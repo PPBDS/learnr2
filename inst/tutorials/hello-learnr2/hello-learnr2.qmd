@@ -1,0 +1,143 @@
+---
+title: "Hello, learnr2"
+subtitle: "A guided tour of learnr2 features"
+format: live-html
+engine: knitr
+toc: true
+webr:
+  packages:
+    - ggplot2
+---
+
+{{< include _extensions/r-wasm/live/_knitr.qmd >}}
+
+{{< include _extensions/r-wasm/live/_gradethis.qmd >}}
+
+## What is this?
+
+**learnr2** lets you write interactive R tutorials that run entirely in the
+reader's web browser using [Quarto](https://quarto.org) and
+[WebR](https://docs.r-wasm.org/webr/). There is no Shiny app and no R server:
+the code cells below execute right here on this page.
+
+This tutorial is itself a learnr2 tutorial. Read it, edit the cells, and run
+them to see each feature work.
+
+## 1. Runnable code cells
+
+Every code cell is a live editor. Press **Run** (or `Ctrl`/`Cmd` + `Enter`) to
+execute it. Edit the code and run it again --- it is yours to experiment with.
+
+```{webr}
+x <- c(4, 8, 15, 16, 23, 42)
+mean(x)
+```
+
+Output works the same as in R, including plots:
+
+```{webr}
+library(ggplot2)
+ggplot(mtcars, aes(wt, mpg)) +
+  geom_point() +
+  geom_smooth(method = "lm", formula = y ~ x)
+```
+
+## 2. Non-editable cells
+
+Sometimes you want to *show* code that runs but should not be edited. Use the
+`edit: false` option.
+
+```{webr}
+#| edit: false
+sample(1:100, 5)
+```
+
+## 3. Exercises
+
+An **exercise** is a code cell the reader is expected to complete. Mark a cell
+with the `exercise` option and give it a label. Blanks are written as runs of
+underscores (`______`).
+
+```{webr}
+#| exercise: ex_sum
+# Compute the sum of the integers from 1 to 100.
+______
+```
+
+### Hints
+
+Add a `.hint` block tied to the exercise label. Readers can reveal it when
+stuck.
+
+::: { .hint exercise="ex_sum" }
+The `sum()` function adds numbers, and `1:100` is the sequence 1, 2, ..., 100.
+:::
+
+### Solutions
+
+A `.solution` block reveals a model answer.
+
+::: { .solution exercise="ex_sum" }
+```r
+sum(1:100)
+```
+:::
+
+## 4. Setup cells
+
+Exercises often need objects to exist before the reader starts. A cell marked
+`setup: true` for a given exercise label runs invisibly beforehand. Here we
+pre-create a vector the next exercise uses.
+
+```{webr}
+#| setup: true
+#| exercise: ex_mean
+scores <- c(72, 88, 91, 64, 100)
+```
+
+```{webr}
+#| exercise: ex_mean
+# `scores` already exists. Compute its mean.
+______
+```
+
+::: { .solution exercise="ex_mean" }
+```r
+mean(scores)
+```
+:::
+
+## 5. Automatic grading
+
+learnr2 reuses 'quarto-live''s grading, which is powered by the
+[gradethis](https://pkgs.rstudio.com/gradethis/) package. Add a `check` cell
+for an exercise; it runs when the reader presses **Submit** and compares their
+work against the solution.
+
+```{webr}
+#| exercise: ex_grade
+# Multiply 6 by 7.
+______
+```
+
+```{webr}
+#| exercise: ex_grade
+#| check: true
+gradethis::grade_this_code()
+```
+
+::: { .solution exercise="ex_grade" }
+```r
+6 * 7
+```
+:::
+
+Try submitting a wrong answer (e.g. `6 + 7`), then the right one, to see the
+feedback change.
+
+## Where to go next
+
+- Use `learnr2::create_tutorial("my-tutorial")` to scaffold your own.
+- Edit the `.qmd`, then render with Quarto or `quarto::quarto_render()`.
+
+Quizzes, progress tracking, and a learnr-style theme are on the roadmap.

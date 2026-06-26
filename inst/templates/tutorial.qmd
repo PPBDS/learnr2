@@ -1,0 +1,41 @@
+---
+title: "{{title}}"
+format: live-html
+engine: knitr
+toc: true
+webr:
+  packages:
+    - dplyr
+---
+
+{{< include _extensions/r-wasm/live/_knitr.qmd >}}
+
+## Welcome
+
+Write your tutorial here. The chunks below run entirely in the reader's
+browser using WebR --- no R server required.
+
+## A runnable cell
+
+```{webr}
+x <- c(1, 2, 3, 4, 5)
+mean(x)
+```
+
+## An exercise
+
+```{webr}
+#| exercise: first_exercise
+# Compute the sum of 1 through 10.
+______
+```
+
+::: { .hint exercise="first_exercise" }
+The `sum()` function adds its arguments. Try `sum(1:10)`.
+:::
+
+::: { .solution exercise="first_exercise" }
+```r
+sum(1:10)
+```
+:::

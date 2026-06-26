@@ -1,0 +1,5 @@
+^spike$
+^LICENSE\.md$
+^\.git$
+^.*\.Rproj$
+^\.Rproj\.user$

@@ -1,0 +1,23 @@
+Package: learnr2
+Title: Interactive Tutorials with Quarto and WebR
+Version: 0.0.0.9000
+Authors@R:
+    person("David", "Kane", , "dave.kane@gmail.com", role = c("aut", "cre"))
+Description: Create interactive R tutorials that run entirely in the
+    browser using Quarto and WebR via the 'quarto-live' extension. Provides
+    learnr-style authoring conveniences -- scaffolding, exercises, hints,
+    solutions, and quizzes -- without Shiny, R Markdown, or a server.
+License: MIT + file LICENSE
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.3
+Imports:
+    fs,
+    quarto
+Suggests:
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3
+SystemRequirements: Quarto command line tool
+    (https://github.com/quarto-dev/quarto-cli).
+URL: https://github.com/davidkane9/learnr2
+BugReports: https://github.com/davidkane9/learnr2/issues
