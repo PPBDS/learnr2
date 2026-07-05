@@ -26,6 +26,7 @@ mean(x)
 
 ```{webr}
 #| exercise: first_exercise
+#| persist: true
 # Compute the sum of 1 through 10.
 ______
 ```
@@ -39,3 +40,15 @@ The `sum()` function adds its arguments. Try `sum(1:10)`.
 sum(1:10)
 ```
 :::
+
+## A quiz question
+
+```{r}
+learnr2::question(
+  "What does `sum(1:10)` return?",
+  learnr2::answer("55", correct = TRUE),
+  learnr2::answer("50"),
+  learnr2::answer("100"),
+  allow_retry = TRUE
+)
+```

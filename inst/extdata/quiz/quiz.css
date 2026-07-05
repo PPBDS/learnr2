@@ -1,0 +1,101 @@
+.learnr2-quiz {
+  margin: 1.5rem 0;
+}
+
+.learnr2-quiz-caption {
+  font-weight: 600;
+  font-size: 1.1rem;
+  margin-bottom: 0.75rem;
+}
+
+.learnr2-question {
+  border: 1px solid #d8dee4;
+  border-radius: 0.5rem;
+  padding: 1rem 1.25rem;
+  margin: 1rem 0;
+  background: #fafbfc;
+}
+
+.learnr2-question-text {
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+}
+
+.learnr2-answers {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-bottom: 0.75rem;
+}
+
+.learnr2-answer-row {
+  display: flex;
+}
+
+.learnr2-answer {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+}
+
+.learnr2-text-input {
+  padding: 0.4rem 0.6rem;
+  border: 1px solid #ced4da;
+  border-radius: 0.3rem;
+  font-size: 1rem;
+  width: 100%;
+  max-width: 20rem;
+}
+
+.learnr2-controls {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.learnr2-submit,
+.learnr2-try-again {
+  padding: 0.4rem 0.9rem;
+  border: 1px solid #0d6efd;
+  border-radius: 0.3rem;
+  background: #0d6efd;
+  color: #fff;
+  cursor: pointer;
+  font-size: 0.95rem;
+}
+
+.learnr2-submit:hover {
+  background: #0b5ed7;
+}
+
+.learnr2-try-again {
+  background: #6c757d;
+  border-color: #6c757d;
+}
+
+.learnr2-try-again:hover {
+  background: #5c636a;
+}
+
+.learnr2-feedback {
+  margin-top: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.3rem;
+  font-size: 0.95rem;
+}
+
+.learnr2-feedback-correct {
+  background: #d1e7dd;
+  color: #0a3622;
+  border: 1px solid #a3cfbb;
+}
+
+.learnr2-feedback-incorrect {
+  background: #f8d7da;
+  color: #58151c;
+  border: 1px solid #f1aeb5;
+}
+
+.learnr2-question .d-none {
+  display: none !important;
+}

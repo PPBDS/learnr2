@@ -13,6 +13,9 @@ Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.3
 Imports:
     fs,
+    htmltools,
+    jsonlite,
+    knitr,
     quarto
 Suggests:
     testthat (>= 3.0.0)

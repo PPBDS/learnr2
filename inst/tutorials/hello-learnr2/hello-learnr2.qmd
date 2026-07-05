@@ -60,9 +60,14 @@ underscores (`______`).
 
 ```{webr}
 #| exercise: ex_sum
+#| persist: true
 # Compute the sum of the integers from 1 to 100.
 ______
 ```
+
+Add `persist: true` (as shown above) to save the reader's edits in the
+browser's `localStorage`, keyed to this page and exercise. Refresh the page
+after editing the cell above --- your changes are still there.
 
 ### Hints
 
@@ -135,9 +140,79 @@ gradethis::grade_this_code()
 Try submitting a wrong answer (e.g. `6 + 7`), then the right one, to see the
 feedback change.
 
+## 6. Quiz questions
+
+Not every check needs to run code. `learnr2::question()` adds a learnr-style
+quiz question --- graded entirely in the reader's browser with plain
+JavaScript, no Shiny or R server involved. Questions render wherever the
+R code below is evaluated (a normal `{r}` chunk, since this runs once while
+you *author* the tutorial, not each time a reader loads the page).
+
+Single choice, with a nudge to try again:
+
+```{r}
+learnr2::question(
+  "Which function computes the arithmetic mean in base R?",
+  learnr2::answer("mean()", correct = TRUE),
+  learnr2::answer("average()"),
+  learnr2::answer("avg()"),
+  allow_retry = TRUE
+)
+```
+
+Multiple choice is inferred automatically from how many answers are marked
+`correct`:
+
+```{r}
+learnr2::question(
+  "Which of these are valid ways to create a vector in R?",
+  learnr2::answer("c(1, 2, 3)", correct = TRUE),
+  learnr2::answer("1:3", correct = TRUE),
+  learnr2::answer("vector(1, 2, 3)"),
+  random_answer_order = TRUE
+)
+```
+
+Free-text questions compare the reader's typed answer against one or more
+acceptable responses:
+
+```{r}
+learnr2::question(
+  "What R package powers grading for learnr2 exercises?",
+  learnr2::answer("gradethis", correct = TRUE),
+  type = "text",
+  allow_retry = TRUE
+)
+```
+
+Submitted answers are saved automatically (again via `localStorage`, keyed
+by page URL and question) and restored on the reader's next visit. The
+default key is derived from the question text, so editing a question's
+wording resets its saved answers --- pass `id = "some-stable-slug"` to
+`question()` if you want to reword a question without losing readers'
+progress.
+
+Group related questions with `learnr2::quiz()`:
+
+```{r}
+learnr2::quiz(
+  caption = "Quick check",
+  learnr2::question(
+    "2 + 2 equals?",
+    learnr2::answer("4", correct = TRUE),
+    learnr2::answer("22")
+  ),
+  learnr2::question(
+    "Is R free and open source?",
+    learnr2::answer("Yes", correct = TRUE),
+    learnr2::answer("No")
+  )
+)
+```
+
 ## Where to go next
 
 - Use `learnr2::create_tutorial("my-tutorial")` to scaffold your own.
 - Edit the `.qmd`, then render with Quarto or `quarto::quarto_render()`.
 
-Quizzes, progress tracking, and a learnr-style theme are on the roadmap.
+A learnr-style progressive, section-by-section theme is on the roadmap.
