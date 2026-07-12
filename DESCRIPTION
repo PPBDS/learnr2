@@ -23,6 +23,8 @@ Suggests:
     rstudioapi,
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
+Config/Needs/website:
+    rsconnect
 SystemRequirements: Quarto command line tool
     (https://github.com/quarto-dev/quarto-cli).
 URL: https://github.com/PPBDS/learnr2, https://ppbds.github.io/learnr2/
