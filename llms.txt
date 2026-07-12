@@ -1,0 +1,97 @@
+# learnr2
+
+**learnr2** creates interactive R tutorials that run entirely in the
+reader’s web browser using [Quarto](https://quarto.org) and
+[WebR](https://docs.r-wasm.org/webr/), via the
+[quarto-live](https://github.com/r-wasm/quarto-live) extension. It
+offers [learnr](https://rstudio.github.io/learnr/)-style authoring
+conveniences — scaffolding, exercises, hints, solutions, and quizzes —
+**without Shiny, R Markdown, or a server**. A rendered tutorial is a
+self-contained HTML page.
+
+## Installation
+
+``` r
+
+# install.packages("pak")
+pak::pak("PPBDS/learnr2")
+```
+
+You will also need the [Quarto
+CLI](https://quarto.org/docs/get-started/).
+
+## Usage
+
+Try the bundled feature-tour tutorial:
+
+``` r
+
+library(learnr2)
+
+available_tutorials()          # list tutorials bundled with a package
+run_tutorial("hello-learnr2")  # render + open in your browser
+```
+
+Scaffold your own tutorial:
+
+``` r
+
+create_tutorial("my-tutorial")
+```
+
+This creates `my-tutorial/my-tutorial.qmd` with the quarto-live
+extension copied alongside it, so it renders out of the box with Quarto
+or
+[`quarto::quarto_render()`](https://quarto-dev.github.io/quarto-r/reference/quarto_render.html).
+
+## What’s inside a tutorial
+
+- **Live code cells** — editable, runnable R that executes in the
+  browser.
+- **Exercises** — cells with blanks, plus `.hint` and `.solution`
+  blocks.
+- **Automatic grading** — powered by
+  [gradethis](https://pkgs.rstudio.com/gradethis/).
+- **Quiz questions** —
+  [`question()`](https://ppbds.github.io/learnr2/reference/question.md)
+  / [`quiz()`](https://ppbds.github.io/learnr2/reference/quiz.md),
+  graded in the browser with plain JavaScript, including single/multiple
+  choice, free-text, and reflection questions. Answers persist in the
+  browser’s `localStorage`.
+
+See the reference index and the bundled `hello-learnr2` tutorial for
+details.
+
+# Package index
+
+## Authoring tutorials
+
+Scaffold and run interactive tutorials.
+
+- [`create_tutorial()`](https://ppbds.github.io/learnr2/reference/create_tutorial.md)
+  : Create a new learnr2 tutorial
+- [`run_tutorial()`](https://ppbds.github.io/learnr2/reference/run_tutorial.md)
+  : Render and open a bundled tutorial
+- [`available_tutorials()`](https://ppbds.github.io/learnr2/reference/available_tutorials.md)
+  : List tutorials bundled with learnr2 (or any installed package)
+
+## Quiz questions
+
+learnr-style quiz questions, graded in the browser.
+
+- [`question()`](https://ppbds.github.io/learnr2/reference/question.md)
+  : Create a quiz question
+- [`answer()`](https://ppbds.github.io/learnr2/reference/answer.md) :
+  Define an answer choice for a quiz question
+- [`quiz()`](https://ppbds.github.io/learnr2/reference/quiz.md) : Group
+  questions into a quiz
+
+## Quarto-live extension
+
+Manage the bundled quarto-live Quarto extension.
+
+- [`add_live_extension()`](https://ppbds.github.io/learnr2/reference/add_live_extension.md)
+  : Add the 'quarto-live' extension to a project
+- [`live_extension_dir()`](https://ppbds.github.io/learnr2/reference/live_extension_dir.md)
+  : Path to the bundled 'quarto-live' extension
+
