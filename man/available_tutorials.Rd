@@ -17,7 +17,7 @@ A data frame with one row per tutorial and columns \code{package},
 }
 \description{
 Scans one package -- or, by default, every package installed -- for a
-bundled \code{inst/tutorials/} directory, the same convention 'learnr' uses.
+bundled \verb{inst/tutorials/} directory, the same convention 'learnr' uses.
 This lets tools like the "R Tutorials" VS Code extension discover
 tutorials from separately-installed content packages (in the style of
 'primer.tutorials') without knowing their names in advance.

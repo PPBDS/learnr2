@@ -1,0 +1,23 @@
+url: https://ppbds.github.io/learnr2/
+
+template:
+  bootstrap: 5
+
+reference:
+  - title: Authoring tutorials
+    desc: Scaffold and run interactive tutorials.
+    contents:
+      - create_tutorial
+      - run_tutorial
+      - available_tutorials
+  - title: Quiz questions
+    desc: learnr-style quiz questions, graded in the browser.
+    contents:
+      - question
+      - answer
+      - quiz
+  - title: Quarto-live extension
+    desc: Manage the bundled quarto-live Quarto extension.
+    contents:
+      - add_live_extension
+      - live_extension_dir

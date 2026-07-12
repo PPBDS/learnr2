@@ -253,12 +253,12 @@ quiz_html.learnr2_quiz <- function(x) {
   htmltools::attachDependencies(container, quiz_dependency())
 }
 
-#' @export
+#' @exportS3Method knitr::knit_print
 knit_print.learnr2_question <- function(x, ...) {
   knitr::knit_print(quiz_html(x), ...)
 }
 
-#' @export
+#' @exportS3Method knitr::knit_print
 knit_print.learnr2_quiz <- function(x, ...) {
   knitr::knit_print(quiz_html(x), ...)
 }

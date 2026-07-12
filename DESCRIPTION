@@ -19,9 +19,11 @@ Imports:
     quarto,
     rmarkdown
 Suggests:
+    pkgdown,
+    rstudioapi,
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
 SystemRequirements: Quarto command line tool
     (https://github.com/quarto-dev/quarto-cli).
-URL: https://github.com/davidkane9/learnr2
-BugReports: https://github.com/davidkane9/learnr2/issues
+URL: https://github.com/PPBDS/learnr2, https://ppbds.github.io/learnr2/
+BugReports: https://github.com/PPBDS/learnr2/issues
