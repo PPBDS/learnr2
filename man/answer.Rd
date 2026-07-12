@@ -9,12 +9,18 @@ answer(text, correct = FALSE, message = NULL)
 \arguments{
 \item{text}{The answer text shown to the reader. For \code{type = "text"}
 questions (see \code{\link[=question]{question()}}), this is instead one acceptable response
-that the reader's typed input is compared against.}
+that the reader's typed input is compared against. For \code{"reflection"}
+and \code{"reflection_editable"} questions, the \code{text} of every \code{correct}
+answer is shown to the reader as the model answer -- it is not compared
+against anything.}
 
-\item{correct}{Is this a correct answer? Defaults to \code{FALSE}.}
+\item{correct}{Is this a correct answer? Defaults to \code{FALSE}. For
+\code{"reflection"}/\code{"reflection_editable"} questions, this instead marks
+\code{text} as one of the model answers to reveal.}
 
 \item{message}{Optional feedback shown when the reader picks (or types)
-this specific answer.}
+this specific answer. Unused for \code{"reflection"}/\code{"reflection_editable"}
+questions.}
 }
 \value{
 A \code{learnr2_answer} object for use inside \code{\link[=question]{question()}}.

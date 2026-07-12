@@ -2,17 +2,26 @@
 % Please edit documentation in R/tutorials.R
 \name{available_tutorials}
 \alias{available_tutorials}
-\title{List tutorials bundled with learnr2}
+\title{List tutorials bundled with learnr2 (or any installed package)}
 \usage{
-available_tutorials()
+available_tutorials(package = NULL)
+}
+\arguments{
+\item{package}{Name of a single package to scan. Defaults to \code{NULL},
+which scans every installed package.}
 }
 \value{
-A character vector of tutorial names that can be passed to
-\code{\link[=run_tutorial]{run_tutorial()}}.
+A data frame with one row per tutorial and columns \code{package},
+\code{name}, and \code{title} (\code{NA} if the tutorial's \code{.qmd}/\code{.Rmd} has no YAML
+\code{title}). \code{name} can be passed to \code{\link[=run_tutorial]{run_tutorial()}}.
 }
 \description{
-List tutorials bundled with learnr2
+Scans one package -- or, by default, every package installed -- for a
+bundled \code{inst/tutorials/} directory, the same convention 'learnr' uses.
+This lets tools like the "R Tutorials" VS Code extension discover
+tutorials from separately-installed content packages (in the style of
+'primer.tutorials') without knowing their names in advance.
 }
 \examples{
-available_tutorials()
+available_tutorials(package = "learnr2")
 }

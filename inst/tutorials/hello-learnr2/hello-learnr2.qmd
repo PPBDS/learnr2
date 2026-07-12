@@ -185,6 +185,59 @@ learnr2::question(
 )
 ```
 
+Some free-response questions have a definite right answer that's too long or
+variable in phrasing to grade with an exact match. `type = "reflection"`
+handles that case: it shows the reader a model answer after they submit
+their own response, without grading it --- and locks their response so it
+can't be changed afterward:
+
+```{r}
+learnr2::question(
+  "Explain why the code cells on this page don't need a running R server.",
+  learnr2::answer(
+    "They execute in the reader's own browser via WebR (R compiled to
+    WebAssembly), not on a remote server --- so the tutorial keeps working
+    even after wherever it was originally hosted goes offline.",
+    correct = TRUE
+  ),
+  type = "reflection"
+)
+```
+
+`type = "reflection_editable"` works the same way, except the reader can
+keep revising their own response after the model answer is revealed:
+
+```{r}
+learnr2::question(
+  "Explain the difference between `type = \"text\"` and `type =
+  \"reflection\"`.",
+  learnr2::answer(
+    "`\"text\"` grades an exact match against one or more accepted answers;
+    `\"reflection\"` never grades anything, it just shows a model answer for
+    comparison.",
+    correct = TRUE
+  ),
+  type = "reflection_editable"
+)
+```
+
+For exercises where the reader's work is a plot or other image, add
+`allow_image = TRUE` to let them paste a screenshot from their clipboard
+(Ctrl+V/Cmd+V) alongside their written response --- there is no file-upload
+button, just click the box and paste:
+
+```{r}
+learnr2::question(
+  "Paste a screenshot of the plot you made in the exercise above.",
+  learnr2::answer(
+    "A scatterplot of `wt` vs. `mpg` with a downward-sloping trend line.",
+    correct = TRUE
+  ),
+  type = "reflection",
+  allow_image = TRUE
+)
+```
+
 Submitted answers are saved automatically (again via `localStorage`, keyed
 by page URL and question) and restored on the reader's next visit. The
 default key is derived from the question text, so editing a question's

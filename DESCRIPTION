@@ -16,7 +16,8 @@ Imports:
     htmltools,
     jsonlite,
     knitr,
-    quarto
+    quarto,
+    rmarkdown
 Suggests:
     testthat (>= 3.0.0)
 Config/testthat/edition: 3

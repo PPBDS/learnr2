@@ -240,6 +240,178 @@
     }
   }
 
+  // A clickable/focusable box the reader pastes an image into with
+  // Ctrl+V/Cmd+V -- not a file upload, no <input type="file"> anywhere.
+  // Only image/png clipboard items are accepted, capped at MAX_BYTES so a
+  // handful of screenshots can't blow past the browser's localStorage quota
+  // (pasted images are persisted as base64 data URLs, like everything else).
+  function buildImagePasteArea() {
+    var MAX_BYTES = 2 * 1024 * 1024;
+    var wrapper = el("div", { class: "learnr2-image-paste", tabindex: "0" });
+    var placeholder = el("div", {
+      class: "learnr2-image-paste-placeholder",
+      text: "Click here, then press Ctrl+V (or Cmd+V) to paste a screenshot (PNG)."
+    });
+    var preview = el("img", { class: "learnr2-image-paste-preview d-none" });
+    var error = el("div", { class: "learnr2-image-paste-error d-none" });
+    var remove = el(
+      "button",
+      { type: "button", class: "learnr2-image-paste-remove d-none", text: "Remove image" }
+    );
+
+    var dataUrl = null;
+
+    function setError(message) {
+      error.textContent = message;
+      error.classList.remove("d-none");
+    }
+
+    function setImage(nextDataUrl) {
+      dataUrl = nextDataUrl;
+      preview.src = nextDataUrl;
+      preview.classList.remove("d-none");
+      placeholder.classList.add("d-none");
+      remove.classList.remove("d-none");
+      error.classList.add("d-none");
+    }
+
+    function clearImage() {
+      dataUrl = null;
+      preview.src = "";
+      preview.classList.add("d-none");
+      placeholder.classList.remove("d-none");
+      remove.classList.add("d-none");
+    }
+
+    wrapper.addEventListener("paste", function (event) {
+      if (wrapper.classList.contains("learnr2-image-paste-disabled")) {
+        return;
+      }
+      event.preventDefault();
+
+      var items = (event.clipboardData && event.clipboardData.items) || [];
+      var imageItem = null;
+      for (var i = 0; i < items.length; i++) {
+        if (items[i].type === "image/png") {
+          imageItem = items[i];
+          break;
+        }
+      }
+      if (!imageItem) {
+        setError("Please paste a PNG image (copy a screenshot, then press Ctrl+V here).");
+        return;
+      }
+
+      var file = imageItem.getAsFile();
+      if (!file) {
+        setError("Could not read the pasted image. Please try again.");
+        return;
+      }
+      if (file.size > MAX_BYTES) {
+        setError("That image is too large (max 2MB). Try a smaller screenshot or crop it first.");
+        return;
+      }
+
+      var reader = new FileReader();
+      reader.onload = function () {
+        setImage(reader.result);
+      };
+      reader.onerror = function () {
+        setError("Could not read the pasted image. Please try again.");
+      };
+      reader.readAsDataURL(file);
+    });
+
+    remove.addEventListener("click", function () {
+      clearImage();
+    });
+
+    wrapper.appendChild(placeholder);
+    wrapper.appendChild(preview);
+    wrapper.appendChild(remove);
+    wrapper.appendChild(error);
+
+    return {
+      element: wrapper,
+      getDataUrl: function () { return dataUrl; },
+      setImage: setImage,
+      setDisabled: function (disabled) {
+        wrapper.classList.toggle("learnr2-image-paste-disabled", disabled);
+        wrapper.tabIndex = disabled ? -1 : 0;
+        if (disabled) {
+          remove.classList.add("d-none");
+        } else if (dataUrl) {
+          remove.classList.remove("d-none");
+        }
+      }
+    };
+  }
+
+  // Ungraded free-response: reveals the `correct`-marked answer(s) as a
+  // model answer after submitting. `type === "reflection"` locks the
+  // reader's own response afterward; `"reflection_editable"` leaves it open
+  // so they can keep revising it.
+  function buildReflectionQuestion(container, data) {
+    var editable = data.type === "reflection_editable";
+    var modelAnswers = data.answers
+      .filter(function (a) { return a.correct; })
+      .map(function (a) { return a.text; });
+
+    var textarea = el("textarea", { class: "learnr2-text-input learnr2-textarea", rows: "4" });
+    var reveal = el("div", { class: "learnr2-model-answer d-none" });
+    var submit = el("button", { type: "button", class: "learnr2-submit", text: data.submitLabel });
+    var imagePaste = data.allowImage ? buildImagePasteArea() : null;
+
+    function showModelAnswer() {
+      reveal.textContent = "";
+      reveal.appendChild(el("div", { class: "learnr2-model-answer-label", text: "Model answer:" }));
+      modelAnswers.forEach(function (text) {
+        reveal.appendChild(el("p", { text: text }));
+      });
+      reveal.classList.remove("d-none");
+    }
+
+    function applyOutcome(disable) {
+      showModelAnswer();
+      if (disable) {
+        textarea.disabled = true;
+        submit.classList.add("d-none");
+        if (imagePaste) {
+          imagePaste.setDisabled(true);
+        }
+      }
+    }
+
+    submit.addEventListener("click", function () {
+      applyOutcome(!editable);
+      saveState(data, {
+        value: textarea.value,
+        image: imagePaste ? imagePaste.getDataUrl() : null,
+        submitted: true
+      });
+    });
+
+    container.appendChild(el("div", { class: "learnr2-answers" }, [textarea]));
+    if (imagePaste) {
+      container.appendChild(imagePaste.element);
+    }
+    container.appendChild(el("div", { class: "learnr2-controls" }, [submit]));
+    container.appendChild(reveal);
+
+    var saved = loadState(data);
+    if (saved) {
+      if (typeof saved.value === "string") {
+        textarea.value = saved.value;
+      }
+      if (saved.image && imagePaste) {
+        imagePaste.setImage(saved.image);
+      }
+      if (saved.submitted) {
+        applyOutcome(!editable);
+      }
+    }
+  }
+
   function renderQuestion(node) {
     var encoded = node.getAttribute("data-learnr2-question");
     if (!encoded) {
@@ -253,6 +425,8 @@
 
     if (data.type === "text") {
       buildTextQuestion(node, data);
+    } else if (data.type === "reflection" || data.type === "reflection_editable") {
+      buildReflectionQuestion(node, data);
     } else {
       buildChoiceQuestion(node, data);
     }

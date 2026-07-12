@@ -2,10 +2,16 @@
 #'
 #' @param text The answer text shown to the reader. For `type = "text"`
 #'   questions (see [question()]), this is instead one acceptable response
-#'   that the reader's typed input is compared against.
-#' @param correct Is this a correct answer? Defaults to `FALSE`.
+#'   that the reader's typed input is compared against. For `"reflection"`
+#'   and `"reflection_editable"` questions, the `text` of every `correct`
+#'   answer is shown to the reader as the model answer -- it is not compared
+#'   against anything.
+#' @param correct Is this a correct answer? Defaults to `FALSE`. For
+#'   `"reflection"`/`"reflection_editable"` questions, this instead marks
+#'   `text` as one of the model answers to reveal.
 #' @param message Optional feedback shown when the reader picks (or types)
-#'   this specific answer.
+#'   this specific answer. Unused for `"reflection"`/`"reflection_editable"`
+#'   questions.
 #'
 #' @return A `learnr2_answer` object for use inside [question()].
 #' @export
@@ -39,21 +45,36 @@ print.learnr2_answer <- function(x, ...) {
 #' @param text Question prompt.
 #' @param ... One or more [answer()] objects.
 #' @param type Question type. `"auto"` (the default) picks `"single"` when
-#'   exactly one answer is marked `correct`, and `"multiple"` otherwise. Use
-#'   `"text"` for a free-text question, where the reader types a response
-#'   that is compared (trimmed, whitespace-collapsed, case-insensitive)
-#'   against the [answer()] text(s).
-#' @param correct Message shown when the reader answers correctly.
-#' @param incorrect Message shown when the reader answers incorrectly.
+#'   exactly one answer is marked `correct`, and `"multiple"` otherwise.
+#'   Other types:
+#'   * `"text"` -- a free-text question, graded by comparing (trimmed,
+#'     whitespace-collapsed, case-insensitive) the reader's response against
+#'     the [answer()] text(s).
+#'   * `"reflection"` -- an ungraded free-response question. After
+#'     submitting, the reader sees the model answer (the `correct`
+#'     [answer()] text(s)) and their own response is locked.
+#'   * `"reflection_editable"` -- like `"reflection"`, but the reader's
+#'     response stays editable after the model answer is revealed, so they
+#'     can keep revising it.
+#' @param correct Message shown when the reader answers correctly. Unused
+#'   for `"reflection"`/`"reflection_editable"` questions.
+#' @param incorrect Message shown when the reader answers incorrectly. Unused
+#'   for `"reflection"`/`"reflection_editable"` questions.
 #' @param allow_retry Allow the reader to try again after an incorrect
-#'   answer? Defaults to `FALSE`.
+#'   answer? Defaults to `FALSE`. Unused for
+#'   `"reflection"`/`"reflection_editable"` questions.
 #' @param random_answer_order Shuffle answer order each time the page loads?
-#'   Defaults to `FALSE`. Ignored for `type = "text"`.
+#'   Defaults to `FALSE`. Only applies to `"single"`/`"multiple"` questions.
 #' @param submit_button,try_again_button Button labels.
 #' @param id Stable identifier used to key the reader's saved answer (see
 #'   "Progress persistence" below). Defaults to a slug derived from `text`.
 #'   Set this explicitly if you plan to edit the question wording later and
 #'   want readers' saved answers to survive the edit.
+#' @param allow_image For `"reflection"`/`"reflection_editable"` questions,
+#'   let the reader paste a PNG image (e.g. a screenshot) from their
+#'   clipboard, alongside their typed response -- not a file upload, just
+#'   Ctrl+V/Cmd+V into the question. Defaults to `FALSE`. Ignored for other
+#'   question types.
 #'
 #' @return A `learnr2_question` object. Printed as an interactive HTML
 #'   widget, both in a rendered Quarto document and (via a browser preview)
@@ -77,14 +98,18 @@ print.learnr2_answer <- function(x, ...) {
 #' )
 question <- function(text,
                       ...,
-                      type = c("auto", "single", "multiple", "text"),
+                      type = c(
+                        "auto", "single", "multiple", "text",
+                        "reflection", "reflection_editable"
+                      ),
                       correct = "Correct!",
                       incorrect = "Incorrect.",
                       allow_retry = FALSE,
                       random_answer_order = FALSE,
                       submit_button = "Submit Answer",
                       try_again_button = "Try Again",
-                      id = NULL) {
+                      id = NULL,
+                      allow_image = FALSE) {
   type <- match.arg(type)
 
   if (!is.null(id) && (!is.character(id) || length(id) != 1 || !nzchar(id))) {
@@ -112,6 +137,8 @@ question <- function(text,
   if (type == "auto") {
     type <- if (n_correct > 1) "multiple" else "single"
   }
+  is_choice_type <- type %in% c("single", "multiple")
+  is_reflection_type <- type %in% c("reflection", "reflection_editable")
 
   payload <- list(
     id = question_id(id, text),
@@ -123,9 +150,10 @@ question <- function(text,
     correctMessage = correct,
     incorrectMessage = incorrect,
     allowRetry = isTRUE(allow_retry),
-    randomAnswerOrder = isTRUE(random_answer_order) && type != "text",
+    randomAnswerOrder = isTRUE(random_answer_order) && is_choice_type,
     submitLabel = submit_button,
-    tryAgainLabel = try_again_button
+    tryAgainLabel = try_again_button,
+    allowImage = isTRUE(allow_image) && is_reflection_type
   )
 
   structure(list(payload = payload), class = "learnr2_question")

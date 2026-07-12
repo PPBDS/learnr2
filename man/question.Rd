@@ -7,14 +7,15 @@
 question(
   text,
   ...,
-  type = c("auto", "single", "multiple", "text"),
+  type = c("auto", "single", "multiple", "text", "reflection", "reflection_editable"),
   correct = "Correct!",
   incorrect = "Incorrect.",
   allow_retry = FALSE,
   random_answer_order = FALSE,
   submit_button = "Submit Answer",
   try_again_button = "Try Again",
-  id = NULL
+  id = NULL,
+  allow_image = FALSE
 )
 }
 \arguments{
@@ -23,20 +24,32 @@ question(
 \item{...}{One or more \code{\link[=answer]{answer()}} objects.}
 
 \item{type}{Question type. \code{"auto"} (the default) picks \code{"single"} when
-exactly one answer is marked \code{correct}, and \code{"multiple"} otherwise. Use
-\code{"text"} for a free-text question, where the reader types a response
-that is compared (trimmed, whitespace-collapsed, case-insensitive)
-against the \code{\link[=answer]{answer()}} text(s).}
+exactly one answer is marked \code{correct}, and \code{"multiple"} otherwise.
+Other types:
+\itemize{
+\item \code{"text"} -- a free-text question, graded by comparing (trimmed,
+whitespace-collapsed, case-insensitive) the reader's response against
+the \code{\link[=answer]{answer()}} text(s).
+\item \code{"reflection"} -- an ungraded free-response question. After
+submitting, the reader sees the model answer (the \code{correct}
+\code{\link[=answer]{answer()}} text(s)) and their own response is locked.
+\item \code{"reflection_editable"} -- like \code{"reflection"}, but the reader's
+response stays editable after the model answer is revealed, so they
+can keep revising it.
+}}
 
-\item{correct}{Message shown when the reader answers correctly.}
+\item{correct}{Message shown when the reader answers correctly. Unused
+for \code{"reflection"}/\code{"reflection_editable"} questions.}
 
-\item{incorrect}{Message shown when the reader answers incorrectly.}
+\item{incorrect}{Message shown when the reader answers incorrectly. Unused
+for \code{"reflection"}/\code{"reflection_editable"} questions.}
 
 \item{allow_retry}{Allow the reader to try again after an incorrect
-answer? Defaults to \code{FALSE}.}
+answer? Defaults to \code{FALSE}. Unused for
+\code{"reflection"}/\code{"reflection_editable"} questions.}
 
 \item{random_answer_order}{Shuffle answer order each time the page loads?
-Defaults to \code{FALSE}. Ignored for \code{type = "text"}.}
+Defaults to \code{FALSE}. Only applies to \code{"single"}/\code{"multiple"} questions.}
 
 \item{submit_button, try_again_button}{Button labels.}
 
@@ -44,6 +57,12 @@ Defaults to \code{FALSE}. Ignored for \code{type = "text"}.}
 "Progress persistence" below). Defaults to a slug derived from \code{text}.
 Set this explicitly if you plan to edit the question wording later and
 want readers' saved answers to survive the edit.}
+
+\item{allow_image}{For \code{"reflection"}/\code{"reflection_editable"} questions,
+let the reader paste a PNG image (e.g. a screenshot) from their
+clipboard, alongside their typed response -- not a file upload, just
+Ctrl+V/Cmd+V into the question. Defaults to \code{FALSE}. Ignored for other
+question types.}
 }
 \value{
 A \code{learnr2_question} object. Printed as an interactive HTML

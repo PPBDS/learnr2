@@ -13,7 +13,21 @@ test_that("add_live_extension copies the extension", {
 })
 
 test_that("the hello-learnr2 tutorial is available", {
-  expect_true("hello-learnr2" %in% available_tutorials())
+  tutorials <- available_tutorials(package = "learnr2")
+  expect_s3_class(tutorials, "data.frame")
+  expect_true(all(c("package", "name", "title") %in% names(tutorials)))
+  expect_true("hello-learnr2" %in% tutorials$name)
+  expect_true(all(tutorials$package == "learnr2"))
+})
+
+test_that("available_tutorials() with no package scans every installed package", {
+  tutorials <- available_tutorials()
+  expect_true("hello-learnr2" %in% tutorials$name[tutorials$package == "learnr2"])
+})
+
+test_that("available_tutorials() validates and errors on an unknown package", {
+  expect_error(available_tutorials(package = ""), "single non-empty string")
+  expect_error(available_tutorials(package = "not-a-real-package-xyz"), "No package found")
 })
 
 test_that("the hello-learnr2 tutorial demonstrates quiz questions", {

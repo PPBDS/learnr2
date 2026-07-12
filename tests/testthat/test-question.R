@@ -58,6 +58,70 @@ test_that("type = 'text' questions disable random answer order", {
   expect_false(q$payload$randomAnswerOrder)
 })
 
+test_that("reflection questions lock random_answer_order off and carry the model answer", {
+  q <- question(
+    "What surprised you most about this section?",
+    answer("There is no single right answer, but look for ...", correct = TRUE),
+    type = "reflection",
+    random_answer_order = TRUE
+  )
+  expect_equal(q$payload$type, "reflection")
+  expect_false(q$payload$randomAnswerOrder)
+  expect_true(q$payload$answers[[1]]$correct)
+})
+
+test_that("reflection_editable is a distinct type from reflection", {
+  q <- question(
+    "Summarize the argument in your own words.",
+    answer("A model summary would mention ...", correct = TRUE),
+    type = "reflection_editable"
+  )
+  expect_equal(q$payload$type, "reflection_editable")
+})
+
+test_that("allow_image is carried through for reflection types", {
+  q <- question(
+    "Paste a screenshot of your plot.",
+    answer("A scatterplot with a downward trend.", correct = TRUE),
+    type = "reflection",
+    allow_image = TRUE
+  )
+  expect_true(q$payload$allowImage)
+
+  q2 <- question(
+    "Paste a screenshot of your plot.",
+    answer("A scatterplot with a downward trend.", correct = TRUE),
+    type = "reflection_editable",
+    allow_image = TRUE,
+    id = "plot-screenshot-editable"
+  )
+  expect_true(q2$payload$allowImage)
+})
+
+test_that("allow_image is ignored for non-reflection question types", {
+  q <- question(
+    "2 + 2?",
+    answer("4", correct = TRUE),
+    allow_image = TRUE
+  )
+  expect_false(q$payload$allowImage)
+
+  q2 <- question(
+    "Capital of France?",
+    answer("Paris", correct = TRUE),
+    type = "text",
+    allow_image = TRUE
+  )
+  expect_false(q2$payload$allowImage)
+})
+
+test_that("reflection types still require at least one correct answer", {
+  expect_error(
+    question("Reflect on this.", answer("not marked correct"), type = "reflection"),
+    "at least one correct"
+  )
+})
+
 test_that("question ids are deterministic slugs of the text", {
   q <- question("The Deterministic ID Test Case!!", answer("x", correct = TRUE))
   expect_equal(q$payload$id, "learnr2-question-the-deterministic-id-test-case")

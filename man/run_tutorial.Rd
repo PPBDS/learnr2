@@ -6,13 +6,18 @@
 \usage{
 run_tutorial(
   name = NULL,
+  package = "learnr2",
   output_dir = tempfile("learnr2-"),
   open = interactive()
 )
 }
 \arguments{
 \item{name}{Name of the tutorial to run. See \code{\link[=available_tutorials]{available_tutorials()}}. If
-\code{NULL}, the available tutorials are listed.}
+\code{NULL}, the available tutorials in \code{package} are listed.}
+
+\item{package}{Name of the package the tutorial is bundled with. Defaults
+to \code{"learnr2"}; set this to run a tutorial from another installed
+package (e.g. a 'primer.tutorials'-style content package).}
 
 \item{output_dir}{Directory in which to render the tutorial. Defaults to a
 fresh temporary directory.}
@@ -24,10 +29,11 @@ fresh temporary directory.}
 Path to the rendered HTML file, invisibly.
 }
 \description{
-Renders one of learnr2's built-in tutorials to a temporary directory and,
-in an interactive session, opens the result in a browser. Because installed
-tutorials live in a read-only package library, the tutorial is copied to a
-writable location and the 'quarto-live' extension is added before rendering.
+Renders a tutorial bundled with an installed package to a temporary
+directory and, in an interactive session, opens the result in a browser.
+Because installed tutorials live in a read-only package library, the
+tutorial is copied to a writable location and the 'quarto-live' extension
+is added before rendering.
 }
 \examples{
 \dontrun{
