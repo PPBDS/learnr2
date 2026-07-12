@@ -1,15 +1,22 @@
-Can we have the example tutorial appear on-line and allow students to do it there, including downloading the answers?
+1) How do I start a tutorial? The old way is this:
 
-Add old TODO items here.
-
-You need to understand the tests. Is there really a test for the copy/paste the image?
-
-How do we find all the installed tutorials, e.g. for VS Code extension?
-
-Student information and download answers defaults. With tutorial.helpers, we have:
+learnr::run_tutorial(tutorial = "hello", package = "learnr")
 
 
+2) Can we have the example tutorial appear on-line (maybe GitHub Pages) and allow students to do it there, including downloading the answers?
+
+3) Add old TODO items here that have not been done.
+
+4) You need to understand the tests. Is there really a test for the copy/paste the image?
+
+5) How do we find all the installed tutorials, e.g. for VS Code extension?
+
+6) Student information and download answers defaults. With tutorial.helpers, we have:
+
+```{r info-section, child = system.file("child_documents/info_section.Rmd", package = "tutorial.helpers")}
+```
 
 ```{r download-answers, child = system.file("child_documents/download_answers.Rmd", package = "tutorial.helpers")}
 ```
 
+7) Why template? Why extdata?
