@@ -14,7 +14,10 @@
 #'   `title`). `name` can be passed to [run_tutorial()].
 #' @export
 #' @examples
-#' available_tutorials(package = "learnr2")
+#' # Qualified with learnr2:: because the older learnr package exports a
+#' # function of the same name; this guarantees learnr2's version is used
+#' # even when both packages are attached (e.g. when building the pkgdown site).
+#' learnr2::available_tutorials(package = "learnr2")
 available_tutorials <- function(package = NULL) {
   if (!is.null(package)) {
     if (!is.character(package) || length(package) != 1 || !nzchar(package)) {

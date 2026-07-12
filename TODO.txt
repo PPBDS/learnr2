@@ -1,2 +1,15 @@
 Can we have the example tutorial appear on-line and allow students to do it there, including downloading the answers?
 
+Add old TODO items here.
+
+You need to understand the tests. Is there really a test for the copy/paste the image?
+
+How do we find all the installed tutorials, e.g. for VS Code extension?
+
+Student information and download answers defaults. With tutorial.helpers, we have:
+
+
+
+```{r download-answers, child = system.file("child_documents/download_answers.Rmd", package = "tutorial.helpers")}
+```
+

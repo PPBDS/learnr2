@@ -11,8 +11,9 @@ Create interactive R tutorials that run entirely in the browser using Quarto and
 \seealso{
 Useful links:
 \itemize{
-  \item \url{https://github.com/davidkane9/learnr2}
-  \item Report bugs at \url{https://github.com/davidkane9/learnr2/issues}
+  \item \url{https://github.com/PPBDS/learnr2}
+  \item \url{https://ppbds.github.io/learnr2/}
+  \item Report bugs at \url{https://github.com/PPBDS/learnr2/issues}
 }
 
 }

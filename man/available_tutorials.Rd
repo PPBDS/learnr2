@@ -23,5 +23,8 @@ tutorials from separately-installed content packages (in the style of
 'primer.tutorials') without knowing their names in advance.
 }
 \examples{
-available_tutorials(package = "learnr2")
+# Qualified with learnr2:: because the older learnr package exports a
+# function of the same name; this guarantees learnr2's version is used
+# even when both packages are attached (e.g. when building the pkgdown site).
+learnr2::available_tutorials(package = "learnr2")
 }
