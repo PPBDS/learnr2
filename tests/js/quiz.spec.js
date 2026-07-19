@@ -227,3 +227,112 @@ test.describe("image paste (allow_image)", () => {
     await expect(page.locator(".learnr2-image-paste")).toHaveClass(/learnr2-image-paste-disabled/);
   });
 });
+
+test.describe("student info form", () => {
+  test("fields auto-save on blur and are restored on reload", async ({ page }) => {
+    await page.goto("/student-info");
+    await page.locator("#learnr2-info-student-info-name").fill("Ada Lovelace");
+    await page.locator("#learnr2-info-student-info-email").fill("ada@example.com");
+    // Blur the last field to force a save without waiting on the debounce.
+    await page.locator("body").click();
+
+    await page.reload();
+    await expect(page.locator("#learnr2-info-student-info-name")).toHaveValue("Ada Lovelace");
+    await expect(page.locator("#learnr2-info-student-info-email")).toHaveValue("ada@example.com");
+  });
+
+  test("there is no submit button or grading -- it's pure data entry", async ({ page }) => {
+    await page.goto("/student-info");
+    await expect(page.locator(".learnr2-submit")).toHaveCount(0);
+    await expect(page.locator(".learnr2-feedback")).toHaveCount(0);
+  });
+
+  test("required fields (name, email) are marked with * and show an inline error when left blank", async ({ page }) => {
+    await page.goto("/student-info");
+
+    await expect(page.locator("label[for='learnr2-info-student-info-name']")).toContainText("*");
+    await expect(page.locator("label[for='learnr2-info-student-info-email']")).toContainText("*");
+    await expect(page.locator("label[for='learnr2-info-student-info-id']")).not.toContainText("*");
+
+    const nameInput = page.locator("#learnr2-info-student-info-name");
+    const nameError = nameInput.locator("xpath=../div[contains(@class,'learnr2-info-error')]");
+
+    await nameInput.click();
+    await page.locator("body").click(); // blur while still empty
+    await expect(nameError).toBeVisible();
+
+    await nameInput.fill("Ada Lovelace");
+    await expect(nameError).toBeHidden();
+  });
+});
+
+test.describe("download answers button", () => {
+  test("downloads a JSON file with student info and question answers", async ({ page }) => {
+    await page.goto("/download-answers");
+
+    await page.locator("#learnr2-info-student-info-name").fill("Ada Lovelace");
+    await page.locator("#learnr2-info-student-info-email").fill("ada@example.com");
+    await page.locator("body").click();
+
+    // Answer the single-choice question correctly, leave the reflection one
+    // untouched to confirm unanswered questions are reported as such.
+    const singleChoiceQuestion = page.locator(".learnr2-question", {
+      has: page.locator("#single-choice-answer-0")
+    });
+    await singleChoiceQuestion.locator("#single-choice-answer-0").check();
+    await singleChoiceQuestion.locator(".learnr2-submit").click();
+    await expect(singleChoiceQuestion.locator(".learnr2-feedback")).toBeVisible();
+
+    const downloadPromise = page.waitForEvent("download");
+    await page.locator(".learnr2-download-answers-btn").click();
+    const download = await downloadPromise;
+
+    expect(download.suggestedFilename()).toMatch(/^class-101-.*\.json$/);
+
+    const stream = await download.createReadStream();
+    const chunks = [];
+    for await (const chunk of stream) {
+      chunks.push(chunk);
+    }
+    const contents = JSON.parse(Buffer.concat(chunks).toString("utf8"));
+
+    expect(contents.info).toEqual({ name: "Ada Lovelace", email: "ada@example.com", id: null });
+    expect(contents.answers).toHaveLength(2);
+
+    const choiceAnswer = contents.answers.find((a) => a.question === "What is 6 times 7?");
+    expect(choiceAnswer.answered).toBe(true);
+    expect(choiceAnswer.correct).toBe(true);
+    expect(choiceAnswer.yourAnswer).toEqual(["42"]);
+
+    const reflectionAnswer = contents.answers.find((a) => a.question.indexOf("sky is blue") !== -1);
+    expect(reflectionAnswer.answered).toBe(false);
+    expect(reflectionAnswer.yourAnswer).toBeNull();
+  });
+
+  test("is blocked with an error if a required info field is missing", async ({ page }) => {
+    await page.goto("/download-answers");
+
+    // Only fill in name, leaving the also-required email blank.
+    await page.locator("#learnr2-info-student-info-name").fill("Ada Lovelace");
+    await page.locator("body").click();
+
+    let downloadHappened = false;
+    page.once("download", () => {
+      downloadHappened = true;
+    });
+
+    await page.locator(".learnr2-download-answers-btn").click();
+    await expect(page.locator(".learnr2-download-error")).toBeVisible();
+    await expect(page.locator(".learnr2-download-error")).toContainText("Email:");
+    expect(downloadHappened).toBe(false);
+
+    // Filling in the missing field and retrying should now succeed.
+    await page.locator("#learnr2-info-student-info-email").fill("ada@example.com");
+    await page.locator("body").click();
+
+    const downloadPromise = page.waitForEvent("download");
+    await page.locator(".learnr2-download-answers-btn").click();
+    await downloadPromise;
+    await expect(page.locator(".learnr2-download-error")).toBeHidden();
+  });
+});

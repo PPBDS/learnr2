@@ -9,9 +9,21 @@ learnr::run_tutorial(tutorial = "hello", package = "learnr")
     Now yes: tests/js/quiz.spec.js, run via Playwright (real browser, real
     clipboard, real Ctrl+V), wired into CI at .github/workflows/js-tests.yaml.
     Before this it was only manually checked by hand, never automated --
-    testthat can't test browser JS at all.
+    testthat can't test browser JS at all. (GH Actions)
+    Playwright = can now test the thing. GitHub Actions = automates, makes 
+    sure that test keeps running on its own,
+
 
 5) How do we find all the installed tutorials, e.g. for VS Code extension?
+
+    learnr2::available_tutorials() -- no registration needed, just a folder
+    convention. It loops over every installed package, checks each one for
+    an inst/tutorials/ folder, and if found, treats every subfolder there as
+    one tutorial (reading its title from the .qmd's YAML header). Any
+    package that follows the convention is auto-discovered.
+    See R/tutorials.R: available_tutorials() + tutorials_in_package().
+
+
 
 6) Student information and download answers defaults. With tutorial.helpers, we have:
 ```{r info-section, child = system.file("child_documents/info_section.Rmd", package = "tutorial.helpers")}
@@ -20,8 +32,18 @@ learnr::run_tutorial(tutorial = "hello", package = "learnr")
 ```{r download-answers, child = system.file("child_documents/download_answers.Rmd", package = "tutorial.helpers")}
 ```
 
+    Now have a learnr2-native version of both, no Shiny server needed:
+    learnr2::student_info() -- ungraded name/email/id form, auto-saves to
+    localStorage as the reader types, no submit button, no grading.
+    learnr2::download_answers_button() -- gathers every question() and
+    student_info() answer already saved on the page into one JSON file and
+    downloads it client-side (no server to submit to). See R/submission.R.
+    Demoed in inst/tutorials/hello-learnr2/hello-learnr2.qmd section 7.
+
 7) Why template? Why extdata? What do they do? (Text Answer)
 
 
 2) Can we have the example tutorial appear on-line (maybe GitHub Pages) and allow students to do it there, including downloading the answers?
     8) Check out GH Pages webhosting
+
+9) About section

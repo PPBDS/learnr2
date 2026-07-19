@@ -47,10 +47,12 @@
   // ---- Progress persistence -------------------------------------------
   // Mirrors the storage-key convention used by quarto-live's own exercise
   // editor persistence (`editor-${location.href}#${id}`), with our own
-  // prefix so the two never collide.
+  // prefix so the two never collide. Shared by questions, info forms, and
+  // anything else that persists state -- `data.id` already carries its own
+  // semantic prefix (e.g. "learnr2-question-...", "learnr2-info-...").
 
   function storageKey(data) {
-    return "learnr2-question-" + window.location.href + "#" + data.id;
+    return "learnr2-" + window.location.href + "#" + data.id;
   }
 
   function loadState(data) {
@@ -445,6 +447,192 @@
     }
   }
 
+  function debounce(fn, delay) {
+    var timer = null;
+    return function () {
+      var args = arguments;
+      clearTimeout(timer);
+      timer = setTimeout(function () {
+        fn.apply(null, args);
+      }, delay);
+    };
+  }
+
+  // Ungraded, always-editable data collection (name/email/id, etc.) --
+  // no submit button, no feedback, just auto-saved as the reader types.
+  // Required fields (per-field `required`, e.g. name/email by default) get
+  // a marker and inline validation on blur; the actual gate that matters is
+  // in buildDownloadButton, which blocks downloading until they're filled.
+  function buildInfoForm(container, data) {
+    var inputs = {};
+    var saved = loadState(data) || {};
+
+    function save() {
+      var values = {};
+      Object.keys(inputs).forEach(function (key) {
+        values[key] = inputs[key].value;
+      });
+      saveState(data, values);
+    }
+    var debouncedSave = debounce(save, 400);
+
+    data.fields.forEach(function (field) {
+      var inputId = data.id + "-" + field.key;
+      var input = el("input", { type: "text", id: inputId, class: "learnr2-info-input" });
+      if (typeof saved[field.key] === "string") {
+        input.value = saved[field.key];
+      }
+
+      var error = el("div", { class: "learnr2-info-error d-none", text: "This field is required." });
+
+      function validate() {
+        if (field.required && !input.value.trim()) {
+          error.classList.remove("d-none");
+        } else {
+          error.classList.add("d-none");
+        }
+      }
+
+      input.addEventListener("input", function () {
+        debouncedSave();
+        if (input.value.trim()) {
+          error.classList.add("d-none");
+        }
+      });
+      input.addEventListener("blur", function () {
+        save();
+        validate();
+      });
+      inputs[field.key] = input;
+
+      var labelText = field.required ? field.label + " *" : field.label;
+      var label = el("label", { class: "learnr2-info-label", for: inputId, text: labelText });
+      container.appendChild(el("div", { class: "learnr2-info-row" }, [label, input, error]));
+    });
+  }
+
+  // Reads the *live* DOM value (not the possibly-stale debounced-save
+  // localStorage copy) for one info field.
+  function infoFieldValue(infoId, fieldKey) {
+    var input = document.getElementById(infoId + "-" + fieldKey);
+    return input ? input.value : "";
+  }
+
+  // Every required info field, across every .learnr2-info on the page, that
+  // is currently empty. Used to block downloading incomplete submissions.
+  function missingRequiredInfoFields() {
+    var missing = [];
+    document.querySelectorAll(".learnr2-info[data-learnr2-info]").forEach(function (node) {
+      var data = decodeBase64Json(node.getAttribute("data-learnr2-info"));
+      data.fields.forEach(function (field) {
+        if (field.required && !infoFieldValue(data.id, field.key).trim()) {
+          missing.push(field.label);
+        }
+      });
+    });
+    return missing;
+  }
+
+  function renderInfo(node) {
+    var encoded = node.getAttribute("data-learnr2-info");
+    if (!encoded) {
+      return;
+    }
+    var data = decodeBase64Json(encoded);
+    node.textContent = "";
+    node.classList.add("learnr2-info-rendered");
+    buildInfoForm(node, data);
+    node.setAttribute("data-learnr2-initialized", "true");
+  }
+
+  // Gathers every learnr2 question/info answer currently on *this* page
+  // (cross-referencing each element's own payload against its saved
+  // localStorage state, so the export is human-readable, not just raw ids)
+  // into one JSON object.
+  function collectAnswers() {
+    // Live DOM values, not localStorage: a field's debounced auto-save may
+    // not have fired yet if the reader is still focused in it when they
+    // click "Download".
+    var info = {};
+    document.querySelectorAll(".learnr2-info[data-learnr2-info]").forEach(function (node) {
+      var data = decodeBase64Json(node.getAttribute("data-learnr2-info"));
+      data.fields.forEach(function (field) {
+        var value = infoFieldValue(data.id, field.key);
+        info[field.key] = value ? value : null;
+      });
+    });
+
+    var answers = [];
+    document.querySelectorAll(".learnr2-question[data-learnr2-question]").forEach(function (node) {
+      var data = decodeBase64Json(node.getAttribute("data-learnr2-question"));
+      var saved = loadState(data);
+      answers.push({
+        question: data.text,
+        type: data.type,
+        // `saveState()` is only ever called from inside a submit handler,
+        // for every question type -- so any saved state at all means the
+        // reader submitted this question. (Not all types store a
+        // `submitted` field; reflection questions do, choice/text don't.)
+        answered: !!saved,
+        yourAnswer: saved ? (saved.selected || saved.value || null) : null,
+        correct: saved && typeof saved.correct === "boolean" ? saved.correct : null,
+        hasImage: !!(saved && saved.image)
+      });
+    });
+
+    return {
+      page: window.location.href,
+      downloadedAt: new Date().toISOString(),
+      info: info,
+      answers: answers
+    };
+  }
+
+  function triggerDownload(filename, dataObj) {
+    var json = JSON.stringify(dataObj, null, 2);
+    var blob = new Blob([json], { type: "application/json" });
+    var url = URL.createObjectURL(blob);
+    var link = el("a", { href: url, download: filename });
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }
+
+  function buildDownloadButton(node, data) {
+    var button = el("button", { type: "button", class: "learnr2-download-answers-btn", text: data.label });
+    var error = el("div", { class: "learnr2-download-error d-none" });
+
+    button.addEventListener("click", function () {
+      var missing = missingRequiredInfoFields();
+      if (missing.length > 0) {
+        error.textContent = "Please fill in: " + missing.join(", ");
+        error.classList.remove("d-none");
+        return;
+      }
+      error.classList.add("d-none");
+
+      var payload = collectAnswers();
+      var stamp = new Date().toISOString().replace(/[:.]/g, "-");
+      triggerDownload(data.filenamePrefix + "-" + stamp + ".json", payload);
+    });
+
+    node.appendChild(button);
+    node.appendChild(error);
+  }
+
+  function renderDownloadButton(node) {
+    var encoded = node.getAttribute("data-learnr2-download");
+    if (!encoded) {
+      return;
+    }
+    var data = decodeBase64Json(encoded);
+    node.textContent = "";
+    node.classList.add("learnr2-download-rendered");
+    buildDownloadButton(node, data);
+    node.setAttribute("data-learnr2-initialized", "true");
+  }
+
   function renderQuestion(node) {
     var encoded = node.getAttribute("data-learnr2-question");
     if (!encoded) {
@@ -471,6 +659,12 @@
     document
       .querySelectorAll(".learnr2-question:not([data-learnr2-initialized])")
       .forEach(renderQuestion);
+    document
+      .querySelectorAll(".learnr2-info:not([data-learnr2-initialized])")
+      .forEach(renderInfo);
+    document
+      .querySelectorAll(".learnr2-download-answers:not([data-learnr2-initialized])")
+      .forEach(renderDownloadButton);
   }
 
   if (document.readyState === "loading") {

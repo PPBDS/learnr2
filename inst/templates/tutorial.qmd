@@ -10,6 +10,12 @@ webr:
 
 {{< include _extensions/r-wasm/live/_knitr.qmd >}}
 
+## Student Information
+
+```{r}
+learnr2::student_info()
+```
+
 ## Welcome
 
 Write your tutorial here. The chunks below run entirely in the reader's

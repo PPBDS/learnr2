@@ -264,6 +264,31 @@ learnr2::quiz(
 )
 ```
 
+## 7. Student info and submission
+
+Two more pieces for wrapping a tutorial into something a student can turn
+in, no server required. In a real tutorial, `student_info()` normally goes
+at the very top and `download_answers_button()` at the very bottom; they're
+shown together here just for the demo.
+
+`student_info()` collects identifying information (name, email, an
+optional ID by default). It's deliberately *not* a quiz question --- there
+is nothing to grade and no model answer, just a plain form that
+auto-saves as the reader types:
+
+```{r}
+learnr2::student_info()
+```
+
+`download_answers_button()` gathers every `question()` and `student_info()`
+answer already saved on the page into one readable JSON file and downloads
+it --- so a reader can save their work and turn it in (attach to an email,
+upload to an LMS), all without a server to submit to:
+
+```{r}
+learnr2::download_answers_button(filename_prefix = "hello-learnr2")
+```
+
 ## Where to go next
 
 - Use `learnr2::create_tutorial("my-tutorial")` to scaffold your own.

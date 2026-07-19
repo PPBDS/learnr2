@@ -213,7 +213,7 @@ quiz <- function(..., caption = "Quiz") {
 
 # ---- Rendering -------------------------------------------------------------
 
-quiz_dependency <- function() {
+learnr2_dependency <- function() {
   htmltools::htmlDependency(
     name = "learnr2-quiz",
     version = as.character(utils::packageVersion("learnr2")),
@@ -240,7 +240,7 @@ quiz_html <- function(x) {
 
 #' @exportS3Method
 quiz_html.learnr2_question <- function(x) {
-  htmltools::attachDependencies(question_div(x), quiz_dependency())
+  htmltools::attachDependencies(question_div(x), learnr2_dependency())
 }
 
 #' @exportS3Method
@@ -250,7 +250,7 @@ quiz_html.learnr2_quiz <- function(x) {
     htmltools::tags$div(class = "learnr2-quiz-caption", x$caption),
     lapply(x$questions, question_div)
   )
-  htmltools::attachDependencies(container, quiz_dependency())
+  htmltools::attachDependencies(container, learnr2_dependency())
 }
 
 #' @exportS3Method knitr::knit_print

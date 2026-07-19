@@ -61,3 +61,13 @@ test_that("create_tutorial scaffolds a qmd and extension", {
   contents <- paste(readLines(qmd), collapse = "\n")
   expect_match(contents, "format: live-html")
 })
+
+test_that("create_tutorial() scaffolds a student_info() section by default", {
+  tmp <- fs::path(tempfile())
+  fs::dir_create(tmp)
+  on.exit(fs::dir_delete(tmp), add = TRUE)
+
+  qmd <- create_tutorial("demo", dir = tmp, open = FALSE)
+  contents <- paste(readLines(qmd), collapse = "\n")
+  expect_match(contents, "learnr2::student_info\\(")
+})

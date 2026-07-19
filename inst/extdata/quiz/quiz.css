@@ -129,6 +129,71 @@
   pointer-events: none;
 }
 
+.learnr2-info {
+  border: 1px solid #d8dee4;
+  border-radius: 0.5rem;
+  padding: 1rem 1.25rem;
+  margin: 1rem 0;
+  background: #fafbfc;
+}
+
+.learnr2-info-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.6rem;
+}
+
+.learnr2-info-row:last-child {
+  margin-bottom: 0;
+}
+
+.learnr2-info-label {
+  min-width: 8rem;
+  font-weight: 600;
+}
+
+.learnr2-info-input {
+  flex: 1;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid #ced4da;
+  border-radius: 0.3rem;
+  font-size: 1rem;
+  max-width: 20rem;
+}
+
+.learnr2-info-error {
+  flex-basis: 100%;
+  margin-left: calc(8rem + 0.75rem);
+  color: #b02a37;
+  font-size: 0.85rem;
+}
+
+.learnr2-download-answers-btn {
+  padding: 0.4rem 0.9rem;
+  border: 1px solid #198754;
+  border-radius: 0.3rem;
+  background: #198754;
+  color: #fff;
+  cursor: pointer;
+  font-size: 0.95rem;
+}
+
+.learnr2-download-answers-btn:hover {
+  background: #157347;
+}
+
+.learnr2-download-error {
+  margin-top: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.3rem;
+  font-size: 0.9rem;
+  background: #f8d7da;
+  color: #58151c;
+  border: 1px solid #f1aeb5;
+}
+
 .learnr2-controls {
   display: flex;
   gap: 0.5rem;
@@ -177,6 +242,9 @@
   border: 1px solid #f1aeb5;
 }
 
-.learnr2-question .d-none {
+/* Unscoped on purpose: info forms, download buttons, and quiz question
+   containers all use .d-none, and new widgets will too. Matches Bootstrap's
+   own .d-none exactly, so it's harmless if Bootstrap is also on the page. */
+.d-none {
   display: none !important;
 }

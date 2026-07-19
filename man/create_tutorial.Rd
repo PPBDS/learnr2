@@ -26,6 +26,9 @@ The path to the created \code{.qmd} file, invisibly.
 Scaffolds a new interactive tutorial: a directory containing a starter
 \code{.qmd} document wired up for \code{format: live-html}, with the bundled
 'quarto-live' extension copied alongside it so it renders out of the box.
+The starter document opens with \code{\link[=student_info]{student_info()}}, so every new tutorial
+collects name/email (and an optional ID) by default; delete that section
+if a given tutorial doesn't need it.
 }
 \examples{
 \dontrun{
