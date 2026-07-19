@@ -16,7 +16,7 @@ so a reader can turn their work in.
 student_info(
   fields = c(name = "Name:", email = "Email:", id =
     "ID (if requested by your instructor):"),
-  required = c("name", "email"),
+  required = intersect(c("name", "email"), names(fields)),
   id = "student-info"
 )
 ```
@@ -32,10 +32,13 @@ student_info(
 - required:
 
   Character vector of keys (from `fields`) the reader must fill in.
-  Defaults to `c("name", "email")`, so ID is optional by default. A
-  required field left blank is flagged inline and blocks
+  Defaults to whichever of `"name"` and `"email"` are actually present
+  in `fields`, so ID is optional by default and supplying custom
+  `fields` does not require also supplying `required`. A required field
+  left blank is flagged inline and blocks
   [`download_answers_button()`](https://ppbds.github.io/learnr2/reference/download_answers_button.md)
-  until it's filled in.
+  until it's filled in. Passing a key that is not in `fields` is an
+  error.
 
 - id:
 

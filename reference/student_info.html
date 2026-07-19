@@ -59,7 +59,7 @@ reader can turn their work in.</p>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">student_info</span><span class="op">(</span></span>
 <span>  fields <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>name <span class="op">=</span> <span class="st">"Name:"</span>, email <span class="op">=</span> <span class="st">"Email:"</span>, id <span class="op">=</span></span>
 <span>    <span class="st">"ID (if requested by your instructor):"</span><span class="op">)</span>,</span>
-<span>  required <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"name"</span>, <span class="st">"email"</span><span class="op">)</span>,</span>
+<span>  required <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sets.html" class="external-link">intersect</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"name"</span>, <span class="st">"email"</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">fields</span><span class="op">)</span><span class="op">)</span>,</span>
 <span>  id <span class="op">=</span> <span class="st">"student-info"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -76,9 +76,11 @@ collect. Defaults to name, email, and an optional ID, matching
 
 <dt id="arg-required">required<a class="anchor" aria-label="anchor" href="#arg-required"></a></dt>
 <dd><p>Character vector of keys (from <code>fields</code>) the reader must
-fill in. Defaults to <code>c("name", "email")</code>, so ID is optional by
-default. A required field left blank is flagged inline and blocks
-<code><a href="download_answers_button.html">download_answers_button()</a></code> until it's filled in.</p></dd>
+fill in. Defaults to whichever of <code>"name"</code> and <code>"email"</code> are actually
+present in <code>fields</code>, so ID is optional by default and supplying custom
+<code>fields</code> does not require also supplying <code>required</code>. A required field
+left blank is flagged inline and blocks <code><a href="download_answers_button.html">download_answers_button()</a></code>
+until it's filled in. Passing a key that is not in <code>fields</code> is an error.</p></dd>
 
 
 <dt id="arg-id">id<a class="anchor" aria-label="anchor" href="#arg-id"></a></dt>
