@@ -96,7 +96,12 @@ tutorial_title <- function(dir) {
 #'   to `"learnr2"`; set this to run a tutorial from another installed
 #'   package (e.g. a 'primer.tutorials'-style content package).
 #' @param output_dir Directory in which to render the tutorial. Defaults to a
-#'   fresh temporary directory.
+#'   persistent per-user cache directory (see [tools::R_user_dir()]), *not*
+#'   [tempfile()] -- R deletes its own session temp directory as soon as the
+#'   R process exits, which races with (and often loses to) the browser
+#'   actually loading the page when `open = TRUE` is used non-interactively
+#'   (e.g. via `Rscript`), producing a "file not found" page. Pass your own
+#'   `output_dir` for a one-off location instead.
 #' @param open Whether to open the rendered HTML in a browser. Defaults to
 #'   `TRUE` when interactive.
 #'
@@ -108,7 +113,7 @@ tutorial_title <- function(dir) {
 #' }
 run_tutorial <- function(name = NULL,
                          package = "learnr2",
-                         output_dir = tempfile("learnr2-"),
+                         output_dir = tools::R_user_dir("learnr2", "cache"),
                          open = interactive()) {
   tutorials <- available_tutorials(package = package)
   if (is.null(name)) {

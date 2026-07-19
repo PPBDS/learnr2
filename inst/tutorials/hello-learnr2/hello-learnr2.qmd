@@ -223,8 +223,9 @@ learnr2::question(
 
 For exercises where the reader's work is a plot or other image, add
 `allow_image = TRUE` to let them paste a screenshot from their clipboard
-(Ctrl+V/Cmd+V) alongside their written response --- there is no file-upload
-button, just click the box and paste:
+alongside their written response --- there is no file-upload button, just
+press Ctrl+V (or Cmd+V) with the response box focused (or click the box
+below it and paste there instead):
 
 ```{r}
 learnr2::question(

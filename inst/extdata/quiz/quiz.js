@@ -240,8 +240,15 @@
     }
   }
 
-  // A clickable/focusable box the reader pastes an image into with
-  // Ctrl+V/Cmd+V -- not a file upload, no <input type="file"> anywhere.
+  // A box showing the pasted image, plus a *secondary* paste target of its
+  // own -- but the primary way readers paste is directly into the response
+  // textarea (see wireImagePaste below). A <textarea> reliably fires native
+  // "paste" events in every browser; an arbitrary non-editable <div> does
+  // not always, and even where it does, a reader who never notices the
+  // small box below the textarea will naturally paste into the textarea
+  // instead and see nothing happen. Handling paste on the textarea too
+  // means it works wherever the reader's cursor actually is.
+  //
   // Only image/png clipboard items are accepted, capped at MAX_BYTES so a
   // handful of screenshots can't blow past the browser's localStorage quota
   // (pasted images are persisted as base64 data URLs, like everything else).
@@ -250,7 +257,8 @@
     var wrapper = el("div", { class: "learnr2-image-paste", tabindex: "0" });
     var placeholder = el("div", {
       class: "learnr2-image-paste-placeholder",
-      text: "Click here, then press Ctrl+V (or Cmd+V) to paste a screenshot (PNG)."
+      text: "Paste a screenshot (PNG) with Ctrl+V (or Cmd+V) into the text box " +
+        "above, or click here and paste it directly."
     });
     var preview = el("img", { class: "learnr2-image-paste-preview d-none" });
     var error = el("div", { class: "learnr2-image-paste-error d-none" });
@@ -260,10 +268,16 @@
     );
 
     var dataUrl = null;
+    var disabled = false;
 
     function setError(message) {
       error.textContent = message;
       error.classList.remove("d-none");
+    }
+
+    function clearError() {
+      error.textContent = "";
+      error.classList.add("d-none");
     }
 
     function setImage(nextDataUrl) {
@@ -271,8 +285,10 @@
       preview.src = nextDataUrl;
       preview.classList.remove("d-none");
       placeholder.classList.add("d-none");
-      remove.classList.remove("d-none");
-      error.classList.add("d-none");
+      if (!disabled) {
+        remove.classList.remove("d-none");
+      }
+      clearError();
     }
 
     function clearImage() {
@@ -283,12 +299,15 @@
       remove.classList.add("d-none");
     }
 
-    wrapper.addEventListener("paste", function (event) {
-      if (wrapper.classList.contains("learnr2-image-paste-disabled")) {
+    // `silent`: when handling paste on the textarea (which is also used for
+    // ordinary typed/pasted text), a clipboard paste with no image should
+    // just fall through to the browser's normal text-paste behavior --
+    // no error, no preventDefault(). The dedicated box has no other
+    // purpose, so there `silent` is false and a non-image paste is an error.
+    function handlePaste(event, silent) {
+      if (disabled) {
         return;
       }
-      event.preventDefault();
-
       var items = (event.clipboardData && event.clipboardData.items) || [];
       var imageItem = null;
       for (var i = 0; i < items.length; i++) {
@@ -298,9 +317,12 @@
         }
       }
       if (!imageItem) {
-        setError("Please paste a PNG image (copy a screenshot, then press Ctrl+V here).");
+        if (!silent) {
+          setError("Please paste a PNG image (copy a screenshot, then press Ctrl+V here).");
+        }
         return;
       }
+      event.preventDefault();
 
       var file = imageItem.getAsFile();
       if (!file) {
@@ -320,6 +342,10 @@
         setError("Could not read the pasted image. Please try again.");
       };
       reader.readAsDataURL(file);
+    }
+
+    wrapper.addEventListener("paste", function (event) {
+      handlePaste(event, false);
     });
 
     remove.addEventListener("click", function () {
@@ -335,7 +361,9 @@
       element: wrapper,
       getDataUrl: function () { return dataUrl; },
       setImage: setImage,
-      setDisabled: function (disabled) {
+      handlePaste: function (event) { handlePaste(event, true); },
+      setDisabled: function (isDisabled) {
+        disabled = isDisabled;
         wrapper.classList.toggle("learnr2-image-paste-disabled", disabled);
         wrapper.tabIndex = disabled ? -1 : 0;
         if (disabled) {
@@ -361,6 +389,11 @@
     var reveal = el("div", { class: "learnr2-model-answer d-none" });
     var submit = el("button", { type: "button", class: "learnr2-submit", text: data.submitLabel });
     var imagePaste = data.allowImage ? buildImagePasteArea() : null;
+    if (imagePaste) {
+      textarea.addEventListener("paste", function (event) {
+        imagePaste.handlePaste(event);
+      });
+    }
 
     function showModelAnswer() {
       reveal.textContent = "";

@@ -40,6 +40,15 @@ test_that("the hello-learnr2 tutorial demonstrates quiz questions", {
   expect_match(contents, "learnr2::quiz\\(")
 })
 
+test_that("run_tutorial() defaults to a persistent output_dir, not tempdir()", {
+  # R deletes its own session tempdir() on exit; a browser opened via
+  # `open = TRUE` in a non-interactive session (e.g. Rscript) can lose the
+  # race and find the file already gone. The default output_dir must not
+  # live under tempdir().
+  default_output_dir <- eval(formals(run_tutorial)$output_dir)
+  expect_false(startsWith(default_output_dir, tempdir()))
+})
+
 test_that("create_tutorial scaffolds a qmd and extension", {
   tmp <- fs::path(tempfile())
   fs::dir_create(tmp)

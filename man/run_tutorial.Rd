@@ -7,7 +7,7 @@
 run_tutorial(
   name = NULL,
   package = "learnr2",
-  output_dir = tempfile("learnr2-"),
+  output_dir = tools::R_user_dir("learnr2", "cache"),
   open = interactive()
 )
 }
@@ -20,7 +20,12 @@ to \code{"learnr2"}; set this to run a tutorial from another installed
 package (e.g. a 'primer.tutorials'-style content package).}
 
 \item{output_dir}{Directory in which to render the tutorial. Defaults to a
-fresh temporary directory.}
+persistent per-user cache directory (see \code{\link[tools:userdir]{tools::R_user_dir()}}), \emph{not}
+\code{\link[=tempfile]{tempfile()}} -- R deletes its own session temp directory as soon as the
+R process exits, which races with (and often loses to) the browser
+actually loading the page when \code{open = TRUE} is used non-interactively
+(e.g. via \code{Rscript}), producing a "file not found" page. Pass your own
+\code{output_dir} for a one-off location instead.}
 
 \item{open}{Whether to open the rendered HTML in a browser. Defaults to
 \code{TRUE} when interactive.}
