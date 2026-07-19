@@ -16,6 +16,11 @@ reference:
       - question
       - answer
       - quiz
+  - title: Collecting student work
+    desc: Gather reader identifying information and let them turn work in.
+    contents:
+      - student_info
+      - download_answers_button
   - title: Quarto-live extension
     desc: Manage the bundled quarto-live Quarto extension.
     contents:

@@ -80,7 +80,7 @@ info_html <- function(x) {
   htmltools::attachDependencies(info_div(x), learnr2_dependency())
 }
 
-#' @export
+#' @exportS3Method knitr::knit_print
 knit_print.learnr2_info <- function(x, ...) {
   knitr::knit_print(info_html(x), ...)
 }
@@ -137,7 +137,7 @@ download_button_html <- function(x) {
   htmltools::attachDependencies(download_button_div(x), learnr2_dependency())
 }
 
-#' @export
+#' @exportS3Method knitr::knit_print
 knit_print.learnr2_download_button <- function(x, ...) {
   knitr::knit_print(download_button_html(x), ...)
 }
