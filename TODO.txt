@@ -6,6 +6,11 @@ learnr::run_tutorial(tutorial = "hello", package = "learnr")
 
 4) You need to understand the tests. Is there really a test for the copy/paste the image?
 
+    Now yes: tests/js/quiz.spec.js, run via Playwright (real browser, real
+    clipboard, real Ctrl+V), wired into CI at .github/workflows/js-tests.yaml.
+    Before this it was only manually checked by hand, never automated --
+    testthat can't test browser JS at all.
+
 5) How do we find all the installed tutorials, e.g. for VS Code extension?
 
 6) Student information and download answers defaults. With tutorial.helpers, we have:

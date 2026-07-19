@@ -1,0 +1,41 @@
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  workflow_dispatch:
+
+name: js-tests.yaml
+
+permissions: read-all
+
+jobs:
+  quiz-js-tests:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: tests/js
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: tests/js/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright's Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Run quiz.js tests
+        run: npx playwright test
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: tests/js/playwright-report/
+          retention-days: 7

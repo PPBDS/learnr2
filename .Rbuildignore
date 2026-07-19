@@ -8,3 +8,4 @@
 ^docs$
 ^pkgdown$
 ^TODO\.txt$
+^tests/js$
