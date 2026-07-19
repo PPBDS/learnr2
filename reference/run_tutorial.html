@@ -53,7 +53,7 @@ is added before rendering.</p>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">run_tutorial</span><span class="op">(</span></span>
 <span>  name <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  package <span class="op">=</span> <span class="st">"learnr2"</span>,</span>
-<span>  output_dir <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span><span class="st">"learnr2-"</span><span class="op">)</span>,</span>
+<span>  output_dir <span class="op">=</span> <span class="fu">tools</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/tools/userdir.html" class="external-link">R_user_dir</a></span><span class="op">(</span><span class="st">"learnr2"</span>, <span class="st">"cache"</span><span class="op">)</span>,</span>
 <span>  open <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/interactive.html" class="external-link">interactive</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -75,7 +75,12 @@ package (e.g. a 'primer.tutorials'-style content package).</p></dd>
 
 <dt id="arg-output-dir">output_dir<a class="anchor" aria-label="anchor" href="#arg-output-dir"></a></dt>
 <dd><p>Directory in which to render the tutorial. Defaults to a
-fresh temporary directory.</p></dd>
+persistent per-user cache directory (see <code><a href="https://rdrr.io/r/tools/userdir.html" class="external-link">tools::R_user_dir()</a></code>), <em>not</em>
+<code><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile()</a></code> – R deletes its own session temp directory as soon as the
+R process exits, which races with (and often loses to) the browser
+actually loading the page when <code>open = TRUE</code> is used non-interactively
+(e.g. via <code>Rscript</code>), producing a "file not found" page. Pass your own
+<code>output_dir</code> for a one-off location instead.</p></dd>
 
 
 <dt id="arg-open">open<a class="anchor" aria-label="anchor" href="#arg-open"></a></dt>
