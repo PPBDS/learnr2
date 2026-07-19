@@ -86,6 +86,15 @@ learnr-style quiz questions, graded in the browser.
 - [`quiz()`](https://ppbds.github.io/learnr2/reference/quiz.md) : Group
   questions into a quiz
 
+## Collecting student work
+
+Gather reader identifying information and let them turn work in.
+
+- [`student_info()`](https://ppbds.github.io/learnr2/reference/student_info.md)
+  : Collect student identifying information
+- [`download_answers_button()`](https://ppbds.github.io/learnr2/reference/download_answers_button.md)
+  : Add a "download my answers" button
+
 ## Quarto-live extension
 
 Manage the bundled quarto-live Quarto extension.
