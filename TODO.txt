@@ -1,28 +1,13 @@
-1) How do I start a tutorial? The old way is this:
-learnr::run_tutorial(tutorial = "hello", package = "learnr")
-
-    learnr2::run_tutorial('hello-learnr2', open = TRUE)
+0) Have AI make a new repo (in your personal GitHub) which is vscode.tutorials2 (start by forking vscode.tutorials), for learnr2. Create a CLAUDE.md which guides Claude in how to take a learnr tutorial and turn it into a learnr2 tutorial. Do it.
 
 
-4) You need to understand the tests. Is there really a test for the copy/paste the image?
+1) Learn about devtools::check() and R CMD check in general. And how the .github YAML files work, especially R CMD check.
 
-    Now yes: tests/js/quiz.spec.js, run via Playwright (real browser, real
-    clipboard, real Ctrl+V), wired into CI at .github/workflows/js-tests.yaml.
-    Before this it was only manually checked by hand, never automated --
-    testthat can't test browser JS at all. (GH Actions)
-    Playwright = can now test the thing. GitHub Actions = automates, makes 
-    sure that test keeps running on its own,
+2) What happens to the work we have done when we quit the browser? Can we re-open the tutorial and have all our work saved? What happens if we restart our computer?
 
+3) Tutorials must be discoverable from R Tutorials VS Code Extension. See https://github.com/PPBDS/vscode-r-tutorials. My preference is that we don't change this extension. Instead, I think that we need functions in learnr2 which are the equivalent of useful functions in learnr. Do not edit the extension. Fixing it is the last thing we do. This is just a note for the future.
 
-5) How do we find all the installed tutorials, e.g. for VS Code extension?
-
-    learnr2::available_tutorials() -- no registration needed, just a folder
-    convention. It loops over every installed package, checks each one for
-    an inst/tutorials/ folder, and if found, treats every subfolder there as
-    one tutorial (reading its title from the .qmd's YAML header). Any
-    package that follows the convention is auto-discovered.
-    See R/tutorials.R: available_tutorials() + tutorials_in_package().
-
+4) how do we make it super easy for authors (or AIs!) to add our three standard intro questions and the download question about minutes and the down answers button?
 
 
 6) Student information and download answers defaults. With tutorial.helpers, we have:
@@ -32,18 +17,10 @@ learnr::run_tutorial(tutorial = "hello", package = "learnr")
 ```{r download-answers, child = system.file("child_documents/download_answers.Rmd", package = "tutorial.helpers")}
 ```
 
-    Now have a learnr2-native version of both, no Shiny server needed:
-    learnr2::student_info() -- ungraded name/email/id form, auto-saves to
-    localStorage as the reader types, no submit button, no grading.
-    learnr2::download_answers_button() -- gathers every question() and
-    student_info() answer already saved on the page into one JSON file and
-    downloads it client-side (no server to submit to). See R/submission.R.
-    Demoed in inst/tutorials/hello-learnr2/hello-learnr2.qmd section 7.
-
+ 
 7) Why template? Why extdata? What do they do? (Text Answer)
 
 
 2) Can we have the example tutorial appear on-line (maybe GitHub Pages) and allow students to do it there, including downloading the answers?
     8) Check out GH Pages webhosting
 
-9) About section
