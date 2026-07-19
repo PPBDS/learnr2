@@ -7,7 +7,7 @@
 student_info(
   fields = c(name = "Name:", email = "Email:", id =
     "ID (if requested by your instructor):"),
-  required = c("name", "email"),
+  required = intersect(c("name", "email"), names(fields)),
   id = "student-info"
 )
 }
@@ -17,9 +17,11 @@ collect. Defaults to name, email, and an optional ID, matching
 'tutorial.helpers''s \code{info_section.Rmd}.}
 
 \item{required}{Character vector of keys (from \code{fields}) the reader must
-fill in. Defaults to \code{c("name", "email")}, so ID is optional by
-default. A required field left blank is flagged inline and blocks
-\code{\link[=download_answers_button]{download_answers_button()}} until it's filled in.}
+fill in. Defaults to whichever of \code{"name"} and \code{"email"} are actually
+present in \code{fields}, so ID is optional by default and supplying custom
+\code{fields} does not require also supplying \code{required}. A required field
+left blank is flagged inline and blocks \code{\link[=download_answers_button]{download_answers_button()}}
+until it's filled in. Passing a key that is not in \code{fields} is an error.}
 
 \item{id}{Stable identifier used to key the saved values in
 \code{localStorage}. Defaults to \code{"student-info"}; change it if a single

@@ -12,9 +12,11 @@
 #'   collect. Defaults to name, email, and an optional ID, matching
 #'   'tutorial.helpers''s `info_section.Rmd`.
 #' @param required Character vector of keys (from `fields`) the reader must
-#'   fill in. Defaults to `c("name", "email")`, so ID is optional by
-#'   default. A required field left blank is flagged inline and blocks
-#'   [download_answers_button()] until it's filled in.
+#'   fill in. Defaults to whichever of `"name"` and `"email"` are actually
+#'   present in `fields`, so ID is optional by default and supplying custom
+#'   `fields` does not require also supplying `required`. A required field
+#'   left blank is flagged inline and blocks [download_answers_button()]
+#'   until it's filled in. Passing a key that is not in `fields` is an error.
 #' @param id Stable identifier used to key the saved values in
 #'   `localStorage`. Defaults to `"student-info"`; change it if a single
 #'   tutorial embeds more than one `student_info()` form.
@@ -29,7 +31,7 @@ student_info <- function(fields = c(
                             email = "Email:",
                             id = "ID (if requested by your instructor):"
                           ),
-                          required = c("name", "email"),
+                          required = intersect(c("name", "email"), names(fields)),
                           id = "student-info") {
   if (!is.character(fields) || length(fields) == 0 ||
       is.null(names(fields)) || any(!nzchar(names(fields)))) {
