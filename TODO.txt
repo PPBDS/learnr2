@@ -16,7 +16,9 @@
 
 I bet that the best approach is an AGENTS.md file which any tutorial writer can access. Writers just ask it to create a tutorial draft or starter QMD file. If the AI always (?) reads the AGENT.md file, then it will know what should go where and it can just write out the underlying words/code, no need for child_documents. That is the approach I recommend.
 
-6) Fork PPBDS/vscode.tutorials. Rename your forked version vscode.tutorials2. Start a CLAUDE.md file, in learnr2, which guides Claude in how to translate learnr tutorials to learnr2 tutorials. The first time it tries, it will do bad. Give it feedback. Tell it to both record lessons learned in CLAUDE.md and to try again. (Obviously, start by just translating one tutorials, like 01-code.) After some work, Claude may help you create an entire vscode.tutorials2 package.
+6) Add a getting-started tutorial to learnr2. It is copied over from tutorial.helpers, but, of course, into a QMD, not RMD file. Start a CLAUDE.md file, in learnr2, which guides Claude in how to translate learnr tutorials to learnr2 tutorials. The first time it tries, it will do bad. Give it feedback. Tell it to both record lessons learned in CLAUDE.md and to try again. Keep iterating until it can, from scratch, translate tutorial.Rmd into tutorial.qmd for Getting Started.
+
+6) Fork PPBDS/vscode.tutorials. Rename your forked version vscode.tutorials2.  Use youe new translation skills to translate 01-code/tutorial.Rmd to 01-code/tutorial.qmd. Again, the first attempt will fail. Provide feedback so that your AI can both improve AGENTS.md and also edit tutorial.qmd until the latter looks good to you. After some work, your AI may help you create an entire vscode.tutorials2 package.
 
 
 
