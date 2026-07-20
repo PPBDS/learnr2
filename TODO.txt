@@ -18,7 +18,8 @@ I bet that the best approach is an AGENTS.md file which any tutorial writer can 
 
 6) Add a getting-started tutorial to learnr2. It is copied over from tutorial.helpers, but, of course, into a QMD, not RMD file. Start a CLAUDE.md file, in learnr2, which guides Claude in how to translate learnr tutorials to learnr2 tutorials. The first time it tries, it will do bad. Give it feedback. Tell it to both record lessons learned in CLAUDE.md and to try again. Keep iterating until it can, from scratch, translate tutorial.Rmd into tutorial.qmd for Getting Started.
 
-6) Fork PPBDS/vscode.tutorials. Rename your forked version vscode.tutorials2.  Use youe new translation skills to translate 01-code/tutorial.Rmd to 01-code/tutorial.qmd. Again, the first attempt will fail. Provide feedback so that your AI can both improve AGENTS.md and also edit tutorial.qmd until the latter looks good to you. After some work, your AI may help you create an entire vscode.tutorials2 package.
+7) Fork PPBDS/vscode.tutorials. Rename your forked version vscode.tutorials2.  Use youe new translation skills to translate 01-code/tutorial.Rmd to 01-code/tutorial.qmd. Again, the first attempt will fail. Provide feedback so that your AI can both improve AGENTS.md and also edit tutorial.qmd until the latter looks good to you. After some work, your AI may help you create an entire vscode.tutorials2 package.
 
+8) After the student hits the download button, can we add a hash to the download answers. This hash would be created from info like date/time, computer name, user name, and so on. The teacher, of course, needs to be able to translate the hash. But the hash is designed so that, even though students know what it is, they can't easily add an appropriately constructed hash to their answers. This is not perfect security, but it is pretty good. 
 
-
+Big Picture: We hope to replace both learnr and tutorial.helpers with learnr2. There is no reason to have two packages, or to not have learnr2 do everything we want a tutorial package to do.
