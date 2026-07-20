@@ -1,26 +1,22 @@
-0) Have AI make a new repo (in your personal GitHub) which is vscode.tutorials2 (start by forking vscode.tutorials), for learnr2. Create a CLAUDE.md which guides Claude in how to take a learnr tutorial and turn it into a learnr2 tutorial. Do it.
+1) What happens to the work we have done when we quit the browser? Can we re-open the tutorial and have all our work saved? What happens if we restart our computer? This is amongst the most important functionality needed. Once it is working, add some test cases to ensure it keeps doing so.
 
+2) Can we have the example tutorial from learnr2 appear on-line (maybe GitHub Pages) and allow students to do it there, including downloading the answers?
 
-1) Learn about devtools::check() and R CMD check in general. And how the .github YAML files work, especially R CMD check.
+3) Why template? Why extdata? What do they do? Maybe delete them?
 
-2) What happens to the work we have done when we quit the browser? Can we re-open the tutorial and have all our work saved? What happens if we restart our computer?
+4) For now, we run the tutorials with your new learnr2 function. Don't start working on a VS Code extension yet.
 
-3) Tutorials must be discoverable from R Tutorials VS Code Extension. See https://github.com/PPBDS/vscode-r-tutorials. My preference is that we don't change this extension. Instead, I think that we need functions in learnr2 which are the equivalent of useful functions in learnr. Do not edit the extension. Fixing it is the last thing we do. This is just a note for the future.
+5) How do we make it super easy for authors (or AIs!) to add our three standard intro questions and the download question about minutes and the download answers button? In tutorial.helpers, we use:
 
-4) how do we make it super easy for authors (or AIs!) to add our three standard intro questions and the download question about minutes and the down answers button?
-
-
-6) Student information and download answers defaults. With tutorial.helpers, we have:
 ```{r info-section, child = system.file("child_documents/info_section.Rmd", package = "tutorial.helpers")}
 ```
 
 ```{r download-answers, child = system.file("child_documents/download_answers.Rmd", package = "tutorial.helpers")}
 ```
 
- 
-7) Why template? Why extdata? What do they do? (Text Answer)
+I bet that the best approach is an AGENTS.md file which any tutorial writer can access. Writers just ask it to create a tutorial draft or starter QMD file. If the AI always (?) reads the AGENT.md file, then it will know what should go where and it can just write out the underlying words/code, no need for child_documents. That is the approach I recommend.
+
+6) Fork PPBDS/vscode.tutorials. Rename your forked version vscode.tutorials2. Start a CLAUDE.md file, in learnr2, which guides Claude in how to translate learnr tutorials to learnr2 tutorials. The first time it tries, it will do bad. Give it feedback. Tell it to both record lessons learned in CLAUDE.md and to try again. (Obviously, start by just translating one tutorials, like 01-code.) After some work, Claude may help you create an entire vscode.tutorials2 package.
 
 
-2) Can we have the example tutorial appear on-line (maybe GitHub Pages) and allow students to do it there, including downloading the answers?
-    8) Check out GH Pages webhosting
 
