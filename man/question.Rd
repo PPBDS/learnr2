@@ -82,6 +82,17 @@ Once a reader submits an answer, it is saved in the browser's
 visit. Because the default \code{id} is derived from \code{text}, editing a
 question's wording changes its \code{id} and resets any saved answers for it;
 pass \code{id} explicitly to avoid that.
+
+\code{localStorage} is written straight to disk, not held only in memory, so
+this survives closing and reopening the browser, and restarting the
+computer -- confirmed with automated tests
+(\code{tests/js/persistence.spec.js}) that fully quit and relaunch a real
+browser against the same profile, for both a \code{file://} tutorial (how
+\code{\link[=run_tutorial]{run_tutorial()}} opens one) and one served over HTTP. Two things it does
+\emph{not} survive, by browser design rather than anything learnr2 controls:
+private/incognito windows (their storage is wiped when the window
+closes) and the exact page URL changing -- a tutorial re-rendered to a
+different path, or opened from a different server/port, starts fresh.
 }
 
 \examples{

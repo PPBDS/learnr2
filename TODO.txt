@@ -1,8 +1,34 @@
 1) What happens to the work we have done when we quit the browser? Can we re-open the tutorial and have all our work saved? What happens if we restart our computer? This is amongst the most important functionality needed. Once it is working, add some test cases to ensure it keeps doing so.
 
+    Verified, and it already worked (localStorage is disk-backed, not
+    memory-only) -- but hadn't actually been tested against a real browser
+    quit/reopen before, only page reloads, which is a weaker test. Confirmed
+    with tests/js/persistence.spec.js: launches a real Chromium with a
+    *persistent* profile, answers a question, fully closes the browser,
+    relaunches against the same profile dir, and checks the answer is still
+    there. Covers both a file:// tutorial (how run_tutorial() actually opens
+    one) and one served over HTTP -- both pass. A computer restart doesn't
+    add any new risk beyond that, since the browser's storage is just files
+    on disk. Caveat that IS real: private/incognito windows wipe their
+    storage on close, by browser design, nothing learnr2 can do about that.
+    Documented in question()'s "Progress persistence" section.
+
 2) Can we have the example tutorial from learnr2 appear on-line (maybe GitHub Pages) and allow students to do it there, including downloading the answers?
 
 3) Why template? Why extdata? What do they do? Maybe delete them?
+
+    Both load-bearing, don't delete. templates/tutorial.qmd is the starter
+    file create_tutorial() copies and fills in ({{title}}) -- delete it and
+    create_tutorial() breaks. extdata/ holds two things: _extensions/r-wasm/
+    live/ is the vendored quarto-live extension that add_live_extension()
+    copies into every tutorial, which is what makes format: live-html
+    render at all; extdata/quiz/ is our own quiz.js/quiz.css -- the runtime
+    behind question(), quiz(), student_info(), download_answers_button().
+    Delete either and rendering, or every interactive widget, silently
+    stops working. The extdata/templates names are just conventional R
+    package folder names (extdata = bundled external assets, used all over
+    CRAN; templates = starting-point files to copy), not something R
+    enforces -- purely for readability.
 
 4) For now, we run the tutorials with your new learnr2 function. Don't start working on a VS Code extension yet.
 
