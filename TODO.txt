@@ -49,3 +49,15 @@ I bet that the best approach is an AGENTS.md file which any tutorial writer can 
 8) After the student hits the download button, can we add a hash to the download answers. This hash would be created from info like date/time, computer name, user name, and so on. The teacher, of course, needs to be able to translate the hash. But the hash is designed so that, even though students know what it is, they can't easily add an appropriately constructed hash to their answers. This is not perfect security, but it is pretty good. 
 
 Big Picture: We hope to replace both learnr and tutorial.helpers with learnr2. There is no reason to have two packages, or to not have learnr2 do everything we want a tutorial package to do.
+
+DK: Consider providing a simple hash to guarantee that students haven't cheated, even if they submit html. The function would run some R code which produced a string including things like date, time, pwd, whois, computer name, and whatever else. It then takes that string and turns it into a hash. That hash is output into the html. If there are concerns about cheating, an instructor can check the hash. He can run some code on the HTML answer file and get back that information in an easy to read form.
+
+Perhaps the the code first creates a JSON file --- or rather text string --- which is a paired list of command (or request) and result. So:
+
+date, 2026-05-19
+
+And so on. A JSON list would be nice because, after unhashing, it is easy to process. Also, if some commands (or requests) don't work on some OSs, that would be OK. The JSON file would just contain:
+
+pwd, NULL
+
+or whatever.
