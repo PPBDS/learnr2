@@ -108,6 +108,18 @@ visit. Because the default `id` is derived from `text`, editing a
 question's wording changes its `id` and resets any saved answers for it;
 pass `id` explicitly to avoid that.
 
+`localStorage` is written straight to disk, not held only in memory, so
+this survives closing and reopening the browser, and restarting the
+computer – confirmed with automated tests
+(`tests/js/persistence.spec.js`) that fully quit and relaunch a real
+browser against the same profile, for both a `file://` tutorial (how
+[`run_tutorial()`](https://ppbds.github.io/learnr2/reference/run_tutorial.md)
+opens one) and one served over HTTP. Two things it does *not* survive,
+by browser design rather than anything learnr2 controls:
+private/incognito windows (their storage is wiped when the window
+closes) and the exact page URL changing – a tutorial re-rendered to a
+different path, or opened from a different server/port, starts fresh.
+
 ## Examples
 
 ``` r

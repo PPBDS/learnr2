@@ -144,6 +144,16 @@ at the R console.</p>
 visit. Because the default <code>id</code> is derived from <code>text</code>, editing a
 question's wording changes its <code>id</code> and resets any saved answers for it;
 pass <code>id</code> explicitly to avoid that.</p>
+<p><code>localStorage</code> is written straight to disk, not held only in memory, so
+this survives closing and reopening the browser, and restarting the
+computer – confirmed with automated tests
+(<code>tests/js/persistence.spec.js</code>) that fully quit and relaunch a real
+browser against the same profile, for both a <code>file://</code> tutorial (how
+<code><a href="run_tutorial.html">run_tutorial()</a></code> opens one) and one served over HTTP. Two things it does
+<em>not</em> survive, by browser design rather than anything learnr2 controls:
+private/incognito windows (their storage is wiped when the window
+closes) and the exact page URL changing – a tutorial re-rendered to a
+different path, or opened from a different server/port, starts fresh.</p>
     </div>
 
     <div class="section level2">
