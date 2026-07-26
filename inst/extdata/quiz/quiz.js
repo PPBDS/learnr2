@@ -459,12 +459,16 @@
   }
 
   // Ungraded, always-editable data collection (name/email/id, etc.) --
-  // no submit button, no feedback, just auto-saved as the reader types.
+  // auto-saved as the reader types (so nothing is lost if they never click
+  // Submit), plus a Submit button matching the one on every question(), so
+  // the reader gets the same explicit "did that go through" confirmation.
   // Required fields (per-field `required`, e.g. name/email by default) get
-  // a marker and inline validation on blur; the actual gate that matters is
-  // in buildDownloadButton, which blocks downloading until they're filled.
+  // a marker and inline validation on blur *and* on Submit; the actual gate
+  // that matters is in buildDownloadButton, which blocks downloading until
+  // they're filled, regardless of whether Submit was ever clicked.
   function buildInfoForm(container, data) {
     var inputs = {};
+    var validators = [];
     var saved = loadState(data) || {};
 
     function save() {
@@ -486,12 +490,11 @@
       var error = el("div", { class: "learnr2-info-error d-none", text: "This field is required." });
 
       function validate() {
-        if (field.required && !input.value.trim()) {
-          error.classList.remove("d-none");
-        } else {
-          error.classList.add("d-none");
-        }
+        var missing = field.required && !input.value.trim();
+        error.classList.toggle("d-none", !missing);
+        return !missing;
       }
+      validators.push(validate);
 
       input.addEventListener("input", function () {
         debouncedSave();
@@ -509,6 +512,23 @@
       var label = el("label", { class: "learnr2-info-label", for: inputId, text: labelText });
       container.appendChild(el("div", { class: "learnr2-info-row" }, [label, input, error]));
     });
+
+    var feedback = el("div", { class: "learnr2-feedback d-none" });
+    var submit = el("button", { type: "button", class: "learnr2-submit", text: data.submitLabel });
+
+    submit.addEventListener("click", function () {
+      save();
+      var allValid = validators.map(function (validate) { return validate(); })
+        .every(Boolean);
+      feedback.className = "learnr2-feedback " +
+        (allValid ? "learnr2-feedback-correct" : "learnr2-feedback-incorrect");
+      feedback.textContent = allValid ?
+        "Submitted." :
+        "Please fill in the required field(s) marked above.";
+    });
+
+    container.appendChild(el("div", { class: "learnr2-controls" }, [submit]));
+    container.appendChild(feedback);
   }
 
   // Reads the *live* DOM value (not the possibly-stale debounced-save
@@ -545,11 +565,80 @@
     node.setAttribute("data-learnr2-initialized", "true");
   }
 
+  // A random id generated once and persisted in localStorage, so it stays
+  // the same across a reader's sessions on this browser/device -- not tied
+  // to their real identity, just "this is the same device that did the
+  // work" signal for the integrity metadata below.
+  var DEVICE_ID_KEY = "learnr2-device-id";
+
+  function randomId() {
+    if (window.crypto && window.crypto.randomUUID) {
+      return window.crypto.randomUUID();
+    }
+    return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
+      var r = (Math.random() * 16) | 0;
+      var v = c === "x" ? r : (r & 0x3) | 0x8;
+      return v.toString(16);
+    });
+  }
+
+  function getDeviceId() {
+    try {
+      var existing = window.localStorage.getItem(DEVICE_ID_KEY);
+      if (existing) {
+        return existing;
+      }
+      var id = randomId();
+      window.localStorage.setItem(DEVICE_ID_KEY, id);
+      return id;
+    } catch (e) {
+      return "unknown";
+    }
+  }
+
+  // What a browser can actually expose to a web page -- notably NOT the
+  // computer name, OS username, or anything filesystem-related, which
+  // browsers deliberately never give to JavaScript.
+  function captureMetadata() {
+    var timezone = "unknown";
+    try {
+      timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    } catch (e) {
+      // Ignore; leave "unknown".
+    }
+    return {
+      capturedAt: new Date().toISOString(),
+      timezone: timezone,
+      userAgent: navigator.userAgent,
+      language: navigator.language,
+      screen: window.screen.width + "x" + window.screen.height,
+      deviceId: getDeviceId()
+    };
+  }
+
+  async function sha256Hex(text) {
+    var bytes = new TextEncoder().encode(text);
+    var digest = await window.crypto.subtle.digest("SHA-256", bytes);
+    return Array.prototype.map
+      .call(new Uint8Array(digest), function (b) {
+        return b.toString(16).padStart(2, "0");
+      })
+      .join("");
+  }
+
   // Gathers every learnr2 question/info answer currently on *this* page
   // (cross-referencing each element's own payload against its saved
   // localStorage state, so the export is human-readable, not just raw ids)
-  // into one JSON object.
-  function collectAnswers() {
+  // into one JSON object, plus a SHA-256 integrity hash over that content.
+  //
+  // This is tamper-EVIDENCE, not proof of identity: everything here runs in
+  // the reader's own browser with no server-held secret, so a technical
+  // reader could in principle reproduce the hash function themselves. What
+  // it does catch is the much more common case -- editing the downloaded
+  // file afterward (e.g. changing a wrong answer to a right one before
+  // turning it in) -- since that invalidates the hash. See
+  // `learnr2::verify_submission()` on the R side to check a downloaded file.
+  async function collectAnswers() {
     // Live DOM values, not localStorage: a field's debounced auto-save may
     // not have fired yet if the reader is still focused in it when they
     // click "Download".
@@ -580,12 +669,28 @@
       });
     });
 
-    return {
+    var content = {
       page: window.location.href,
       downloadedAt: new Date().toISOString(),
       info: info,
-      answers: answers
+      answers: answers,
+      metadata: captureMetadata()
     };
+
+    // Hash the exact string below, not a re-serialized copy of `content` --
+    // verification must hash this same string byte-for-byte, and JSON
+    // key/number formatting isn't guaranteed identical across languages
+    // (e.g. R re-encoding the parsed object could silently produce a
+    // different string and a false "tampered" result).
+    var hashedContent = JSON.stringify(content);
+    var hash = await sha256Hex(hashedContent);
+
+    var result = {};
+    Object.keys(content).forEach(function (key) {
+      result[key] = content[key];
+    });
+    result.integrity = { algorithm: "sha256", hash: hash, hashedContent: hashedContent };
+    return result;
   }
 
   function triggerDownload(filename, dataObj) {
@@ -603,7 +708,7 @@
     var button = el("button", { type: "button", class: "learnr2-download-answers-btn", text: data.label });
     var error = el("div", { class: "learnr2-download-error d-none" });
 
-    button.addEventListener("click", function () {
+    button.addEventListener("click", async function () {
       var missing = missingRequiredInfoFields();
       if (missing.length > 0) {
         error.textContent = "Please fill in: " + missing.join(", ");
@@ -612,7 +717,7 @@
       }
       error.classList.add("d-none");
 
-      var payload = collectAnswers();
+      var payload = await collectAnswers();
       var stamp = new Date().toISOString().replace(/[:.]/g, "-");
       triggerDownload(data.filenamePrefix + "-" + stamp + ".json", payload);
     });

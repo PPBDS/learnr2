@@ -37,7 +37,8 @@ function info(overrides) {
         { key: "name", label: "Name:", required: true },
         { key: "email", label: "Email:", required: true },
         { key: "id", label: "ID (if requested by your instructor):", required: false }
-      ]
+      ],
+      submitLabel: "Submit"
     },
     overrides
   );

@@ -8,7 +8,8 @@ student_info(
   fields = c(name = "Name:", email = "Email:", id =
     "ID (if requested by your instructor):"),
   required = intersect(c("name", "email"), names(fields)),
-  id = "student-info"
+  id = "student-info",
+  submit_button = "Submit"
 )
 }
 \arguments{
@@ -20,12 +21,15 @@ collect. Defaults to name, email, and an optional ID, matching
 fill in. Defaults to whichever of \code{"name"} and \code{"email"} are actually
 present in \code{fields}, so ID is optional by default and supplying custom
 \code{fields} does not require also supplying \code{required}. A required field
-left blank is flagged inline and blocks \code{\link[=download_answers_button]{download_answers_button()}}
-until it's filled in. Passing a key that is not in \code{fields} is an error.}
+left blank is flagged inline (on blur, and again on Submit) and blocks
+\code{\link[=download_answers_button]{download_answers_button()}} until it's filled in. Passing a key that is
+not in \code{fields} is an error.}
 
 \item{id}{Stable identifier used to key the saved values in
 \code{localStorage}. Defaults to \code{"student-info"}; change it if a single
 tutorial embeds more than one \code{student_info()} form.}
+
+\item{submit_button}{Submit button label.}
 }
 \value{
 A \code{learnr2_info} object, printed as an interactive HTML form.
@@ -34,10 +38,13 @@ A \code{learnr2_info} object, printed as an interactive HTML form.
 Adds a small, ungraded form for the reader to fill in identifying
 information before starting a tutorial: name and email required, an ID
 optional, by default. Unlike \code{\link[=question]{question()}}, nothing here is graded and
-there is no model answer to reveal -- it is pure data collection,
-auto-saved to the browser's \code{localStorage} as the reader types and
-restored on their next visit. Pair with \code{\link[=download_answers_button]{download_answers_button()}} so a
-reader can turn their work in.
+there is no model answer to reveal -- it is auto-saved to the browser's
+\code{localStorage} as the reader types and restored on their next visit, the
+same as every other field here. A "Submit" button, matching the one on
+every \code{\link[=question]{question()}}, gives the reader an explicit way to confirm their
+entry and see the required fields checked right away, instead of only
+finding out when they later try to download. Pair with
+\code{\link[=download_answers_button]{download_answers_button()}} so a reader can turn their work in.
 }
 \examples{
 student_info()

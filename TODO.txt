@@ -1,33 +1,25 @@
 1) What happens to the work we have done when we quit the browser? Can we re-open the tutorial and have all our work saved? What happens if we restart our computer? This is amongst the most important functionality needed. Once it is working, add some test cases to ensure it keeps doing so.
 
-    Verified, and it already worked (localStorage is disk-backed, not
-    memory-only) -- but hadn't actually been tested against a real browser
-    quit/reopen before, only page reloads, which is a weaker test. Confirmed
-    with tests/js/persistence.spec.js: launches a real Chromium with a
-    *persistent* profile, answers a question, fully closes the browser,
-    relaunches against the same profile dir, and checks the answer is still
-    there. Covers both a file:// tutorial (how run_tutorial() actually opens
-    one) and one served over HTTP -- both pass. A computer restart doesn't
-    add any new risk beyond that, since the browser's storage is just files
-    on disk. Caveat that IS real: private/incognito windows wipe their
-    storage on close, by browser design, nothing learnr2 can do about that.
-    Documented in question()'s "Progress persistence" section.
+    Verified -- it already worked (localStorage is disk-backed). Confirmed
+    with tests/js/persistence.spec.js: a real Chromium, a persistent
+    profile, a full close/reopen, for both a file:// tutorial and one
+    served over HTTP -- both pass. A computer restart adds no new risk
+    beyond that. One real caveat: private/incognito windows wipe storage on
+    close, by browser design, nothing learnr2 can do about that. Documented
+    in question()'s "Progress persistence" section.
 
 2) Can we have the example tutorial from learnr2 appear on-line (maybe GitHub Pages) and allow students to do it there, including downloading the answers?
 
+
 3) Why template? Why extdata? What do they do? Maybe delete them?
 
-    Both load-bearing, don't delete. templates/tutorial.qmd is the starter
-    file create_tutorial() copies and fills in ({{title}}) -- delete it and
-    create_tutorial() breaks. extdata/ holds two things: _extensions/r-wasm/
-    live/ is the vendored quarto-live extension that add_live_extension()
-    copies into every tutorial, which is what makes format: live-html
-    render at all; extdata/quiz/ is our own quiz.js/quiz.css -- the runtime
-    behind question(), quiz(), student_info(), download_answers_button().
-    Delete either and rendering, or every interactive widget, silently
-    stops working. The extdata/templates names are just conventional R
-    package folder names (extdata = bundled external assets, used all over
-    CRAN; templates = starting-point files to copy), not something R
+    Both load-bearing, don't delete. templates/tutorial.qmd is
+    create_tutorial()'s starter file. extdata/ holds the vendored
+    quarto-live extension (makes format: live-html render at all) and our
+    own quiz.js/quiz.css (the runtime behind question(), quiz(),
+    student_info(), download_answers_button()). Delete either and
+    rendering, or every widget, silently breaks. The extdata/templates
+    names are just conventional R package folder names, not something R
     enforces -- purely for readability.
 
 4) For now, we run the tutorials with your new learnr2 function. Don't start working on a VS Code extension yet.
@@ -42,11 +34,80 @@
 
 I bet that the best approach is an AGENTS.md file which any tutorial writer can access. Writers just ask it to create a tutorial draft or starter QMD file. If the AI always (?) reads the AGENT.md file, then it will know what should go where and it can just write out the underlying words/code, no need for child_documents. That is the approach I recommend.
 
+    Done, using CLAUDE.md as the AGENTS.md-equivalent. The three standard
+    intro questions were already covered by student_info(). What was
+    actually missing was the outro: no template had the minutes-spent
+    question or download_answers_button().
+
+    Added both to the end of inst/templates/tutorial.qmd, and wired
+    create_tutorial() to fill in a new {{name}} placeholder so the download
+    button's filename_prefix comes out right automatically. The minutes
+    question uses type = "reflection_editable", since question() has no
+    numeric type -- documented in CLAUDE.md as a settled convention. Also
+    fixed the same echo-leak bug as item 6 in the template's existing
+    chunks.
+
+    Added an "Authoring a new tutorial" section to CLAUDE.md with the
+    boilerplate to hand-write for tutorials that don't start from
+    create_tutorial() (e.g. one translated per item 6).
+
+    Verified for real: reinstalled the package, ran create_tutorial(),
+    rendered the result with Quarto, and grepped the HTML -- no leaked
+    source, all four widgets present. Also re-rendered the getting-started
+    tutorial with the same minutes question added, confirming it's clean too.
+
 6) Add a getting-started tutorial to learnr2. It is copied over from tutorial.helpers, but, of course, into a QMD, not RMD file. Start a CLAUDE.md file, in learnr2, which guides Claude in how to translate learnr tutorials to learnr2 tutorials. The first time it tries, it will do bad. Give it feedback. Tell it to both record lessons learned in CLAUDE.md and to try again. Keep iterating until it can, from scratch, translate tutorial.Rmd into tutorial.qmd for Getting Started.
 
-7) Fork PPBDS/vscode.tutorials. Rename your forked version vscode.tutorials2.  Use youe new translation skills to translate 01-code/tutorial.Rmd to 01-code/tutorial.qmd. Again, the first attempt will fail. Provide feedback so that your AI can both improve AGENTS.md and also edit tutorial.qmd until the latter looks good to you. After some work, your AI may help you create an entire vscode.tutorials2 package.
+    Done: inst/tutorials/getting-started/tutorial.qmd, translated from
+    tutorial.helpers's tutorial.Rmd. Took three from-scratch attempts (a
+    fresh agent each time, guided only by CLAUDE.md) before one succeeded:
 
-8) After the student hits the download button, can we add a hash to the download answers. This hash would be created from info like date/time, computer name, user name, and so on. The teacher, of course, needs to be able to translate the hash. But the hash is designed so that, even though students know what it is, they can't easily add an appropriately constructed hash to their answers. This is not perfect security, but it is pretty good. 
+    Attempt 1 leaked raw R source above every widget -- dropping learnr's
+    setup chunk lost its `echo = FALSE`. Fixed with `#| echo: false` on each
+    widget chunk.
+
+    Attempt 2 fixed that but regressed differently: exercises still told
+    the reader to open "the R Console" and run RStudio/tutorial.helpers-
+    specific commands, assuming a local install -- contradicting learnr2's
+    whole point. Title was also left as "Tutorials in RStudio."
+
+    Attempt 3, with both lessons added to CLAUDE.md, got it right on the
+    first try -- verified by actually rendering and inspecting the HTML,
+    not just reading the source or trusting the agent's self-report.
+
+    CLAUDE.md now carries the mechanical translation rules plus these two
+    lessons, plus a standing instruction to verify by rendering.
+
+7) Fork PPBDS/vscode.tutorials. Rename your forked version vscode.tutorials2.  Use your new translation skills to translate 01-code/tutorial.Rmd to 01-code/tutorial.qmd. Again, the first attempt will fail. Provide feedback so that your AI can both improve AGENTS.md and also edit tutorial.qmd until the latter looks good to you. After some work, your AI may help you create an entire vscode.tutorials2 package.
+
+    First attempt done, in the sibling vscode.tutorials2 repo (already
+    forked and renamed on GitHub; local package identity now renamed to
+    match). Most of 01-code's source turned out to be VS Code/Codespace
+    Terminal mechanics with no learnr2 equivalent (a Terminal to restart,
+    the Source button, an AI chat sidebar) -- dropped or reframed rather
+    than ported, each call explained in vscode.tutorials2's CLAUDE.md. The
+    genuinely R content (building a ggplot layer by layer) translated
+    cleanly into self-contained {webr} exercises. Not yet verified by
+    rendering -- no R/quarto available in this environment. Awaiting your
+    feedback.
+
+8) After the student hits the download button, can we add a hash to the download answers. This hash would be created from info like date/time, computer name, user name, and so on. The teacher, of course, needs to be able to translate the hash. But the hash is designed so that, even though students know what it is, they can't easily add an appropriately constructed hash to their answers. This is not perfect security, but it is pretty good.
+
+    Done, but reframed after confirming two things: browser JS can't read
+    computer name, OS username, or run whois -- no way around that -- so
+    those fields aren't included. And with no server, there's no secret key
+    only the teacher has, so this is tamper-EVIDENCE, not proof of identity:
+    it stops quietly editing a wrong answer before turning the file in, not
+    a technical student reverse-engineering the hash.
+
+    download_answers_button() now embeds a metadata block (timestamp,
+    timezone, browser info, a per-device id) plus a SHA-256 hash over the
+    content. verify_submission(path) recomputes it and reports OK vs.
+    TAMPERED, and also checks the visible content matches what was hashed.
+
+    Verified for real: downloaded a file, verified it OK, hand-edited it,
+    and confirmed verify_submission() caught it. Tests in
+    tests/js/quiz.spec.js and tests/testthat/test-submission.R.
 
 Big Picture: We hope to replace both learnr and tutorial.helpers with learnr2. There is no reason to have two packages, or to not have learnr2 do everything we want a tutorial package to do.
 

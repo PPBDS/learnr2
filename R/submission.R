@@ -3,10 +3,13 @@
 #' Adds a small, ungraded form for the reader to fill in identifying
 #' information before starting a tutorial: name and email required, an ID
 #' optional, by default. Unlike [question()], nothing here is graded and
-#' there is no model answer to reveal -- it is pure data collection,
-#' auto-saved to the browser's `localStorage` as the reader types and
-#' restored on their next visit. Pair with [download_answers_button()] so a
-#' reader can turn their work in.
+#' there is no model answer to reveal -- it is auto-saved to the browser's
+#' `localStorage` as the reader types and restored on their next visit, the
+#' same as every other field here. A "Submit" button, matching the one on
+#' every [question()], gives the reader an explicit way to confirm their
+#' entry and see the required fields checked right away, instead of only
+#' finding out when they later try to download. Pair with
+#' [download_answers_button()] so a reader can turn their work in.
 #'
 #' @param fields A named character vector of field key/label pairs to
 #'   collect. Defaults to name, email, and an optional ID, matching
@@ -15,11 +18,13 @@
 #'   fill in. Defaults to whichever of `"name"` and `"email"` are actually
 #'   present in `fields`, so ID is optional by default and supplying custom
 #'   `fields` does not require also supplying `required`. A required field
-#'   left blank is flagged inline and blocks [download_answers_button()]
-#'   until it's filled in. Passing a key that is not in `fields` is an error.
+#'   left blank is flagged inline (on blur, and again on Submit) and blocks
+#'   [download_answers_button()] until it's filled in. Passing a key that is
+#'   not in `fields` is an error.
 #' @param id Stable identifier used to key the saved values in
 #'   `localStorage`. Defaults to `"student-info"`; change it if a single
 #'   tutorial embeds more than one `student_info()` form.
+#' @param submit_button Submit button label.
 #'
 #' @return A `learnr2_info` object, printed as an interactive HTML form.
 #' @export
@@ -32,7 +37,8 @@ student_info <- function(fields = c(
                             id = "ID (if requested by your instructor):"
                           ),
                           required = intersect(c("name", "email"), names(fields)),
-                          id = "student-info") {
+                          id = "student-info",
+                          submit_button = "Submit") {
   if (!is.character(fields) || length(fields) == 0 ||
       is.null(names(fields)) || any(!nzchar(names(fields)))) {
     stop("`fields` must be a named character vector, e.g. c(name = \"Name:\").", call. = FALSE)
@@ -62,7 +68,8 @@ student_info <- function(fields = c(
         label = unname(fields[i]),
         required = field_keys[i] %in% required
       )
-    })
+    }),
+    submitLabel = submit_button
   )
 
   structure(list(payload = payload), class = "learnr2_info")
@@ -102,6 +109,15 @@ print.learnr2_info <- function(x, ...) {
 #' entirely in the reader's browser; there is no server to submit to, so
 #' this is meant for a reader to save and turn in themselves (e.g. attach
 #' to an email or upload to an LMS).
+#'
+#' The download includes a `metadata` block (timestamp, timezone, browser
+#' info, and a random per-device id persisted across the reader's visits)
+#' and a SHA-256 `integrity` hash over the content. Check a downloaded file
+#' with [verify_submission()]. This is tamper-*evidence*, not proof of
+#' identity: since everything runs in the reader's own browser with no
+#' server-held secret, a technical reader could reproduce the hash
+#' themselves. What it reliably catches is editing the file afterward (e.g.
+#' changing a wrong answer to a right one before turning it in).
 #'
 #' @param filename_prefix Prefix for the downloaded file's name. Defaults
 #'   to `"learnr2-answers"`.
@@ -148,4 +164,98 @@ knit_print.learnr2_download_button <- function(x, ...) {
 print.learnr2_download_button <- function(x, ...) {
   print(htmltools::browsable(download_button_html(x)))
   invisible(x)
+}
+
+#' Verify a downloaded submission's integrity hash
+#'
+#' Checks a JSON file downloaded via [download_answers_button()] against its
+#' embedded SHA-256 hash, to detect whether it was edited after being
+#' downloaded (e.g. a wrong answer quietly changed to a right one before
+#' being turned in). This is tamper-*evidence*, not proof of identity: the
+#' hash is computed entirely in the reader's own browser with no
+#' server-held secret, so a technical reader could in principle reproduce
+#' it themselves -- this is a deterrent and a check against casual editing,
+#' not real cryptographic security.
+#'
+#' @param path Path to a JSON file downloaded via [download_answers_button()].
+#'
+#' @return Invisibly, a list with `ok` (logical) and the parsed submission
+#'   `content`. Also prints a human-readable summary.
+#' @export
+#' @examples
+#' \dontrun{
+#' verify_submission("class-101-2026-01-15T12-00-00-000Z.json")
+#' }
+verify_submission <- function(path) {
+  if (!is.character(path) || length(path) != 1 || !nzchar(path)) {
+    stop("`path` must be a single non-empty string.", call. = FALSE)
+  }
+  if (!file.exists(path)) {
+    stop("File not found: ", path, call. = FALSE)
+  }
+  if (!requireNamespace("digest", quietly = TRUE)) {
+    stop(
+      "The 'digest' package is required to verify submissions. ",
+      "Install it with install.packages(\"digest\").",
+      call. = FALSE
+    )
+  }
+
+  raw_text <- paste(readLines(path, warn = FALSE, encoding = "UTF-8"), collapse = "\n")
+  parsed <- tryCatch(
+    jsonlite::fromJSON(raw_text, simplifyVector = FALSE),
+    error = function(e) NULL
+  )
+  if (is.null(parsed)) {
+    message("FAILED: could not parse '", path, "' as JSON.")
+    return(invisible(list(ok = FALSE, content = NULL)))
+  }
+
+  integrity <- parsed$integrity
+  if (is.null(integrity$hash) || is.null(integrity$hashedContent)) {
+    message(
+      "FAILED: '", path, "' has no integrity hash -- not downloaded via ",
+      "learnr2::download_answers_button(), or it predates this feature."
+    )
+    return(invisible(list(ok = FALSE, content = parsed)))
+  }
+
+  computed_hash <- digest::digest(integrity$hashedContent, algo = "sha256", serialize = FALSE)
+  hash_ok <- identical(computed_hash, integrity$hash)
+
+  # The hash only certifies `hashedContent` itself; separately confirm the
+  # human-readable top-level fields match it, in case only *those* were
+  # hand-edited after download, leaving the integrity block untouched.
+  hashed_parsed <- tryCatch(
+    jsonlite::fromJSON(integrity$hashedContent, simplifyVector = FALSE),
+    error = function(e) NULL
+  )
+  visible_fields <- c("page", "downloadedAt", "info", "answers", "metadata")
+  visible_ok <- !is.null(hashed_parsed) &&
+    isTRUE(all.equal(hashed_parsed, parsed[visible_fields]))
+
+  ok <- hash_ok && visible_ok
+
+  if (ok) {
+    message("OK: '", path, "' matches its integrity hash -- unedited since download.")
+  } else if (!hash_ok) {
+    message(
+      "TAMPERED: '", path, "'s hash does not match its content.\n",
+      "  Expected: ", integrity$hash, "\n",
+      "  Computed: ", computed_hash
+    )
+  } else {
+    message("TAMPERED: '", path, "'s visible content does not match its hashed content.")
+  }
+
+  info <- parsed$info
+  metadata <- parsed$metadata
+  message(
+    "  Name: ", if (is.null(info$name)) "(none)" else info$name, "\n",
+    "  Email: ", if (is.null(info$email)) "(none)" else info$email, "\n",
+    "  Captured at: ", if (is.null(metadata$capturedAt)) "(unknown)" else metadata$capturedAt, "\n",
+    "  Device id: ", if (is.null(metadata$deviceId)) "(unknown)" else metadata$deviceId
+  )
+
+  invisible(list(ok = ok, content = parsed))
 }

@@ -273,8 +273,9 @@ shown together here just for the demo.
 
 `student_info()` collects identifying information (name, email, an
 optional ID by default). It's deliberately *not* a quiz question --- there
-is nothing to grade and no model answer, just a plain form that
-auto-saves as the reader types:
+is nothing to grade and no model answer, just a plain form with its own
+Submit button. It also auto-saves as the reader types, so nothing is lost
+even if they never click Submit:
 
 ```{r}
 learnr2::student_info()
@@ -283,7 +284,14 @@ learnr2::student_info()
 `download_answers_button()` gathers every `question()` and `student_info()`
 answer already saved on the page into one readable JSON file and downloads
 it --- so a reader can save their work and turn it in (attach to an email,
-upload to an LMS), all without a server to submit to:
+upload to an LMS), all without a server to submit to. The download also
+includes a timestamp, browser info, a per-device id, and a SHA-256
+integrity hash over the content --- run `learnr2::verify_submission(path)`
+on a downloaded file to check it hasn't been edited since it was
+downloaded (e.g. a wrong answer quietly changed to a right one). This is
+tamper-*evidence*, not proof of identity: with no server involved, a
+technical reader could reproduce the hash themselves --- it's a deterrent
+against casually editing the file, not real cryptographic security:
 
 ```{r}
 learnr2::download_answers_button(filename_prefix = "hello-learnr2")

@@ -1,5 +1,6 @@
 "use strict";
 const { test, expect } = require("@playwright/test");
+const nodeCrypto = require("crypto");
 
 const TINY_PNG_BASE64 =
   "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=";
@@ -241,10 +242,29 @@ test.describe("student info form", () => {
     await expect(page.locator("#learnr2-info-student-info-email")).toHaveValue("ada@example.com");
   });
 
-  test("there is no submit button or grading -- it's pure data entry", async ({ page }) => {
+  test("Submit button confirms a complete entry, and flags a missing required field", async ({ page }) => {
     await page.goto("/student-info");
-    await expect(page.locator(".learnr2-submit")).toHaveCount(0);
-    await expect(page.locator(".learnr2-feedback")).toHaveCount(0);
+
+    const submit = page.locator(".learnr2-info .learnr2-submit");
+    const feedback = page.locator(".learnr2-info .learnr2-feedback");
+
+    // Required fields still blank -- Submit should flag it, not silently succeed.
+    await submit.click();
+    await expect(feedback).toBeVisible();
+    await expect(feedback).toHaveClass(/learnr2-feedback-incorrect/);
+    await expect(
+      page.locator("#learnr2-info-student-info-name")
+        .locator("xpath=../div[contains(@class,'learnr2-info-error')]")
+    ).toBeVisible();
+
+    await page.locator("#learnr2-info-student-info-name").fill("Ada Lovelace");
+    await page.locator("#learnr2-info-student-info-email").fill("ada@example.com");
+    await submit.click();
+    await expect(feedback).toHaveClass(/learnr2-feedback-correct/);
+
+    // Unlike a graded question(), the form stays editable after Submit --
+    // this is data entry, not something to lock.
+    await expect(page.locator("#learnr2-info-student-info-name")).toBeEditable();
   });
 
   test("required fields (name, email) are marked with * and show an inline error when left blank", async ({ page }) => {
@@ -307,6 +327,53 @@ test.describe("download answers button", () => {
     const reflectionAnswer = contents.answers.find((a) => a.question.indexOf("sky is blue") !== -1);
     expect(reflectionAnswer.answered).toBe(false);
     expect(reflectionAnswer.yourAnswer).toBeNull();
+
+    // Integrity block: independently recompute SHA-256 with Node's own
+    // crypto module (not our own JS's sha256Hex) as a cross-check that the
+    // browser's Web Crypto digest is correct, not just internally
+    // self-consistent.
+    expect(contents.integrity.algorithm).toBe("sha256");
+    const expectedHash = nodeCrypto
+      .createHash("sha256")
+      .update(contents.integrity.hashedContent, "utf8")
+      .digest("hex");
+    expect(contents.integrity.hash).toBe(expectedHash);
+
+    // hashedContent must be an exact stringified copy of the visible fields.
+    const reparsed = JSON.parse(contents.integrity.hashedContent);
+    expect(reparsed).toEqual({
+      page: contents.page,
+      downloadedAt: contents.downloadedAt,
+      info: contents.info,
+      answers: contents.answers,
+      metadata: contents.metadata
+    });
+
+    // metadata: what a browser can actually expose (no computer name/username).
+    expect(contents.metadata.deviceId).toMatch(/^[0-9a-f-]{20,}$/i);
+    expect(typeof contents.metadata.userAgent).toBe("string");
+    expect(typeof contents.metadata.timezone).toBe("string");
+  });
+
+  test("the device id is stable across repeated downloads (same browser/profile)", async ({ page }) => {
+    await page.goto("/download-answers");
+    await page.locator("#learnr2-info-student-info-name").fill("Ada Lovelace");
+    await page.locator("#learnr2-info-student-info-email").fill("ada@example.com");
+    await page.locator("body").click();
+
+    async function download() {
+      const downloadPromise = page.waitForEvent("download");
+      await page.locator(".learnr2-download-answers-btn").click();
+      const dl = await downloadPromise;
+      const stream = await dl.createReadStream();
+      const chunks = [];
+      for await (const chunk of stream) chunks.push(chunk);
+      return JSON.parse(Buffer.concat(chunks).toString("utf8"));
+    }
+
+    const first = await download();
+    const second = await download();
+    expect(second.metadata.deviceId).toBe(first.metadata.deviceId);
   });
 
   test("is blocked with an error if a required info field is missing", async ({ page }) => {

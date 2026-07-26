@@ -13,6 +13,7 @@ webr:
 ## Student Information
 
 ```{r}
+#| echo: false
 learnr2::student_info()
 ```
 
@@ -50,6 +51,7 @@ sum(1:10)
 ## A quiz question
 
 ```{r}
+#| echo: false
 learnr2::question(
   "What does `sum(1:10)` return?",
   learnr2::answer("55", correct = TRUE),
@@ -57,4 +59,25 @@ learnr2::question(
   learnr2::answer("100"),
   allow_retry = TRUE
 )
+```
+
+## Your Answers
+
+```{r}
+#| echo: false
+learnr2::question(
+  "How many minutes, approximately, did it take you to complete this
+  tutorial? For example, an hour and a half would be 90 minutes.",
+  learnr2::answer(
+    "There's no fixed correct answer here --- just enter your honest
+    estimate, as a number of minutes.",
+    correct = TRUE
+  ),
+  type = "reflection_editable"
+)
+```
+
+```{r}
+#| echo: false
+learnr2::download_answers_button(filename_prefix = "{{name}}")
 ```

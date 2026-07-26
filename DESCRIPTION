@@ -19,6 +19,7 @@ Imports:
     quarto,
     rmarkdown
 Suggests:
+    digest,
     pkgdown,
     rstudioapi,
     testthat (>= 3.0.0)

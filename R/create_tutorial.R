@@ -3,9 +3,11 @@
 #' Scaffolds a new interactive tutorial: a directory containing a starter
 #' `.qmd` document wired up for `format: live-html`, with the bundled
 #' 'quarto-live' extension copied alongside it so it renders out of the box.
-#' The starter document opens with [student_info()], so every new tutorial
-#' collects name/email (and an optional ID) by default; delete that section
-#' if a given tutorial doesn't need it.
+#' The starter document opens with [student_info()] and ends with a
+#' "how many minutes did this take" question plus
+#' [download_answers_button()], so every new tutorial collects name/email
+#' (and an optional ID) and lets the reader turn in their answers by
+#' default; delete either section if a given tutorial doesn't need it.
 #'
 #' @param name Name of the tutorial. Used for the directory and the `.qmd`
 #'   file name, so it should be a valid file name (e.g. `"my-tutorial"`).
@@ -43,6 +45,7 @@ create_tutorial <- function(name,
     encoding = "UTF-8"
   )
   contents <- gsub("{{title}}", title, template, fixed = TRUE)
+  contents <- gsub("{{name}}", name, contents, fixed = TRUE)
 
   qmd <- fs::path(tutorial_dir, name, ext = "qmd")
   writeLines(contents, qmd, useBytes = TRUE)

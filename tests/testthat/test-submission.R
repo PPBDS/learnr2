@@ -7,6 +7,14 @@ test_that("student_info() builds the default name/email/id fields", {
   expect_equal(info$payload$fields[[1]]$label, "Name:")
 })
 
+test_that("student_info() has a Submit button label, customizable like question()'s", {
+  info <- student_info()
+  expect_equal(info$payload$submitLabel, "Submit")
+
+  custom <- student_info(submit_button = "Save Info")
+  expect_equal(custom$payload$submitLabel, "Save Info")
+})
+
 test_that("name and email are required by default, id is not", {
   info <- student_info()
   by_key <- stats::setNames(
@@ -94,4 +102,86 @@ test_that("rendered info/button HTML embeds a decodable payload with the quiz de
     simplifyVector = FALSE
   )
   expect_equal(decoded2$filenamePrefix, "learnr2-answers")
+})
+
+# Builds a submission JSON file exactly like the one quiz.js's
+# collectAnswers() produces, with a correctly-computed integrity hash, so
+# tests can start from something genuinely valid and then tamper with it.
+write_valid_submission <- function(path, info = list(name = "Ada Lovelace", email = "ada@example.com")) {
+  content <- list(
+    page = "http://localhost/tutorial.html",
+    downloadedAt = "2026-01-15T12:00:00.000Z",
+    info = info,
+    answers = list(list(question = "2 + 2?", type = "single", answered = TRUE, yourAnswer = list("4"), correct = TRUE, hasImage = FALSE)),
+    metadata = list(
+      capturedAt = "2026-01-15T12:00:00.000Z",
+      timezone = "America/New_York",
+      userAgent = "test-agent",
+      language = "en-US",
+      screen = "1920x1080",
+      deviceId = "test-device-id"
+    )
+  )
+  hashed_content <- as.character(jsonlite::toJSON(content, auto_unbox = TRUE, null = "null"))
+  hash <- digest::digest(hashed_content, algo = "sha256", serialize = FALSE)
+
+  full <- c(content, list(integrity = list(algorithm = "sha256", hash = hash, hashedContent = hashed_content)))
+  writeLines(as.character(jsonlite::toJSON(full, auto_unbox = TRUE, null = "null")), path, useBytes = TRUE)
+  invisible(list(content = content, hashed_content = hashed_content, hash = hash))
+}
+
+test_that("verify_submission() reports ok for an untampered file", {
+  skip_if_not_installed("digest")
+  tmp <- tempfile(fileext = ".json")
+  on.exit(unlink(tmp))
+  write_valid_submission(tmp)
+
+  result <- suppressMessages(verify_submission(tmp))
+  expect_true(result$ok)
+})
+
+test_that("verify_submission() detects a tampered hash", {
+  skip_if_not_installed("digest")
+  tmp <- tempfile(fileext = ".json")
+  on.exit(unlink(tmp))
+  built <- write_valid_submission(tmp)
+
+  # Simulate someone editing the visible answer without recomputing the hash:
+  # corrupt the stored hash directly.
+  raw <- jsonlite::fromJSON(tmp, simplifyVector = FALSE)
+  raw$integrity$hash <- "0000000000000000000000000000000000000000000000000000000000000"
+  writeLines(as.character(jsonlite::toJSON(raw, auto_unbox = TRUE, null = "null")), tmp, useBytes = TRUE)
+
+  result <- suppressMessages(verify_submission(tmp))
+  expect_false(result$ok)
+})
+
+test_that("verify_submission() detects visible content edited without updating hashedContent", {
+  skip_if_not_installed("digest")
+  tmp <- tempfile(fileext = ".json")
+  on.exit(unlink(tmp))
+  write_valid_submission(tmp)
+
+  raw <- jsonlite::fromJSON(tmp, simplifyVector = FALSE)
+  raw$info$name <- "Someone Else"
+  # integrity block deliberately left untouched -- still matches the
+  # *original* hashedContent, but no longer matches the visible info.
+  writeLines(as.character(jsonlite::toJSON(raw, auto_unbox = TRUE, null = "null")), tmp, useBytes = TRUE)
+
+  result <- suppressMessages(verify_submission(tmp))
+  expect_false(result$ok)
+})
+
+test_that("verify_submission() reports not-ok for a file with no integrity block", {
+  tmp <- tempfile(fileext = ".json")
+  on.exit(unlink(tmp))
+  writeLines('{"page": "http://example.com", "info": {}}', tmp)
+
+  result <- suppressMessages(verify_submission(tmp))
+  expect_false(result$ok)
+})
+
+test_that("verify_submission() errors on a missing file or bad path", {
+  expect_error(verify_submission(123), "single non-empty string")
+  expect_error(verify_submission("this-file-does-not-exist.json"), "not found")
 })
