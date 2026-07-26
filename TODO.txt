@@ -10,6 +10,28 @@
 
 2) Can we have the example tutorial from learnr2 appear on-line (maybe GitHub Pages) and allow students to do it there, including downloading the answers?
 
+    Done, via CI rather than a manual upload -- no server is needed at
+    runtime (WebR runs in-browser, download_answers_button() saves to a
+    local file via browser JS), so a static host is all GitHub Pages has
+    to provide.
+
+    Added .github/workflows/tutorials.yaml, modeled on the existing
+    pkgdown.yaml. On every push touching inst/tutorials/ (or
+    workflow_dispatch), it installs Quarto + R, runs
+    tools/render_tutorials_for_pages.R (renders every tutorial found by
+    available_tutorials(), same approach as run_tutorial(): copy to a
+    scratch dir, add_live_extension(), quarto_render(), plus a generated
+    index.html linking all of them), and deploys the result to gh-pages
+    under tutorials/ -- a different subfolder from pkgdown's docs/, with
+    clean: false so neither deployment clobbers the other.
+
+    Not yet verified end-to-end: this sandbox has no R/Quarto/gh installed,
+    so I couldn't run the workflow or confirm the rendered page actually
+    works in a browser. Push to main and check the Actions tab; the
+    gh-pages branch already exists (from pkgdown), which suggests Pages is
+    already enabled in repo settings, but confirm Settings > Pages is
+    serving from gh-pages if the tutorials/ path 404s.
+
 
 3) Why template? Why extdata? What do they do? Maybe delete them?
 
