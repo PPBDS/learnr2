@@ -11,6 +11,15 @@ reader's browser; there is no server to submit to, so this is meant for
 a reader to save and turn in themselves (e.g. attach to an email or
 upload to an LMS).
 
+The download includes a `metadata` block (timestamp, timezone, browser
+info, and a random per-device id persisted across the reader's visits)
+and a SHA-256 `integrity` hash over the content. Check a downloaded file
+with `verify_submission()`. This is tamper-*evidence*, not proof of
+identity: since everything runs in the reader's own browser with no
+server-held secret, a technical reader could reproduce the hash
+themselves. What it reliably catches is editing the file afterward (e.g.
+changing a wrong answer to a right one before turning it in).
+
 ## Usage
 
 ``` r
