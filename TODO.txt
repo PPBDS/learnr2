@@ -1,4 +1,4 @@
-1) What happens to the work we have done when we quit the browser? Can we re-open the tutorial and have all our work saved? What happens if we restart our computer? This is amongst the most important functionality needed. Once it is working, add some test cases to ensure it keeps doing so.
+1) What happens to the work we have done when we quit the browser? Can we re-open the tutorial and have all our work saved? What happens if we restart our computer? This is amongst the most important functionality needed. Once it is working, add some test cases to ensure it keeps doing so. Done.
 
     Verified -- it already worked (localStorage is disk-backed). Confirmed
     with tests/js/persistence.spec.js: a real Chromium, a persistent
