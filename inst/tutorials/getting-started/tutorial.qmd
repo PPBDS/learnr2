@@ -1,0 +1,205 @@
+---
+title: "Getting Started with learnr2 Tutorials"
+subtitle: "How exercises, quizzes, and downloads work in this format"
+format: live-html
+engine: knitr
+toc: true
+---
+
+{{< include _extensions/r-wasm/live/_knitr.qmd >}}
+
+## Introduction
+
+This tutorial is an introduction to the general use of interactive R
+tutorials built with **learnr2**. It is meant for beginning students who
+have never completed one before.
+
+A learnr2 tutorial runs entirely in your web browser using
+[Quarto](https://quarto.org) and [WebR](https://docs.r-wasm.org/webr/) (R
+compiled to WebAssembly). There is no separate R or RStudio installation to
+set up, and no server involved --- the code cells on this page run right
+here as you work through them. When you are done, you will download a file
+containing your answers and then submit it to your instructor (or just keep
+a copy for yourself).
+
+Most tutorials begin by asking for your name and email. (Your instructor
+might also ask you to fill in the "ID" field so your work can be matched to
+a grading roster; if not, just leave it blank.) Fill in the fields below and
+click **Submit** --- your answers also save automatically as you type, so
+nothing is lost even if you forget to click it.
+
+## Student Information
+
+```{r}
+#| echo: false
+learnr2::student_info()
+```
+
+## Exercises
+
+In each tutorial, there will be a set of exercises for you to complete. For
+non-coding questions, you write your answer and then click the "Submit
+Answer" button, as you did above. For coding exercises, you write R code in
+a runnable cell and click "Run Code" to see the result.
+
+If you don't click "Run Code" (or "Submit Answer"), your response isn't
+recorded.
+
+### Exercise 1
+
+Let's practice some simple math. Type `4 + 5` into the code cell below and
+click **Run Code** to see the result. Clicking **Hint** gives you a hint
+about what to type.
+
+```{webr}
+#| exercise: exercise_1
+#| persist: true
+______
+```
+
+::: { .hint exercise="exercise_1" }
+4 + 5
+:::
+
+Once you run the code, the answer `[1] 9` should appear below the cell ---
+right here on the page, with no separate console to switch to.
+
+There are two types of answers for tutorial questions: prose and code. With
+prose answers, you use the "Submit Answer" button, as you did with your
+name and email above. With code answers, you use the "Run Code" button, as
+you did for this exercise.
+
+### Exercise 2
+
+Let's use variables to perform the same calculation. Below, we have already
+assigned 5 to `x` and 4 to `y`. On the blank line, add the two variables by
+typing `x + y`. Click **Run Code** to see your result.
+
+```{webr}
+#| exercise: exercise_2
+#| persist: true
+x <- 5
+y <- 4
+
+______
+```
+
+::: { .hint exercise="exercise_2" }
+x + y
+:::
+
+Once you run the code, the answer `[1] 9` should appear below the cell.
+
+### Exercise 3
+
+Now change the values to `x <- 6` and `y <- 10` and add them together.
+Click **Run Code**. You should get the answer `[1] 16`.
+
+```{webr}
+#| exercise: exercise_3
+#| persist: true
+______
+```
+
+::: { .hint exercise="exercise_3" }
+x <- ...
+y <- 10
+x + ...
+:::
+
+Note that the assignment symbol, `<-`, is a less-than sign followed by a
+dash. We often pronounce it as "gets." So we might say, when reading this
+code, that "x gets 6."
+
+If you used the hint, note how we did not provide the entire answer. This
+is our standard approach with hints.
+
+Your progress on every exercise and question in this tutorial is saved
+automatically to your browser's storage as you work. Try reloading this
+page --- your answers above are still there. It's not a problem to close a
+tutorial partway through and come back to it later.
+
+### Exercise 4
+
+Let's run a command that reports the version of R powering the code cells
+on this page.
+
+```{webr}
+#| exercise: exercise_4
+#| persist: true
+______
+```
+
+::: { .hint exercise="exercise_4" }
+version[['version.string']]
+:::
+
+You should see something like `[1] "R version 4.4.2 (2024-10-31)"`. Because
+this R is compiled to WebAssembly and running right here in your browser,
+the exact version may differ from what you'd see on a desktop install of R
+--- and that's fine. There's no separate R Console involved; the command
+runs and reports its result right here, the same way every other exercise
+on this page does.
+
+### Exercise 5
+
+Not every exercise involves code. Sometimes we'll ask you to write a
+sentence or two of prose instead, with no strict right answer to match.
+
+```{r}
+#| echo: false
+learnr2::question(
+  "In your own words, what is the difference between a coding exercise
+  (\"Run Code\") and a quiz or prose question (\"Submit Answer\") in this
+  tutorial?",
+  learnr2::answer(
+    "A coding exercise runs R code that you write, in a code cell, right
+    here in the browser. A quiz or prose question instead asks you to
+    choose or type an answer, which is checked (or simply recorded)
+    without running any code.",
+    correct = TRUE
+  ),
+  type = "reflection"
+)
+```
+
+Most instructors grade tutorials on an honest-effort, pass/fail basis, so
+don't stress about getting prose answers "right."
+
+## Your Answers
+
+At the end of every tutorial, you will save your work (and submit it, at
+your instructor's discretion). First, answer the question below about how
+many minutes you spent on the tutorial. Then click the button below that to
+gather every answer on this page into a single file and download it.
+
+```{r}
+#| echo: false
+learnr2::question(
+  "How many minutes, approximately, did it take you to complete this
+  tutorial? For example, an hour and a half would be 90 minutes.",
+  learnr2::answer(
+    "There's no fixed correct answer here --- just enter your honest
+    estimate, as a number of minutes.",
+    correct = TRUE
+  ),
+  type = "reflection_editable"
+)
+```
+
+```{r}
+#| echo: false
+learnr2::download_answers_button(filename_prefix = "getting-started")
+```
+
+The downloaded file's name will start with `getting-started`, followed by a
+timestamp, and will be saved wherever your browser saves downloads.
+Unless your instructor tells you otherwise, send them this file as-is (for
+example, attached to an email or uploaded to your course's learning
+management system).
+
+## Summary
+
+You now understand how learnr2 tutorials work: running code in live cells
+right in your browser, answering quiz and prose questions, and downloading
+your answers when you're done. Good luck with your data science journey!
