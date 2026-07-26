@@ -87,7 +87,7 @@ pass \code{id} explicitly to avoid that.
 this survives closing and reopening the browser, and restarting the
 computer -- confirmed with automated tests
 (\code{tests/js/persistence.spec.js}) that fully quit and relaunch a real
-browser against the same profile, for both a \code{file://} tutorial (how
+browser against the same profile, for both a \verb{file://} tutorial (how
 \code{\link[=run_tutorial]{run_tutorial()}} opens one) and one served over HTTP. Two things it does
 \emph{not} survive, by browser design rather than anything learnr2 controls:
 private/incognito windows (their storage is wiped when the window

@@ -1,8 +1,0 @@
-Here is what was in commit 38ce719 "test":
-
-student_info() Submit button (R/submission.R, man/student_info.Rd, inst/extdata/quiz/quiz.js, tests/js/fixtures.js, tests/js/quiz.spec.js) — the feature from earlier today: an explicit Submit button with inline validation and feedback, matching question()'s UX.
-verify_submission() (R/submission.R, NAMESPACE, DESCRIPTION — adds digest to Suggests, man/download_answers_button.Rd) — checks a downloaded answers file's SHA-256 integrity hash and flags tampering (item 8's hash/tamper-evidence feature).
-create_tutorial() {{name}} placeholder (R/create_tutorial.R) — auto-fills the download button's filename_prefix in scaffolded tutorials, and the starter template now ends with a minutes-spent question + download button (inst/templates/tutorial.qmd).
-hello-learnr2.qmd updates — doc tweaks reflecting the new Submit button behavior.
-TODO.txt — the shortened/updated blurbs from earlier in this session.
-tests/testthat/test-submission.R — new test coverage for verify_submission() and the submit_button param.

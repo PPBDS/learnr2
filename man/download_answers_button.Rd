@@ -27,7 +27,8 @@ the browser's \code{localStorage} as the reader worked through the tutorial
 entirely in the reader's browser; there is no server to submit to, so
 this is meant for a reader to save and turn in themselves (e.g. attach
 to an email or upload to an LMS).
-
+}
+\details{
 The download includes a \code{metadata} block (timestamp, timezone, browser
 info, and a random per-device id persisted across the reader's visits)
 and a SHA-256 \code{integrity} hash over the content. Check a downloaded file
