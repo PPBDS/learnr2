@@ -27,8 +27,12 @@ actually loading the page when \code{open = TRUE} is used non-interactively
 (e.g. via \code{Rscript}), producing a "file not found" page. Pass your own
 \code{output_dir} for a one-off location instead.}
 
-\item{open}{Whether to open the rendered HTML in a browser. Defaults to
-\code{TRUE} when interactive.}
+\item{open}{Whether to serve the rendered tutorial and open it in a
+browser. Defaults to \code{TRUE} when interactive. When \code{TRUE}, this call
+blocks (like \code{\link[httpuv:runStaticServer]{httpuv::runStaticServer()}} or \code{shiny::runApp()}) until you
+interrupt it (Ctrl+C, or the console's Stop button) -- see the section
+below for why. When \code{FALSE}, the tutorial is rendered and the path
+returned without serving or blocking.}
 }
 \value{
 Path to the rendered HTML file, invisibly.
@@ -40,6 +44,32 @@ Because installed tutorials live in a read-only package library, the
 tutorial is copied to a writable location and the 'quarto-live' extension
 is added before rendering.
 }
+\section{Why this blocks and serves over local HTTP instead of opening the file directly}{
+
+Every \code{{webr}} exercise compiles down to Observable JS (OJS), which
+Quarto's runtime loads via ES modules -- and browsers refuse to load ES
+modules from a \code{file://} URL. Opening the rendered HTML directly (e.g.
+\code{utils::browseURL()} on the local path, or double-clicking the file) hits
+this and shows an "OJS runtime" error, even though plain
+\code{\link[=question]{question()}}/\code{\link[=student_info]{student_info()}} widgets (not OJS-based) work fine over
+\code{file://}.
+
+An earlier version of this function used \code{\link[quarto:quarto_preview]{quarto::quarto_preview()}} to
+both render and serve the tutorial via a background daemon process, on
+the theory that it would keep running after \code{run_tutorial()} returned.
+In practice that daemon did not reliably stay alive (confirmed: it could
+exit within seconds, even with the calling R session still running and
+pumping its event loop), silently leaving you back at a \code{file://} URL
+with no server behind it. This function now renders with the same
+one-shot \code{\link[quarto:quarto_render]{quarto::quarto_render()}} call the package's own pkgdown
+publishing script uses, and serves the result with
+\code{\link[httpuv:runStaticServer]{httpuv::runStaticServer()}} -- an in-process server with no separate
+daemon to lose track of. Its trade-off is that it blocks the caller
+while serving, matching how the original 'learnr' package's
+\code{run_tutorial()} (built on a blocking Shiny app) behaved -- stop the
+server to get your prompt back.
+}
+
 \examples{
 \dontrun{
 run_tutorial("hello-learnr2")
