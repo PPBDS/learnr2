@@ -48,18 +48,18 @@ is added before rendering.
 
 Every \code{{webr}} exercise compiles down to Observable JS (OJS), which
 Quarto's runtime loads via ES modules -- and browsers refuse to load ES
-modules from a \code{file://} URL. Opening the rendered HTML directly (e.g.
+modules from a \verb{file://} URL. Opening the rendered HTML directly (e.g.
 \code{utils::browseURL()} on the local path, or double-clicking the file) hits
 this and shows an "OJS runtime" error, even though plain
 \code{\link[=question]{question()}}/\code{\link[=student_info]{student_info()}} widgets (not OJS-based) work fine over
-\code{file://}.
+\verb{file://}.
 
 An earlier version of this function used \code{\link[quarto:quarto_preview]{quarto::quarto_preview()}} to
 both render and serve the tutorial via a background daemon process, on
 the theory that it would keep running after \code{run_tutorial()} returned.
 In practice that daemon did not reliably stay alive (confirmed: it could
 exit within seconds, even with the calling R session still running and
-pumping its event loop), silently leaving you back at a \code{file://} URL
+pumping its event loop), silently leaving you back at a \verb{file://} URL
 with no server behind it. This function now renders with the same
 one-shot \code{\link[quarto:quarto_render]{quarto::quarto_render()}} call the package's own pkgdown
 publishing script uses, and serves the result with

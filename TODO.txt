@@ -17,53 +17,20 @@ Big Picture: We hope to replace both learnr and tutorial.helpers with learnr2. T
 
 7) An downloaded answer file has an entry for every question, whether or not the student answered it.
 
+8) Agreed that this is a good approach to the image answer type: "The real fix is two parts: (1) have
+    collectAnswers() include the actual image data URI, and (2) add an R
+    helper alongside verify_submission() -- something like
+    extract_submission_images(path, dir) -- that pulls any embedded images
+    out of a downloaded JSON into real .png files an instructor can just
+    open, the same way verify_submission() already turns the integrity
+    hash into a plain-English report instead of leaving a human to check
+    it by hand."
 
-1) Can we have the example tutorial from learnr2 appear on-line (maybe GitHub Pages) and allow students to do it there, including downloading the answers?
+9) Your approach is to running tutorials vis GitHub Pages is excellent! Make sure to document it somewhere. Also, testing that this is working after a new push is important? How can we do this quickly? Maybe fill in a couple of answers at random and then click the download answers button ...  As long as the answers we gave --- so we need to keep track of them! --- can be found in the downloaded answer file, then it passes the test.
 
-    Done, via CI rather than a manual upload -- no server is needed at
-    runtime (WebR runs in-browser, download_answers_button() saves to a
-    local file via browser JS), so a static host is all GitHub Pages has
-    to provide.
+10) Anything useful in CLAUDE.md should be moved to AGENTS.md, with CLAUDE.md then deleted, and removed from .Rbuildignore.
 
-    Added .github/workflows/tutorials.yaml, modeled on the existing
-    pkgdown.yaml. On every push touching inst/tutorials/ (or
-    workflow_dispatch), it installs Quarto + R, runs
-    tools/render_tutorials_for_pages.R (renders every tutorial found by
-    available_tutorials(), same approach as run_tutorial(): copy to a
-    scratch dir, add_live_extension(), quarto_render(), plus a generated
-    index.html linking all of them), and deploys the result to gh-pages
-    under tutorials/ -- a different subfolder from pkgdown's docs/, with
-    clean: false so neither deployment clobbers the other.
-
-    Not yet verified end-to-end: this sandbox has no R/Quarto/gh installed,
-    so I couldn't run the workflow or confirm the rendered page actually
-    works in a browser. Push to main and check the Actions tab; the
-    gh-pages branch already exists (from pkgdown), which suggests Pages is
-    already enabled in repo settings, but confirm Settings > Pages is
-    serving from gh-pages if the tutorials/ path 404s.
-
-2) Are templates better than clear instructions in AGENTS.md? If not, then make an AGENTS.md --- or, better, have Claude make it --- which records that information. Test it by telling Claude to make a new tutorial. Same applies to create_tutorial(). No one (?) will ever call that function. Maybe AIs will use it . . . Same applies to student_info()? But that is different because it is called from within the tutorial.
-
-    Done. Verdict: clear instructions beat a bare template -- a template
-    shows what correct output looks like once, not why (the echo: false
-    chunk-scoping rule, the "no local R/RStudio" translation trap, and
-    "verify by rendering" as a habit are all things a template can't teach,
-    and CLAUDE.md already documented a real regression proving it).
-
-    Added AGENTS.md, recording that verdict plus the two follow-ups:
-    create_tutorial() is kept -- few humans will call it, but it's exactly
-    the kind of single unambiguous action an AI agent benefits from reaching
-    for instead of hand-typing frontmatter. student_info() is a different
-    kind of question entirely: it's tutorial *content* (like question()/
-    quiz()), called from inside the .qmd regardless of how that .qmd came to
-    exist, not an authoring-time tool -- so "templates vs. instructions"
-    doesn't apply to it the way it does to create_tutorial().
-
-    Tested by hand-authoring inst/tutorials/intro-vectors/intro-vectors.qmd
-    from AGENTS.md alone -- not via create_tutorial(), not copied from the
-    template. Rendered cleanly with Quarto; verified no leaked chunk source,
-    correct quarto-live/OJS asset wiring, and correct
-    student_info()/question()/download_answers_button() rendering.
+11) Left over topic to investigate wrt using AGENTS.md to create a new tutorial:
 
     Not yet verified end-to-end: couldn't confirm live WebR code execution
     (clicking Run on a {webr} cell and seeing computed output) in this
@@ -71,40 +38,12 @@ Big Picture: We hope to replace both learnr and tutorial.helpers with learnr2. T
     like a restricted-network sandbox limitation rather than a defect in the
     tutorial itself. Worth a manual click-through to fully close the loop.
 
-    CLAUDE.md was left untouched (still has the original authoring/
-    translation instructions, now duplicated in AGENTS.md) -- reconciling
-    the two (e.g. making CLAUDE.md point to AGENTS.md) is still open.
+12) Keep in mind that students use Mac, Windows, Chromebooks and so on. Does a screenshot always get saved as a PNG file? How does the Clipboard keep track of that fact? 
 
-    Follow-up question worth heading off: does this verdict mean the
-    template (inst/templates/tutorial.qmd, scaffolded by create_tutorial())
-    should just be deleted? No -- that was never the verdict. "Templates
-    can't teach" is not the same claim as "templates are worthless."
-    AGENTS.md is the primary guide because only written instructions can
-    explain the *why* behind a rule; the template's remaining job is a
-    plain scaffolding convenience -- a guaranteed-correct starting point,
-    saving a human or an AI agent from hand-typing frontmatter or
-    forgetting add_live_extension(). Deleting it would also just break
-    create_tutorial() outright, since it reads the template via
-    system.file() -- not a documentation question, a real regression.
 
-3) Add a getting-started tutorial to learnr2. It is copied over from tutorial.helpers, but, of course, into a QMD, not RMD file. Start a AGENTS.md file, in learnr2, which guides Claude in how to translate learnr tutorials to learnr2 tutorials. The first time it tries, it will do bad. Give it feedback. Tell it to both record lessons learned in AGENTS.md and to try again. Keep iterating until it can, from scratch, translate tutorial.Rmd into tutorial.qmd for Getting Started.
-
- If you are sure it works on tutorial.helpers Getting Started, try it on all the tutorials in vscode.tutorials.
-
-    Done, in two parts. The getting-started tutorial and the translation
-    guide (frontmatter, {webr} exercise chunks, echo: false chunk-scoping,
-    the "no local R/RStudio dependency" rule, verify-by-rendering) already
-    existed from an earlier session; this pass consolidated that guide into
-    AGENTS.md as the canonical file (see item 2) rather than leaving it only
-    in CLAUDE.md.
-
-    Then tried it on vscode.tutorials, per the second half of this item.
-    vscode.tutorials2/AGENTS.md already had a first-pass translation of
-    01-code from an earlier session, flagged as "not yet verified by
-    rendering" since that session had no R/Quarto available -- this pass
-    rendered it, checked it in a browser (no leaked source, no console
-    errors, everything works), and fixed one small drift (missing
-    validate = "integer"). Then translated 02-quarto from scratch as the
+13) Not sure I understand these comments. We need a new QMD 02-quarto tutorial which includes all the material in the current RMD version. We can discuss on Friday.
+    
+    Then translated 02-quarto from scratch as the
     next real test: most of its source is VS Code file/render mechanics
     with no learnr2 analogue at all (creating/saving/rendering a .qmd file,
     the "QMD World vs. R Terminal World" desync exercises), so it became a
@@ -136,50 +75,8 @@ Big Picture: We hope to replace both learnr and tutorial.helpers with learnr2. T
     CLAUDE.md is still the pre-AGENTS.md duplicate mentioned in item 2,
     still not reconciled.
 
-4) Fork PPBDS/vscode.tutorials. Rename your forked version vscode.tutorials2.  Use your new translation skills to translate 01-code/tutorial.Rmd to 01-code/tutorial.qmd. Again, the first attempt will fail. Provide feedback so that your AI can both improve AGENTS.md and also edit tutorial.qmd until the latter looks good to you. After some work, your AI may help you create an entire vscode.tutorials2 package.
+14) Fork PPBDS/vscode.tutorials. Rename your forked version vscode.tutorials2.  Use your new translation skills to translate 01-code/tutorial.Rmd to 01-code/tutorial.qmd. Again, the first attempt will fail. Provide feedback so that your AI can both improve AGENTS.md and also edit tutorial.qmd until the latter looks good to you. After some work, your AI may help you create an entire vscode.tutorials2 package.
 
 Note that, from a student point of view, vscode.tutorials and vscode.tutorials2 look identical. Same questions. Same images. Doesn't have to be perfect, like with fonts and colors. But the substance is the same.
 
-5) After the student hits the download button, can we add a hash to the download answers. This hash would be created from the time --- of hitting the download answers, presumably. The teacher, of course, needs to be able to translate the hash. But the hash is designed so that, even though students know what it is, they can't easily add an appropriately constructed hash to their answers. This is not perfect security, but it is pretty good.
-
-6) Can students upload images? Show in an example. Add it to Getting Started.
-
-    Done. Yes -- question(type = "reflection", allow_image = TRUE) already
-    existed (and was already demonstrated in hello-learnr2), so this was
-    "add an example to Getting Started," not new functionality. It's a
-    clipboard paste (Ctrl+V/Cmd+V), not a file-picker upload, and only
-    accepts PNG.
-
-    Added Exercise 6 to getting-started/tutorial.qmd: a {webr} exercise
-    using the built-in `cars` dataset to make a plot(cars) scatterplot (no
-    package needed, matching the rest of Getting Started's base-R-only
-    exercises), followed by a reflection question with allow_image = TRUE
-    asking the student to screenshot and paste it.
-
-    Verified by rendering, and by actually exercising the paste path rather
-    than just reading the HTML: dispatched a real clipboard paste event
-    with a PNG at the question's textarea, confirmed the preview image
-    renders with the exact bytes pasted, and confirmed Submit reveals the
-    model answer correctly. No console errors, no leaked chunk source.
-
-    Open gap, found while verifying this (not fixed yet, on request --
-    left as a comment instead): actually downloaded a real answers file
-    after pasting an image and checked its contents. The pasted image
-    itself is never in it -- collectAnswers() in quiz.js only writes
-    hasImage: true/false, never the image data, even though the image is
-    sitting right there in localStorage. So today, an instructor who
-    downloads a student's answers cannot see the screenshot the student
-    pasted, only that one was attached; the student's typed description is
-    the only thing anyone actually reading the JSON sees.
-
-    Just embedding the raw image bytes wouldn't fully fix this either --
-    a JSON file with a base64 blob in it isn't something a human can look
-    at without extra tooling. The real fix is two parts: (1) have
-    collectAnswers() include the actual image data URI, and (2) add an R
-    helper alongside verify_submission() -- something like
-    extract_submission_images(path, dir) -- that pulls any embedded images
-    out of a downloaded JSON into real .png files an instructor can just
-    open, the same way verify_submission() already turns the integrity
-    hash into a plain-English report instead of leaving a human to check
-    it by hand.
 

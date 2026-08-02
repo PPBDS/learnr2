@@ -1,6 +1,6 @@
 Package: learnr2
 Title: Interactive Tutorials with Quarto and WebR
-Version: 0.0.0.9000
+Version: 0.0.0.9001
 Authors@R:
     person("David", "Kane", , "dave.kane@gmail.com", role = c("aut", "cre"))
 Description: Create interactive R tutorials that run entirely in the
