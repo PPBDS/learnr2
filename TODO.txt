@@ -59,7 +59,52 @@ Big Picture: We hope to replace both learnr and tutorial.helpers with learnr2. T
 
 3) Add a getting-started tutorial to learnr2. It is copied over from tutorial.helpers, but, of course, into a QMD, not RMD file. Start a AGENTS.md file, in learnr2, which guides Claude in how to translate learnr tutorials to learnr2 tutorials. The first time it tries, it will do bad. Give it feedback. Tell it to both record lessons learned in AGENTS.md and to try again. Keep iterating until it can, from scratch, translate tutorial.Rmd into tutorial.qmd for Getting Started.
 
- If you are sure it works on tutorial.helpers Getting Started, try it on all the tutorials in vscode.tutorials.   
+ If you are sure it works on tutorial.helpers Getting Started, try it on all the tutorials in vscode.tutorials.
+
+    Done, in two parts. The getting-started tutorial and the translation
+    guide (frontmatter, {webr} exercise chunks, echo: false chunk-scoping,
+    the "no local R/RStudio dependency" rule, verify-by-rendering) already
+    existed from an earlier session; this pass consolidated that guide into
+    AGENTS.md as the canonical file (see item 2) rather than leaving it only
+    in CLAUDE.md.
+
+    Then tried it on vscode.tutorials, per the second half of this item.
+    vscode.tutorials2/AGENTS.md already had a first-pass translation of
+    01-code from an earlier session, flagged as "not yet verified by
+    rendering" since that session had no R/Quarto available -- this pass
+    rendered it, checked it in a browser (no leaked source, no console
+    errors, everything works), and fixed one small drift (missing
+    validate = "integer"). Then translated 02-quarto from scratch as the
+    next real test: most of its source is VS Code file/render mechanics
+    with no learnr2 analogue at all (creating/saving/rendering a .qmd file,
+    the "QMD World vs. R Terminal World" desync exercises), so it became a
+    much shorter, hand-written tutorial covering only the parts that are
+    real Quarto content -- chunk options, the YAML header, inline code --
+    plus one new {webr} plot exercise. Rendering caught a genuine bug: an
+    attempt to show literal `r x` syntax next to its evaluated result got
+    evaluated instead, the same problem the source .Rmd's own comments
+    said they'd had to "hack" around with HTML-entity-escaped backticks.
+    Fixed the same way, and recorded it as a general lesson in learnr2's
+    own AGENTS.md (not just vscode.tutorials2's), since it applies to any
+    tutorial whose subject is Quarto/knitr syntax itself.
+
+    The other 10 tutorials in vscode.tutorials (Terminal, GitHub, the AI-CLI
+    pair, the Quarto-websites pair, devcontainers, codespace-starter,
+    Docker) were assessed and left untranslated on purpose, not skipped by
+    accident: their entire subject is a local Terminal/GitHub/devcontainer/
+    Docker/AI-agent workflow that doesn't exist on a learnr2 page at all --
+    exactly the "doesn't have a learnr2 translation" case this item's own
+    guide already warns about. Forcing a translation would mean deleting
+    nearly the whole tutorial and calling the empty shell that's left a
+    port. Reasoning recorded in vscode.tutorials2/AGENTS.md so it isn't
+    re-litigated per tutorial.
+
+    Also fixed an inconsistency while doing this: vscode.tutorials2 had a
+    CLAUDE.md but no AGENTS.md. Moved its content to AGENTS.md (git mv, so
+    history follows) and left CLAUDE.md as a one-line pointer, matching the
+    convention item 2 established in learnr2 itself -- learnr2's own
+    CLAUDE.md is still the pre-AGENTS.md duplicate mentioned in item 2,
+    still not reconciled.
 
 4) Fork PPBDS/vscode.tutorials. Rename your forked version vscode.tutorials2.  Use your new translation skills to translate 01-code/tutorial.Rmd to 01-code/tutorial.qmd. Again, the first attempt will fail. Provide feedback so that your AI can both improve AGENTS.md and also edit tutorial.qmd until the latter looks good to you. After some work, your AI may help you create an entire vscode.tutorials2 package.
 

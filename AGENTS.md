@@ -131,6 +131,34 @@ from a learnr/tutorial.helpers source per the next section.
 Don't forget `#| echo: false` on all three chunks (see that section, below,
 for why it matters).
 
+## Showing inline-code syntax literally, without triggering it
+
+Sometimes prose needs to *show* what inline code looks like -- the literal
+text `` `r x` `` -- right next to its actual evaluated result, e.g. "writing
+`` `r x` `` produces: the value is 123". The naive way to write the literal
+half, wrapping it in one extra pair of backticks (`` `` `r x` `` ``, a
+double-backtick code span), **does not work**: verified by rendering, Quarto
+still evaluates it, so both halves of that sentence show the *computed
+value* and there's no way left to show the syntax itself. This surprised a
+real translation attempt (`vscode.tutorials2`'s `02-quarto`) enough that its
+source `.Rmd` has its own comment calling this out: "If you try to include
+the inline code in the middle of a sentence, all hell breaks loose... so we
+hack."
+
+The fix, matching that source file's own workaround: spell the backticks as
+the HTML entity `&#96;` inside a `<code>` tag instead of typing literal
+backtick characters --
+
+```
+<code>&#96;r x&#96;</code>
+```
+
+-- which Quarto has no reason to treat as executable, since there's no
+backtick character in the source for its inline-code regex to match. Use
+this whenever a tutorial's own subject is Quarto/knitr syntax itself (like
+explaining what inline code or chunk options are) and needs to show, not
+run, an example.
+
 ## Translating a learnr/tutorial.helpers `.Rmd` tutorial to learnr2 `.qmd`
 
 Tutorials from `tutorial.helpers`-based packages live at
