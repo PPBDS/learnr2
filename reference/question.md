@@ -155,7 +155,10 @@ question(
 
 question(
   "How many minutes, approximately, did this take?",
-  answer("There's no fixed correct answer here -- just enter your honest estimate.", correct = TRUE),
+  answer(
+    "There's no fixed correct answer here -- just enter your honest estimate.",
+    correct = TRUE
+  ),
   type = "reflection_editable",
   validate = "integer"
 )
