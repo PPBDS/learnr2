@@ -34,18 +34,18 @@ time:
 
 at the top (right after the frontmatter/intro prose), and at the bottom:
 
-`{r} #| echo: false learnr2::question( "How many minutes, approximately, did it take you to complete this tutorial? For example, an hour and a half would be 90 minutes.", learnr2::answer( "There's no fixed correct answer here --- just enter your honest estimate, as a number of minutes.", correct = TRUE ), type = "reflection_editable" )`
+`{r} #| echo: false learnr2::question( "How many minutes, approximately, did it take you to complete this tutorial? For example, an hour and a half would be 90 minutes.", learnr2::answer( "There's no fixed correct answer here --- just enter your honest estimate, as a number of minutes.", correct = TRUE ), type = "reflection_editable", validate = "integer" )`
 
 `{r} #| echo: false learnr2::download_answers_button(filename_prefix = "<tutorial-name>")`
 
 (`type = "reflection_editable"` stands in for learnr’s
 `question_numeric()` here —
 [`learnr2::question()`](https://ppbds.github.io/learnr2/reference/question.md)
-has no numeric type, and
-[`answer()`](https://ppbds.github.io/learnr2/reference/answer.md)
-requires a real, non-`NULL` string, so there’s no way to express “accept
-literally anything.” This is a deliberate, settled choice, not a gap to
-keep re-litigating per tutorial.)
+has no dedicated numeric type. `validate = "integer"` is the closest
+match: it blocks Submit client-side unless the typed response is a whole
+number, without grading it against one specific value, since any honest
+minute count is acceptable. This is a deliberate, settled choice, not a
+gap to keep re-litigating per tutorial.)
 
 `inst/templates/tutorial.qmd` — the file
 [`create_tutorial()`](https://ppbds.github.io/learnr2/reference/create_tutorial.md)

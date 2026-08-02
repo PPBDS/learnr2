@@ -18,8 +18,10 @@ question(
   random_answer_order = FALSE,
   submit_button = "Submit Answer",
   try_again_button = "Try Again",
+  edit_button = "Edit Answer",
   id = NULL,
-  allow_image = FALSE
+  allow_image = FALSE,
+  validate = c("none", "integer")
 )
 ```
 
@@ -80,6 +82,15 @@ question(
 
   Button labels.
 
+- edit_button:
+
+  Button label shown instead of `submit_button` once a
+  `"reflection_editable"` question has been submitted at least once –
+  from then on, clicking it revises the reader's already-visible answer
+  rather than submitting for the first time. Ignored for every other
+  `type`, since only `"reflection_editable"` stays open for revision
+  after the model answer is revealed.
+
 - id:
 
   Stable identifier used to key the reader's saved answer (see "Progress
@@ -93,6 +104,17 @@ question(
   paste a PNG image (e.g. a screenshot) from their clipboard, alongside
   their typed response – not a file upload, just Ctrl+V/Cmd+V into the
   question. Defaults to `FALSE`. Ignored for other question types.
+
+- validate:
+
+  Client-side format check applied before the reader can submit a
+  `"text"`, `"reflection"`, or `"reflection_editable"` answer. `"none"`
+  (the default) accepts anything. `"integer"` requires the typed
+  response to be a whole number (optionally signed, e.g. `-3`) – useful
+  for a question like "how many minutes did this take?" where any honest
+  number is fine, but free-form prose is not; see the `"reflection"`
+  example below. Ignored (forced to `"none"`) for
+  `"single"`/`"multiple"` questions.
 
 ## Value
 
@@ -129,5 +151,12 @@ question(
   answer("36"),
   answer("48"),
   allow_retry = TRUE
+)
+
+question(
+  "How many minutes, approximately, did this take?",
+  answer("There's no fixed correct answer here -- just enter your honest estimate.", correct = TRUE),
+  type = "reflection_editable",
+  validate = "integer"
 )
 ```

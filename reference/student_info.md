@@ -6,11 +6,11 @@ optional, by default. Unlike
 [`question()`](https://ppbds.github.io/learnr2/reference/question.md),
 nothing here is graded and there is no model answer to reveal – it is
 auto-saved to the browser's `localStorage` as the reader types and
-restored on their next visit, the same as every other field here. A
-"Submit" button, matching the one on every
-[`question()`](https://ppbds.github.io/learnr2/reference/question.md),
-gives the reader an explicit way to confirm their entry and see the
-required fields checked right away, instead of only finding out when
+restored on their next visit, the same as every other field here. An
+"Edit" button, matching the one on every
+[`question()`](https://ppbds.github.io/learnr2/reference/question.md) in
+style, gives the reader an explicit way to confirm their entry and see
+the required fields checked right away, instead of only finding out when
 they later try to download. Pair with
 [`download_answers_button()`](https://ppbds.github.io/learnr2/reference/download_answers_button.md)
 so a reader can turn their work in.
@@ -23,7 +23,7 @@ student_info(
     "ID (if requested by your instructor):"),
   required = intersect(c("name", "email"), names(fields)),
   id = "student-info",
-  submit_button = "Submit"
+  submit_button = "Edit"
 )
 ```
 
@@ -33,7 +33,8 @@ student_info(
 
   A named character vector of field key/label pairs to collect. Defaults
   to name, email, and an optional ID, matching 'tutorial.helpers”s
-  `info_section.Rmd`.
+  `info_section.Rmd`. A field named `"email"` is additionally checked
+  for an `"@"` character, regardless of whether it is `required`.
 
 - required:
 
@@ -41,10 +42,10 @@ student_info(
   Defaults to whichever of `"name"` and `"email"` are actually present
   in `fields`, so ID is optional by default and supplying custom
   `fields` does not require also supplying `required`. A required field
-  left blank is flagged inline (on blur, and again on Submit) and blocks
+  left blank, or an `"email"` field missing an `"@"`, is flagged inline
+  (on blur, and again when the button is clicked) and blocks
   [`download_answers_button()`](https://ppbds.github.io/learnr2/reference/download_answers_button.md)
-  until it's filled in. Passing a key that is not in `fields` is an
-  error.
+  until it's fixed. Passing a key that is not in `fields` is an error.
 
 - id:
 
@@ -54,7 +55,7 @@ student_info(
 
 - submit_button:
 
-  Submit button label.
+  Confirmation button label.
 
 ## Value
 

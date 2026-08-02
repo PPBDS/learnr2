@@ -58,8 +58,10 @@ questions, graded entirely in the reader's browser.</p>
 <span>  random_answer_order <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  submit_button <span class="op">=</span> <span class="st">"Submit Answer"</span>,</span>
 <span>  try_again_button <span class="op">=</span> <span class="st">"Try Again"</span>,</span>
+<span>  edit_button <span class="op">=</span> <span class="st">"Edit Answer"</span>,</span>
 <span>  id <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  allow_image <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span>  allow_image <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  validate <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"none"</span>, <span class="st">"integer"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -115,6 +117,15 @@ Defaults to <code>FALSE</code>. Only applies to <code>"single"</code>/<code>"mul
 <dd><p>Button labels.</p></dd>
 
 
+<dt id="arg-edit-button">edit_button<a class="anchor" aria-label="anchor" href="#arg-edit-button"></a></dt>
+<dd><p>Button label shown instead of <code>submit_button</code> once a
+<code>"reflection_editable"</code> question has been submitted at least once –
+from then on, clicking it revises the reader's already-visible answer
+rather than submitting for the first time. Ignored for every other
+<code>type</code>, since only <code>"reflection_editable"</code> stays open for revision
+after the model answer is revealed.</p></dd>
+
+
 <dt id="arg-id">id<a class="anchor" aria-label="anchor" href="#arg-id"></a></dt>
 <dd><p>Stable identifier used to key the reader's saved answer (see
 "Progress persistence" below). Defaults to a slug derived from <code>text</code>.
@@ -128,6 +139,17 @@ let the reader paste a PNG image (e.g. a screenshot) from their
 clipboard, alongside their typed response – not a file upload, just
 Ctrl+V/Cmd+V into the question. Defaults to <code>FALSE</code>. Ignored for other
 question types.</p></dd>
+
+
+<dt id="arg-validate">validate<a class="anchor" aria-label="anchor" href="#arg-validate"></a></dt>
+<dd><p>Client-side format check applied before the reader can
+submit a <code>"text"</code>, <code>"reflection"</code>, or <code>"reflection_editable"</code> answer.
+<code>"none"</code> (the default) accepts anything. <code>"integer"</code> requires the typed
+response to be a whole number (optionally signed, e.g. <code>-3</code>) – useful
+for a question like "how many minutes did this take?" where any honest
+number is fine, but free-form prose is not; see the <code>"reflection"</code>
+example below. Ignored (forced to <code>"none"</code>) for <code>"single"</code>/<code>"multiple"</code>
+questions.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -165,6 +187,13 @@ different path, or opened from a different server/port, starts fresh.</p>
 <span class="r-in"><span>  <span class="fu"><a href="answer.html">answer</a></span><span class="op">(</span><span class="st">"36"</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>  <span class="fu"><a href="answer.html">answer</a></span><span class="op">(</span><span class="st">"48"</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>  allow_retry <span class="op">=</span> <span class="cn">TRUE</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="fu">question</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="st">"How many minutes, approximately, did this take?"</span>,</span></span>
+<span class="r-in"><span>  <span class="fu"><a href="answer.html">answer</a></span><span class="op">(</span><span class="st">"There's no fixed correct answer here -- just enter your honest estimate."</span>, correct <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  type <span class="op">=</span> <span class="st">"reflection_editable"</span>,</span></span>
+<span class="r-in"><span>  validate <span class="op">=</span> <span class="st">"integer"</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 </code></pre></div>
     </div>

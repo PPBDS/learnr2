@@ -85,13 +85,43 @@ actually loading the page when <code>open = TRUE</code> is used non-interactivel
 
 
 <dt id="arg-open">open<a class="anchor" aria-label="anchor" href="#arg-open"></a></dt>
-<dd><p>Whether to open the rendered HTML in a browser. Defaults to
-<code>TRUE</code> when interactive.</p></dd>
+<dd><p>Whether to serve the rendered tutorial and open it in a
+browser. Defaults to <code>TRUE</code> when interactive. When <code>TRUE</code>, this call
+blocks (like <code><a href="https://rstudio.github.io/httpuv/reference/runStaticServer.html" class="external-link">httpuv::runStaticServer()</a></code> or <code>shiny::runApp()</code>) until you
+interrupt it (Ctrl+C, or the console's Stop button) – see the section
+below for why. When <code>FALSE</code>, the tutorial is rendered and the path
+returned without serving or blocking.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>Path to the rendered HTML file, invisibly.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="why-this-blocks-and-serves-over-local-http-instead-of-opening-the-file-directly">Why this blocks and serves over local HTTP instead of opening the file directly<a class="anchor" aria-label="anchor" href="#why-this-blocks-and-serves-over-local-http-instead-of-opening-the-file-directly"></a></h2>
+
+
+<p>Every <code>{webr}</code> exercise compiles down to Observable JS (OJS), which
+Quarto's runtime loads via ES modules – and browsers refuse to load ES
+modules from a <code>file://</code> URL. Opening the rendered HTML directly (e.g.
+<code><a href="https://rdrr.io/r/utils/browseURL.html" class="external-link">utils::browseURL()</a></code> on the local path, or double-clicking the file) hits
+this and shows an "OJS runtime" error, even though plain
+<code><a href="question.html">question()</a></code>/<code><a href="student_info.html">student_info()</a></code> widgets (not OJS-based) work fine over
+<code>file://</code>.</p>
+<p>An earlier version of this function used <code><a href="https://quarto-dev.github.io/quarto-r/reference/quarto_preview.html" class="external-link">quarto::quarto_preview()</a></code> to
+both render and serve the tutorial via a background daemon process, on
+the theory that it would keep running after <code>run_tutorial()</code> returned.
+In practice that daemon did not reliably stay alive (confirmed: it could
+exit within seconds, even with the calling R session still running and
+pumping its event loop), silently leaving you back at a <code>file://</code> URL
+with no server behind it. This function now renders with the same
+one-shot <code><a href="https://quarto-dev.github.io/quarto-r/reference/quarto_render.html" class="external-link">quarto::quarto_render()</a></code> call the package's own pkgdown
+publishing script uses, and serves the result with
+<code><a href="https://rstudio.github.io/httpuv/reference/runStaticServer.html" class="external-link">httpuv::runStaticServer()</a></code> – an in-process server with no separate
+daemon to lose track of. Its trade-off is that it blocks the caller
+while serving, matching how the original 'learnr' package's
+<code>run_tutorial()</code> (built on a blocking Shiny app) behaved – stop the
+server to get your prompt back.</p>
     </div>
 
     <div class="section level2">

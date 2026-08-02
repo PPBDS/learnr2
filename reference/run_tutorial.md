@@ -45,12 +45,47 @@ run_tutorial(
 
 - open:
 
-  Whether to open the rendered HTML in a browser. Defaults to `TRUE`
-  when interactive.
+  Whether to serve the rendered tutorial and open it in a browser.
+  Defaults to `TRUE` when interactive. When `TRUE`, this call blocks
+  (like
+  [`httpuv::runStaticServer()`](https://rstudio.github.io/httpuv/reference/runStaticServer.html)
+  or `shiny::runApp()`) until you interrupt it (Ctrl+C, or the console's
+  Stop button) – see the section below for why. When `FALSE`, the
+  tutorial is rendered and the path returned without serving or
+  blocking.
 
 ## Value
 
 Path to the rendered HTML file, invisibly.
+
+## Why this blocks and serves over local HTTP instead of opening the file directly
+
+Every `{webr}` exercise compiles down to Observable JS (OJS), which
+Quarto's runtime loads via ES modules – and browsers refuse to load ES
+modules from a `file://` URL. Opening the rendered HTML directly (e.g.
+[`utils::browseURL()`](https://rdrr.io/r/utils/browseURL.html) on the
+local path, or double-clicking the file) hits this and shows an "OJS
+runtime" error, even though plain
+[`question()`](https://ppbds.github.io/learnr2/reference/question.md)/[`student_info()`](https://ppbds.github.io/learnr2/reference/student_info.md)
+widgets (not OJS-based) work fine over `file://`.
+
+An earlier version of this function used
+[`quarto::quarto_preview()`](https://quarto-dev.github.io/quarto-r/reference/quarto_preview.html)
+to both render and serve the tutorial via a background daemon process,
+on the theory that it would keep running after `run_tutorial()`
+returned. In practice that daemon did not reliably stay alive
+(confirmed: it could exit within seconds, even with the calling R
+session still running and pumping its event loop), silently leaving you
+back at a `file://` URL with no server behind it. This function now
+renders with the same one-shot
+[`quarto::quarto_render()`](https://quarto-dev.github.io/quarto-r/reference/quarto_render.html)
+call the package's own pkgdown publishing script uses, and serves the
+result with
+[`httpuv::runStaticServer()`](https://rstudio.github.io/httpuv/reference/runStaticServer.html)
+– an in-process server with no separate daemon to lose track of. Its
+trade-off is that it blocks the caller while serving, matching how the
+original 'learnr' package's `run_tutorial()` (built on a blocking Shiny
+app) behaved – stop the server to get your prompt back.
 
 ## Examples
 

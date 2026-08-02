@@ -4,19 +4,19 @@ information before starting a tutorial: name and email required, an ID
 optional, by default. Unlike question(), nothing here is graded and
 there is no model answer to reveal – it is auto-saved to the browser's
 localStorage as the reader types and restored on their next visit, the
-same as every other field here. A &quot;Submit&quot; button, matching the one on
-every question(), gives the reader an explicit way to confirm their
-entry and see the required fields checked right away, instead of only
-finding out when they later try to download. Pair with
+same as every other field here. An &quot;Edit&quot; button, matching the one on
+every question() in style, gives the reader an explicit way to confirm
+their entry and see the required fields checked right away, instead of
+only finding out when they later try to download. Pair with
 download_answers_button() so a reader can turn their work in."><meta property="og:description" content="Adds a small, ungraded form for the reader to fill in identifying
 information before starting a tutorial: name and email required, an ID
 optional, by default. Unlike question(), nothing here is graded and
 there is no model answer to reveal – it is auto-saved to the browser's
 localStorage as the reader types and restored on their next visit, the
-same as every other field here. A &quot;Submit&quot; button, matching the one on
-every question(), gives the reader an explicit way to confirm their
-entry and see the required fields checked right away, instead of only
-finding out when they later try to download. Pair with
+same as every other field here. An &quot;Edit&quot; button, matching the one on
+every question() in style, gives the reader an explicit way to confirm
+their entry and see the required fields checked right away, instead of
+only finding out when they later try to download. Pair with
 download_answers_button() so a reader can turn their work in."></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
@@ -57,10 +57,10 @@ information before starting a tutorial: name and email required, an ID
 optional, by default. Unlike <code><a href="question.html">question()</a></code>, nothing here is graded and
 there is no model answer to reveal – it is auto-saved to the browser's
 <code>localStorage</code> as the reader types and restored on their next visit, the
-same as every other field here. A "Submit" button, matching the one on
-every <code><a href="question.html">question()</a></code>, gives the reader an explicit way to confirm their
-entry and see the required fields checked right away, instead of only
-finding out when they later try to download. Pair with
+same as every other field here. An "Edit" button, matching the one on
+every <code><a href="question.html">question()</a></code> in style, gives the reader an explicit way to confirm
+their entry and see the required fields checked right away, instead of
+only finding out when they later try to download. Pair with
 <code><a href="download_answers_button.html">download_answers_button()</a></code> so a reader can turn their work in.</p>
     </div>
 
@@ -71,7 +71,7 @@ finding out when they later try to download. Pair with
 <span>    <span class="st">"ID (if requested by your instructor):"</span><span class="op">)</span>,</span>
 <span>  required <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sets.html" class="external-link">intersect</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"name"</span>, <span class="st">"email"</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">fields</span><span class="op">)</span><span class="op">)</span>,</span>
 <span>  id <span class="op">=</span> <span class="st">"student-info"</span>,</span>
-<span>  submit_button <span class="op">=</span> <span class="st">"Submit"</span></span>
+<span>  submit_button <span class="op">=</span> <span class="st">"Edit"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -82,7 +82,9 @@ finding out when they later try to download. Pair with
 <dl><dt id="arg-fields">fields<a class="anchor" aria-label="anchor" href="#arg-fields"></a></dt>
 <dd><p>A named character vector of field key/label pairs to
 collect. Defaults to name, email, and an optional ID, matching
-'tutorial.helpers”s <code>info_section.Rmd</code>.</p></dd>
+'tutorial.helpers”s <code>info_section.Rmd</code>. A field named <code>"email"</code> is
+additionally checked for an <code>"@"</code> character, regardless of whether it
+is <code>required</code>.</p></dd>
 
 
 <dt id="arg-required">required<a class="anchor" aria-label="anchor" href="#arg-required"></a></dt>
@@ -90,8 +92,9 @@ collect. Defaults to name, email, and an optional ID, matching
 fill in. Defaults to whichever of <code>"name"</code> and <code>"email"</code> are actually
 present in <code>fields</code>, so ID is optional by default and supplying custom
 <code>fields</code> does not require also supplying <code>required</code>. A required field
-left blank is flagged inline (on blur, and again on Submit) and blocks
-<code><a href="download_answers_button.html">download_answers_button()</a></code> until it's filled in. Passing a key that is
+left blank, or an <code>"email"</code> field missing an <code>"@"</code>, is flagged inline
+(on blur, and again when the button is clicked) and blocks
+<code><a href="download_answers_button.html">download_answers_button()</a></code> until it's fixed. Passing a key that is
 not in <code>fields</code> is an error.</p></dd>
 
 
@@ -102,7 +105,7 @@ tutorial embeds more than one <code>student_info()</code> form.</p></dd>
 
 
 <dt id="arg-submit-button">submit_button<a class="anchor" aria-label="anchor" href="#arg-submit-button"></a></dt>
-<dd><p>Submit button label.</p></dd>
+<dd><p>Confirmation button label.</p></dd>
 
 </dl></div>
     <div class="section level2">
