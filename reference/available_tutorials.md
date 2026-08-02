@@ -36,4 +36,5 @@ learnr2::available_tutorials(package = "learnr2")
 #>   package            name                                  title
 #> 1 learnr2 getting-started Getting Started with learnr2 Tutorials
 #> 2 learnr2   hello-learnr2                         Hello, learnr2
+#> 3 learnr2   intro-vectors                  Intro to Vectors in R
 ```
