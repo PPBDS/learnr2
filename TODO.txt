@@ -57,6 +57,18 @@ Big Picture: We hope to replace both learnr and tutorial.helpers with learnr2. T
     translation instructions, now duplicated in AGENTS.md) -- reconciling
     the two (e.g. making CLAUDE.md point to AGENTS.md) is still open.
 
+    Follow-up question worth heading off: does this verdict mean the
+    template (inst/templates/tutorial.qmd, scaffolded by create_tutorial())
+    should just be deleted? No -- that was never the verdict. "Templates
+    can't teach" is not the same claim as "templates are worthless."
+    AGENTS.md is the primary guide because only written instructions can
+    explain the *why* behind a rule; the template's remaining job is a
+    plain scaffolding convenience -- a guaranteed-correct starting point,
+    saving a human or an AI agent from hand-typing frontmatter or
+    forgetting add_live_extension(). Deleting it would also just break
+    create_tutorial() outright, since it reads the template via
+    system.file() -- not a documentation question, a real regression.
+
 3) Add a getting-started tutorial to learnr2. It is copied over from tutorial.helpers, but, of course, into a QMD, not RMD file. Start a AGENTS.md file, in learnr2, which guides Claude in how to translate learnr tutorials to learnr2 tutorials. The first time it tries, it will do bad. Give it feedback. Tell it to both record lessons learned in AGENTS.md and to try again. Keep iterating until it can, from scratch, translate tutorial.Rmd into tutorial.qmd for Getting Started.
 
  If you are sure it works on tutorial.helpers Getting Started, try it on all the tutorials in vscode.tutorials.
@@ -131,4 +143,25 @@ Note that, from a student point of view, vscode.tutorials and vscode.tutorials2 
     with a PNG at the question's textarea, confirmed the preview image
     renders with the exact bytes pasted, and confirmed Submit reveals the
     model answer correctly. No console errors, no leaked chunk source.
+
+    Open gap, found while verifying this (not fixed yet, on request --
+    left as a comment instead): actually downloaded a real answers file
+    after pasting an image and checked its contents. The pasted image
+    itself is never in it -- collectAnswers() in quiz.js only writes
+    hasImage: true/false, never the image data, even though the image is
+    sitting right there in localStorage. So today, an instructor who
+    downloads a student's answers cannot see the screenshot the student
+    pasted, only that one was attached; the student's typed description is
+    the only thing anyone actually reading the JSON sees.
+
+    Just embedding the raw image bytes wouldn't fully fix this either --
+    a JSON file with a base64 blob in it isn't something a human can look
+    at without extra tooling. The real fix is two parts: (1) have
+    collectAnswers() include the actual image data URI, and (2) add an R
+    helper alongside verify_submission() -- something like
+    extract_submission_images(path, dir) -- that pulls any embedded images
+    out of a downloaded JSON into real .png files an instructor can just
+    open, the same way verify_submission() already turns the integrity
+    hash into a plain-English report instead of leaving a human to check
+    it by hand.
 
