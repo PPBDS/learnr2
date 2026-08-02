@@ -1,0 +1,113 @@
+---
+title: "Intro to Vectors in R"
+format: live-html
+engine: knitr
+toc: true
+---
+
+{{< include _extensions/r-wasm/live/_knitr.qmd >}}
+
+## Student Information
+
+```{r}
+#| echo: false
+learnr2::student_info()
+```
+
+## Welcome
+
+A **vector** is R's basic container for a sequence of values of the same
+type. This short tutorial covers creating vectors, indexing them, and a
+couple of summary functions.
+
+## Creating vectors
+
+The `c()` function ("combine") builds a vector out of individual values:
+
+```{webr}
+scores <- c(88, 92, 79, 95, 61)
+scores
+```
+
+You can pull out one element with `[ ]` and a position (R counts from 1,
+not 0):
+
+```{webr}
+scores[2]
+```
+
+## Exercise: total and average
+
+```{webr}
+#| exercise: ex_total
+#| persist: true
+scores <- c(88, 92, 79, 95, 61)
+
+# Compute the sum of `scores`.
+______
+```
+
+::: { .hint exercise="ex_total" }
+The `sum()` function adds up every element of a vector: `sum(scores)`.
+:::
+
+::: { .solution exercise="ex_total" }
+```r
+sum(scores)
+```
+:::
+
+```{webr}
+#| exercise: ex_average
+#| persist: true
+scores <- c(88, 92, 79, 95, 61)
+
+# Compute the average (mean) of `scores`.
+______
+```
+
+::: { .hint exercise="ex_average" }
+The `mean()` function averages every element of a vector: `mean(scores)`.
+:::
+
+::: { .solution exercise="ex_average" }
+```r
+mean(scores)
+```
+:::
+
+## Quick check
+
+```{r}
+#| echo: false
+learnr2::question(
+  "What does `scores[2]` return, for `scores <- c(88, 92, 79, 95, 61)`?",
+  learnr2::answer("92", correct = TRUE),
+  learnr2::answer("88"),
+  learnr2::answer("79"),
+  learnr2::answer("An error --- R vectors start counting at 0"),
+  allow_retry = TRUE
+)
+```
+
+## Your Answers
+
+```{r}
+#| echo: false
+learnr2::question(
+  "How many minutes, approximately, did it take you to complete this
+  tutorial? For example, an hour and a half would be 90 minutes.",
+  learnr2::answer(
+    "There's no fixed correct answer here --- just enter your honest
+    estimate, as a number of minutes.",
+    correct = TRUE
+  ),
+  type = "reflection_editable",
+  validate = "integer"
+)
+```
+
+```{r}
+#| echo: false
+learnr2::download_answers_button(filename_prefix = "intro-vectors")
+```

@@ -26,6 +26,37 @@ Big Picture: We hope to replace both learnr and tutorial.helpers with learnr2. T
 
 2) Are templates better than clear instructions in AGENTS.md? If not, then make an AGENTS.md --- or, better, have Claude make it --- which records that information. Test it by telling Claude to make a new tutorial. Same applies to create_tutorial(). No one (?) will ever call that function. Maybe AIs will use it . . . Same applies to student_info()? But that is different because it is called from within the tutorial.
 
+    Done. Verdict: clear instructions beat a bare template -- a template
+    shows what correct output looks like once, not why (the echo: false
+    chunk-scoping rule, the "no local R/RStudio" translation trap, and
+    "verify by rendering" as a habit are all things a template can't teach,
+    and CLAUDE.md already documented a real regression proving it).
+
+    Added AGENTS.md, recording that verdict plus the two follow-ups:
+    create_tutorial() is kept -- few humans will call it, but it's exactly
+    the kind of single unambiguous action an AI agent benefits from reaching
+    for instead of hand-typing frontmatter. student_info() is a different
+    kind of question entirely: it's tutorial *content* (like question()/
+    quiz()), called from inside the .qmd regardless of how that .qmd came to
+    exist, not an authoring-time tool -- so "templates vs. instructions"
+    doesn't apply to it the way it does to create_tutorial().
+
+    Tested by hand-authoring inst/tutorials/intro-vectors/intro-vectors.qmd
+    from AGENTS.md alone -- not via create_tutorial(), not copied from the
+    template. Rendered cleanly with Quarto; verified no leaked chunk source,
+    correct quarto-live/OJS asset wiring, and correct
+    student_info()/question()/download_answers_button() rendering.
+
+    Not yet verified end-to-end: couldn't confirm live WebR code execution
+    (clicking Run on a {webr} cell and seeing computed output) in this
+    sandbox -- the WebR runtime never finished initializing, which looks
+    like a restricted-network sandbox limitation rather than a defect in the
+    tutorial itself. Worth a manual click-through to fully close the loop.
+
+    CLAUDE.md was left untouched (still has the original authoring/
+    translation instructions, now duplicated in AGENTS.md) -- reconciling
+    the two (e.g. making CLAUDE.md point to AGENTS.md) is still open.
+
 3) Add a getting-started tutorial to learnr2. It is copied over from tutorial.helpers, but, of course, into a QMD, not RMD file. Start a AGENTS.md file, in learnr2, which guides Claude in how to translate learnr tutorials to learnr2 tutorials. The first time it tries, it will do bad. Give it feedback. Tell it to both record lessons learned in AGENTS.md and to try again. Keep iterating until it can, from scratch, translate tutorial.Rmd into tutorial.qmd for Getting Started.
 
  If you are sure it works on tutorial.helpers Getting Started, try it on all the tutorials in vscode.tutorials.   
