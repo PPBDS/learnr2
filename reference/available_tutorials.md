@@ -33,6 +33,7 @@ and `title` (`NA` if the tutorial's `.qmd`/`.Rmd` has no YAML `title`).
 # the same name; this guarantees learnr2's version is used even if learnr is
 # also attached and masks it on the search path.
 learnr2::available_tutorials(package = "learnr2")
-#>   package          name          title
-#> 1 learnr2 hello-learnr2 Hello, learnr2
+#>   package            name                                  title
+#> 1 learnr2 getting-started Getting Started with learnr2 Tutorials
+#> 2 learnr2   hello-learnr2                         Hello, learnr2
 ```

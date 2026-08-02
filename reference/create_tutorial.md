@@ -4,9 +4,12 @@ Scaffolds a new interactive tutorial: a directory containing a starter
 `.qmd` document wired up for `format: live-html`, with the bundled
 'quarto-live' extension copied alongside it so it renders out of the
 box. The starter document opens with
-[`student_info()`](https://ppbds.github.io/learnr2/reference/student_info.md),
-so every new tutorial collects name/email (and an optional ID) by
-default; delete that section if a given tutorial doesn't need it.
+[`student_info()`](https://ppbds.github.io/learnr2/reference/student_info.md)
+and ends with a "how many minutes did this take" question plus
+[`download_answers_button()`](https://ppbds.github.io/learnr2/reference/download_answers_button.md),
+so every new tutorial collects name/email (and an optional ID) and lets
+the reader turn in their answers by default; delete either section if a
+given tutorial doesn't need it.
 
 ## Usage
 

@@ -30,6 +30,8 @@ Gather reader identifying information and let them turn work in.
   : Collect student identifying information
 - [`download_answers_button()`](https://ppbds.github.io/learnr2/reference/download_answers_button.md)
   : Add a "download my answers" button
+- [`verify_submission()`](https://ppbds.github.io/learnr2/reference/verify_submission.md)
+  : Verify a downloaded submission's integrity hash
 
 ## Quarto-live extension
 

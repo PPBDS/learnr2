@@ -5,29 +5,13 @@ the browser's localStorage as the reader worked through the tutorial
 – into a single readable JSON file and downloads it. This happens
 entirely in the reader's browser; there is no server to submit to, so
 this is meant for a reader to save and turn in themselves (e.g. attach
-to an email or upload to an LMS).
-The download includes a metadata block (timestamp, timezone, browser
-info, and a random per-device id persisted across the reader's visits)
-and a SHA-256 integrity hash over the content. Check a downloaded file
-with verify_submission(). This is tamper-evidence, not proof of
-identity: since everything runs in the reader's own browser with no
-server-held secret, a technical reader could reproduce the hash
-themselves. What it reliably catches is editing the file afterward (e.g.
-changing a wrong answer to a right one before turning it in)."><meta property="og:description" content="Adds a button that, when clicked, gathers every question() and
+to an email or upload to an LMS)."><meta property="og:description" content="Adds a button that, when clicked, gathers every question() and
 student_info() answer currently on the page – each already saved to
 the browser's localStorage as the reader worked through the tutorial
 – into a single readable JSON file and downloads it. This happens
 entirely in the reader's browser; there is no server to submit to, so
 this is meant for a reader to save and turn in themselves (e.g. attach
-to an email or upload to an LMS).
-The download includes a metadata block (timestamp, timezone, browser
-info, and a random per-device id persisted across the reader's visits)
-and a SHA-256 integrity hash over the content. Check a downloaded file
-with verify_submission(). This is tamper-evidence, not proof of
-identity: since everything runs in the reader's own browser with no
-server-held secret, a technical reader could reproduce the hash
-themselves. What it reliably catches is editing the file afterward (e.g.
-changing a wrong answer to a right one before turning it in)."></head><body>
+to an email or upload to an LMS)."></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -44,6 +28,7 @@ changing a wrong answer to a right one before turning it in)."></head><body>
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto"><li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
+<li class="nav-item"><a class="nav-link" href="../tutorials/index.html">Tutorials</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
 <li class="nav-item"><a class="external-link nav-link" href="https://github.com/PPBDS/learnr2/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
@@ -68,14 +53,6 @@ the browser's <code>localStorage</code> as the reader worked through the tutoria
 entirely in the reader's browser; there is no server to submit to, so
 this is meant for a reader to save and turn in themselves (e.g. attach
 to an email or upload to an LMS).</p>
-<p>The download includes a <code>metadata</code> block (timestamp, timezone, browser
-info, and a random per-device id persisted across the reader's visits)
-and a SHA-256 <code>integrity</code> hash over the content. Check a downloaded file
-with <code>verify_submission()</code>. This is tamper-<em>evidence</em>, not proof of
-identity: since everything runs in the reader's own browser with no
-server-held secret, a technical reader could reproduce the hash
-themselves. What it reliably catches is editing the file afterward (e.g.
-changing a wrong answer to a right one before turning it in).</p>
     </div>
 
     <div class="section level2">
@@ -103,6 +80,17 @@ to <code>"learnr2-answers"</code>.</p></dd>
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A <code>learnr2_download_button</code> object, printed as an interactive
 HTML button.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
+    <p>The download includes a <code>metadata</code> block (timestamp, timezone, browser
+info, and a random per-device id persisted across the reader's visits)
+and a SHA-256 <code>integrity</code> hash over the content. Check a downloaded file
+with <code><a href="verify_submission.html">verify_submission()</a></code>. This is tamper-<em>evidence</em>, not proof of
+identity: since everything runs in the reader's own browser with no
+server-held secret, a technical reader could reproduce the hash
+themselves. What it reliably catches is editing the file afterward (e.g.
+changing a wrong answer to a right one before turning it in).</p>
     </div>
 
     <div class="section level2">
