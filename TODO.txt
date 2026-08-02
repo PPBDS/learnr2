@@ -114,3 +114,21 @@ Note that, from a student point of view, vscode.tutorials and vscode.tutorials2 
 
 6) Can students upload images? Show in an example. Add it to Getting Started.
 
+    Done. Yes -- question(type = "reflection", allow_image = TRUE) already
+    existed (and was already demonstrated in hello-learnr2), so this was
+    "add an example to Getting Started," not new functionality. It's a
+    clipboard paste (Ctrl+V/Cmd+V), not a file-picker upload, and only
+    accepts PNG.
+
+    Added Exercise 6 to getting-started/tutorial.qmd: a {webr} exercise
+    using the built-in `cars` dataset to make a plot(cars) scatterplot (no
+    package needed, matching the rest of Getting Started's base-R-only
+    exercises), followed by a reflection question with allow_image = TRUE
+    asking the student to screenshot and paste it.
+
+    Verified by rendering, and by actually exercising the paste path rather
+    than just reading the HTML: dispatched a real clipboard paste event
+    with a PNG at the question's textarea, confirmed the preview image
+    renders with the exact bytes pasted, and confirmed Submit reveals the
+    model answer correctly. No console errors, no leaked chunk source.
+

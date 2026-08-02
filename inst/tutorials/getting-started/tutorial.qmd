@@ -166,6 +166,46 @@ learnr2::question(
 Most instructors grade tutorials on an honest-effort, pass/fail basis, so
 don't stress about getting prose answers "right."
 
+### Exercise 6
+
+Some exercises produce a plot instead of a number or a sentence. Let's make
+one, using `cars`, a small dataset built into R (speed vs. stopping
+distance for cars in the 1920s --- no package needed). Type `plot(cars)`
+into the code cell below and click **Run Code**.
+
+```{webr}
+#| exercise: exercise_6
+#| persist: true
+______
+```
+
+::: { .hint exercise="exercise_6" }
+plot(cars)
+:::
+
+You should see a scatterplot appear below the cell, the same way text
+output did in the earlier exercises.
+
+Now paste a screenshot of that plot into the box below --- take a
+screenshot with your usual tool (e.g. `Cmd+Shift+4` on a Mac, the Snipping
+Tool or `Win+Shift+S` on Windows), then click the box and press
+`Ctrl+V`/`Cmd+V` to paste it in, as a PNG. There is no file-upload button
+to click; pasting is the whole mechanism.
+
+```{r}
+#| echo: false
+learnr2::question(
+  "Paste a screenshot of the plot you made above.",
+  learnr2::answer(
+    "A scatterplot with speed on the x-axis and stopping distance on the
+    y-axis, trending upward --- faster cars take longer to stop.",
+    correct = TRUE
+  ),
+  type = "reflection",
+  allow_image = TRUE
+)
+```
+
 ## Your Answers
 
 At the end of every tutorial, you will save your work (and submit it, at
@@ -183,7 +223,8 @@ learnr2::question(
     estimate, as a number of minutes.",
     correct = TRUE
   ),
-  type = "reflection_editable"
+  type = "reflection_editable",
+  validate = "integer"
 )
 ```
 
