@@ -3,6 +3,15 @@ url: https://ppbds.github.io/learnr2/
 template:
   bootstrap: 5
 
+navbar:
+  structure:
+    left: [reference, tutorials]
+    right: [search, github]
+  components:
+    tutorials:
+      text: Tutorials
+      href: tutorials/index.html
+
 reference:
   - title: Authoring tutorials
     desc: Scaffold and run interactive tutorials.
