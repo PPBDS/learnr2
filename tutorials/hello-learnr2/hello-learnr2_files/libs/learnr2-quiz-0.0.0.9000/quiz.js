@@ -44,6 +44,23 @@
     return String(value).trim().replace(/\s+/g, " ").toLowerCase();
   }
 
+  // Client-side format check applied before a "text"/"reflection"/
+  // "reflection_editable" answer is accepted, independent of grading --
+  // e.g. `validate: "integer"` rejects free-form prose in an otherwise
+  // ungraded reflection question ("how many minutes did this take?").
+  // `data.validate` is "none" (never blocks submission) unless the R side
+  // set it explicitly, so this is a no-op for every other question.
+  var VALIDATION_MESSAGES = {
+    integer: "Please enter a whole number (e.g. 42)."
+  };
+
+  function passesValidation(value, validate) {
+    if (validate === "integer") {
+      return /^-?\d+$/.test(String(value).trim());
+    }
+    return true;
+  }
+
   // ---- Progress persistence -------------------------------------------
   // Mirrors the storage-key convention used by quarto-live's own exercise
   // editor persistence (`editor-${location.href}#${id}`), with our own
@@ -217,6 +234,11 @@
     }
 
     submit.addEventListener("click", function () {
+      if (!passesValidation(input.value, data.validate)) {
+        feedback.className = "learnr2-feedback learnr2-feedback-incorrect";
+        feedback.textContent = VALIDATION_MESSAGES[data.validate];
+        return;
+      }
       var correct = applyOutcome(input.value, true);
       saveState(data, { value: input.value, correct: correct });
     });
@@ -389,6 +411,7 @@
 
     var textarea = el("textarea", { class: "learnr2-text-input learnr2-textarea", rows: "4" });
     var reveal = el("div", { class: "learnr2-model-answer d-none" });
+    var feedback = el("div", { class: "learnr2-feedback d-none" });
     var submit = el("button", { type: "button", class: "learnr2-submit", text: data.submitLabel });
     var imagePaste = data.allowImage ? buildImagePasteArea() : null;
     if (imagePaste) {
@@ -414,10 +437,21 @@
         if (imagePaste) {
           imagePaste.setDisabled(true);
         }
+      } else {
+        // Once a reflection_editable question has been submitted at least
+        // once, further clicks revise the already-visible answer rather
+        // than submit for the first time -- relabel the button to match.
+        submit.textContent = data.editLabel;
       }
     }
 
     submit.addEventListener("click", function () {
+      if (!passesValidation(textarea.value, data.validate)) {
+        feedback.className = "learnr2-feedback learnr2-feedback-incorrect";
+        feedback.textContent = VALIDATION_MESSAGES[data.validate];
+        return;
+      }
+      feedback.className = "learnr2-feedback d-none";
       applyOutcome(!editable);
       saveState(data, {
         value: textarea.value,
@@ -431,6 +465,7 @@
       container.appendChild(imagePaste.element);
     }
     container.appendChild(el("div", { class: "learnr2-controls" }, [submit]));
+    container.appendChild(feedback);
     container.appendChild(reveal);
 
     var saved = loadState(data);
@@ -458,14 +493,24 @@
     };
   }
 
+  // A non-empty "email" field's value is required to look at least
+  // vaguely like an email address -- checked with a plain "@" test, not a
+  // full RFC 5322 regex, since this is a friendly nudge against typos
+  // ("adaexample.com"), not a security or deliverability check.
+  function isValidEmail(value) {
+    return value.indexOf("@") !== -1;
+  }
+
   // Ungraded, always-editable data collection (name/email/id, etc.) --
   // auto-saved as the reader types (so nothing is lost if they never click
-  // Submit), plus a Submit button matching the one on every question(), so
-  // the reader gets the same explicit "did that go through" confirmation.
-  // Required fields (per-field `required`, e.g. name/email by default) get
-  // a marker and inline validation on blur *and* on Submit; the actual gate
-  // that matters is in buildDownloadButton, which blocks downloading until
-  // they're filled, regardless of whether Submit was ever clicked.
+  // the confirmation button), plus a button matching the one on every
+  // question(), so the reader gets the same explicit "did that go through"
+  // confirmation. Required fields (per-field `required`, e.g. name/email by
+  // default) get a marker, and an "email" field is checked for an "@"
+  // regardless of `required`; both kinds of problem get inline validation
+  // on blur *and* on click. The actual gate that matters is in
+  // buildDownloadButton, which blocks downloading until they're fixed,
+  // regardless of whether the button was ever clicked.
   function buildInfoForm(container, data) {
     var inputs = {};
     var validators = [];
@@ -487,12 +532,20 @@
         input.value = saved[field.key];
       }
 
-      var error = el("div", { class: "learnr2-info-error d-none", text: "This field is required." });
+      var error = el("div", { class: "learnr2-info-error d-none" });
 
       function validate() {
-        var missing = field.required && !input.value.trim();
-        error.classList.toggle("d-none", !missing);
-        return !missing;
+        var value = input.value.trim();
+        var missing = field.required && !value;
+        var invalidEmail = !missing && field.key === "email" && value && !isValidEmail(value);
+        if (missing) {
+          error.textContent = "This field is required.";
+        } else if (invalidEmail) {
+          error.textContent = "Please include an \"@\" in the email address.";
+        }
+        var problem = missing || invalidEmail;
+        error.classList.toggle("d-none", !problem);
+        return !problem;
       }
       validators.push(validate);
 
@@ -523,8 +576,8 @@
       feedback.className = "learnr2-feedback " +
         (allValid ? "learnr2-feedback-correct" : "learnr2-feedback-incorrect");
       feedback.textContent = allValid ?
-        "Submitted." :
-        "Please fill in the required field(s) marked above.";
+        "Looks good." :
+        "Please fix the highlighted field(s) above.";
     });
 
     container.appendChild(el("div", { class: "learnr2-controls" }, [submit]));
@@ -538,19 +591,23 @@
     return input ? input.value : "";
   }
 
-  // Every required info field, across every .learnr2-info on the page, that
-  // is currently empty. Used to block downloading incomplete submissions.
-  function missingRequiredInfoFields() {
-    var missing = [];
+  // Every info field, across every .learnr2-info on the page, that is
+  // either a required field left empty or an "email" field with no "@".
+  // Used to block downloading incomplete/invalid submissions.
+  function infoFieldProblems() {
+    var problems = [];
     document.querySelectorAll(".learnr2-info[data-learnr2-info]").forEach(function (node) {
       var data = decodeBase64Json(node.getAttribute("data-learnr2-info"));
       data.fields.forEach(function (field) {
-        if (field.required && !infoFieldValue(data.id, field.key).trim()) {
-          missing.push(field.label);
+        var value = infoFieldValue(data.id, field.key).trim();
+        if (field.required && !value) {
+          problems.push(field.label);
+        } else if (field.key === "email" && value && !isValidEmail(value)) {
+          problems.push(field.label + " (needs an \"@\")");
         }
       });
     });
-    return missing;
+    return problems;
   }
 
   function renderInfo(node) {
@@ -709,9 +766,9 @@
     var error = el("div", { class: "learnr2-download-error d-none" });
 
     button.addEventListener("click", async function () {
-      var missing = missingRequiredInfoFields();
-      if (missing.length > 0) {
-        error.textContent = "Please fill in: " + missing.join(", ");
+      var problems = infoFieldProblems();
+      if (problems.length > 0) {
+        error.textContent = "Please fix: " + problems.join(", ");
         error.classList.remove("d-none");
         return;
       }
