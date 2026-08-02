@@ -76,27 +76,34 @@
 <p>Don’t forget <code>#| echo: false</code> on all three chunks (see that section, below, for why it matters).</p>
 </div>
 <div class="section level2">
+<h2 id="showing-inline-code-syntax-literally-without-triggering-it">Showing inline-code syntax literally, without triggering it<a class="anchor" aria-label="anchor" href="#showing-inline-code-syntax-literally-without-triggering-it"></a></h2>
+<p>Sometimes prose needs to <em>show</em> what inline code looks like – the literal text <code>`r x`</code> – right next to its actual evaluated result, e.g. “writing <code>`r x`</code> produces: the value is 123”. The naive way to write the literal half, wrapping it in one extra pair of backticks (<code></code> <code>r x</code> <code></code>, a double-backtick code span), <strong>does not work</strong>: verified by rendering, Quarto still evaluates it, so both halves of that sentence show the <em>computed value</em> and there’s no way left to show the syntax itself. This surprised a real translation attempt (<code>vscode.tutorials2</code>’s <code>02-quarto</code>) enough that its source <code>.Rmd</code> has its own comment calling this out: “If you try to include the inline code in the middle of a sentence, all hell breaks loose… so we hack.”</p>
+<p>The fix, matching that source file’s own workaround: spell the backticks as the HTML entity <code>&amp;#96;</code> inside a <code>&lt;code&gt;</code> tag instead of typing literal backtick characters –</p>
+<pre><code>&lt;code&gt;&amp;#96;r x&amp;#96;&lt;/code&gt;</code></pre>
+<p>– which Quarto has no reason to treat as executable, since there’s no backtick character in the source for its inline-code regex to match. Use this whenever a tutorial’s own subject is Quarto/knitr syntax itself (like explaining what inline code or chunk options are) and needs to show, not run, an example.</p>
+</div>
+<div class="section level2">
 <h2 id="translating-a-learnrtutorialhelpers-rmd-tutorial-to-learnr2-qmd">Translating a learnr/tutorial.helpers <code>.Rmd</code> tutorial to learnr2 <code>.qmd</code>
 <a class="anchor" aria-label="anchor" href="#translating-a-learnrtutorialhelpers-rmd-tutorial-to-learnr2-qmd"></a></h2>
 <p>Tutorials from <code>tutorial.helpers</code>-based packages live at <code>tutorials/&lt;name&gt;/tutorial.Rmd</code> inside the installed package (find them with <code>system.file("tutorials", package = "tutorial.helpers")</code>, or similar for other <code>*.tutorials</code> packages). Translate one into <code>inst/tutorials/&lt;name&gt;/tutorial.qmd</code> in learnr2.</p>
 <div class="section level3">
 <h3 id="yaml-frontmatter">YAML frontmatter<a class="anchor" aria-label="anchor" href="#yaml-frontmatter"></a></h3>
 <p>Replace the learnr frontmatter:</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="pp">---</span></span>
-<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="fu">title</span><span class="kw">:</span><span class="at"> Some Title</span></span>
-<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a><span class="fu">output</span><span class="kw">:</span></span>
-<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a><span class="at">  learnr:</span><span class="fu">:tutorial</span><span class="kw">:</span></span>
-<span id="cb1-5"><a href="#cb1-5" tabindex="-1"></a><span class="at">    </span><span class="fu">progressive</span><span class="kw">:</span><span class="at"> </span><span class="ch">yes</span></span>
-<span id="cb1-6"><a href="#cb1-6" tabindex="-1"></a><span class="at">    </span><span class="fu">allow_skip</span><span class="kw">:</span><span class="at"> </span><span class="ch">yes</span></span>
-<span id="cb1-7"><a href="#cb1-7" tabindex="-1"></a><span class="fu">runtime</span><span class="kw">:</span><span class="at"> shiny_prerendered</span></span>
-<span id="cb1-8"><a href="#cb1-8" tabindex="-1"></a><span class="pp">---</span></span></code></pre></div>
-<p>with:</p>
 <div class="sourceCode" id="cb2"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="pp">---</span></span>
-<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a><span class="fu">title</span><span class="kw">:</span><span class="at"> </span><span class="st">"Some Title"</span></span>
-<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a><span class="fu">format</span><span class="kw">:</span><span class="at"> live-html</span></span>
-<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a><span class="fu">engine</span><span class="kw">:</span><span class="at"> knitr</span></span>
-<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a><span class="fu">toc</span><span class="kw">:</span><span class="at"> </span><span class="ch">true</span></span>
-<span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a><span class="pp">---</span></span></code></pre></div>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a><span class="fu">title</span><span class="kw">:</span><span class="at"> Some Title</span></span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a><span class="fu">output</span><span class="kw">:</span></span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a><span class="at">  learnr:</span><span class="fu">:tutorial</span><span class="kw">:</span></span>
+<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a><span class="at">    </span><span class="fu">progressive</span><span class="kw">:</span><span class="at"> </span><span class="ch">yes</span></span>
+<span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a><span class="at">    </span><span class="fu">allow_skip</span><span class="kw">:</span><span class="at"> </span><span class="ch">yes</span></span>
+<span id="cb2-7"><a href="#cb2-7" tabindex="-1"></a><span class="fu">runtime</span><span class="kw">:</span><span class="at"> shiny_prerendered</span></span>
+<span id="cb2-8"><a href="#cb2-8" tabindex="-1"></a><span class="pp">---</span></span></code></pre></div>
+<p>with:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="pp">---</span></span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a><span class="fu">title</span><span class="kw">:</span><span class="at"> </span><span class="st">"Some Title"</span></span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a><span class="fu">format</span><span class="kw">:</span><span class="at"> live-html</span></span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a><span class="fu">engine</span><span class="kw">:</span><span class="at"> knitr</span></span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a><span class="fu">toc</span><span class="kw">:</span><span class="at"> </span><span class="ch">true</span></span>
+<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a><span class="pp">---</span></span></code></pre></div>
 <p>Drop <code>tutorial: id:</code>, <code>output:</code>/<code>runtime: shiny_prerendered</code> entirely – none of it applies without a Shiny server. Add a <code>webr: packages: [...]</code> block only if the tutorial actually attaches non-base packages inside exercises.</p>
 <p>Immediately after the frontmatter, include the <code>quarto-live</code> runtime partial(s):</p>
 <pre><code>{{&lt; include _extensions/r-wasm/live/_knitr.qmd &gt;}}</code></pre>
@@ -165,8 +172,8 @@ learnr2::student_info()
 <div class="section level3">
 <h3 id="general-rule-verify-by-actually-rendering">General rule: verify by actually rendering<a class="anchor" aria-label="anchor" href="#general-rule-verify-by-actually-rendering"></a></h3>
 <p>Syntax that merely <em>looks</em> plausible can still be wrong in ways that are only visible in the rendered HTML (like the <code>echo</code> issue above). After translating (or hand-authoring), actually render the tutorial with Quarto and open the result, rather than relying on visual inspection of the <code>.qmd</code> source alone:</p>
-<div class="sourceCode" id="cb9"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a><span class="ex">Rscript</span> <span class="at">-e</span> <span class="st">"learnr2::add_live_extension('path/to/tutorial/dir')"</span></span>
-<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a><span class="ex">quarto</span> render path/to/tutorial/dir/tutorial.qmd</span></code></pre></div>
+<div class="sourceCode" id="cb10"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a><span class="ex">Rscript</span> <span class="at">-e</span> <span class="st">"learnr2::add_live_extension('path/to/tutorial/dir')"</span></span>
+<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a><span class="ex">quarto</span> render path/to/tutorial/dir/tutorial.qmd</span></code></pre></div>
 <p>Then check the rendered <code>.html</code> (e.g. serve the directory and open it in a browser) for anything that shouldn’t be visible to a student – most importantly, source code above a widget that should be output-only. Don’t commit the render artifacts (<code>_extensions/</code>, <code>*.html</code>, <code>*_files/</code>, <code>.quarto/</code>, <code>*.knit.md</code>) alongside the tutorial’s <code>.qmd</code> – <code><a href="reference/run_tutorial.html">run_tutorial()</a></code> and <code><a href="reference/create_tutorial.html">create_tutorial()</a></code> add the extension and render on demand, and none of the bundled tutorials in this repo commit those generated files.</p>
 </div>
 </div>
