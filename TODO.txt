@@ -1,5 +1,23 @@
 Big Picture: We hope to replace both learnr and tutorial.helpers with learnr2. There is no reason to have two packages, or to not have learnr2 do everything we want a tutorial package to do.
 
+
+0) I like that tutorials pop up in the VS Code editor. Make sure to document how that is happening? 
+
+1) Fix Getting Started tutorial. As much like the one from tutorial.helpers as possible. But wording should be different as appropriate. What does the edit button?
+
+2) available_tutorials() should take a `type` argument which allows for three possible values: "learnr", "learnnr2" and "all". Or "rmarkdown", "quarto" or "all". I think I like the latter.
+
+3) Always have a "Start Over" button or option.
+
+4) Need a "copy image" question in hello-learnr2.
+
+5) hello-learnr to does not download the answers for the execute code questions. It should.
+
+6) Shouldn't every question have a code chunk name? Yes. Shouldn't they be unique? Yes. Shouldn't they follow the usual tutorial.helpers convention of section-header (lower cased and weird characters to dashes, and duplicate dashes simoplified to one dash()) dash exercise number? Yes.
+
+7) An downloaded answer file has an entry for every question, whether or not the student answered it.
+
+
 1) Can we have the example tutorial from learnr2 appear on-line (maybe GitHub Pages) and allow students to do it there, including downloading the answers?
 
     Done, via CI rather than a manual upload -- no server is needed at
