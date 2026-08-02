@@ -129,16 +129,77 @@ test.describe("reflection questions", () => {
 
   test("editable type: stays editable and can be resubmitted with a revision", async ({ page }) => {
     await page.goto("/reflection-editable");
+    const submit = page.locator(".learnr2-submit");
+    await expect(submit).toHaveText("Submit Answer");
+
+    await page.locator("textarea").fill("First draft.");
+    await submit.click();
+
+    await expect(page.locator("textarea")).toBeEnabled();
+    await expect(submit).toBeVisible();
+    // Once submitted, further clicks are edits, not first submissions --
+    // the button should say so.
+    await expect(submit).toHaveText("Edit Answer");
+
+    await page.locator("textarea").fill("Revised answer.");
+    await submit.click();
+    await expect(page.locator("textarea")).toHaveValue("Revised answer.");
+    await expect(page.locator("textarea")).toBeEnabled();
+    await expect(submit).toHaveText("Edit Answer");
+  });
+
+  test("editable type: button still says Edit Answer after a reload", async ({ page }) => {
+    await page.goto("/reflection-editable");
     await page.locator("textarea").fill("First draft.");
     await page.locator(".learnr2-submit").click();
 
-    await expect(page.locator("textarea")).toBeEnabled();
-    await expect(page.locator(".learnr2-submit")).toBeVisible();
+    await page.reload();
+    await expect(page.locator(".learnr2-submit")).toHaveText("Edit Answer");
+  });
+});
 
-    await page.locator("textarea").fill("Revised answer.");
+test.describe("validate = \"integer\"", () => {
+  test("text question: non-integer input is rejected without grading, valid input proceeds to grading", async ({ page }) => {
+    await page.goto("/text-integer");
+    const input = page.locator(".learnr2-text-input");
+    const feedback = page.locator(".learnr2-feedback");
+
+    await input.fill("nineteen ninety-nine");
     await page.locator(".learnr2-submit").click();
-    await expect(page.locator("textarea")).toHaveValue("Revised answer.");
-    await expect(page.locator("textarea")).toBeEnabled();
+    await expect(feedback).toHaveClass(/learnr2-feedback-incorrect/);
+    await expect(feedback).toHaveText(/whole number/);
+    // Rejected at the validation step, before grading -- input stays enabled.
+    await expect(input).toBeEnabled();
+
+    await input.fill("2000");
+    await page.locator(".learnr2-submit").click();
+    await expect(feedback).toHaveText("Incorrect.");
+    await expect(input).toBeDisabled();
+  });
+
+  test("text question: a signed integer passes validation and grades correct", async ({ page }) => {
+    await page.goto("/text-integer");
+    await page.locator(".learnr2-text-input").fill("1999");
+    await page.locator(".learnr2-submit").click();
+    await expect(page.locator(".learnr2-feedback")).toHaveClass(/learnr2-feedback-correct/);
+  });
+
+  test("reflection_editable question: non-integer input blocks submission, no model answer revealed", async ({ page }) => {
+    await page.goto("/reflection-editable-integer");
+    const textarea = page.locator("textarea");
+    const feedback = page.locator(".learnr2-feedback");
+
+    await textarea.fill("about an hour");
+    await page.locator(".learnr2-submit").click();
+    await expect(feedback).toHaveClass(/learnr2-feedback-incorrect/);
+    await expect(feedback).toHaveText(/whole number/);
+    await expect(page.locator(".learnr2-model-answer")).toBeHidden();
+    await expect(textarea).toBeEnabled();
+
+    await textarea.fill("45");
+    await page.locator(".learnr2-submit").click();
+    await expect(page.locator(".learnr2-model-answer")).toBeVisible();
+    await expect(textarea).toBeEnabled(); // reflection_editable stays editable
   });
 });
 
@@ -242,13 +303,14 @@ test.describe("student info form", () => {
     await expect(page.locator("#learnr2-info-student-info-email")).toHaveValue("ada@example.com");
   });
 
-  test("Submit button confirms a complete entry, and flags a missing required field", async ({ page }) => {
+  test("Edit button confirms a complete entry, and flags a missing required field", async ({ page }) => {
     await page.goto("/student-info");
 
     const submit = page.locator(".learnr2-info .learnr2-submit");
     const feedback = page.locator(".learnr2-info .learnr2-feedback");
+    await expect(submit).toHaveText("Edit");
 
-    // Required fields still blank -- Submit should flag it, not silently succeed.
+    // Required fields still blank -- clicking should flag it, not silently succeed.
     await submit.click();
     await expect(feedback).toBeVisible();
     await expect(feedback).toHaveClass(/learnr2-feedback-incorrect/);
@@ -262,7 +324,7 @@ test.describe("student info form", () => {
     await submit.click();
     await expect(feedback).toHaveClass(/learnr2-feedback-correct/);
 
-    // Unlike a graded question(), the form stays editable after Submit --
+    // Unlike a graded question(), the form stays editable after clicking --
     // this is data entry, not something to lock.
     await expect(page.locator("#learnr2-info-student-info-name")).toBeEditable();
   });
@@ -283,6 +345,22 @@ test.describe("student info form", () => {
 
     await nameInput.fill("Ada Lovelace");
     await expect(nameError).toBeHidden();
+  });
+
+  test("email field is flagged when it has no '@', and clears once fixed", async ({ page }) => {
+    await page.goto("/student-info");
+
+    const emailInput = page.locator("#learnr2-info-student-info-email");
+    const emailError = emailInput.locator("xpath=../div[contains(@class,'learnr2-info-error')]");
+
+    await emailInput.fill("adaexample.com");
+    await page.locator("body").click(); // blur
+    await expect(emailError).toBeVisible();
+    await expect(emailError).toContainText("@");
+
+    await emailInput.fill("ada@example.com");
+    await page.locator("body").click();
+    await expect(emailError).toBeHidden();
   });
 });
 
@@ -394,6 +472,32 @@ test.describe("download answers button", () => {
     expect(downloadHappened).toBe(false);
 
     // Filling in the missing field and retrying should now succeed.
+    await page.locator("#learnr2-info-student-info-email").fill("ada@example.com");
+    await page.locator("body").click();
+
+    const downloadPromise = page.waitForEvent("download");
+    await page.locator(".learnr2-download-answers-btn").click();
+    await downloadPromise;
+    await expect(page.locator(".learnr2-download-error")).toBeHidden();
+  });
+
+  test("is blocked with an error if the email field has no '@', even though it's non-empty", async ({ page }) => {
+    await page.goto("/download-answers");
+
+    await page.locator("#learnr2-info-student-info-name").fill("Ada Lovelace");
+    await page.locator("#learnr2-info-student-info-email").fill("adaexample.com");
+    await page.locator("body").click();
+
+    let downloadHappened = false;
+    page.once("download", () => {
+      downloadHappened = true;
+    });
+
+    await page.locator(".learnr2-download-answers-btn").click();
+    await expect(page.locator(".learnr2-download-error")).toBeVisible();
+    await expect(page.locator(".learnr2-download-error")).toContainText("Email:");
+    expect(downloadHappened).toBe(false);
+
     await page.locator("#learnr2-info-student-info-email").fill("ada@example.com");
     await page.locator("body").click();
 

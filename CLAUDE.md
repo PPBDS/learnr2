@@ -41,7 +41,8 @@ learnr2::question(
     estimate, as a number of minutes.",
     correct = TRUE
   ),
-  type = "reflection_editable"
+  type = "reflection_editable",
+  validate = "integer"
 )
 ```
 
@@ -51,10 +52,11 @@ learnr2::download_answers_button(filename_prefix = "<tutorial-name>")
 ```
 
 (`type = "reflection_editable"` stands in for learnr's `question_numeric()`
-here — `learnr2::question()` has no numeric type, and `answer()` requires a
-real, non-`NULL` string, so there's no way to express "accept literally
-anything." This is a deliberate, settled choice, not a gap to keep
-re-litigating per tutorial.)
+here — `learnr2::question()` has no dedicated numeric type. `validate =
+"integer"` is the closest match: it blocks Submit client-side unless the
+typed response is a whole number, without grading it against one specific
+value, since any honest minute count is acceptable. This is a deliberate,
+settled choice, not a gap to keep re-litigating per tutorial.)
 
 `inst/templates/tutorial.qmd` — the file `create_tutorial()` scaffolds —
 already includes both blocks (with `{{name}}` filled in automatically for

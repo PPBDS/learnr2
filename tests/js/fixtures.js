@@ -23,7 +23,9 @@ function question(overrides) {
       randomAnswerOrder: false,
       submitLabel: "Submit Answer",
       tryAgainLabel: "Try Again",
-      allowImage: false
+      editLabel: "Edit Answer",
+      allowImage: false,
+      validate: "none"
     },
     overrides
   );
@@ -38,7 +40,7 @@ function info(overrides) {
         { key: "email", label: "Email:", required: true },
         { key: "id", label: "ID (if requested by your instructor):", required: false }
       ],
-      submitLabel: "Submit"
+      submitLabel: "Edit"
     },
     overrides
   );
@@ -130,6 +132,28 @@ const FIXTURES = {
         text: "Explain photosynthesis.",
         type: "reflection_editable",
         answers: [answer("Plants convert light into chemical energy.", true)]
+      })
+    )
+  ],
+  "reflection-editable-integer": [
+    questionBlock(
+      question({
+        id: "reflection-editable-integer",
+        text: "How many minutes did this take?",
+        type: "reflection_editable",
+        answers: [answer("Any honest number of minutes is fine.", true)],
+        validate: "integer"
+      })
+    )
+  ],
+  "text-integer": [
+    questionBlock(
+      question({
+        id: "text-integer",
+        text: "Enter the year 1999 as a number.",
+        type: "text",
+        answers: [answer("1999", true)],
+        validate: "integer"
       })
     )
   ],

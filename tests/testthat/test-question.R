@@ -115,6 +115,47 @@ test_that("allow_image is ignored for non-reflection question types", {
   expect_false(q2$payload$allowImage)
 })
 
+test_that("validate defaults to 'none' and is carried through for free-text types", {
+  q <- question("2 + 2?", answer("4", correct = TRUE), type = "text")
+  expect_equal(q$payload$validate, "none")
+
+  minutes <- question(
+    "How many minutes did this take?",
+    answer("Any honest number is fine.", correct = TRUE),
+    type = "reflection_editable",
+    validate = "integer"
+  )
+  expect_equal(minutes$payload$validate, "integer")
+
+  reflection <- question(
+    "What surprised you?",
+    answer("Anything.", correct = TRUE),
+    type = "reflection",
+    validate = "integer"
+  )
+  expect_equal(reflection$payload$validate, "integer")
+})
+
+test_that("validate is ignored (forced to 'none') for single/multiple questions", {
+  q <- question("2 + 2?", answer("4", correct = TRUE), validate = "integer")
+  expect_equal(q$payload$validate, "none")
+
+  q2 <- question(
+    "Pick the even numbers",
+    answer("2", correct = TRUE),
+    answer("3"),
+    validate = "integer"
+  )
+  expect_equal(q2$payload$validate, "none")
+})
+
+test_that("validate rejects unknown values", {
+  expect_error(
+    question("2 + 2?", answer("4", correct = TRUE), validate = "numeric"),
+    "should be one of"
+  )
+})
+
 test_that("reflection types still require at least one correct answer", {
   expect_error(
     question("Reflect on this.", answer("not marked correct"), type = "reflection"),

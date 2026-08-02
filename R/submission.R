@@ -5,26 +5,29 @@
 #' optional, by default. Unlike [question()], nothing here is graded and
 #' there is no model answer to reveal -- it is auto-saved to the browser's
 #' `localStorage` as the reader types and restored on their next visit, the
-#' same as every other field here. A "Submit" button, matching the one on
-#' every [question()], gives the reader an explicit way to confirm their
-#' entry and see the required fields checked right away, instead of only
-#' finding out when they later try to download. Pair with
+#' same as every other field here. An "Edit" button, matching the one on
+#' every [question()] in style, gives the reader an explicit way to confirm
+#' their entry and see the required fields checked right away, instead of
+#' only finding out when they later try to download. Pair with
 #' [download_answers_button()] so a reader can turn their work in.
 #'
 #' @param fields A named character vector of field key/label pairs to
 #'   collect. Defaults to name, email, and an optional ID, matching
-#'   'tutorial.helpers''s `info_section.Rmd`.
+#'   'tutorial.helpers''s `info_section.Rmd`. A field named `"email"` is
+#'   additionally checked for an `"@"` character, regardless of whether it
+#'   is `required`.
 #' @param required Character vector of keys (from `fields`) the reader must
 #'   fill in. Defaults to whichever of `"name"` and `"email"` are actually
 #'   present in `fields`, so ID is optional by default and supplying custom
 #'   `fields` does not require also supplying `required`. A required field
-#'   left blank is flagged inline (on blur, and again on Submit) and blocks
-#'   [download_answers_button()] until it's filled in. Passing a key that is
+#'   left blank, or an `"email"` field missing an `"@"`, is flagged inline
+#'   (on blur, and again when the button is clicked) and blocks
+#'   [download_answers_button()] until it's fixed. Passing a key that is
 #'   not in `fields` is an error.
 #' @param id Stable identifier used to key the saved values in
 #'   `localStorage`. Defaults to `"student-info"`; change it if a single
 #'   tutorial embeds more than one `student_info()` form.
-#' @param submit_button Submit button label.
+#' @param submit_button Confirmation button label.
 #'
 #' @return A `learnr2_info` object, printed as an interactive HTML form.
 #' @export
@@ -38,7 +41,7 @@ student_info <- function(fields = c(
                           ),
                           required = intersect(c("name", "email"), names(fields)),
                           id = "student-info",
-                          submit_button = "Submit") {
+                          submit_button = "Edit") {
   if (!is.character(fields) || length(fields) == 0 ||
       is.null(names(fields)) || any(!nzchar(names(fields)))) {
     stop("`fields` must be a named character vector, e.g. c(name = \"Name:\").", call. = FALSE)

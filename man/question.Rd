@@ -14,8 +14,10 @@ question(
   random_answer_order = FALSE,
   submit_button = "Submit Answer",
   try_again_button = "Try Again",
+  edit_button = "Edit Answer",
   id = NULL,
-  allow_image = FALSE
+  allow_image = FALSE,
+  validate = c("none", "integer")
 )
 }
 \arguments{
@@ -53,6 +55,13 @@ Defaults to \code{FALSE}. Only applies to \code{"single"}/\code{"multiple"} ques
 
 \item{submit_button, try_again_button}{Button labels.}
 
+\item{edit_button}{Button label shown instead of \code{submit_button} once a
+\code{"reflection_editable"} question has been submitted at least once --
+from then on, clicking it revises the reader's already-visible answer
+rather than submitting for the first time. Ignored for every other
+\code{type}, since only \code{"reflection_editable"} stays open for revision
+after the model answer is revealed.}
+
 \item{id}{Stable identifier used to key the reader's saved answer (see
 "Progress persistence" below). Defaults to a slug derived from \code{text}.
 Set this explicitly if you plan to edit the question wording later and
@@ -63,6 +72,15 @@ let the reader paste a PNG image (e.g. a screenshot) from their
 clipboard, alongside their typed response -- not a file upload, just
 Ctrl+V/Cmd+V into the question. Defaults to \code{FALSE}. Ignored for other
 question types.}
+
+\item{validate}{Client-side format check applied before the reader can
+submit a \code{"text"}, \code{"reflection"}, or \code{"reflection_editable"} answer.
+\code{"none"} (the default) accepts anything. \code{"integer"} requires the typed
+response to be a whole number (optionally signed, e.g. \code{-3}) -- useful
+for a question like "how many minutes did this take?" where any honest
+number is fine, but free-form prose is not; see the \code{"reflection"}
+example below. Ignored (forced to \code{"none"}) for \code{"single"}/\code{"multiple"}
+questions.}
 }
 \value{
 A \code{learnr2_question} object. Printed as an interactive HTML
@@ -102,5 +120,12 @@ question(
   answer("36"),
   answer("48"),
   allow_retry = TRUE
+)
+
+question(
+  "How many minutes, approximately, did this take?",
+  answer("There's no fixed correct answer here -- just enter your honest estimate.", correct = TRUE),
+  type = "reflection_editable",
+  validate = "integer"
 )
 }

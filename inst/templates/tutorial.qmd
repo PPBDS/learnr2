@@ -73,7 +73,8 @@ learnr2::question(
     estimate, as a number of minutes.",
     correct = TRUE
   ),
-  type = "reflection_editable"
+  type = "reflection_editable",
+  validate = "integer"
 )
 ```
 
