@@ -2,5 +2,4 @@ docs
 tests/js/node_modules
 tests/js/test-results
 tests/js/playwright-report
-CLAUDE.md
 AGENTS.md

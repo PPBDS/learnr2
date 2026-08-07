@@ -138,6 +138,17 @@ const FIXTURES = {
       })
     )
   ],
+  "reflection-no-model-answer": [
+    questionBlock(
+      question({
+        id: "reflection-no-model-answer",
+        text: "How many minutes, approximately, did this take?",
+        type: "reflection_editable",
+        answers: [],
+        validate: "integer"
+      })
+    )
+  ],
   "reflection-editable": [
     questionBlock(
       question({

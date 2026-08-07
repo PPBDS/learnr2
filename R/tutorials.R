@@ -8,17 +8,25 @@
 #'
 #' @param package Name of a single package to scan. Defaults to `NULL`,
 #'   which scans every installed package.
+#' @param type Which authoring format to include: `"quarto"` (tutorials
+#'   whose top-level document is a `.qmd`), `"rmarkdown"` (a `.Rmd`), or
+#'   `"all"` (the default) for both.
 #'
 #' @return A data frame with one row per tutorial and columns `package`,
-#'   `name`, and `title` (`NA` if the tutorial's `.qmd`/`.Rmd` has no YAML
-#'   `title`). `name` can be passed to [run_tutorial()].
+#'   `name`, `title` (`NA` if the tutorial's `.qmd`/`.Rmd` has no YAML
+#'   `title`), and `format` (`"quarto"` or `"rmarkdown"`). `name` can be
+#'   passed to [run_tutorial()].
 #' @export
 #' @examples
 #' # Qualified with learnr2:: because the learnr package exports a function of
 #' # the same name; this guarantees learnr2's version is used even if learnr is
 #' # also attached and masks it on the search path.
 #' learnr2::available_tutorials(package = "learnr2")
-available_tutorials <- function(package = NULL) {
+#' learnr2::available_tutorials(package = "learnr2", type = "quarto")
+available_tutorials <- function(package = NULL, type = "all") {
+  if (!is.character(type) || length(type) != 1 || !type %in% c("all", "rmarkdown", "quarto")) {
+    stop('`type` must be one of "all", "rmarkdown", or "quarto".', call. = FALSE)
+  }
   if (!is.null(package)) {
     if (!is.character(package) || length(package) != 1 || !nzchar(package)) {
       stop("`package` must be a single non-empty string.", call. = FALSE)
@@ -38,11 +46,16 @@ available_tutorials <- function(package = NULL) {
       package = character(0),
       name = character(0),
       title = character(0),
+      format = character(0),
       stringsAsFactors = FALSE
     ))
   }
   out <- do.call(rbind, rows)
   rownames(out) <- NULL
+  if (type != "all") {
+    out <- out[!is.na(out$format) & out$format == type, , drop = FALSE]
+    rownames(out) <- NULL
+  }
   out
 }
 
@@ -57,25 +70,41 @@ tutorials_in_package <- function(pkg) {
   if (length(dirs) == 0) {
     return(NULL)
   }
+  docs <- lapply(dirs, tutorial_doc)
   data.frame(
     package = pkg,
     name = fs::path_file(dirs),
-    title = vapply(dirs, tutorial_title, character(1), USE.NAMES = FALSE),
+    title = vapply(docs, tutorial_title, character(1), USE.NAMES = FALSE),
+    format = vapply(docs, tutorial_format, character(1), USE.NAMES = FALSE),
     stringsAsFactors = FALSE
   )
 }
 
-# The YAML `title:` of the first .qmd/.Rmd directly inside `dir`, or NA.
-tutorial_title <- function(dir) {
+# The first .qmd/.Rmd directly inside `dir` (.qmd takes precedence if a
+# tutorial somehow has both), or NA if it has neither.
+tutorial_doc <- function(dir) {
   doc <- fs::dir_ls(dir, glob = "*.qmd")
   if (length(doc) == 0) {
     doc <- fs::dir_ls(dir, glob = "*.Rmd")
   }
-  if (length(doc) == 0) {
+  if (length(doc) == 0) NA_character_ else as.character(doc[1])
+}
+
+# "quarto" or "rmarkdown" based on `doc`'s extension, or NA if `doc` is NA.
+tutorial_format <- function(doc) {
+  if (is.na(doc)) {
+    return(NA_character_)
+  }
+  if (identical(fs::path_ext(doc), "qmd")) "quarto" else "rmarkdown"
+}
+
+# The YAML `title:` of `doc`, or NA if `doc` is NA or has no YAML `title`.
+tutorial_title <- function(doc) {
+  if (is.na(doc)) {
     return(NA_character_)
   }
   front_matter <- tryCatch(
-    rmarkdown::yaml_front_matter(doc[1]),
+    rmarkdown::yaml_front_matter(doc),
     error = function(e) NULL
   )
   title <- front_matter$title

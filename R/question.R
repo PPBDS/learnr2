@@ -43,7 +43,9 @@ print.learnr2_answer <- function(x, ...) {
 #' questions, graded entirely in the reader's browser.
 #'
 #' @param text Question prompt.
-#' @param ... One or more [answer()] objects.
+#' @param ... One or more [answer()] objects. Optional for
+#'   `"reflection"`/`"reflection_editable"` questions (see `type`); required,
+#'   with at least one marked `correct`, for every other type.
 #' @param type Question type. `"auto"` (the default) picks `"single"` when
 #'   exactly one answer is marked `correct`, and `"multiple"` otherwise.
 #'   Other types:
@@ -52,10 +54,14 @@ print.learnr2_answer <- function(x, ...) {
 #'     the [answer()] text(s).
 #'   * `"reflection"` -- an ungraded free-response question. After
 #'     submitting, the reader sees the model answer (the `correct`
-#'     [answer()] text(s)) and their own response is locked.
+#'     [answer()] text(s)) and their own response is locked. If no `answer()`
+#'     is marked `correct` -- including passing none at all, e.g. for a
+#'     genuinely open-ended prompt like "how many minutes did this take?"
+#'     with no right answer to demonstrate -- nothing is revealed; the
+#'     reader's response is still saved and locked exactly the same.
 #'   * `"reflection_editable"` -- like `"reflection"`, but the reader's
-#'     response stays editable after the model answer is revealed, so they
-#'     can keep revising it.
+#'     response stays editable after submitting (whether or not a model
+#'     answer was revealed), so they can keep revising it.
 #' @param correct Message shown when the reader answers correctly. Unused
 #'   for `"reflection"`/`"reflection_editable"` questions.
 #' @param incorrect Message shown when the reader answers incorrectly. Unused
@@ -140,12 +146,10 @@ print.learnr2_answer <- function(x, ...) {
 #'   allow_retry = TRUE
 #' )
 #'
+#' # No answer() at all -- a genuinely open-ended prompt with nothing to
+#' # reveal after the reader submits.
 #' question(
 #'   "How many minutes, approximately, did this take?",
-#'   answer(
-#'     "There's no fixed correct answer here -- just enter your honest estimate.",
-#'     correct = TRUE
-#'   ),
 #'   type = "reflection_editable",
 #'   validate = "integer"
 #' )
@@ -177,16 +181,25 @@ question <- function(text,
   }
 
   answers <- list(...)
-  if (length(answers) == 0) {
-    stop("`question()` requires at least one `answer()`.", call. = FALSE)
-  }
   is_answer <- vapply(answers, inherits, logical(1), "learnr2_answer")
   if (!all(is_answer)) {
     stop("All elements of `...` must be created with `answer()`.", call. = FALSE)
   }
 
+  # Every other type needs a correct answer() to grade against; a
+  # reflection question isn't graded at all, so it's the one type allowed
+  # no answer()s, or none marked correct -- that's simply a reflection with
+  # no model answer to reveal after the reader submits (see quiz.js's
+  # buildReflectionQuestion(), which skips rendering the "Model answer:"
+  # box entirely in that case rather than showing it empty).
+  is_reflection_type <- type %in% c("reflection", "reflection_editable")
+
+  if (length(answers) == 0 && !is_reflection_type) {
+    stop("`question()` requires at least one `answer()`.", call. = FALSE)
+  }
+
   n_correct <- sum(vapply(answers, function(a) a$correct, logical(1)))
-  if (n_correct == 0) {
+  if (n_correct == 0 && !is_reflection_type) {
     stop("`question()` needs at least one correct `answer()`.", call. = FALSE)
   }
 
@@ -194,7 +207,6 @@ question <- function(text,
     type <- if (n_correct > 1) "multiple" else "single"
   }
   is_choice_type <- type %in% c("single", "multiple")
-  is_reflection_type <- type %in% c("reflection", "reflection_editable")
   is_free_text_type <- type %in% c("text", "reflection", "reflection_editable")
 
   payload <- list(

@@ -23,7 +23,9 @@ question(
 \arguments{
 \item{text}{Question prompt.}
 
-\item{...}{One or more \code{\link[=answer]{answer()}} objects.}
+\item{...}{One or more \code{\link[=answer]{answer()}} objects. Optional for
+\code{"reflection"}/\code{"reflection_editable"} questions (see \code{type}); required,
+with at least one marked \code{correct}, for every other type.}
 
 \item{type}{Question type. \code{"auto"} (the default) picks \code{"single"} when
 exactly one answer is marked \code{correct}, and \code{"multiple"} otherwise.
@@ -34,10 +36,14 @@ whitespace-collapsed, case-insensitive) the reader's response against
 the \code{\link[=answer]{answer()}} text(s).
 \item \code{"reflection"} -- an ungraded free-response question. After
 submitting, the reader sees the model answer (the \code{correct}
-\code{\link[=answer]{answer()}} text(s)) and their own response is locked.
+\code{\link[=answer]{answer()}} text(s)) and their own response is locked. If no
+\code{answer()} is marked \code{correct} -- including passing none at all, e.g.
+for a genuinely open-ended prompt like "how many minutes did this
+take?" with no right answer to demonstrate -- nothing is revealed; the
+reader's response is still saved and locked exactly the same.
 \item \code{"reflection_editable"} -- like \code{"reflection"}, but the reader's
-response stays editable after the model answer is revealed, so they
-can keep revising it.
+response stays editable after submitting (whether or not a model
+answer was revealed), so they can keep revising it.
 }}
 
 \item{correct}{Message shown when the reader answers correctly. Unused
@@ -139,12 +145,10 @@ question(
   allow_retry = TRUE
 )
 
+# No answer() at all -- a genuinely open-ended prompt with nothing to
+# reveal after the reader submits.
 question(
   "How many minutes, approximately, did this take?",
-  answer(
-    "There's no fixed correct answer here -- just enter your honest estimate.",
-    correct = TRUE
-  ),
   type = "reflection_editable",
   validate = "integer"
 )

@@ -156,11 +156,42 @@ test_that("validate rejects unknown values", {
   )
 })
 
-test_that("reflection types still require at least one correct answer", {
+test_that("non-reflection types still require at least one correct answer", {
   expect_error(
-    question("Reflect on this.", answer("not marked correct"), type = "reflection"),
+    question("2 + 2?", answer("4"), answer("5")),
     "at least one correct"
   )
+  expect_error(
+    question("Capital of France?", answer("Paris"), type = "text"),
+    "at least one correct"
+  )
+})
+
+test_that("reflection types allow no answer() marked correct -- no model answer to reveal", {
+  q <- question("Reflect on this.", answer("not marked correct"), type = "reflection")
+  expect_equal(q$payload$type, "reflection")
+  expect_length(q$payload$answers, 1)
+  expect_false(q$payload$answers[[1]]$correct)
+})
+
+test_that("reflection types allow no answer() at all -- a genuinely open-ended prompt", {
+  q <- question(
+    "How many minutes, approximately, did this take?",
+    type = "reflection_editable",
+    validate = "integer"
+  )
+  expect_equal(q$payload$type, "reflection_editable")
+  expect_length(q$payload$answers, 0)
+  expect_equal(q$payload$validate, "integer")
+
+  locked <- question("What surprised you?", type = "reflection")
+  expect_equal(locked$payload$type, "reflection")
+  expect_length(locked$payload$answers, 0)
+})
+
+test_that("non-reflection types still require at least one answer() at all", {
+  expect_error(question("Prompt?"), "at least one")
+  expect_error(question("Prompt?", type = "text"), "at least one")
 })
 
 test_that("question ids are deterministic slugs of the text", {

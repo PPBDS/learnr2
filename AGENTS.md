@@ -101,11 +101,6 @@ at the top (right after the frontmatter/intro prose), and at the bottom:
 learnr2::question(
   "How many minutes, approximately, did it take you to complete this
   tutorial? For example, an hour and a half would be 90 minutes.",
-  learnr2::answer(
-    "There's no fixed correct answer here --- just enter your honest
-    estimate, as a number of minutes.",
-    correct = TRUE
-  ),
   type = "reflection_editable",
   validate = "integer"
 )
@@ -122,7 +117,13 @@ here -- `learnr2::question()` has no dedicated numeric type. `validate =
 "integer"` is the closest match: it blocks Submit client-side unless the
 typed response is a whole number, without grading it against one specific
 value, since any honest minute count is acceptable. This is a deliberate,
-settled choice, not a gap to keep re-litigating per tutorial.)
+settled choice, not a gap to keep re-litigating per tutorial. No `answer()`
+is passed at all -- there genuinely is no correct number of minutes, and
+`question()` no longer requires one for `"reflection"`/`"reflection_editable"`
+types; see [question()]'s docs. An earlier version of this snippet worked
+around the old requirement with a throwaway `answer(..., correct = TRUE)`
+whose "model answer" text just restated that there was no correct answer --
+that workaround is gone now that it's unnecessary.)
 
 `inst/templates/tutorial.qmd` -- the file `create_tutorial()` scaffolds --
 already includes both blocks (with `{{name}}` filled in automatically for
@@ -417,3 +418,66 @@ commit the render artifacts (`_extensions/`, `*.html`, `*_files/`,
 `.quarto/`, `*.knit.md`) alongside the tutorial's `.qmd` -- `run_tutorial()`
 and `create_tutorial()` add the extension and render on demand, and none of
 the bundled tutorials in this repo commit those generated files.
+
+## Publishing tutorials via GitHub Pages
+
+Every bundled tutorial is also published as static HTML, so students can
+open one from a link with nothing installed at all -- no R, no Quarto, not
+even this package. `.github/workflows/tutorials.yaml` does this on every
+push that touches `inst/tutorials/**`, `inst/extdata/**`, `R/**`, or the
+render script itself:
+
+1. `Rscript tools/render_tutorials_for_pages.R` renders every tutorial
+   `available_tutorials(package = "learnr2")` finds (via `quarto::quarto_render()`,
+   same as `run_tutorial()`) into `_site/tutorials/<name>/<name>.html`, plus a
+   generated `_site/tutorials/index.html` linking all of them.
+2. `JamesIves/github-pages-deploy-action` pushes `_site/tutorials/` to the
+   `tutorials/` path of the `gh-pages` branch -- the same branch and Pages
+   site `pkgdown.yaml` already publishes the package's own documentation to
+   (`https://ppbds.github.io/learnr2/`), so a tutorial ends up at
+   `https://ppbds.github.io/learnr2/tutorials/<name>/<name>.html`.
+
+Nothing server-side is involved at either step: rendering happens once in
+CI, not per-reader, and the page itself still runs entirely in the reader's
+browser via WebR exactly as described throughout this file -- GitHub Pages
+is just a static file host for the already-self-contained HTML.
+
+### Automated smoke test after every deploy
+
+A render succeeding doesn't prove the *live* page actually works for a
+reader -- GitHub Pages could still end up serving something stale, broken,
+or missing the `quarto-live` extension. `tutorials.yaml`'s second job,
+`smoke-test`, checks this automatically after every deploy (`needs:
+tutorials`) instead of relying on someone remembering to click through a
+tutorial by hand after a push:
+
+1. Polls the live `hello-learnr2` URL (a `curl` retry loop, since GitHub
+   Pages/its CDN can lag a few minutes behind a push) until it actually
+   serves fresh content, with a cache-busting query string as a best-effort
+   guard against checking a stale cached copy.
+2. Runs `tests/js/deployed-smoke.spec.js` (via `tests/js/playwright.smoke.config.js`,
+   a separate config from the rest of `tests/js/` since this targets a real
+   URL with no local dev server to manage) against that live page in a real
+   browser: fills in known `student_info()` values and answers a couple of
+   `question()`s with known answers, clicks the download button, and asserts
+   those exact known values -- and nothing else -- come back out of the
+   downloaded JSON. This is exactly the manual "fill in a couple of answers
+   at random, download, confirm they're in the file" check, just automated
+   and run on every push instead of by hand occasionally.
+3. Deliberately only exercises `question()`/`student_info()`/
+   `download_answers_button()` -- plain JS, not `{webr}` -- so it can't flake
+   on WebR's WebAssembly runtime being slow to boot in CI, the same
+   limitation noted earlier in this file for rendering checks in a
+   restricted-network sandbox.
+
+Run it locally against any deployed (or `run_tutorial()`-served) URL with:
+
+```sh
+cd tests/js
+SMOKE_URL="https://ppbds.github.io/learnr2/tutorials/hello-learnr2/hello-learnr2.html" npm run test:smoke
+```
+
+Not yet verified against a real push to the actual repo (this sandbox can't
+trigger or observe a live GitHub Actions run) -- worth watching the first
+real run of the `smoke-test` job after this lands, both to confirm the wait
+loop's timing is long enough and that the live selectors still match.

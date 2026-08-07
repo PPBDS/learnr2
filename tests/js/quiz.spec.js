@@ -156,6 +156,24 @@ test.describe("reflection questions", () => {
     await page.reload();
     await expect(page.locator(".learnr2-submit")).toHaveText("Edit Answer");
   });
+
+  test("with no answer() marked correct: submitting saves the response but reveals no model answer box", async ({
+    page
+  }) => {
+    await page.goto("/reflection-no-model-answer");
+    await page.locator("textarea").fill("90");
+    await page.locator(".learnr2-submit").click();
+
+    // Still behaves like a normal reflection_editable submission otherwise --
+    // just nothing to reveal.
+    await expect(page.locator(".learnr2-model-answer")).toBeHidden();
+    await expect(page.locator(".learnr2-model-answer")).toBeEmpty();
+    await expect(page.locator(".learnr2-submit")).toHaveText("Edit Answer");
+
+    await page.reload();
+    await expect(page.locator("textarea")).toHaveValue("90");
+    await expect(page.locator(".learnr2-model-answer")).toBeHidden();
+  });
 });
 
 test.describe("validate = \"integer\"", () => {

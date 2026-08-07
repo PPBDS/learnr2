@@ -73,6 +73,23 @@ Big Picture: We hope to replace both learnr and tutorial.helpers with learnr2. T
 
 2) available_tutorials() should take a `type` argument which allows for three possible values: "learnr", "learnnr2" and "all". Or "rmarkdown", "quarto" or "all". I think I like the latter.
 
+    Done. Added `type = "all"` (also accepts "quarto" or "rmarkdown"),
+    validated with a clear error on anything else. Detection is by each
+    tutorial's own top-level document extension -- `.qmd` scans as
+    "quarto", `.Rmd` as "rmarkdown" -- the same lookup tutorial_title()
+    already did, factored out into a shared tutorial_doc() helper so title
+    and format come from the same file instead of two separate directory
+    scans. Also added a new `format` column to the returned data frame
+    (present regardless of `type`, not just when filtering), since a
+    reader of the full "all" listing has no other way to tell which
+    tutorials are which. Updated available_tutorials.Rd and
+    tests/testthat/test-tutorials.R by hand (R isn't available in this
+    sandbox to run devtools::document()/devtools::test() -- worth an
+    actual run to confirm the regenerated .Rd matches and the new tests
+    pass). run_tutorial() and tools/render_tutorials_for_pages.R were
+    checked and need no changes: both only read the `name`/`title`
+    columns and don't pass `type`, so they keep the old "all" behavior.
+
 3) Always have a "Start Over" button or option.
 
     Done. Every page now gets a "Start Over" button, appended
@@ -240,7 +257,59 @@ Big Picture: We hope to replace both learnr and tutorial.helpers with learnr2. T
 
 9) Your approach is to running tutorials vis GitHub Pages is excellent! Make sure to document it somewhere. Also, testing that this is working after a new push is important? How can we do this quickly? Maybe fill in a couple of answers at random and then click the download answers button ...  As long as the answers we gave --- so we need to keep track of them! --- can be found in the downloaded answer file, then it passes the test.
 
+    Done, and automated with GitHub Actions rather than left as a manual
+    step -- asked directly, and yes, this is exactly the kind of thing CI is
+    for. Documented the existing GitHub Pages approach (tutorials.yaml +
+    tools/render_tutorials_for_pages.R, previously undocumented anywhere) in
+    a new "Publishing tutorials via GitHub Pages" section in AGENTS.md.
+
+    For the test itself: added a `smoke-test` job to tutorials.yaml
+    (`needs: tutorials`, so it only runs after a real deploy), which waits
+    for the live hello-learnr2 URL to actually come up (a curl retry loop --
+    GitHub Pages/its CDN can lag a push by a couple of minutes -- with a
+    cache-busting query string as a best-effort guard against checking a
+    stale cached copy), then runs a new Playwright spec
+    (tests/js/deployed-smoke.spec.js, via a new tests/js/playwright.smoke.config.js
+    kept separate from the rest of tests/js/ since this one targets a real
+    URL rather than the local fixture server) against that live page in a
+    real browser: fills in known student_info() values and answers two
+    question()s with known answers, clicks download, and asserts those exact
+    known values (and only those) come back out of the downloaded JSON. This
+    is precisely the "fill in a couple of answers, keep track of them,
+    confirm they're in the download" idea from this item, just running on
+    every push automatically instead of by hand. It's also runnable locally
+    against any URL via `SMOKE_URL=<url> npm run test:smoke` in tests/js/.
+
+    Deliberately scoped to question()/student_info()/download_answers_button()
+    only, not {webr} exercises -- keeps it immune to WebR's WASM boot time,
+    the same limitation already noted elsewhere for local rendering checks.
+
+    Not yet verified against a real push to the actual repo -- this sandbox
+    has no way to trigger or observe a live GitHub Actions run. Worth
+    watching the first real run of the new smoke-test job once this lands,
+    to confirm the wait loop's timing is enough and the live selectors still
+    match (they're plain CSS class/id selectors already exercised by the
+    existing local Playwright suite against the same real quiz.js, so this
+    is a low-risk gap, but genuinely unverified end-to-end).
+
 10) Anything useful in CLAUDE.md should be moved to AGENTS.md, with CLAUDE.md then deleted, and removed from .Rbuildignore.
+
+    Done. Compared the two files line by line first: CLAUDE.md turned out
+    to be exactly the pre-AGENTS.md snapshot item 13 already flagged as
+    "still not reconciled" -- every section it had was already present in
+    AGENTS.md, in a strictly newer form (e.g. its boilerplate snippets
+    predate item 6's `#| label:` convention, and its "no Start Over exists"
+    claim predates item 3 actually building one -- AGENTS.md's version of
+    that same bullet already documents linking to the real button instead).
+    So there was nothing left to move; CLAUDE.md contributed no content
+    AGENTS.md didn't already have.
+
+    Deleted CLAUDE.md (`git rm`), removed its line from .Rbuildignore, and
+    also removed its now-dead entry from .gitignore (not explicitly asked,
+    but pointless to leave a gitignore rule for a file that no longer
+    exists). Left .gitignore's separate `AGENTS.md` line alone -- out of
+    scope here, and harmless as-is since AGENTS.md is already tracked (a
+    gitignore rule has no effect on a file git already tracks).
 
 11) Left over topic to investigate wrt using AGENTS.md to create a new tutorial:
 

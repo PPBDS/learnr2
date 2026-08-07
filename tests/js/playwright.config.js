@@ -3,6 +3,10 @@ const { defineConfig, devices } = require("@playwright/test");
 
 module.exports = defineConfig({
   testDir: ".",
+  // deployed-smoke.spec.js targets a real deployed URL via
+  // playwright.smoke.config.js instead -- it has no use for (and would
+  // needlessly wait on) the local webServer below.
+  testIgnore: "deployed-smoke.spec.js",
   timeout: 15000,
   fullyParallel: true,
   // Keep this modest: many concurrent Chromium instances hitting the one

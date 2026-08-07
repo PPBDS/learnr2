@@ -30,6 +30,27 @@ test_that("available_tutorials() validates and errors on an unknown package", {
   expect_error(available_tutorials(package = "not-a-real-package-xyz"), "No package found")
 })
 
+test_that("available_tutorials() validates type", {
+  expect_error(available_tutorials(type = "learnr"), '"all", "rmarkdown", or "quarto"')
+})
+
+test_that("available_tutorials() reports format and filters by type", {
+  tutorials <- available_tutorials(package = "learnr2")
+  expect_true(all(c("package", "name", "title", "format") %in% names(tutorials)))
+  expect_identical(
+    tutorials$format[tutorials$name == "hello-learnr2"],
+    "quarto"
+  )
+
+  quarto_only <- available_tutorials(package = "learnr2", type = "quarto")
+  expect_true("hello-learnr2" %in% quarto_only$name)
+  expect_true(all(quarto_only$format == "quarto"))
+
+  rmarkdown_only <- available_tutorials(package = "learnr2", type = "rmarkdown")
+  expect_false("hello-learnr2" %in% rmarkdown_only$name)
+  expect_true(all(rmarkdown_only$format == "rmarkdown"))
+})
+
 test_that("the hello-learnr2 tutorial demonstrates quiz questions", {
   qmd <- system.file(
     "tutorials", "hello-learnr2", "hello-learnr2.qmd",

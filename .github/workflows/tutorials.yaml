@@ -52,3 +52,57 @@ jobs:
           branch: gh-pages
           folder: _site/tutorials
           target-folder: tutorials
+
+  # Confirms the tutorials that were just deployed actually work, from a
+  # reader's point of view -- catches "the render succeeded but the live
+  # page is broken/stale/missing the extension" in a way the render step
+  # above can't, since render_tutorials_for_pages.R only proves the HTML
+  # was produced, not that GitHub Pages is actually serving a working copy
+  # of it. See AGENTS.md's "Publishing tutorials via GitHub Pages" section.
+  smoke-test:
+    needs: tutorials
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Wait for GitHub Pages to serve the fresh deploy
+        run: |
+          url="https://ppbds.github.io/learnr2/tutorials/hello-learnr2/hello-learnr2.html?cachebust=${{ github.sha }}"
+          for i in $(seq 1 20); do
+            if curl -fsS "$url" | grep -q "Hello, learnr2"; then
+              echo "Live at $url"
+              exit 0
+            fi
+            echo "Not live yet (attempt $i/20), waiting 15s..."
+            sleep 15
+          done
+          echo "::error::$url never came up with the expected content after 5 minutes."
+          exit 1
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: tests/js/package-lock.json
+
+      - name: Install dependencies
+        working-directory: tests/js
+        run: npm ci
+
+      - name: Install Playwright's Chromium
+        working-directory: tests/js
+        run: npx playwright install --with-deps chromium
+
+      - name: Verify known answers survive a real download from the live tutorial
+        working-directory: tests/js
+        env:
+          SMOKE_URL: "https://ppbds.github.io/learnr2/tutorials/hello-learnr2/hello-learnr2.html?cachebust=${{ github.sha }}"
+        run: npm run test:smoke
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: smoke-test-playwright-report
+          path: tests/js/playwright-report/
+          retention-days: 7

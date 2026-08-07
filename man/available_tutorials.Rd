@@ -4,16 +4,21 @@
 \alias{available_tutorials}
 \title{List tutorials bundled with learnr2 (or any installed package)}
 \usage{
-available_tutorials(package = NULL)
+available_tutorials(package = NULL, type = "all")
 }
 \arguments{
 \item{package}{Name of a single package to scan. Defaults to \code{NULL},
 which scans every installed package.}
+
+\item{type}{Which authoring format to include: \code{"quarto"} (tutorials
+whose top-level document is a \code{.qmd}), \code{"rmarkdown"} (a \code{.Rmd}), or
+\code{"all"} (the default) for both.}
 }
 \value{
 A data frame with one row per tutorial and columns \code{package},
-\code{name}, and \code{title} (\code{NA} if the tutorial's \code{.qmd}/\code{.Rmd} has no YAML
-\code{title}). \code{name} can be passed to \code{\link[=run_tutorial]{run_tutorial()}}.
+\code{name}, \code{title} (\code{NA} if the tutorial's \code{.qmd}/\code{.Rmd} has no YAML
+\code{title}), and \code{format} (\code{"quarto"} or \code{"rmarkdown"}). \code{name} can be
+passed to \code{\link[=run_tutorial]{run_tutorial()}}.
 }
 \description{
 Scans one package -- or, by default, every package installed -- for a
@@ -27,4 +32,5 @@ tutorials from separately-installed content packages (in the style of
 # the same name; this guarantees learnr2's version is used even if learnr is
 # also attached and masks it on the search path.
 learnr2::available_tutorials(package = "learnr2")
+learnr2::available_tutorials(package = "learnr2", type = "quarto")
 }
