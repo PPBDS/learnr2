@@ -6,12 +6,17 @@ optional, by default. Unlike
 [`question()`](https://ppbds.github.io/learnr2/reference/question.md),
 nothing here is graded and there is no model answer to reveal – it is
 auto-saved to the browser's `localStorage` as the reader types and
-restored on their next visit, the same as every other field here. An
-"Edit" button, matching the one on every
+restored on their next visit, the same as every other field here. A
+confirmation button, matching the one on every
 [`question()`](https://ppbds.github.io/learnr2/reference/question.md) in
-style, gives the reader an explicit way to confirm their entry and see
-the required fields checked right away, instead of only finding out when
-they later try to download. Pair with
+both style and behavior, gives the reader an explicit way to confirm
+their entry and see the required fields checked right away, instead of
+only finding out when they later try to download: it reads "Submit"
+until they successfully do, at which point it switches to "Edit" (like a
+`"reflection_editable"`
+[`question()`](https://ppbds.github.io/learnr2/reference/question.md))
+since any further click is revising an already-confirmed entry, not
+submitting for the first time. Pair with
 [`download_answers_button()`](https://ppbds.github.io/learnr2/reference/download_answers_button.md)
 so a reader can turn their work in.
 
@@ -23,7 +28,8 @@ student_info(
     "ID (if requested by your instructor):"),
   required = intersect(c("name", "email"), names(fields)),
   id = "student-info",
-  submit_button = "Edit"
+  submit_button = "Submit",
+  edit_button = "Edit"
 )
 ```
 
@@ -55,7 +61,15 @@ student_info(
 
 - submit_button:
 
-  Confirmation button label.
+  Button label shown before the reader has successfully confirmed their
+  entry.
+
+- edit_button:
+
+  Button label shown instead of `submit_button` from then on – mirrors
+  [`question()`](https://ppbds.github.io/learnr2/reference/question.md)'s
+  `edit_button` for a `"reflection_editable"` question exactly,
+  including persisting across a reload.
 
 ## Value
 

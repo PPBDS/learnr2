@@ -101,9 +101,14 @@ question(
 - allow_image:
 
   For `"reflection"`/`"reflection_editable"` questions, let the reader
-  paste a PNG image (e.g. a screenshot) from their clipboard, alongside
+  paste an image (e.g. a screenshot) from their clipboard, alongside
   their typed response – not a file upload, just Ctrl+V/Cmd+V into the
   question. Defaults to `FALSE`. Ignored for other question types.
+  Accepts PNG, JPEG, GIF, WebP, or BMP (whatever the reader's platform
+  actually put on the clipboard – this varies, and isn't guaranteed to
+  be PNG just because they took a screenshot) and re-encodes it as PNG
+  before storing it, so what ends up saved is always PNG regardless of
+  the source format. Capped at 2MB.
 
 - validate:
 
@@ -141,6 +146,21 @@ by browser design rather than anything learnr2 controls:
 private/incognito windows (their storage is wiped when the window
 closes) and the exact page URL changing – a tutorial re-rendered to a
 different path, or opened from a different server/port, starts fresh.
+
+Every page also gets a "Start Over" button, appended automatically to
+the bottom of Quarto's TOC sidebar (nothing to opt into – it's added by
+the same JavaScript that renders
+`question()`/[`student_info()`](https://ppbds.github.io/learnr2/reference/student_info.md),
+as long as the tutorial has a sidebar to put it in, i.e. `toc: true`).
+Clicking it, after a confirmation prompt, clears every `question()`/
+[`student_info()`](https://ppbds.github.io/learnr2/reference/student_info.md)
+answer *and* every `{webr}` exercise's persisted code (`persist: true`)
+for this page on this device, then reloads – a clean slate, without
+needing to know that both live under different `localStorage` key
+prefixes. It deliberately leaves alone the random per-device id
+[`download_answers_button()`](https://ppbds.github.io/learnr2/reference/download_answers_button.md)
+embeds in a submission's metadata, since that identifies this browser
+across every tutorial and visit, not this one tutorial's progress.
 
 ## Examples
 
