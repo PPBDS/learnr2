@@ -5,29 +5,13 @@ the browser's localStorage as the reader worked through the tutorial
 – into a single readable JSON file and downloads it. This happens
 entirely in the reader's browser; there is no server to submit to, so
 this is meant for a reader to save and turn in themselves (e.g. attach
-to an email or upload to an LMS).
-The download's exercises array also includes every {webr} code
-exercise's current code, under the same condition quarto-live itself
-requires to keep a record of it at all: #| persist: true (already the
-convention every bundled tutorial follows). An exercise without
-persist: true has no saved copy of the reader's code anywhere –
-learnr2 included – so it can't appear in the download; this is a
-structural limit of quarto-live's own editor, not something
-download_answers_button() chooses to skip."><meta property="og:description" content="Adds a button that, when clicked, gathers every question() and
+to an email or upload to an LMS)."><meta property="og:description" content="Adds a button that, when clicked, gathers every question() and
 student_info() answer currently on the page – each already saved to
 the browser's localStorage as the reader worked through the tutorial
 – into a single readable JSON file and downloads it. This happens
 entirely in the reader's browser; there is no server to submit to, so
 this is meant for a reader to save and turn in themselves (e.g. attach
-to an email or upload to an LMS).
-The download's exercises array also includes every {webr} code
-exercise's current code, under the same condition quarto-live itself
-requires to keep a record of it at all: #| persist: true (already the
-convention every bundled tutorial follows). An exercise without
-persist: true has no saved copy of the reader's code anywhere –
-learnr2 included – so it can't appear in the download; this is a
-structural limit of quarto-live's own editor, not something
-download_answers_button() chooses to skip."></head><body>
+to an email or upload to an LMS)."></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -69,14 +53,6 @@ the browser's <code>localStorage</code> as the reader worked through the tutoria
 entirely in the reader's browser; there is no server to submit to, so
 this is meant for a reader to save and turn in themselves (e.g. attach
 to an email or upload to an LMS).</p>
-<p>The download's <code>exercises</code> array also includes every <code>{webr}</code> code
-exercise's current code, under the same condition quarto-live itself
-requires to keep a record of it at all: <code>#| persist: true</code> (already the
-convention every bundled tutorial follows). An exercise without
-<code>persist: true</code> has no saved copy of the reader's code anywhere –
-<code>learnr2</code> included – so it can't appear in the download; this is a
-structural limit of quarto-live's own editor, not something
-<code>download_answers_button()</code> chooses to skip.</p>
     </div>
 
     <div class="section level2">
@@ -107,7 +83,15 @@ HTML button.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>The download includes a <code>metadata</code> block (timestamp, timezone, browser
+    <p>The download's <code>exercises</code> array also includes every <code>{webr}</code> code
+exercise's current code, under the same condition quarto-live itself
+requires to keep a record of it at all: <code>#| persist: true</code> (already the
+convention every bundled tutorial follows). An exercise without
+<code>persist: true</code> has no saved copy of the reader's code anywhere –
+<code>learnr2</code> included – so it can't appear in the download; this is a
+structural limit of quarto-live's own editor, not something
+<code>download_answers_button()</code> chooses to skip.</p>
+<p>The download includes a <code>metadata</code> block (timestamp, timezone, browser
 info, and a random per-device id persisted across the reader's visits)
 and a SHA-256 <code>integrity</code> hash over the content. Check a downloaded file
 with <code><a href="verify_submission.html">verify_submission()</a></code>. This is tamper-<em>evidence</em>, not proof of

@@ -11,15 +11,6 @@ reader's browser; there is no server to submit to, so this is meant for
 a reader to save and turn in themselves (e.g. attach to an email or
 upload to an LMS).
 
-The download's `exercises` array also includes every `{webr}` code
-exercise's current code, under the same condition quarto-live itself
-requires to keep a record of it at all: `#| persist: true` (already the
-convention every bundled tutorial follows). An exercise without
-`persist: true` has no saved copy of the reader's code anywhere –
-`learnr2` included – so it can't appear in the download; this is a
-structural limit of quarto-live's own editor, not something
-`download_answers_button()` chooses to skip.
-
 ## Usage
 
 ``` r
@@ -46,6 +37,15 @@ A `learnr2_download_button` object, printed as an interactive HTML
 button.
 
 ## Details
+
+The download's `exercises` array also includes every `{webr}` code
+exercise's current code, under the same condition quarto-live itself
+requires to keep a record of it at all: `#| persist: true` (already the
+convention every bundled tutorial follows). An exercise without
+`persist: true` has no saved copy of the reader's code anywhere –
+`learnr2` included – so it can't appear in the download; this is a
+structural limit of quarto-live's own editor, not something
+`download_answers_button()` chooses to skip.
 
 The download includes a `metadata` block (timestamp, timezone, browser
 info, and a random per-device id persisted across the reader's visits)

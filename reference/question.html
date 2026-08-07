@@ -87,10 +87,10 @@ whitespace-collapsed, case-insensitive) the reader's response against
 the <code><a href="answer.html">answer()</a></code> text(s).</p></li>
 <li><p><code>"reflection"</code> – an ungraded free-response question. After
 submitting, the reader sees the model answer (the <code>correct</code>
-<code><a href="answer.html">answer()</a></code> text(s)) and their own response is locked. If no
-<code><a href="answer.html">answer()</a></code> is marked <code>correct</code> – including passing none at all, e.g.
-for a genuinely open-ended prompt like "how many minutes did this
-take?" with no right answer to demonstrate – nothing is revealed; the
+<code><a href="answer.html">answer()</a></code> text(s)) and their own response is locked. If no <code><a href="answer.html">answer()</a></code>
+is marked <code>correct</code> – including passing none at all, e.g. for a
+genuinely open-ended prompt like "how many minutes did this take?"
+with no right answer to demonstrate – nothing is revealed; the
 reader's response is still saved and locked exactly the same.</p></li>
 <li><p><code>"reflection_editable"</code> – like <code>"reflection"</code>, but the reader's
 response stays editable after submitting (whether or not a model
@@ -146,9 +146,9 @@ alongside their typed response – not a file upload, just Ctrl+V/Cmd+V
 into the question. Defaults to <code>FALSE</code>. Ignored for other question
 types. Accepts PNG, JPEG, GIF, WebP, or BMP (whatever the reader's
 platform actually put on the clipboard – this varies, and isn't
-guaranteed to be PNG just because they took a screenshot) and re-encodes
-it as PNG before storing it, so what ends up saved is always PNG
-regardless of the source format. Capped at 2MB.</p></dd>
+guaranteed to be PNG just because they took a screenshot) and
+re-encodes it as PNG before storing it, so what ends up saved is
+always PNG regardless of the source format. Capped at 2MB.</p></dd>
 
 
 <dt id="arg-validate">validate<a class="anchor" aria-label="anchor" href="#arg-validate"></a></dt>
