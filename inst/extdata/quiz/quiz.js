@@ -264,6 +264,35 @@
     }
   }
 
+  // Re-encodes any browser-decodable raster image `file` as a PNG data URL,
+  // via an off-DOM <img>/<canvas> round-trip -- so what's stored is always
+  // PNG, regardless of which raster type the clipboard actually handed us.
+  // (Also, incidentally, strips whatever metadata the original carried,
+  // e.g. EXIF orientation/GPS from a photo -- not something readers should
+  // need to think about for a plot screenshot.)
+  function convertToPngDataUrl(file, onSuccess, onError) {
+    var reader = new FileReader();
+    reader.onload = function () {
+      var img = new Image();
+      img.onload = function () {
+        var canvas = document.createElement("canvas");
+        canvas.width = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+        var ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0);
+        try {
+          onSuccess(canvas.toDataURL("image/png"));
+        } catch (e) {
+          onError();
+        }
+      };
+      img.onerror = onError;
+      img.src = reader.result;
+    };
+    reader.onerror = onError;
+    reader.readAsDataURL(file);
+  }
+
   // A box showing the pasted image, plus a *secondary* paste target of its
   // own -- but the primary way readers paste is directly into the response
   // textarea (see wireImagePaste below). A <textarea> reliably fires native
@@ -273,15 +302,16 @@
   // instead and see nothing happen. Handling paste on the textarea too
   // means it works wherever the reader's cursor actually is.
   //
-  // Only image/png clipboard items are accepted, capped at MAX_BYTES so a
-  // handful of screenshots can't blow past the browser's localStorage quota
-  // (pasted images are persisted as base64 data URLs, like everything else).
+  // Accepted clipboard image types and the MAX_BYTES cap are documented
+  // just above handlePaste(), below -- a handful of screenshots shouldn't
+  // blow past the browser's localStorage quota (pasted images are
+  // persisted as base64 data URLs, like everything else).
   function buildImagePasteArea() {
     var MAX_BYTES = 2 * 1024 * 1024;
     var wrapper = el("div", { class: "learnr2-image-paste", tabindex: "0" });
     var placeholder = el("div", {
       class: "learnr2-image-paste-placeholder",
-      text: "Paste a screenshot (PNG) with Ctrl+V (or Cmd+V) into the text box " +
+      text: "Paste a screenshot with Ctrl+V (or Cmd+V) into the text box " +
         "above, or click here and paste it directly."
     });
     var preview = el("img", { class: "learnr2-image-paste-preview d-none" });
@@ -323,6 +353,28 @@
       remove.classList.add("d-none");
     }
 
+    // Which raster types get accepted: verified (MDN, web.dev) that only
+    // the *newer* Async Clipboard API's write() path is documented as
+    // PNG-only for images. This code uses the older `paste`-event
+    // clipboardData.items path instead (works without the permission
+    // prompt the async API needs), which has no such documented
+    // guarantee -- and a real OS-native screenshot's clipboard format is
+    // platform-dependent (this could not be verified end-to-end against
+    // real macOS/Windows/ChromeOS screenshot tools from this sandbox, only
+    // simulated). Rather than gamble on "screenshots are always PNG" and
+    // reject anything else, accept every raster type every mainstream
+    // browser can reliably decode via <img>/canvas, and normalize to PNG
+    // ourselves in convertToPngDataUrl() below -- so what's actually
+    // stored and submitted is always PNG regardless of what the reader's
+    // platform put on the clipboard. Deliberately excludes image/svg+xml
+    // (vector markup, not a raster screenshot, and a different security
+    // surface to feed into <img>) and image/tiff (real OS clipboards can
+    // expose this, notably on macOS, but mainstream browsers other than
+    // Safari generally don't decode it via <img> either, so accepting it
+    // would just trade one confusing failure for another -- flagged as an
+    // open gap rather than papered over).
+    var ACCEPTED_IMAGE_TYPES = /^image\/(png|jpeg|gif|webp|bmp)$/;
+
     // `silent`: when handling paste on the textarea (which is also used for
     // ordinary typed/pasted text), a clipboard paste with no image should
     // just fall through to the browser's normal text-paste behavior --
@@ -335,14 +387,14 @@
       var items = (event.clipboardData && event.clipboardData.items) || [];
       var imageItem = null;
       for (var i = 0; i < items.length; i++) {
-        if (items[i].type === "image/png") {
+        if (ACCEPTED_IMAGE_TYPES.test(items[i].type)) {
           imageItem = items[i];
           break;
         }
       }
       if (!imageItem) {
         if (!silent) {
-          setError("Please paste a PNG image (copy a screenshot, then press Ctrl+V here).");
+          setError("Please paste an image (copy a screenshot, then press Ctrl+V here).");
         }
         return;
       }
@@ -358,14 +410,15 @@
         return;
       }
 
-      var reader = new FileReader();
-      reader.onload = function () {
-        setImage(reader.result);
-      };
-      reader.onerror = function () {
-        setError("Could not read the pasted image. Please try again.");
-      };
-      reader.readAsDataURL(file);
+      convertToPngDataUrl(
+        file,
+        function (pngDataUrl) {
+          setImage(pngDataUrl);
+        },
+        function () {
+          setError("Could not read the pasted image. Please try again.");
+        }
+      );
     }
 
     wrapper.addEventListener("paste", function (event) {
@@ -515,12 +568,19 @@
     var inputs = {};
     var validators = [];
     var saved = loadState(data) || {};
+    // Mirrors question()'s reflection_editable handling exactly: starts as
+    // "Submit", switches to "Edit" the moment the reader successfully
+    // confirms a fully valid entry, and stays that way (including across a
+    // reload) since any further click is revising an already-confirmed
+    // entry, not submitting for the first time.
+    var hasSubmitted = !!saved.submitted;
 
     function save() {
       var values = {};
       Object.keys(inputs).forEach(function (key) {
         values[key] = inputs[key].value;
       });
+      values.submitted = hasSubmitted;
       saveState(data, values);
     }
     var debouncedSave = debounce(save, 400);
@@ -567,12 +627,19 @@
     });
 
     var feedback = el("div", { class: "learnr2-feedback d-none" });
-    var submit = el("button", { type: "button", class: "learnr2-submit", text: data.submitLabel });
+    var submit = el(
+      "button",
+      { type: "button", class: "learnr2-submit", text: hasSubmitted ? data.editLabel : data.submitLabel }
+    );
 
     submit.addEventListener("click", function () {
-      save();
       var allValid = validators.map(function (validate) { return validate(); })
         .every(Boolean);
+      if (allValid) {
+        hasSubmitted = true;
+        submit.textContent = data.editLabel;
+      }
+      save();
       feedback.className = "learnr2-feedback " +
         (allValid ? "learnr2-feedback-correct" : "learnr2-feedback-incorrect");
       feedback.textContent = allValid ?
@@ -695,6 +762,55 @@
   // file afterward (e.g. changing a wrong answer to a right one before
   // turning it in) -- since that invalidates the hash. See
   // `learnr2::verify_submission()` on the R side to check a downloaded file.
+  // {webr} exercises are entirely quarto-live's own markup -- learnr2 adds
+  // no data-learnr2-* attributes to them the way it does for its own
+  // question()/student_info() widgets, so there's no learnr2-side registry
+  // of "what exercises exist on this page" to iterate. Discover them from
+  // quarto-live's own static markup instead: every {webr} cell embeds a
+  // `<script type="webr-<block-id>-contents">` tag holding a base64-encoded
+  // JSON blob of its starter code and chunk options (`{attr, code}`,
+  // confirmed by reading quarto-live's own webr-exercise.ojs template and
+  // live-runtime.js) -- present in the static HTML regardless of whether
+  // WebR has finished booting, unlike anything that depends on the live
+  // editor having initialized.
+  //
+  // Only cells with `#| exercise: <label>` in their chunk options (not
+  // every {webr} cell -- plain demo/non-editable cells have no `exercise`
+  // attr and are skipped) and `#| persist: true` can be captured at all:
+  // quarto-live's own editor only ever writes the reader's current code to
+  // `localStorage` when `persist` is enabled (see its `WebRExerciseEditor`
+  // constructor/`onInput` handler) -- there is no other record of it
+  // anywhere, live-DOM or otherwise, for a non-persisted cell. The key is
+  // `editor-${location.href}#${id}`, where `id` defaults to the script
+  // tag's own `type` (e.g. "webr-4-contents") -- *not* the `exercise:`
+  // label -- unless a chunk sets its own `#| id:` option to override it.
+  // The stored value is the plain code string itself, not JSON.
+  function collectExerciseAnswers() {
+    var exercises = [];
+    document
+      .querySelectorAll('script[type^="webr-"][type$="-contents"]')
+      .forEach(function (scriptEl) {
+        var block;
+        try {
+          block = decodeBase64Json(scriptEl.textContent);
+        } catch (e) {
+          return;
+        }
+        var attr = block.attr || {};
+        if (!attr.exercise || !attr.persist) {
+          return;
+        }
+        var storageKey = "editor-" + window.location.href + "#" + (attr.id || scriptEl.type);
+        var code = window.localStorage.getItem(storageKey);
+        exercises.push({
+          id: attr.exercise,
+          attempted: code !== null,
+          yourCode: code
+        });
+      });
+    return exercises;
+  }
+
   async function collectAnswers() {
     // Live DOM values, not localStorage: a field's debounced auto-save may
     // not have fired yet if the reader is still focused in it when they
@@ -731,6 +847,7 @@
       downloadedAt: new Date().toISOString(),
       info: info,
       answers: answers,
+      exercises: collectExerciseAnswers(),
       metadata: captureMetadata()
     };
 
@@ -817,6 +934,52 @@
     node.setAttribute("data-learnr2-initialized", "true");
   }
 
+  // ---- Start Over (entire tutorial) ------------------------------------
+  // Clears every bit of progress this page has saved -- both learnr2's own
+  // question()/student_info() state (the "learnr2-" prefix from
+  // storageKey(), above) and quarto-live's own {webr} exercise persistence
+  // (the "editor-" prefix noted there too) -- then reloads so every widget
+  // on the page re-initializes from a clean slate. Deliberately leaves the
+  // "learnr2-device-id" key alone: that identifies this browser/device
+  // across every tutorial and visit, not this one tutorial's progress.
+  function clearAllProgress() {
+    var prefixes = ["learnr2-" + window.location.href + "#", "editor-" + window.location.href + "#"];
+    var keysToRemove = [];
+    for (var i = 0; i < window.localStorage.length; i++) {
+      var key = window.localStorage.key(i);
+      if (key && prefixes.some(function (prefix) { return key.indexOf(prefix) === 0; })) {
+        keysToRemove.push(key);
+      }
+    }
+    keysToRemove.forEach(function (key) {
+      window.localStorage.removeItem(key);
+    });
+  }
+
+  // Appended to the bottom of Quarto's own TOC sidebar, if the page has
+  // one (a tutorial rendered with `toc: false` has nowhere to put it, and
+  // is left without a Start Over control).
+  function injectStartOverButton() {
+    var sidebar = document.getElementById("quarto-margin-sidebar");
+    if (!sidebar || sidebar.querySelector(".learnr2-start-over")) {
+      return;
+    }
+    var button = el("button", { type: "button", class: "learnr2-start-over", text: "Start Over" });
+    button.addEventListener("click", function () {
+      var confirmed = window.confirm(
+        "Start over this entire tutorial?\n\n" +
+        "Every saved answer, pasted image, and exercise on this device will " +
+        "be permanently cleared. This cannot be undone."
+      );
+      if (!confirmed) {
+        return;
+      }
+      clearAllProgress();
+      window.location.reload();
+    });
+    sidebar.appendChild(el("div", { class: "learnr2-start-over-container" }, [button]));
+  }
+
   function init() {
     document
       .querySelectorAll(".learnr2-question:not([data-learnr2-initialized])")
@@ -827,6 +990,7 @@
     document
       .querySelectorAll(".learnr2-download-answers:not([data-learnr2-initialized])")
       .forEach(renderDownloadButton);
+    injectStartOverButton();
   }
 
   if (document.readyState === "loading") {

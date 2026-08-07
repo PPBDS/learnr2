@@ -1,21 +1,233 @@
 Big Picture: We hope to replace both learnr and tutorial.helpers with learnr2. There is no reason to have two packages, or to not have learnr2 do everything we want a tutorial package to do.
 
 
-0) I like that tutorials pop up in the VS Code editor. Make sure to document how that is happening? 
+0) I like that tutorials pop up in the VS Code editor. Make sure to document how that is happening?
+
+    Partial answer, re: why it's sometimes VS Code and sometimes a
+    separate browser tab (inconsistent, not something we've made
+    deliberately configurable). Checked httpuv::runStaticServer() (what
+    run_tutorial() now calls to serve+open a tutorial) directly:
+
+        if (isTRUE(browse)) {
+          utils::browseURL(paste0("http://", host, ":", port))
+        }
+
+    That's the entire mechanism on our side -- plain utils::browseURL(),
+    nothing httpuv- or learnr2-specific, no VS Code awareness at all.
+    Where that actually opens is decided entirely by R's
+    options("browser") in whichever R session happens to execute it:
+
+    - Base R's default is essentially "hand it to the OS," which opens a
+      new tab/window in the system's default browser.
+    - VS Code's R extension overrides this per session: when it attaches
+      to an R session it manages (its own "R Terminal"), an init script
+      sets options(browser = <its own VS Code webview handler>), so
+      browseURL() gets redirected into a Simple Browser panel inside VS
+      Code instead.
+
+    So "sometimes VS Code, sometimes a separate tab" isn't random -- it's
+    telling us which R process actually executed run_tutorial() at that
+    moment: the hooked R Terminal the VS Code R extension manages, vs. any
+    other R process (a plain Rscript call, a background job, a fresh
+    session the extension hasn't hooked yet, or the separate "R Tutorials"
+    extension possibly launching things through its own mechanism rather
+    than the hooked Terminal).
+
+    Not yet confirmed: exactly how the "R Tutorials" VS Code extension
+    itself launches a tutorial -- that's the extension's own source, which
+    wasn't available to inspect from this session. That's the remaining
+    piece needed to fully document "how that is happening," and to decide
+    whether to just force a specific target from run_tutorial() itself
+    (e.g. always open a real browser tab, or always try the VS Code
+    webview) regardless of which R session is running it.
 
 1) Fix Getting Started tutorial. As much like the one from tutorial.helpers as possible. But wording should be different as appropriate. What does the edit button?
+
+    "What does the edit button?" -- done, and it exposed a real
+    inconsistency in the answer: student_info()'s button said "Edit" from
+    the very start, before there was anything to edit yet, while
+    question()'s reflection_editable type correctly said "Submit" first
+    and only switched to "Edit" after a valid submission. Fixed
+    student_info() to match question() exactly -- new edit_button
+    parameter (default "Edit") alongside submit_button (back to default
+    "Submit"), same restart-shows-Edit-if-already-submitted persistence
+    across a reload. Along the way, found and fixed a genuine Playwright
+    test race (not a product bug -- confirmed the underlying clear-and-
+    reload logic was correct via three independent manual reproductions):
+    a test was checking page state before location.reload() had actually
+    fired, since the native confirm() dialog resolves asynchronously
+    through Playwright's dialog handling.
+
+    "As much like the one from tutorial.helpers as possible" -- looked
+    into this earlier: the current (much longer) tutorial.helpers
+    getting-started.Rmd on GitHub is mostly bash Terminal, GitHub Copilot
+    AI-agent, and multi-R-session content with no learnr2 analogue at all
+    (no Terminal, no AI integration, one single {webr} session, not
+    several to desync between) -- the same "doesn't have a learnr2
+    translation" case already established elsewhere. The genuinely
+    transferable parts (creating an object, checking the R version) are
+    already covered here, just reframed for {webr}. Still open: given
+    that, is there anything concretely left to change here, or does
+    "wording should be different as appropriate" mean this is already
+    about as close as it should get? Worth confirming before doing more.
 
 2) available_tutorials() should take a `type` argument which allows for three possible values: "learnr", "learnnr2" and "all". Or "rmarkdown", "quarto" or "all". I think I like the latter.
 
 3) Always have a "Start Over" button or option.
 
+    Done. Every page now gets a "Start Over" button, appended
+    automatically to the bottom of Quarto's TOC sidebar by the same
+    quiz.js that already renders question()/student_info() -- nothing for
+    a tutorial author to opt into, as long as the tutorial has a sidebar
+    to put it in (toc: true, which every bundled tutorial already sets).
+
+    Clicking it asks for confirmation, then clears every question()/
+    student_info() answer *and* every {webr} exercise's persisted code
+    (persist: true) for that page on that device, then reloads. The two
+    kinds of state live under different localStorage key prefixes
+    ("learnr2-..." vs. quarto-live's own "editor-...", see storageKey() in
+    quiz.js) -- clearing both is the point of calling this the *entire*
+    tutorial, not just the questions. Deliberately does not clear the
+    random per-device id download_answers_button() embeds in a
+    submission's metadata, since that identifies the browser/device
+    itself across every tutorial and visit, not this one tutorial's
+    progress -- verified directly (set a fake device id and a fake
+    persisted exercise key, clicked Start Over, confirmed the device id
+    survived and the exercise key didn't).
+
+    Verified by rendering hello-learnr2 and exercising it in a real
+    browser: filled in student info, answered a question, confirmed both
+    saved to localStorage; clicked Start Over; confirmed both were wiped,
+    the page reloaded, and every field/question came back blank. Also
+    added Playwright coverage (tests/js/quiz.spec.js, "Start Over" describe
+    block: button placement, full clear-and-reload, and confirmation
+    dismissal doing nothing) -- all 32 tests pass.
+
+    Updated the one place that had documented the old "no such thing
+    exists" state as a translation rule (learnr2/AGENTS.md's "no local
+    R/RStudio dependency" section) and R/question.R's "Progress
+    persistence" docs to describe the button instead.
+
 4) Need a "copy image" question in hello-learnr2.
+
+    Done. There already was an allow_image = TRUE example, but it was a
+    weak demo: buried as an aside inside section 6 ("Quiz questions"), and
+    it asked the reader to paste "the plot you made in the exercise
+    above" when the nearest plot was actually back in section 1 -- not an
+    exercise, and not adjacent, so there was nothing to actually try right
+    there.
+
+    Gave it its own section instead: new "7. Copy/paste an image" (pushing
+    the old "7. Student info and submission" to 8), with a real, editable
+    {webr} exercise producing a plot directly above the image question, so
+    "the exercise above" is now literally true and the reader can do the
+    whole loop -- run it, screenshot it, paste it -- in one place. Also
+    corrected a technical claim while writing the prose: it's not that
+    screenshot tools save PNG natively (that varies by OS/platform); it's
+    the browser's own Clipboard API that normalizes whatever the native
+    format is into PNG for any web page that reads it, allow_image
+    included. That's a partial answer to item 12, below.
+
+    Verified by rendering and exercising it in a real browser: TOC shows
+    the renumbered sections correctly, no leaked chunk source, and a real
+    paste event against the new exercise's question produces a correct
+    data:image/png;base64,... preview.
 
 5) hello-learnr to does not download the answers for the execute code questions. It should.
 
+    Done. Confirmed the gap first: collectAnswers() in quiz.js only ever
+    scanned .learnr2-question/.learnr2-info elements -- {webr} exercises
+    are entirely quarto-live's own markup, with no learnr2-side registry
+    of what exercises exist on a page at all, so they were silently never
+    included.
+
+    Fixed by reading quarto-live's own bundled source (live-runtime.js,
+    webr-exercise.ojs) rather than guessing:
+    - Every {webr} cell embeds a `<script type="webr-<block-id>-contents">`
+      tag with base64-encoded JSON of its chunk options and starter code --
+      present in the static HTML regardless of whether WebR has finished
+      booting, so exercises can be discovered without needing a live
+      runtime.
+    - A real surprise: the localStorage key quarto-live's own editor uses
+      to persist a reader's code is `editor-<page>#<block-id>`, keyed on
+      that internal block id (e.g. "webr-4-contents") -- *not* the
+      `#| exercise: <label>` name authors actually write. The `exercise:`
+      label is only there for the human-readable id in the download.
+    - Only cells with `#| persist: true` can be captured at all -- that's
+      the only condition under which quarto-live's own editor ever writes
+      anything to localStorage in the first place. This is a structural
+      limit of quarto-live's editor, not a choice learnr2 makes.
+
+    Added a new `exercises` array to the downloaded JSON (one entry per
+    persisted exercise found, `{id, attempted, yourCode}`, present whether
+    or not it was attempted -- same "always an entry" principle as
+    `answers`), and added it to verify_submission()'s visible_fields so
+    the integrity hash actually covers it -- confirmed this was not
+    automatic by tracing through the existing test fixture, which broke
+    without also being updated (fixed, plus a new test proving edited
+    exercise code is now caught as tampering, not just structurally
+    present).
+
+    Along the way, found and fixed a related but separate gap: two of
+    hello-learnr2's four real exercises (ex_mean, ex_grade) were missing
+    `#| persist: true` entirely, meaning their code never survived a
+    reload *or* could ever appear in a download, independent of this fix.
+
+    Verified by rendering hello-learnr2 and driving a real download in a
+    browser: simulated a reader having edited two exercises (via the real
+    editor-<page>#<block-id> key format, not a guess), left two untouched,
+    and confirmed the downloaded JSON's exercises array was exactly right
+    -- correct code for the attempted ones, null for the untouched ones,
+    and the integrity hash's hashedContent genuinely included it. Also
+    added Playwright coverage (new {webr}-exercise-script fixture helper +
+    a dedicated test) -- all 33 JS tests pass. Not independently verified
+    against the R testthat suite (testthat isn't installed in this
+    environment, and no internet access here to install it) -- traced the
+    verify_submission() logic by hand instead against the updated test
+    fixture; worth an actual `devtools::test()` run to be sure.
+
 6) Shouldn't every question have a code chunk name? Yes. Shouldn't they be unique? Yes. Shouldn't they follow the usual tutorial.helpers convention of section-header (lower cased and weird characters to dashes, and duplicate dashes simoplified to one dash()) dash exercise number? Yes.
 
+    Done, scoped to the question()/student_info()/download_answers_button()
+    {r} chunks specifically (not {webr} exercise chunks, which already have
+    their own load-bearing identifier, #| exercise:, unlike a plain {r}
+    chunk's label which learnr2 never reads at all -- didn't touch those,
+    to avoid risking a regression in something quarto-live controls that
+    couldn't be fully verified in this sandbox, WebR never finishing boot).
+
+    Applied `#| label: <section-slug>-<n>` (modern #| syntax, not the old
+    inline `{r label}` header style, matching the project's established
+    per-chunk-option convention) to every such chunk in all three bundled
+    tutorials (hello-learnr2, getting-started, intro-vectors) and to
+    inst/templates/tutorial.qmd (create_tutorial()'s scaffold), so new
+    tutorials get this by default. Slugs derived from each chunk's
+    enclosing ## section heading (lowercased, non-alphanumerics to single
+    dashes, leading numbering like the "6." in "## 6. Quiz questions"
+    dropped since the chunk's own suffix already numbers it), with a
+    sequential number restarting at 1 per section -- e.g. quiz-questions-1
+    through quiz-questions-6 in hello-learnr2. Documented the convention
+    itself as a new rule in AGENTS.md, with its own boilerplate snippets
+    (student_info()/minutes-question/download-button) updated to match, so
+    future tutorials -- hand-authored or via create_tutorial() -- follow
+    it without needing to be told each time.
+
+    Verified by reinstalling the package and re-rendering all three
+    tutorials plus a fresh create_tutorial() scaffold -- all render
+    cleanly, no duplicate-label errors, template output confirmed to
+    contain the new labels.
+
 7) An downloaded answer file has an entry for every question, whether or not the student answered it.
+
+    Confirmed already done, no code change needed. collectAnswers() in
+    quiz.js iterates every .learnr2-question element unconditionally --
+    there's no `if (saved)` gate before pushing an entry, just
+    `answered: !!saved` on whatever's pushed either way. Already covered
+    by the existing "downloads a JSON file..." test, which leaves a
+    reflection question unanswered on purpose and asserts `answered ===
+    false, yourAnswer === null` rather than the entry being absent. The
+    same principle was carried into item 5's new `exercises` array on
+    purpose (attempted: false, yourCode: null for an untouched exercise,
+    never just omitted).
 
 8) Agreed that this is a good approach to the image answer type: "The real fix is two parts: (1) have
     collectAnswers() include the actual image data URI, and (2) add an R
@@ -38,7 +250,47 @@ Big Picture: We hope to replace both learnr and tutorial.helpers with learnr2. T
     like a restricted-network sandbox limitation rather than a defect in the
     tutorial itself. Worth a manual click-through to fully close the loop.
 
-12) Keep in mind that students use Mac, Windows, Chromebooks and so on. Does a screenshot always get saved as a PNG file? How does the Clipboard keep track of that fact? 
+12) Keep in mind that students use Mac, Windows, Chromebooks and so on. Does a screenshot always get saved as a PNG file? How does the Clipboard keep track of that fact?
+
+    Done. Short answer: no, not guaranteed -- so allow_image no longer
+    assumes it. The mechanism: an OS screenshot goes onto the system
+    clipboard in some native, platform-specific format (bitmap, TIFF,
+    etc.); the reader's browser is what translates that into something a
+    web page can read at all, via a "clipboard item" carrying a MIME
+    `.type` string. quiz.js reads this through the paste event's
+    `clipboardData.items` (chosen originally since it works without the
+    permission prompt the newer Async Clipboard API needs).
+
+    Checked what's actually documented (MDN, web.dev) before assuming
+    anything: only the *write* side of the newer Async Clipboard API is
+    documented as PNG-only for images. There's no equivalent documented
+    guarantee for the older paste-event path this code actually uses, and
+    a real OS-native screenshot's exposed format is platform-dependent --
+    this could not be verified end-to-end against real macOS/Windows/
+    ChromeOS screenshot tools from this sandbox (no way to trigger a
+    genuine OS-level screenshot here, only simulate paste events).
+
+    Given that, stopped depending on the assumption entirely instead of
+    continuing to guess: allow_image now accepts PNG, JPEG, GIF, WebP, or
+    BMP -- whatever raster type the clipboard actually hands over -- and
+    re-encodes it as PNG itself (via an off-DOM <img>/<canvas> round-trip)
+    before storing it. What's saved is now always genuinely PNG,
+    regardless of the source format, so the platform question stops
+    mattering. Deliberately excludes image/svg+xml (vector markup, not a
+    screenshot, different security surface) and image/tiff (a real
+    possibility on macOS specifically, but mainstream browsers other than
+    Safari generally don't decode TIFF via <img> either, so accepting it
+    would just trade one confusing failure for another -- flagged as an
+    open gap rather than silently papered over).
+
+    Verified two ways: Playwright (updated the old "non-PNG image is
+    rejected" test, since GIF is now accepted-and-converted rather than
+    rejected -- confirmed the stored data URL is genuinely
+    data:image/png;... via its magic-byte prefix, not just relabeled; kept
+    a rejection test for genuinely non-image content instead), and a real
+    rendered hello-learnr2 in a browser -- pasted an actual GIF file
+    object, confirmed no error and a real PNG-signature data URL came out
+    the other side. All 34 JS tests pass.
 
 
 13) Not sure I understand these comments. We need a new QMD 02-quarto tutorial which includes all the material in the current RMD version. We can discuss on Friday.

@@ -9,7 +9,8 @@ student_info(
     "ID (if requested by your instructor):"),
   required = intersect(c("name", "email"), names(fields)),
   id = "student-info",
-  submit_button = "Edit"
+  submit_button = "Submit",
+  edit_button = "Edit"
 )
 }
 \arguments{
@@ -32,7 +33,13 @@ not in \code{fields} is an error.}
 \code{localStorage}. Defaults to \code{"student-info"}; change it if a single
 tutorial embeds more than one \code{student_info()} form.}
 
-\item{submit_button}{Confirmation button label.}
+\item{submit_button}{Button label shown before the reader has
+successfully confirmed their entry.}
+
+\item{edit_button}{Button label shown instead of \code{submit_button} from
+then on -- mirrors \code{\link[=question]{question()}}'s \code{edit_button} for a
+\code{"reflection_editable"} question exactly, including persisting across
+a reload.}
 }
 \value{
 A \code{learnr2_info} object, printed as an interactive HTML form.
@@ -43,11 +50,15 @@ information before starting a tutorial: name and email required, an ID
 optional, by default. Unlike \code{\link[=question]{question()}}, nothing here is graded and
 there is no model answer to reveal -- it is auto-saved to the browser's
 \code{localStorage} as the reader types and restored on their next visit, the
-same as every other field here. An "Edit" button, matching the one on
-every \code{\link[=question]{question()}} in style, gives the reader an explicit way to confirm
-their entry and see the required fields checked right away, instead of
-only finding out when they later try to download. Pair with
-\code{\link[=download_answers_button]{download_answers_button()}} so a reader can turn their work in.
+same as every other field here. A confirmation button, matching the one
+on every \code{\link[=question]{question()}} in both style and behavior, gives the reader an
+explicit way to confirm their entry and see the required fields checked
+right away, instead of only finding out when they later try to download:
+it reads "Submit" until they successfully do, at which point it switches
+to "Edit" (like a \code{"reflection_editable"} \code{\link[=question]{question()}}) since any further
+click is revising an already-confirmed entry, not submitting for the
+first time. Pair with \code{\link[=download_answers_button]{download_answers_button()}} so a reader can turn
+their work in.
 }
 \examples{
 student_info()

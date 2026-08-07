@@ -246,12 +246,29 @@ test.describe("image paste (allow_image)", () => {
     await expect(page.locator(".learnr2-image-paste-preview")).toBeVisible();
   });
 
-  test("a non-PNG image is rejected with an error", async ({ page }) => {
+  test("a non-PNG raster image (GIF) is accepted and re-encoded as PNG", async ({ page }) => {
+    // A screenshot isn't guaranteed to already be a PNG -- the real OS
+    // clipboard format varies by platform (verified: only the *write*
+    // side of the newer Async Clipboard API is documented as PNG-only;
+    // this code reads via the older paste-event path instead, which has
+    // no such guarantee). So common raster types are accepted directly
+    // and converted, rather than rejected for not already being PNG.
     await page.goto("/reflection-image");
     await dispatchSyntheticPaste(page, ".learnr2-image-paste", TINY_GIF_BASE64, "image/gif", "photo.gif");
 
+    await expect(page.locator(".learnr2-image-paste-error")).toBeHidden();
+    await expect(page.locator(".learnr2-image-paste-preview")).toBeVisible();
+    // What's actually stored is always PNG, regardless of the source format.
+    const src = await page.locator(".learnr2-image-paste-preview").getAttribute("src");
+    expect(src).toMatch(/^data:image\/png;base64,/);
+  });
+
+  test("a non-image file (e.g. a PDF) is rejected with an error", async ({ page }) => {
+    await page.goto("/reflection-image");
+    await dispatchSyntheticPaste(page, ".learnr2-image-paste", TINY_PNG_BASE64, "application/pdf", "notes.pdf");
+
     await expect(page.locator(".learnr2-image-paste-error")).toBeVisible();
-    await expect(page.locator(".learnr2-image-paste-error")).toContainText("Please paste a PNG image");
+    await expect(page.locator(".learnr2-image-paste-error")).toContainText("Please paste an image");
     await expect(page.locator(".learnr2-image-paste-preview")).toBeHidden();
   });
 
@@ -303,17 +320,19 @@ test.describe("student info form", () => {
     await expect(page.locator("#learnr2-info-student-info-email")).toHaveValue("ada@example.com");
   });
 
-  test("Edit button confirms a complete entry, and flags a missing required field", async ({ page }) => {
+  test("button reads Submit, flags a missing required field, then switches to Edit on a valid submission", async ({ page }) => {
     await page.goto("/student-info");
 
     const submit = page.locator(".learnr2-info .learnr2-submit");
     const feedback = page.locator(".learnr2-info .learnr2-feedback");
-    await expect(submit).toHaveText("Edit");
+    await expect(submit).toHaveText("Submit");
 
-    // Required fields still blank -- clicking should flag it, not silently succeed.
+    // Required fields still blank -- clicking should flag it, not silently
+    // succeed, and it must not switch to "Edit" for an invalid attempt.
     await submit.click();
     await expect(feedback).toBeVisible();
     await expect(feedback).toHaveClass(/learnr2-feedback-incorrect/);
+    await expect(submit).toHaveText("Submit");
     await expect(
       page.locator("#learnr2-info-student-info-name")
         .locator("xpath=../div[contains(@class,'learnr2-info-error')]")
@@ -323,10 +342,23 @@ test.describe("student info form", () => {
     await page.locator("#learnr2-info-student-info-email").fill("ada@example.com");
     await submit.click();
     await expect(feedback).toHaveClass(/learnr2-feedback-correct/);
+    // Mirrors question()'s reflection_editable behavior exactly: once
+    // submitted successfully, further clicks are edits, not first submissions.
+    await expect(submit).toHaveText("Edit");
 
     // Unlike a graded question(), the form stays editable after clicking --
     // this is data entry, not something to lock.
     await expect(page.locator("#learnr2-info-student-info-name")).toBeEditable();
+  });
+
+  test("button still says Edit after a reload, once already submitted", async ({ page }) => {
+    await page.goto("/student-info");
+    await page.locator("#learnr2-info-student-info-name").fill("Ada Lovelace");
+    await page.locator("#learnr2-info-student-info-email").fill("ada@example.com");
+    await page.locator(".learnr2-info .learnr2-submit").click();
+
+    await page.reload();
+    await expect(page.locator(".learnr2-info .learnr2-submit")).toHaveText("Edit");
   });
 
   test("required fields (name, email) are marked with * and show an inline error when left blank", async ({ page }) => {
@@ -424,6 +456,7 @@ test.describe("download answers button", () => {
       downloadedAt: contents.downloadedAt,
       info: contents.info,
       answers: contents.answers,
+      exercises: contents.exercises,
       metadata: contents.metadata
     });
 
@@ -431,6 +464,40 @@ test.describe("download answers button", () => {
     expect(contents.metadata.deviceId).toMatch(/^[0-9a-f-]{20,}$/i);
     expect(typeof contents.metadata.userAgent).toBe("string");
     expect(typeof contents.metadata.timezone).toBe("string");
+  });
+
+  test("includes {webr} exercise code, keyed by exercise label not the internal block id", async ({ page }) => {
+    await page.goto("/download-answers");
+
+    await page.locator("#learnr2-info-student-info-name").fill("Ada Lovelace");
+    await page.locator("#learnr2-info-student-info-email").fill("ada@example.com");
+    await page.locator("body").click();
+
+    // Simulate quarto-live's own editor having saved the reader's code for
+    // "ex-attempted" (fixture block id "1") -- real key format confirmed
+    // against quarto-live's own live-runtime.js: editor-<page>#webr-<id>-contents,
+    // storing the plain code string, not JSON.
+    await page.evaluate(() => {
+      localStorage.setItem("editor-" + location.href + "#webr-1-contents", "sum(1:100)");
+    });
+
+    const downloadPromise = page.waitForEvent("download");
+    await page.locator(".learnr2-download-answers-btn").click();
+    const download = await downloadPromise;
+    const stream = await download.createReadStream();
+    const chunks = [];
+    for await (const chunk of stream) {
+      chunks.push(chunk);
+    }
+    const contents = JSON.parse(Buffer.concat(chunks).toString("utf8"));
+
+    // "ex-not-persisted" and the plain non-exercise cell (fixture block ids
+    // 3 and 4) must not appear at all -- neither has anywhere a code could
+    // have been recorded.
+    expect(contents.exercises).toEqual([
+      { id: "ex-attempted", attempted: true, yourCode: "sum(1:100)" },
+      { id: "ex-untouched", attempted: false, yourCode: null }
+    ]);
   });
 
   test("the device id is stable across repeated downloads (same browser/profile)", async ({ page }) => {
@@ -505,5 +572,79 @@ test.describe("download answers button", () => {
     await page.locator(".learnr2-download-answers-btn").click();
     await downloadPromise;
     await expect(page.locator(".learnr2-download-error")).toBeHidden();
+  });
+});
+
+test.describe("Start Over", () => {
+  test("appears at the bottom of the sidebar", async ({ page }) => {
+    await page.goto("/download-answers");
+    const sidebar = page.locator("#quarto-margin-sidebar");
+    const button = sidebar.locator(".learnr2-start-over");
+    await expect(button).toHaveText("Start Over");
+    // Genuinely last, not just present -- appended after the TOC nav.
+    await expect(sidebar.locator(":scope > *").last()).toHaveClass(/learnr2-start-over-container/);
+  });
+
+  test("clears saved answers, student info, and {webr} exercise persistence, but not the device id, then reloads", async ({ page }) => {
+    await page.goto("/download-answers");
+
+    await page.locator("#learnr2-info-student-info-name").fill("Ada Lovelace");
+    await page.locator("#learnr2-info-student-info-email").fill("ada@example.com");
+    await page.locator("body").click();
+    await page.locator("#single-choice-answer-0").check();
+    const singleChoice = page.locator(".learnr2-question", { has: page.locator("#single-choice-answer-0") });
+    await singleChoice.locator(".learnr2-submit").click();
+
+    // Stand in for a real quarto-live {webr} exercise's own persisted code
+    // (this fixture harness has no live webr runtime to produce one) and
+    // for a device id that must survive -- it identifies this browser
+    // across every tutorial and visit, not this one tutorial's progress.
+    await page.evaluate(() => {
+      localStorage.setItem("editor-" + location.href + "#some_exercise", JSON.stringify({ code: "1 + 1" }));
+      localStorage.setItem("learnr2-device-id", "test-device-should-survive");
+    });
+
+    page.on("dialog", (dialog) => dialog.accept());
+    // Registering the load-state wait and the click together matters here:
+    // the click resolves as soon as the event dispatches, but the actual
+    // reload() only happens after the native confirm() dialog round-trips
+    // through Playwright's out-of-process dialog handling. Awaiting the
+    // click alone, then waitForLoadState() afterward, can win that race and
+    // observe the pre-reload page (confirmed: this genuinely happens, not
+    // hypothetical -- the fix below is required, not defensive).
+    await Promise.all([
+      page.waitForLoadState(),
+      page.locator(".learnr2-start-over").click()
+    ]);
+
+    await expect(page.locator("#learnr2-info-student-info-name")).toHaveValue("");
+    await expect(page.locator("#single-choice-answer-0")).not.toBeChecked();
+
+    const remaining = await page.evaluate(() => {
+      const keys = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k.indexOf("learnr2-" + location.href) === 0 || k.indexOf("editor-" + location.href) === 0) {
+          keys.push(k);
+        }
+      }
+      return keys;
+    });
+    expect(remaining).toEqual([]);
+    await expect
+      .poll(() => page.evaluate(() => localStorage.getItem("learnr2-device-id")))
+      .toBe("test-device-should-survive");
+  });
+
+  test("does nothing if the confirmation is dismissed", async ({ page }) => {
+    await page.goto("/download-answers");
+    await page.locator("#learnr2-info-student-info-name").fill("Ada Lovelace");
+    await page.locator("body").click();
+
+    page.on("dialog", (dialog) => dialog.dismiss());
+    await page.locator(".learnr2-start-over").click();
+
+    // No reload happened -- the value typed above is still right there.
+    await expect(page.locator("#learnr2-info-student-info-name")).toHaveValue("Ada Lovelace");
   });
 });

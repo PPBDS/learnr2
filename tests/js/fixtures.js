@@ -40,7 +40,8 @@ function info(overrides) {
         { key: "email", label: "Email:", required: true },
         { key: "id", label: "ID (if requested by your instructor):", required: false }
       ],
-      submitLabel: "Edit"
+      submitLabel: "Submit",
+      editLabel: "Edit"
     },
     overrides
   );
@@ -79,6 +80,18 @@ function downloadBlock(payload) {
     "  <noscript>This button requires JavaScript.</noscript>\n" +
     "</div>\n"
   );
+}
+
+// Stands in for a real quarto-live {webr} exercise cell's own static
+// markup -- a <script type="webr-<blockId>-contents"> holding base64-
+// encoded {attr, code} JSON. Confirmed against the real bundled
+// live-runtime.js/webr-exercise.ojs: `blockId` is what quarto-live's own
+// editor uses as the default persistence id (not the `exercise:` label),
+// so it's what a real "editor-<page>#<blockId>" localStorage key is keyed
+// on too -- see collectExerciseAnswers() in quiz.js.
+function webrExerciseScript(blockId, attr, code) {
+  const type = "webr-" + blockId + "-contents";
+  return '<script type="' + type + '">' + encode({ attr: attr, code: code }) + "</script>\n";
 }
 
 // Each fixture is a list of HTML blocks to place on one page.
@@ -187,6 +200,15 @@ const FIXTURES = {
         answers: [answer("Rayleigh scattering.", true)]
       })
     ),
+    // Four {webr} cells covering every case collectExerciseAnswers() needs
+    // to handle: a real exercise the reader has saved code for, one they
+    // haven't touched, one with no persist: true (excluded -- there is no
+    // record of it to find), and a plain non-exercise cell (no `exercise`
+    // attr at all -- excluded, nothing to collect).
+    webrExerciseScript("1", { exercise: "ex-attempted", persist: true }, "______"),
+    webrExerciseScript("2", { exercise: "ex-untouched", persist: true }, "______"),
+    webrExerciseScript("3", { exercise: "ex-not-persisted", persist: false }, "______"),
+    webrExerciseScript("4", { edit: false }, "sample(1:10)"),
     downloadBlock(downloadButton({ filenamePrefix: "class-101" }))
   ]
 };
@@ -205,6 +227,11 @@ function renderPage(name) {
     '<link rel="stylesheet" href="/quiz/quiz.css">\n' +
     "</head>\n" +
     "<body>\n" +
+    // Minimal stand-in for Quarto's own TOC sidebar (the real markup has a
+    // lot more in it -- a <nav id="TOC">, heading, link list -- but all
+    // injectStartOverButton() needs is the #quarto-margin-sidebar container
+    // itself to append into, matching every real rendered tutorial page.
+    '<div id="quarto-margin-sidebar" class="sidebar margin-sidebar"><nav id="TOC"></nav></div>\n' +
     blocks.join("\n") +
     '<script src="/quiz/quiz.js"></script>\n' +
     "</body>\n" +

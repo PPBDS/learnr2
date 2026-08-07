@@ -31,6 +31,7 @@ nothing is lost even if you forget to click it.
 ## Student Information
 
 ```{r}
+#| label: student-information-1
 #| echo: false
 learnr2::student_info()
 ```
@@ -147,6 +148,7 @@ Not every exercise involves code. Sometimes we'll ask you to write a
 sentence or two of prose instead, with no strict right answer to match.
 
 ```{r}
+#| label: exercises-1
 #| echo: false
 learnr2::question(
   "In your own words, what is the difference between a coding exercise
@@ -193,6 +195,7 @@ Tool or `Win+Shift+S` on Windows), then click the box and press
 to click; pasting is the whole mechanism.
 
 ```{r}
+#| label: exercises-2
 #| echo: false
 learnr2::question(
   "Paste a screenshot of the plot you made above.",
@@ -214,6 +217,7 @@ many minutes you spent on the tutorial. Then click the button below that to
 gather every answer on this page into a single file and download it.
 
 ```{r}
+#| label: your-answers-1
 #| echo: false
 learnr2::question(
   "How many minutes, approximately, did it take you to complete this
@@ -229,6 +233,7 @@ learnr2::question(
 ```
 
 ```{r}
+#| label: your-answers-2
 #| echo: false
 learnr2::download_answers_button(filename_prefix = "getting-started")
 ```

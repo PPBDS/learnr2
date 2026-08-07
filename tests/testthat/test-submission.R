@@ -113,6 +113,7 @@ write_valid_submission <- function(path, info = list(name = "Ada Lovelace", emai
     downloadedAt = "2026-01-15T12:00:00.000Z",
     info = info,
     answers = list(list(question = "2 + 2?", type = "single", answered = TRUE, yourAnswer = list("4"), correct = TRUE, hasImage = FALSE)),
+    exercises = list(list(id = "ex_sum", attempted = TRUE, yourCode = "sum(1:100)")),
     metadata = list(
       capturedAt = "2026-01-15T12:00:00.000Z",
       timezone = "America/New_York",
@@ -166,6 +167,24 @@ test_that("verify_submission() detects visible content edited without updating h
   raw$info$name <- "Someone Else"
   # integrity block deliberately left untouched -- still matches the
   # *original* hashedContent, but no longer matches the visible info.
+  writeLines(as.character(jsonlite::toJSON(raw, auto_unbox = TRUE, null = "null")), tmp, useBytes = TRUE)
+
+  result <- suppressMessages(verify_submission(tmp))
+  expect_false(result$ok)
+})
+
+test_that("verify_submission() detects exercises edited without updating hashedContent", {
+  skip_if_not_installed("digest")
+  tmp <- tempfile(fileext = ".json")
+  on.exit(unlink(tmp))
+  write_valid_submission(tmp)
+
+  # Same tamper pattern as the info-editing test above, but for exercise
+  # code specifically -- exercises was the most recently added field to
+  # the submission format, and visible_fields (in verify_submission()) has
+  # to be kept in sync with it by hand for this to actually be checked.
+  raw <- jsonlite::fromJSON(tmp, simplifyVector = FALSE)
+  raw$exercises[[1]]$yourCode <- "sum(1:1000000)"
   writeLines(as.character(jsonlite::toJSON(raw, auto_unbox = TRUE, null = "null")), tmp, useBytes = TRUE)
 
   result <- suppressMessages(verify_submission(tmp))

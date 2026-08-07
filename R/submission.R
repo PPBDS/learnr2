@@ -5,11 +5,15 @@
 #' optional, by default. Unlike [question()], nothing here is graded and
 #' there is no model answer to reveal -- it is auto-saved to the browser's
 #' `localStorage` as the reader types and restored on their next visit, the
-#' same as every other field here. An "Edit" button, matching the one on
-#' every [question()] in style, gives the reader an explicit way to confirm
-#' their entry and see the required fields checked right away, instead of
-#' only finding out when they later try to download. Pair with
-#' [download_answers_button()] so a reader can turn their work in.
+#' same as every other field here. A confirmation button, matching the one
+#' on every [question()] in both style and behavior, gives the reader an
+#' explicit way to confirm their entry and see the required fields checked
+#' right away, instead of only finding out when they later try to download:
+#' it reads "Submit" until they successfully do, at which point it switches
+#' to "Edit" (like a `"reflection_editable"` [question()]) since any further
+#' click is revising an already-confirmed entry, not submitting for the
+#' first time. Pair with [download_answers_button()] so a reader can turn
+#' their work in.
 #'
 #' @param fields A named character vector of field key/label pairs to
 #'   collect. Defaults to name, email, and an optional ID, matching
@@ -27,7 +31,12 @@
 #' @param id Stable identifier used to key the saved values in
 #'   `localStorage`. Defaults to `"student-info"`; change it if a single
 #'   tutorial embeds more than one `student_info()` form.
-#' @param submit_button Confirmation button label.
+#' @param submit_button Button label shown before the reader has
+#'   successfully confirmed their entry.
+#' @param edit_button Button label shown instead of `submit_button` from
+#'   then on -- mirrors [question()]'s `edit_button` for a
+#'   `"reflection_editable"` question exactly, including persisting across
+#'   a reload.
 #'
 #' @return A `learnr2_info` object, printed as an interactive HTML form.
 #' @export
@@ -41,7 +50,8 @@ student_info <- function(fields = c(
                           ),
                           required = intersect(c("name", "email"), names(fields)),
                           id = "student-info",
-                          submit_button = "Edit") {
+                          submit_button = "Submit",
+                          edit_button = "Edit") {
   if (!is.character(fields) || length(fields) == 0 ||
       is.null(names(fields)) || any(!nzchar(names(fields)))) {
     stop("`fields` must be a named character vector, e.g. c(name = \"Name:\").", call. = FALSE)
@@ -72,7 +82,8 @@ student_info <- function(fields = c(
         required = field_keys[i] %in% required
       )
     }),
-    submitLabel = submit_button
+    submitLabel = submit_button,
+    editLabel = edit_button
   )
 
   structure(list(payload = payload), class = "learnr2_info")
@@ -112,6 +123,15 @@ print.learnr2_info <- function(x, ...) {
 #' entirely in the reader's browser; there is no server to submit to, so
 #' this is meant for a reader to save and turn in themselves (e.g. attach
 #' to an email or upload to an LMS).
+#'
+#' The download's `exercises` array also includes every `{webr}` code
+#' exercise's current code, under the same condition quarto-live itself
+#' requires to keep a record of it at all: `#| persist: true` (already the
+#' convention every bundled tutorial follows). An exercise without
+#' `persist: true` has no saved copy of the reader's code anywhere --
+#' `learnr2` included -- so it can't appear in the download; this is a
+#' structural limit of quarto-live's own editor, not something
+#' `download_answers_button()` chooses to skip.
 #'
 #' The download includes a `metadata` block (timestamp, timezone, browser
 #' info, and a random per-device id persisted across the reader's visits)
@@ -233,7 +253,7 @@ verify_submission <- function(path) {
     jsonlite::fromJSON(integrity$hashedContent, simplifyVector = FALSE),
     error = function(e) NULL
   )
-  visible_fields <- c("page", "downloadedAt", "info", "answers", "metadata")
+  visible_fields <- c("page", "downloadedAt", "info", "answers", "exercises", "metadata")
   visible_ok <- !is.null(hashed_parsed) &&
     isTRUE(all.equal(hashed_parsed, parsed[visible_fields]))
 

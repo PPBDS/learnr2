@@ -88,6 +88,7 @@ equivalent is just writing the same two plain-function-call blocks
 directly into the `.qmd`, by hand, every time:
 
 ```{r}
+#| label: student-information-1
 #| echo: false
 learnr2::student_info()
 ```
@@ -95,6 +96,7 @@ learnr2::student_info()
 at the top (right after the frontmatter/intro prose), and at the bottom:
 
 ```{r}
+#| label: your-answers-1
 #| echo: false
 learnr2::question(
   "How many minutes, approximately, did it take you to complete this
@@ -110,6 +112,7 @@ learnr2::question(
 ```
 
 ```{r}
+#| label: your-answers-2
 #| echo: false
 learnr2::download_answers_button(filename_prefix = "<tutorial-name>")
 ```
@@ -130,6 +133,34 @@ from a learnr/tutorial.helpers source per the next section.
 
 Don't forget `#| echo: false` on all three chunks (see that section, below,
 for why it matters).
+
+## Every `question()`/`student_info()`/`download_answers_button()` chunk needs a unique `#| label:`
+
+learnr2 itself never reads a chunk's label -- unlike the `#| exercise:`
+option on a `{webr}` cell (which really is load-bearing: it's what ties a
+`.hint`/`.solution` div to its exercise), a plain `{r}` chunk's label has
+no runtime effect here at all. Give every one an explicit, unique label
+anyway, on its own `#| label:` line (not the old inline
+`` ```{r some-label} `` header style -- see the per-chunk-options rule two
+sections below), for the same reason `tutorial.helpers` tutorials always
+have one: an anonymous chunk is invisible to anything that wants to talk
+about "that one exercise" -- tooling, a reviewer leaving comments, an
+error message citing a chunk -- and a labelled one isn't.
+
+Follow `tutorial.helpers`'s own convention, the same one used throughout
+its real tutorials (e.g. `bash-terminal-1`, `r-terminal-5`): the enclosing
+`##` section's heading text, lowercased, with spaces and any other
+non-alphanumeric characters collapsed to single dashes (drop a leading
+number-and-period like the `6.` in `## 6. Quiz questions` -- the number is
+already implicit in the chunk's own suffix), followed by a dash and a
+sequential number -- restarting at `1` for each section, counting only
+`{r}` chunks that call one of these three functions (not every `{r}`
+chunk in the section, and not `{webr}` exercise chunks, which already have
+`#| exercise:` serving this purpose). `## Quiz questions` -> `quiz-questions-1`,
+`quiz-questions-2`, .... Every bundled tutorial (`hello-learnr2`,
+`getting-started`, `intro-vectors`) and the `create_tutorial()` template
+follow this now -- match their style for a new one rather than inventing
+another convention.
 
 ## Showing inline-code syntax literally, without triggering it
 
@@ -346,8 +377,12 @@ assumes:
 - any R package other than base R (or whatever's declared in `webr:
   packages:`) being available to run
 - RStudio itself being installed, or RStudio-specific UI/menus/settings
-- a whole-tutorial "Start Over"/reset control (no such thing exists; see
-  "Progress persistence" in `R/question.R`)
+- any source content that walks through *restarting a tutorial from
+  scratch* as a multi-step manual procedure (quit, reopen, re-answer
+  everything by hand): every learnr2 page already has a single "Start
+  Over" button at the bottom of the sidebar (see "Progress persistence" in
+  `R/question.R`) that clears all of it -- link to that instead of
+  reproducing the source's manual steps
 
 If the source tutorial's *point* was genuinely about configuring a local R
 install (as opposed to how-tutorials-work content that merely happened to
