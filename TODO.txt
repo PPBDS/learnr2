@@ -1,129 +1,8 @@
-Big Picture: We hope to replace both learnr and tutorial.helpers with learnr2. There is no reason to have two packages, or to not have learnr2 do everything we want a tutorial package to do.
+Big Picture: We hope to replace both learnr and tutorial.helpers with learnr2. There is no reason to have two packages, or to not have learnr2 do everything we want a tutorial package to do. I like that tutorials pop up in the VS Code editor. Think hard about how this should be handled.
 
 
-0) I like that tutorials pop up in the VS Code editor. Make sure to document how that is happening?
 
-    Partial answer, re: why it's sometimes VS Code and sometimes a
-    separate browser tab (inconsistent, not something we've made
-    deliberately configurable). Checked httpuv::runStaticServer() (what
-    run_tutorial() now calls to serve+open a tutorial) directly:
 
-        if (isTRUE(browse)) {
-          utils::browseURL(paste0("http://", host, ":", port))
-        }
-
-    That's the entire mechanism on our side -- plain utils::browseURL(),
-    nothing httpuv- or learnr2-specific, no VS Code awareness at all.
-    Where that actually opens is decided entirely by R's
-    options("browser") in whichever R session happens to execute it:
-
-    - Base R's default is essentially "hand it to the OS," which opens a
-      new tab/window in the system's default browser.
-    - VS Code's R extension overrides this per session: when it attaches
-      to an R session it manages (its own "R Terminal"), an init script
-      sets options(browser = <its own VS Code webview handler>), so
-      browseURL() gets redirected into a Simple Browser panel inside VS
-      Code instead.
-
-    So "sometimes VS Code, sometimes a separate tab" isn't random -- it's
-    telling us which R process actually executed run_tutorial() at that
-    moment: the hooked R Terminal the VS Code R extension manages, vs. any
-    other R process (a plain Rscript call, a background job, a fresh
-    session the extension hasn't hooked yet, or the separate "R Tutorials"
-    extension possibly launching things through its own mechanism rather
-    than the hooked Terminal).
-
-    Not yet confirmed: exactly how the "R Tutorials" VS Code extension
-    itself launches a tutorial -- that's the extension's own source, which
-    wasn't available to inspect from this session. That's the remaining
-    piece needed to fully document "how that is happening," and to decide
-    whether to just force a specific target from run_tutorial() itself
-    (e.g. always open a real browser tab, or always try the VS Code
-    webview) regardless of which R session is running it.
-
-1) Fix Getting Started tutorial. As much like the one from tutorial.helpers as possible. But wording should be different as appropriate. What does the edit button?
-
-    "What does the edit button?" -- done, and it exposed a real
-    inconsistency in the answer: student_info()'s button said "Edit" from
-    the very start, before there was anything to edit yet, while
-    question()'s reflection_editable type correctly said "Submit" first
-    and only switched to "Edit" after a valid submission. Fixed
-    student_info() to match question() exactly -- new edit_button
-    parameter (default "Edit") alongside submit_button (back to default
-    "Submit"), same restart-shows-Edit-if-already-submitted persistence
-    across a reload. Along the way, found and fixed a genuine Playwright
-    test race (not a product bug -- confirmed the underlying clear-and-
-    reload logic was correct via three independent manual reproductions):
-    a test was checking page state before location.reload() had actually
-    fired, since the native confirm() dialog resolves asynchronously
-    through Playwright's dialog handling.
-
-    "As much like the one from tutorial.helpers as possible" -- looked
-    into this earlier: the current (much longer) tutorial.helpers
-    getting-started.Rmd on GitHub is mostly bash Terminal, GitHub Copilot
-    AI-agent, and multi-R-session content with no learnr2 analogue at all
-    (no Terminal, no AI integration, one single {webr} session, not
-    several to desync between) -- the same "doesn't have a learnr2
-    translation" case already established elsewhere. The genuinely
-    transferable parts (creating an object, checking the R version) are
-    already covered here, just reframed for {webr}. Still open: given
-    that, is there anything concretely left to change here, or does
-    "wording should be different as appropriate" mean this is already
-    about as close as it should get? Worth confirming before doing more.
-
-2) available_tutorials() should take a `type` argument which allows for three possible values: "learnr", "learnnr2" and "all". Or "rmarkdown", "quarto" or "all". I think I like the latter.
-
-    Done. Added `type = "all"` (also accepts "quarto" or "rmarkdown"),
-    validated with a clear error on anything else. Detection is by each
-    tutorial's own top-level document extension -- `.qmd` scans as
-    "quarto", `.Rmd` as "rmarkdown" -- the same lookup tutorial_title()
-    already did, factored out into a shared tutorial_doc() helper so title
-    and format come from the same file instead of two separate directory
-    scans. Also added a new `format` column to the returned data frame
-    (present regardless of `type`, not just when filtering), since a
-    reader of the full "all" listing has no other way to tell which
-    tutorials are which. Updated available_tutorials.Rd and
-    tests/testthat/test-tutorials.R by hand (R isn't available in this
-    sandbox to run devtools::document()/devtools::test() -- worth an
-    actual run to confirm the regenerated .Rd matches and the new tests
-    pass). run_tutorial() and tools/render_tutorials_for_pages.R were
-    checked and need no changes: both only read the `name`/`title`
-    columns and don't pass `type`, so they keep the old "all" behavior.
-
-3) Always have a "Start Over" button or option.
-
-    Done. Every page now gets a "Start Over" button, appended
-    automatically to the bottom of Quarto's TOC sidebar by the same
-    quiz.js that already renders question()/student_info() -- nothing for
-    a tutorial author to opt into, as long as the tutorial has a sidebar
-    to put it in (toc: true, which every bundled tutorial already sets).
-
-    Clicking it asks for confirmation, then clears every question()/
-    student_info() answer *and* every {webr} exercise's persisted code
-    (persist: true) for that page on that device, then reloads. The two
-    kinds of state live under different localStorage key prefixes
-    ("learnr2-..." vs. quarto-live's own "editor-...", see storageKey() in
-    quiz.js) -- clearing both is the point of calling this the *entire*
-    tutorial, not just the questions. Deliberately does not clear the
-    random per-device id download_answers_button() embeds in a
-    submission's metadata, since that identifies the browser/device
-    itself across every tutorial and visit, not this one tutorial's
-    progress -- verified directly (set a fake device id and a fake
-    persisted exercise key, clicked Start Over, confirmed the device id
-    survived and the exercise key didn't).
-
-    Verified by rendering hello-learnr2 and exercising it in a real
-    browser: filled in student info, answered a question, confirmed both
-    saved to localStorage; clicked Start Over; confirmed both were wiped,
-    the page reloaded, and every field/question came back blank. Also
-    added Playwright coverage (tests/js/quiz.spec.js, "Start Over" describe
-    block: button placement, full clear-and-reload, and confirmation
-    dismissal doing nothing) -- all 32 tests pass.
-
-    Updated the one place that had documented the old "no such thing
-    exists" state as a translation rule (learnr2/AGENTS.md's "no local
-    R/RStudio dependency" section) and R/question.R's "Progress
-    persistence" docs to describe the button instead.
 
 4) Need a "copy image" question in hello-learnr2.
 
@@ -205,33 +84,6 @@ Big Picture: We hope to replace both learnr and tutorial.helpers with learnr2. T
 
 6) Shouldn't every question have a code chunk name? Yes. Shouldn't they be unique? Yes. Shouldn't they follow the usual tutorial.helpers convention of section-header (lower cased and weird characters to dashes, and duplicate dashes simoplified to one dash()) dash exercise number? Yes.
 
-    Done, scoped to the question()/student_info()/download_answers_button()
-    {r} chunks specifically (not {webr} exercise chunks, which already have
-    their own load-bearing identifier, #| exercise:, unlike a plain {r}
-    chunk's label which learnr2 never reads at all -- didn't touch those,
-    to avoid risking a regression in something quarto-live controls that
-    couldn't be fully verified in this sandbox, WebR never finishing boot).
-
-    Applied `#| label: <section-slug>-<n>` (modern #| syntax, not the old
-    inline `{r label}` header style, matching the project's established
-    per-chunk-option convention) to every such chunk in all three bundled
-    tutorials (hello-learnr2, getting-started, intro-vectors) and to
-    inst/templates/tutorial.qmd (create_tutorial()'s scaffold), so new
-    tutorials get this by default. Slugs derived from each chunk's
-    enclosing ## section heading (lowercased, non-alphanumerics to single
-    dashes, leading numbering like the "6." in "## 6. Quiz questions"
-    dropped since the chunk's own suffix already numbers it), with a
-    sequential number restarting at 1 per section -- e.g. quiz-questions-1
-    through quiz-questions-6 in hello-learnr2. Documented the convention
-    itself as a new rule in AGENTS.md, with its own boilerplate snippets
-    (student_info()/minutes-question/download-button) updated to match, so
-    future tutorials -- hand-authored or via create_tutorial() -- follow
-    it without needing to be told each time.
-
-    Verified by reinstalling the package and re-rendering all three
-    tutorials plus a fresh create_tutorial() scaffold -- all render
-    cleanly, no duplicate-label errors, template output confirmed to
-    contain the new labels.
 
 7) An downloaded answer file has an entry for every question, whether or not the student answered it.
 
@@ -401,3 +253,16 @@ Big Picture: We hope to replace both learnr and tutorial.helpers with learnr2. T
 Note that, from a student point of view, vscode.tutorials and vscode.tutorials2 look identical. Same questions. Same images. Doesn't have to be perfect, like with fonts and colors. But the substance is the same.
 
 
+1) What is up with this behavior? Desirable? Probabaly not.
+
+> ?learnr2::run_tutorial
+ℹ Rendering development documentation for "run_tutorial"
+VSCode WebView has restricted access to local file.
+Opening in external browser...
+Browsing file:///private/var/folders/r9/6fwqy1_96454b9bjyv3bg8j80000gn/T/Rtmp2jwXnH/.R/doc/html/run_tutorial.html
+
+2) Start Over does not work.
+
+3) No nonsense underscores in Getting Started.
+
+4) Replicate this: https://github.com/PPBDS/tutorial.helpers/blob/main/inst/tutorials/getting-started/tutorial.Rmd
