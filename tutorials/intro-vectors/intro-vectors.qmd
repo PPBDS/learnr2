@@ -100,11 +100,6 @@ learnr2::question(
 learnr2::question(
   "How many minutes, approximately, did it take you to complete this
   tutorial? For example, an hour and a half would be 90 minutes.",
-  learnr2::answer(
-    "There's no fixed correct answer here --- just enter your honest
-    estimate, as a number of minutes.",
-    correct = TRUE
-  ),
   type = "reflection_editable",
   validate = "integer"
 )

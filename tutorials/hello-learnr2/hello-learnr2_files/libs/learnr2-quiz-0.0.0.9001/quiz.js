@@ -474,6 +474,12 @@
     }
 
     function showModelAnswer() {
+      // Nothing to reveal -- e.g. question() was called with no answer()
+      // marked correct, for a genuinely open-ended prompt. Leave `reveal`
+      // hidden rather than showing an empty "Model answer:" box.
+      if (modelAnswers.length === 0) {
+        return;
+      }
       reveal.textContent = "";
       reveal.appendChild(el("div", { class: "learnr2-model-answer-label", text: "Model answer:" }));
       modelAnswers.forEach(function (text) {
