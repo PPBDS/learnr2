@@ -102,6 +102,7 @@ scores <- c(72, 88, 91, 64, 100)
 
 ```{webr}
 #| exercise: ex_mean
+#| persist: true
 # `scores` already exists. Compute its mean.
 ______
 ```
@@ -121,6 +122,7 @@ work against the solution.
 
 ```{webr}
 #| exercise: ex_grade
+#| persist: true
 # Multiply 6 by 7.
 ______
 ```
@@ -151,6 +153,7 @@ you *author* the tutorial, not each time a reader loads the page).
 Single choice, with a nudge to try again:
 
 ```{r}
+#| label: quiz-questions-1
 learnr2::question(
   "Which function computes the arithmetic mean in base R?",
   learnr2::answer("mean()", correct = TRUE),
@@ -164,6 +167,7 @@ Multiple choice is inferred automatically from how many answers are marked
 `correct`:
 
 ```{r}
+#| label: quiz-questions-2
 learnr2::question(
   "Which of these are valid ways to create a vector in R?",
   learnr2::answer("c(1, 2, 3)", correct = TRUE),
@@ -177,6 +181,7 @@ Free-text questions compare the reader's typed answer against one or more
 acceptable responses:
 
 ```{r}
+#| label: quiz-questions-3
 learnr2::question(
   "What R package powers grading for learnr2 exercises?",
   learnr2::answer("gradethis", correct = TRUE),
@@ -192,6 +197,7 @@ their own response, without grading it --- and locks their response so it
 can't be changed afterward:
 
 ```{r}
+#| label: quiz-questions-4
 learnr2::question(
   "Explain why the code cells on this page don't need a running R server.",
   learnr2::answer(
@@ -208,6 +214,7 @@ learnr2::question(
 keep revising their own response after the model answer is revealed:
 
 ```{r}
+#| label: quiz-questions-5
 learnr2::question(
   "Explain the difference between `type = \"text\"` and `type =
   \"reflection\"`.",
@@ -221,24 +228,6 @@ learnr2::question(
 )
 ```
 
-For exercises where the reader's work is a plot or other image, add
-`allow_image = TRUE` to let them paste a screenshot from their clipboard
-alongside their written response --- there is no file-upload button, just
-press Ctrl+V (or Cmd+V) with the response box focused (or click the box
-below it and paste there instead):
-
-```{r}
-learnr2::question(
-  "Paste a screenshot of the plot you made in the exercise above.",
-  learnr2::answer(
-    "A scatterplot of `wt` vs. `mpg` with a downward-sloping trend line.",
-    correct = TRUE
-  ),
-  type = "reflection",
-  allow_image = TRUE
-)
-```
-
 Submitted answers are saved automatically (again via `localStorage`, keyed
 by page URL and question) and restored on the reader's next visit. The
 default key is derived from the question text, so editing a question's
@@ -249,6 +238,7 @@ progress.
 Group related questions with `learnr2::quiz()`:
 
 ```{r}
+#| label: quiz-questions-6
 learnr2::quiz(
   caption = "Quick check",
   learnr2::question(
@@ -264,7 +254,49 @@ learnr2::quiz(
 )
 ```
 
-## 7. Student info and submission
+## 7. Copy/paste an image
+
+For exercises where the reader's work is a plot or other image, add
+`allow_image = TRUE` to a `"reflection"`/`"reflection_editable"` question
+and let them paste a screenshot from their clipboard alongside their
+written response --- there is no file-upload button, just press Ctrl+V (or
+Cmd+V) with the response box focused (or click the box below it and paste
+there instead).
+
+Try it: edit the exercise below (or leave it as-is), run it, then take a
+screenshot of the plot it produces --- e.g. `Cmd+Shift+4` on a Mac,
+`Win+Shift+S` on Windows, or your Chromebook's screenshot tool (`Ctrl` +
+`Show windows`) --- and paste it into the question underneath.
+
+```{webr}
+#| exercise: ex_image_plot
+#| persist: true
+ggplot(mtcars, aes(wt, mpg)) +
+  geom_point(color = "steelblue", size = 3)
+```
+
+```{r}
+#| label: copy-paste-an-image-1
+learnr2::question(
+  "Paste a screenshot of the plot you made in the exercise above.",
+  learnr2::answer(
+    "A scatterplot of `wt` vs. `mpg`, colored steel blue.",
+    correct = TRUE
+  ),
+  type = "reflection",
+  allow_image = TRUE
+)
+```
+
+Whatever your OS's native clipboard format actually is behind the scenes
+(bitmap, TIFF, etc. --- it genuinely varies by platform, so a screenshot
+isn't guaranteed to already be a PNG), `allow_image` accepts it directly
+--- PNG, JPEG, GIF, WebP, or BMP --- and re-encodes it as PNG itself before
+storing it, so what's actually saved is always PNG no matter which of
+those your platform handed over (see [question()]'s docs for the exact
+size limit).
+
+## 8. Student info and submission
 
 Two more pieces for wrapping a tutorial into something a student can turn
 in, no server required. In a real tutorial, `student_info()` normally goes
@@ -278,6 +310,7 @@ Submit button. It also auto-saves as the reader types, so nothing is lost
 even if they never click Submit:
 
 ```{r}
+#| label: student-info-and-submission-1
 learnr2::student_info()
 ```
 
@@ -294,6 +327,7 @@ technical reader could reproduce the hash themselves --- it's a deterrent
 against casually editing the file, not real cryptographic security:
 
 ```{r}
+#| label: student-info-and-submission-2
 learnr2::download_answers_button(filename_prefix = "hello-learnr2")
 ```
 

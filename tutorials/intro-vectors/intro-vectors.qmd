@@ -10,6 +10,7 @@ toc: true
 ## Student Information
 
 ```{r}
+#| label: student-information-1
 #| echo: false
 learnr2::student_info()
 ```
@@ -79,6 +80,7 @@ mean(scores)
 ## Quick check
 
 ```{r}
+#| label: quick-check-1
 #| echo: false
 learnr2::question(
   "What does `scores[2]` return, for `scores <- c(88, 92, 79, 95, 61)`?",
@@ -93,6 +95,7 @@ learnr2::question(
 ## Your Answers
 
 ```{r}
+#| label: your-answers-1
 #| echo: false
 learnr2::question(
   "How many minutes, approximately, did it take you to complete this
@@ -108,6 +111,7 @@ learnr2::question(
 ```
 
 ```{r}
+#| label: your-answers-2
 #| echo: false
 learnr2::download_answers_button(filename_prefix = "intro-vectors")
 ```
