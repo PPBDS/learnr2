@@ -51,7 +51,7 @@ tutorials from separately-installed content packages (in the style of
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">available_tutorials</span><span class="op">(</span>package <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">available_tutorials</span><span class="op">(</span>package <span class="op">=</span> <span class="cn">NULL</span>, type <span class="op">=</span> <span class="st">"all"</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -62,12 +62,19 @@ tutorials from separately-installed content packages (in the style of
 <dd><p>Name of a single package to scan. Defaults to <code>NULL</code>,
 which scans every installed package.</p></dd>
 
+
+<dt id="arg-type">type<a class="anchor" aria-label="anchor" href="#arg-type"></a></dt>
+<dd><p>Which authoring format to include: <code>"quarto"</code> (tutorials
+whose top-level document is a <code>.qmd</code>), <code>"rmarkdown"</code> (a <code>.Rmd</code>), or
+<code>"all"</code> (the default) for both.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A data frame with one row per tutorial and columns <code>package</code>,
-<code>name</code>, and <code>title</code> (<code>NA</code> if the tutorial's <code>.qmd</code>/<code>.Rmd</code> has no YAML
-<code>title</code>). <code>name</code> can be passed to <code><a href="run_tutorial.html">run_tutorial()</a></code>.</p>
+<code>name</code>, <code>title</code> (<code>NA</code> if the tutorial's <code>.qmd</code>/<code>.Rmd</code> has no YAML
+<code>title</code>), and <code>format</code> (<code>"quarto"</code> or <code>"rmarkdown"</code>). <code>name</code> can be
+passed to <code><a href="run_tutorial.html">run_tutorial()</a></code>.</p>
     </div>
 
     <div class="section level2">
@@ -76,10 +83,15 @@ which scans every installed package.</p></dd>
 <span class="r-in"><span><span class="co"># the same name; this guarantees learnr2's version is used even if learnr is</span></span></span>
 <span class="r-in"><span><span class="co"># also attached and masks it on the search path.</span></span></span>
 <span class="r-in"><span><span class="fu">learnr2</span><span class="fu">::</span><span class="fu">available_tutorials</span><span class="op">(</span>package <span class="op">=</span> <span class="st">"learnr2"</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   package            name                                  title</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1 learnr2 getting-started Getting Started with learnr2 Tutorials</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2 learnr2   hello-learnr2                         Hello, learnr2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3 learnr2   intro-vectors                  Intro to Vectors in R</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   package            name                                  title format</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1 learnr2 getting-started Getting Started with learnr2 Tutorials quarto</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2 learnr2   hello-learnr2                         Hello, learnr2 quarto</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3 learnr2   intro-vectors                  Intro to Vectors in R quarto</span>
+<span class="r-in"><span><span class="fu">learnr2</span><span class="fu">::</span><span class="fu">available_tutorials</span><span class="op">(</span>package <span class="op">=</span> <span class="st">"learnr2"</span>, type <span class="op">=</span> <span class="st">"quarto"</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   package            name                                  title format</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1 learnr2 getting-started Getting Started with learnr2 Tutorials quarto</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2 learnr2   hello-learnr2                         Hello, learnr2 quarto</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3 learnr2   intro-vectors                  Intro to Vectors in R quarto</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

@@ -35,7 +35,9 @@ question(
 
   One or more
   [`answer()`](https://ppbds.github.io/learnr2/reference/answer.md)
-  objects.
+  objects. Optional for `"reflection"`/`"reflection_editable"` questions
+  (see `type`); required, with at least one marked `correct`, for every
+  other type.
 
 - type:
 
@@ -52,11 +54,16 @@ question(
   - `"reflection"` – an ungraded free-response question. After
     submitting, the reader sees the model answer (the `correct`
     [`answer()`](https://ppbds.github.io/learnr2/reference/answer.md)
-    text(s)) and their own response is locked.
+    text(s)) and their own response is locked. If no
+    [`answer()`](https://ppbds.github.io/learnr2/reference/answer.md) is
+    marked `correct` – including passing none at all, e.g. for a
+    genuinely open-ended prompt like "how many minutes did this take?"
+    with no right answer to demonstrate – nothing is revealed; the
+    reader's response is still saved and locked exactly the same.
 
   - `"reflection_editable"` – like `"reflection"`, but the reader's
-    response stays editable after the model answer is revealed, so they
-    can keep revising it.
+    response stays editable after submitting (whether or not a model
+    answer was revealed), so they can keep revising it.
 
 - correct:
 
@@ -173,12 +180,10 @@ question(
   allow_retry = TRUE
 )
 
+# No answer() at all -- a genuinely open-ended prompt with nothing to
+# reveal after the reader submits.
 question(
   "How many minutes, approximately, did this take?",
-  answer(
-    "There's no fixed correct answer here -- just enter your honest estimate.",
-    correct = TRUE
-  ),
   type = "reflection_editable",
   validate = "integer"
 )

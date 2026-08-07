@@ -74,7 +74,9 @@ questions, graded entirely in the reader's browser.</p>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
-<dd><p>One or more <code><a href="answer.html">answer()</a></code> objects.</p></dd>
+<dd><p>One or more <code><a href="answer.html">answer()</a></code> objects. Optional for
+<code>"reflection"</code>/<code>"reflection_editable"</code> questions (see <code>type</code>); required,
+with at least one marked <code>correct</code>, for every other type.</p></dd>
 
 
 <dt id="arg-type">type<a class="anchor" aria-label="anchor" href="#arg-type"></a></dt>
@@ -85,10 +87,14 @@ whitespace-collapsed, case-insensitive) the reader's response against
 the <code><a href="answer.html">answer()</a></code> text(s).</p></li>
 <li><p><code>"reflection"</code> – an ungraded free-response question. After
 submitting, the reader sees the model answer (the <code>correct</code>
-<code><a href="answer.html">answer()</a></code> text(s)) and their own response is locked.</p></li>
+<code><a href="answer.html">answer()</a></code> text(s)) and their own response is locked. If no
+<code><a href="answer.html">answer()</a></code> is marked <code>correct</code> – including passing none at all, e.g.
+for a genuinely open-ended prompt like "how many minutes did this
+take?" with no right answer to demonstrate – nothing is revealed; the
+reader's response is still saved and locked exactly the same.</p></li>
 <li><p><code>"reflection_editable"</code> – like <code>"reflection"</code>, but the reader's
-response stays editable after the model answer is revealed, so they
-can keep revising it.</p></li>
+response stays editable after submitting (whether or not a model
+answer was revealed), so they can keep revising it.</p></li>
 </ul></dd>
 
 
@@ -205,12 +211,10 @@ visit, not this one tutorial's progress.</p>
 <span class="r-in"><span>  allow_retry <span class="op">=</span> <span class="cn">TRUE</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># No answer() at all -- a genuinely open-ended prompt with nothing to</span></span></span>
+<span class="r-in"><span><span class="co"># reveal after the reader submits.</span></span></span>
 <span class="r-in"><span><span class="fu">question</span><span class="op">(</span></span></span>
 <span class="r-in"><span>  <span class="st">"How many minutes, approximately, did this take?"</span>,</span></span>
-<span class="r-in"><span>  <span class="fu"><a href="answer.html">answer</a></span><span class="op">(</span></span></span>
-<span class="r-in"><span>    <span class="st">"There's no fixed correct answer here -- just enter your honest estimate."</span>,</span></span>
-<span class="r-in"><span>    correct <span class="op">=</span> <span class="cn">TRUE</span></span></span>
-<span class="r-in"><span>  <span class="op">)</span>,</span></span>
 <span class="r-in"><span>  type <span class="op">=</span> <span class="st">"reflection_editable"</span>,</span></span>
 <span class="r-in"><span>  validate <span class="op">=</span> <span class="st">"integer"</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
