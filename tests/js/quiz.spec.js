@@ -161,7 +161,10 @@ test.describe("reflection questions", () => {
     page
   }) => {
     await page.goto("/reflection-no-model-answer");
-    await page.locator("textarea").fill("90");
+    // This fixture uses validate: "integer" (see the "how many minutes"
+    // example it's modeled on), which renders a single-line input sized
+    // like student_info()'s fields rather than a multi-row textarea.
+    await page.locator(".learnr2-text-input").fill("90");
     await page.locator(".learnr2-submit").click();
 
     // Still behaves like a normal reflection_editable submission otherwise --
@@ -171,7 +174,7 @@ test.describe("reflection questions", () => {
     await expect(page.locator(".learnr2-submit")).toHaveText("Edit Answer");
 
     await page.reload();
-    await expect(page.locator("textarea")).toHaveValue("90");
+    await expect(page.locator(".learnr2-text-input")).toHaveValue("90");
     await expect(page.locator(".learnr2-model-answer")).toBeHidden();
   });
 });
@@ -204,7 +207,9 @@ test.describe("validate = \"integer\"", () => {
 
   test("reflection_editable question: non-integer input blocks submission, no model answer revealed", async ({ page }) => {
     await page.goto("/reflection-editable-integer");
-    const textarea = page.locator("textarea");
+    // validate: "integer" renders a single-line input, not a textarea (see
+    // the fixture above).
+    const textarea = page.locator(".learnr2-text-input");
     const feedback = page.locator(".learnr2-feedback");
 
     await textarea.fill("about an hour");
@@ -518,6 +523,50 @@ test.describe("download answers button", () => {
     ]);
   });
 
+  test("still finds a saved answer and exercise after the reader navigates to a different TOC section (URL hash change) before downloading", async ({ page }) => {
+    // Regression test: quiz.js used to build every storage key from a fresh
+    // `window.location.href` read at click time. Quarto's own TOC sidebar
+    // links change the URL's hash without reloading the page -- completely
+    // normal navigation -- so a reader who saved an answer while the hash
+    // pointed at one section, then clicked to another section before
+    // downloading, made collectAnswers()/collectExerciseAnswers() look for
+    // keys under the new hash while the data was actually saved under the
+    // old one. Nothing was lost, but the download silently came back empty
+    // for that answer/exercise. Fixed by capturing a hash-stripped page URL
+    // once at load time instead (matching how quarto-live's own editor
+    // caches its storage key once, in its constructor).
+    await page.goto("/download-answers");
+
+    await page.locator("#learnr2-info-student-info-name").fill("Ada Lovelace");
+    await page.locator("#learnr2-info-student-info-email").fill("ada@example.com");
+    await page.locator("body").click();
+    const singleChoiceQuestion = page.locator(".learnr2-question", {
+      has: page.locator("#single-choice-answer-0")
+    });
+    await singleChoiceQuestion.locator("#single-choice-answer-0").check();
+    await singleChoiceQuestion.locator(".learnr2-submit").click();
+    await page.evaluate(() => {
+      localStorage.setItem("editor-" + location.href + "#webr-1-contents", "sum(1:100)");
+    });
+
+    // Same as clicking a `<a href="#some-other-section">` TOC link: changes
+    // location.hash without a page reload.
+    await page.evaluate(() => { location.hash = "some-other-section"; });
+
+    const downloadPromise = page.waitForEvent("download");
+    await page.locator(".learnr2-download-answers-btn").click();
+    const download = await downloadPromise;
+    const stream = await download.createReadStream();
+    const chunks = [];
+    for await (const chunk of stream) chunks.push(chunk);
+    const contents = JSON.parse(Buffer.concat(chunks).toString("utf8"));
+
+    const choiceAnswer = contents.answers.find((a) => a.question === "What is 6 times 7?");
+    expect(choiceAnswer.answered).toBe(true);
+    expect(choiceAnswer.yourAnswer).toEqual(["42"]);
+    expect(contents.exercises).toContainEqual({ id: "ex-attempted", attempted: true, yourCode: "sum(1:100)" });
+  });
+
   test("the device id is stable across repeated downloads (same browser/profile)", async ({ page }) => {
     await page.goto("/download-answers");
     await page.locator("#learnr2-info-student-info-name").fill("Ada Lovelace");
@@ -622,17 +671,17 @@ test.describe("Start Over", () => {
       localStorage.setItem("learnr2-device-id", "test-device-should-survive");
     });
 
-    page.on("dialog", (dialog) => dialog.accept());
+    await page.locator(".learnr2-start-over").click();
     // Registering the load-state wait and the click together matters here:
     // the click resolves as soon as the event dispatches, but the actual
-    // reload() only happens after the native confirm() dialog round-trips
-    // through Playwright's out-of-process dialog handling. Awaiting the
-    // click alone, then waitForLoadState() afterward, can win that race and
-    // observe the pre-reload page (confirmed: this genuinely happens, not
-    // hypothetical -- the fix below is required, not defensive).
+    // reload() only happens after the in-page <dialog>'s Start Over button
+    // is clicked. Awaiting the click alone, then waitForLoadState()
+    // afterward, can win that race and observe the pre-reload page
+    // (confirmed: this genuinely happens, not hypothetical -- the fix
+    // below is required, not defensive).
     await Promise.all([
       page.waitForLoadState(),
-      page.locator(".learnr2-start-over").click()
+      page.locator(".learnr2-confirm-dialog-confirm").click()
     ]);
 
     await expect(page.locator("#learnr2-info-student-info-name")).toHaveValue("");
@@ -659,10 +708,45 @@ test.describe("Start Over", () => {
     await page.locator("#learnr2-info-student-info-name").fill("Ada Lovelace");
     await page.locator("body").click();
 
-    page.on("dialog", (dialog) => dialog.dismiss());
     await page.locator(".learnr2-start-over").click();
+    await page.locator(".learnr2-confirm-dialog-cancel").click();
 
     // No reload happened -- the value typed above is still right there.
     await expect(page.locator("#learnr2-info-student-info-name")).toHaveValue("Ada Lovelace");
+  });
+
+  test("still clears a saved answer after the reader navigates to a different TOC section (URL hash change) before clicking Start Over", async ({ page }) => {
+    // Same underlying bug as the equivalent download-answers regression
+    // test above, but for clearAllProgress()'s own key prefixes.
+    await page.goto("/download-answers");
+    await page.locator("#learnr2-info-student-info-name").fill("Ada Lovelace");
+    await page.locator("body").click();
+
+    await page.evaluate(() => { location.hash = "some-other-section"; });
+
+    await page.locator(".learnr2-start-over").click();
+    await Promise.all([
+      page.waitForLoadState(),
+      page.locator(".learnr2-confirm-dialog-confirm").click()
+    ]);
+
+    await expect(page.locator("#learnr2-info-student-info-name")).toHaveValue("");
+  });
+
+  test("a plain window.confirm() is never used -- the dialog is in-page DOM content, since VS Code's Simple Browser webview (see item 0 of TODO.txt on how run_tutorial() ends up opening there) silently no-ops window.confirm()", async ({ page }) => {
+    await page.goto("/download-answers");
+
+    let nativeDialogFired = false;
+    page.on("dialog", (dialog) => {
+      nativeDialogFired = true;
+      dialog.dismiss();
+    });
+
+    await page.locator(".learnr2-start-over").click();
+    await expect(page.locator(".learnr2-confirm-dialog")).toBeVisible();
+    expect(nativeDialogFired).toBe(false);
+
+    await page.locator(".learnr2-confirm-dialog-cancel").click();
+    await expect(page.locator(".learnr2-confirm-dialog")).toHaveCount(0);
   });
 });

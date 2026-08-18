@@ -104,6 +104,36 @@ test_that("rendered info/button HTML embeds a decodable payload with the quiz de
   expect_equal(decoded2$filenamePrefix, "learnr2-answers")
 })
 
+test_that("print.learnr2_info and knit_print.learnr2_info behave like question()'s print/knit_print", {
+  info <- student_info()
+
+  expect_no_error(print(info))
+  result <- withVisible(print(info))
+  expect_false(result$visible)
+  expect_identical(result$value, info)
+
+  kp <- knitr::knit_print(info)
+  expect_s3_class(kp, "knit_asis")
+  html <- as.character(kp)
+  expect_match(html, "learnr2-info")
+  expect_match(html, "data-learnr2-info")
+})
+
+test_that("print.learnr2_download_button and knit_print.learnr2_download_button behave like question()'s print/knit_print", {
+  btn <- download_answers_button()
+
+  expect_no_error(print(btn))
+  result <- withVisible(print(btn))
+  expect_false(result$visible)
+  expect_identical(result$value, btn)
+
+  kp <- knitr::knit_print(btn)
+  expect_s3_class(kp, "knit_asis")
+  html <- as.character(kp)
+  expect_match(html, "learnr2-download-answers")
+  expect_match(html, "data-learnr2-download")
+})
+
 # Builds a submission JSON file exactly like the one quiz.js's
 # collectAnswers() produces, with a correctly-computed integrity hash, so
 # tests can start from something genuinely valid and then tamper with it.

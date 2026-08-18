@@ -235,7 +235,7 @@ test_that("quiz() requires question() objects", {
 
 test_that("rendered question HTML embeds a decodable payload", {
   q <- question("6 * 7?", answer("42", correct = TRUE), answer("36"))
-  html <- quiz_html(q)
+  html <- learnr2:::quiz_html(q)
   expect_true(inherits(html, "shiny.tag"))
 
   encoded <- html$attribs[["data-learnr2-question"]]
@@ -257,7 +257,52 @@ test_that("rendered quiz HTML contains one div per question", {
     question("3 + 3?", answer("6", correct = TRUE)),
     caption = "Arithmetic"
   )
-  html <- as.character(quiz_html(qz))
+  html <- as.character(learnr2:::quiz_html(qz))
   expect_match(html, "learnr2-quiz-caption")
   expect_equal(lengths(regmatches(html, gregexpr("learnr2-question\"", html))), 2)
+})
+
+test_that("print.learnr2_answer prints a one-line summary, with [correct] only when applicable", {
+  correct_answer <- answer("42", correct = TRUE)
+  expect_output(print(correct_answer), "<answer: \"42\" \\[correct\\]>")
+
+  wrong_answer <- answer("36")
+  out <- capture.output(print(wrong_answer))
+  expect_match(out, "<answer: \"36\">", fixed = TRUE, all = FALSE)
+  expect_false(grepl("correct", out, fixed = TRUE))
+
+  # Like every print method here, returns its input invisibly rather than
+  # e.g. NULL, so `x <- print(x)` in a pipe doesn't silently lose the value.
+  expect_identical(print(correct_answer), correct_answer)
+})
+
+test_that("print.learnr2_question opens a browser preview without erroring, and returns its input invisibly", {
+  q <- question("6 * 7?", answer("42", correct = TRUE), answer("36"))
+  expect_no_error(print(q))
+
+  result <- withVisible(print(q))
+  expect_false(result$visible)
+  expect_identical(result$value, q)
+})
+
+test_that("knit_print.learnr2_question renders via quiz_html(), tagged for knitr as knit_asis", {
+  q <- question("6 * 7?", answer("42", correct = TRUE), answer("36"))
+  kp <- knitr::knit_print(q)
+  expect_s3_class(kp, "knit_asis")
+  html <- as.character(kp)
+  expect_match(html, "learnr2-question")
+  expect_match(html, "data-learnr2-question")
+})
+
+test_that("print.learnr2_quiz and knit_print.learnr2_quiz behave the same way as the single-question versions", {
+  qz <- quiz(question("2 + 2?", answer("4", correct = TRUE)), caption = "Arithmetic")
+
+  expect_no_error(print(qz))
+  result <- withVisible(print(qz))
+  expect_false(result$visible)
+  expect_identical(result$value, qz)
+
+  kp <- knitr::knit_print(qz)
+  expect_s3_class(kp, "knit_asis")
+  expect_match(as.character(kp), "learnr2-quiz-caption")
 })

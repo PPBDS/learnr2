@@ -26,6 +26,7 @@ browser using WebR --- no R server required.
 ## A runnable cell
 
 ```{webr}
+#| label: a-runnable-cell-1
 x <- c(1, 2, 3, 4, 5)
 mean(x)
 ```
@@ -33,10 +34,10 @@ mean(x)
 ## An exercise
 
 ```{webr}
+#| label: an-exercise-1
 #| exercise: first_exercise
 #| persist: true
 # Compute the sum of 1 through 10.
-______
 ```
 
 ::: { .hint exercise="first_exercise" }

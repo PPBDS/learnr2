@@ -90,7 +90,7 @@ Big Picture: We hope to replace both learnr and tutorial.helpers with learnr2. T
     checked and need no changes: both only read the `name`/`title`
     columns and don't pass `type`, so they keep the old "all" behavior.
 
-3) Always have a "Start Over" button or option.
+3) Always have a "Start Over" button or option. - Verified
 
     Done. Every page now gets a "Start Over" button, appended
     automatically to the bottom of Quarto's TOC sidebar by the same
@@ -125,7 +125,33 @@ Big Picture: We hope to replace both learnr and tutorial.helpers with learnr2. T
     R/RStudio dependency" section) and R/question.R's "Progress
     persistence" docs to describe the button instead.
 
-4) Need a "copy image" question in hello-learnr2.
+    Follow-up bug, found by hand after this was marked Done: the button
+    did nothing when a rendered tutorial was viewed inside VS Code's
+    built-in Simple Browser webview (the panel run_tutorial() opens
+    tutorials in from a VS Code R terminal -- see item 0). Root cause:
+    the click handler used window.confirm(), a native out-of-process
+    browser dialog -- Simple Browser (and embedded webviews generally)
+    silently resolves it to `false` with no dialog ever shown, so
+    clearAllProgress() was never reached. The Playwright suite never
+    caught this because it runs in real Chromium, where confirm()
+    actually shows a dialog.
+
+    Fixed by replacing window.confirm() with an in-page confirmation
+    built from a plain <dialog> element (new showConfirmDialog() in
+    quiz.js, styled in quiz.css) -- ordinary DOM/CSS renders the same
+    everywhere a tutorial itself renders, unlike a browser-chrome-level
+    dialog. Updated the existing Start Over tests to click the dialog's
+    own Cancel/Start Over buttons instead of Playwright's native-dialog
+    handler, and added a new test asserting no native dialog fires at
+    all. Verified two ways: full Playwright run (37/37 pass, up from 32
+    -- the earlier "32 tests pass" note above was the whole suite at the
+    time, not just this describe block), and by hand -- reinstalled the
+    package, re-rendered hello-learnr2, seeded localStorage, clicked
+    Start Over in a real rendered page, confirmed the new dialog appears
+    and clicking its own Start Over button actually clears storage and
+    reloads.
+
+4) Need a "copy image" question in hello-learnr2.   - Verified
 
     Done. There already was an allow_image = TRUE example, but it was a
     weak demo: buried as an aside inside section 6 ("Quiz questions"), and
@@ -150,7 +176,7 @@ Big Picture: We hope to replace both learnr and tutorial.helpers with learnr2. T
     paste event against the new exercise's question produces a correct
     data:image/png;base64,... preview.
 
-5) hello-learnr to does not download the answers for the execute code questions. It should.
+5) hello-learnr to does not download the answers for the execute code questions. It should. -Verified
 
     Done. Confirmed the gap first: collectAnswers() in quiz.js only ever
     scanned .learnr2-question/.learnr2-info elements -- {webr} exercises
@@ -203,7 +229,7 @@ Big Picture: We hope to replace both learnr and tutorial.helpers with learnr2. T
     verify_submission() logic by hand instead against the updated test
     fixture; worth an actual `devtools::test()` run to be sure.
 
-6) Shouldn't every question have a code chunk name? Yes. Shouldn't they be unique? Yes. Shouldn't they follow the usual tutorial.helpers convention of section-header (lower cased and weird characters to dashes, and duplicate dashes simoplified to one dash()) dash exercise number? Yes.
+6) Shouldn't every question have a code chunk name? Yes. Shouldn't they be unique? Yes. Shouldn't they follow the usual tutorial.helpers convention of section-header (lower cased and weird characters to dashes, and duplicate dashes simoplified to one dash()) dash exercise number? Yes. - Verified(?)
 
     Done, scoped to the question()/student_info()/download_answers_button()
     {r} chunks specifically (not {webr} exercise chunks, which already have
@@ -233,7 +259,7 @@ Big Picture: We hope to replace both learnr and tutorial.helpers with learnr2. T
     cleanly, no duplicate-label errors, template output confirmed to
     contain the new labels.
 
-7) An downloaded answer file has an entry for every question, whether or not the student answered it.
+7) An downloaded answer file has an entry for every question, whether or not the student answered it. -Verified
 
     Confirmed already done, no code change needed. collectAnswers() in
     quiz.js iterates every .learnr2-question element unconditionally --

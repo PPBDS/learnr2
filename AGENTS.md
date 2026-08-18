@@ -135,18 +135,27 @@ from a learnr/tutorial.helpers source per the next section.
 Don't forget `#| echo: false` on all three chunks (see that section, below,
 for why it matters).
 
-## Every `question()`/`student_info()`/`download_answers_button()` chunk needs a unique `#| label:`
+## Every chunk needs a unique `#| label:`
 
 learnr2 itself never reads a chunk's label -- unlike the `#| exercise:`
 option on a `{webr}` cell (which really is load-bearing: it's what ties a
-`.hint`/`.solution` div to its exercise), a plain `{r}` chunk's label has
-no runtime effect here at all. Give every one an explicit, unique label
-anyway, on its own `#| label:` line (not the old inline
-`` ```{r some-label} `` header style -- see the per-chunk-options rule two
-sections below), for the same reason `tutorial.helpers` tutorials always
-have one: an anonymous chunk is invisible to anything that wants to talk
-about "that one exercise" -- tooling, a reviewer leaving comments, an
-error message citing a chunk -- and a labelled one isn't.
+`.hint`/`.solution` div to its exercise), a chunk's label has no runtime
+effect here at all. Give every chunk one anyway -- `{r}` chunks calling
+`question()`/`student_info()`/`download_answers_button()`, *and* every
+`{webr}` chunk, including exercise ones (alongside their load-bearing
+`#| exercise:`, which stays exactly as it was) and plain non-exercise demo
+cells that carry no other identifying option at all. On its own
+`#| label:` line (not the old inline `` ```{r some-label} `` header style
+-- see the per-chunk-options rule two sections below), for the same reason
+`tutorial.helpers` tutorials always have one: an anonymous chunk is
+invisible to anything that wants to talk about "that one cell" -- tooling,
+a reviewer leaving comments, an error message citing a chunk -- and a
+labelled one isn't. (A first pass at this rule scoped it to only the
+three `{r}` functions above, reasoning `{webr}` exercise chunks already
+had `#| exercise:` covering the same need -- true for *that* purpose, but
+it left every plain demo cell with no identifier of any kind, and doesn't
+help a reviewer who's just scanning a `.qmd` for "does every chunk have a
+name," which is what this rule is actually for.)
 
 Follow `tutorial.helpers`'s own convention, the same one used throughout
 its real tutorials (e.g. `bash-terminal-1`, `r-terminal-5`): the enclosing
@@ -154,14 +163,14 @@ its real tutorials (e.g. `bash-terminal-1`, `r-terminal-5`): the enclosing
 non-alphanumeric characters collapsed to single dashes (drop a leading
 number-and-period like the `6.` in `## 6. Quiz questions` -- the number is
 already implicit in the chunk's own suffix), followed by a dash and a
-sequential number -- restarting at `1` for each section, counting only
-`{r}` chunks that call one of these three functions (not every `{r}`
-chunk in the section, and not `{webr}` exercise chunks, which already have
-`#| exercise:` serving this purpose). `## Quiz questions` -> `quiz-questions-1`,
-`quiz-questions-2`, .... Every bundled tutorial (`hello-learnr2`,
-`getting-started`, `intro-vectors`) and the `create_tutorial()` template
-follow this now -- match their style for a new one rather than inventing
-another convention.
+sequential number -- restarting at `1` for each section, in document
+order, counting *every* chunk in the section that gets a label (mixing
+`{r}` and `{webr}` chunks in one sequence if a section has both, rather
+than numbering each chunk type separately). `## Quiz questions` ->
+`quiz-questions-1`, `quiz-questions-2`, .... Every bundled tutorial
+(`hello-learnr2`, `getting-started`, `intro-vectors`) and the
+`create_tutorial()` template follow this now -- match their style for a
+new one rather than inventing another convention.
 
 ## Showing inline-code syntax literally, without triggering it
 
@@ -254,13 +263,13 @@ learnr's `exercise = TRUE` R chunks:
 ```
 ````
 
-become `{webr}` chunks with an `exercise:` option and a stable label. Blanks
-the student must fill in are written as a run of underscores:
+become `{webr}` chunks with an `exercise:` option and a stable label. The
+chunk starts empty for the student to fill in (or with a leading `#`
+comment describing the task, if that helps set up the exercise):
 
 ````
 ```{webr}
 #| exercise: exercise_1
-______
 ```
 ````
 
