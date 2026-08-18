@@ -39,13 +39,13 @@ A data frame with one row per tutorial and columns `package`, `name`,
 # the same name; this guarantees learnr2's version is used even if learnr is
 # also attached and masks it on the search path.
 learnr2::available_tutorials(package = "learnr2")
-#>   package            name                                  title format
-#> 1 learnr2 getting-started Getting Started with learnr2 Tutorials quarto
-#> 2 learnr2   hello-learnr2                         Hello, learnr2 quarto
-#> 3 learnr2   intro-vectors                  Intro to Vectors in R quarto
+#>   package            name                 title format
+#> 1 learnr2 getting-started       Getting Started quarto
+#> 2 learnr2   hello-learnr2        Hello, learnr2 quarto
+#> 3 learnr2   intro-vectors Intro to Vectors in R quarto
 learnr2::available_tutorials(package = "learnr2", type = "quarto")
-#>   package            name                                  title format
-#> 1 learnr2 getting-started Getting Started with learnr2 Tutorials quarto
-#> 2 learnr2   hello-learnr2                         Hello, learnr2 quarto
-#> 3 learnr2   intro-vectors                  Intro to Vectors in R quarto
+#>   package            name                 title format
+#> 1 learnr2 getting-started       Getting Started quarto
+#> 2 learnr2   hello-learnr2        Hello, learnr2 quarto
+#> 3 learnr2   intro-vectors Intro to Vectors in R quarto
 ```
