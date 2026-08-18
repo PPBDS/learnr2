@@ -90,7 +90,7 @@ Big Picture: We hope to replace both learnr and tutorial.helpers with learnr2. T
     checked and need no changes: both only read the `name`/`title`
     columns and don't pass `type`, so they keep the old "all" behavior.
 
-3) Always have a "Start Over" button or option. - Verified
+3) Always have a "Start Over" button or option.
 
     Done. Every page now gets a "Start Over" button, appended
     automatically to the bottom of Quarto's TOC sidebar by the same
@@ -231,33 +231,6 @@ Big Picture: We hope to replace both learnr and tutorial.helpers with learnr2. T
 
 6) Shouldn't every question have a code chunk name? Yes. Shouldn't they be unique? Yes. Shouldn't they follow the usual tutorial.helpers convention of section-header (lower cased and weird characters to dashes, and duplicate dashes simoplified to one dash()) dash exercise number? Yes. - Verified(?)
 
-    Done, scoped to the question()/student_info()/download_answers_button()
-    {r} chunks specifically (not {webr} exercise chunks, which already have
-    their own load-bearing identifier, #| exercise:, unlike a plain {r}
-    chunk's label which learnr2 never reads at all -- didn't touch those,
-    to avoid risking a regression in something quarto-live controls that
-    couldn't be fully verified in this sandbox, WebR never finishing boot).
-
-    Applied `#| label: <section-slug>-<n>` (modern #| syntax, not the old
-    inline `{r label}` header style, matching the project's established
-    per-chunk-option convention) to every such chunk in all three bundled
-    tutorials (hello-learnr2, getting-started, intro-vectors) and to
-    inst/templates/tutorial.qmd (create_tutorial()'s scaffold), so new
-    tutorials get this by default. Slugs derived from each chunk's
-    enclosing ## section heading (lowercased, non-alphanumerics to single
-    dashes, leading numbering like the "6." in "## 6. Quiz questions"
-    dropped since the chunk's own suffix already numbers it), with a
-    sequential number restarting at 1 per section -- e.g. quiz-questions-1
-    through quiz-questions-6 in hello-learnr2. Documented the convention
-    itself as a new rule in AGENTS.md, with its own boilerplate snippets
-    (student_info()/minutes-question/download-button) updated to match, so
-    future tutorials -- hand-authored or via create_tutorial() -- follow
-    it without needing to be told each time.
-
-    Verified by reinstalling the package and re-rendering all three
-    tutorials plus a fresh create_tutorial() scaffold -- all render
-    cleanly, no duplicate-label errors, template output confirmed to
-    contain the new labels.
 
 7) An downloaded answer file has an entry for every question, whether or not the student answered it. -Verified
 
@@ -427,3 +400,16 @@ Big Picture: We hope to replace both learnr and tutorial.helpers with learnr2. T
 Note that, from a student point of view, vscode.tutorials and vscode.tutorials2 look identical. Same questions. Same images. Doesn't have to be perfect, like with fonts and colors. But the substance is the same.
 
 
+1) What is up with this behavior? Desirable? Probabaly not.
+
+> ?learnr2::run_tutorial
+ℹ Rendering development documentation for "run_tutorial"
+VSCode WebView has restricted access to local file.
+Opening in external browser...
+Browsing file:///private/var/folders/r9/6fwqy1_96454b9bjyv3bg8j80000gn/T/Rtmp2jwXnH/.R/doc/html/run_tutorial.html
+
+2) Start Over does not work.
+
+3) No nonsense underscores in Getting Started.
+
+4) Replicate this: https://github.com/PPBDS/tutorial.helpers/blob/main/inst/tutorials/getting-started/tutorial.Rmd

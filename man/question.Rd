@@ -36,10 +36,10 @@ whitespace-collapsed, case-insensitive) the reader's response against
 the \code{\link[=answer]{answer()}} text(s).
 \item \code{"reflection"} -- an ungraded free-response question. After
 submitting, the reader sees the model answer (the \code{correct}
-\code{\link[=answer]{answer()}} text(s)) and their own response is locked. If no
-\code{answer()} is marked \code{correct} -- including passing none at all, e.g.
-for a genuinely open-ended prompt like "how many minutes did this
-take?" with no right answer to demonstrate -- nothing is revealed; the
+\code{\link[=answer]{answer()}} text(s)) and their own response is locked. If no \code{answer()}
+is marked \code{correct} -- including passing none at all, e.g. for a
+genuinely open-ended prompt like "how many minutes did this take?"
+with no right answer to demonstrate -- nothing is revealed; the
 reader's response is still saved and locked exactly the same.
 \item \code{"reflection_editable"} -- like \code{"reflection"}, but the reader's
 response stays editable after submitting (whether or not a model
@@ -79,9 +79,9 @@ alongside their typed response -- not a file upload, just Ctrl+V/Cmd+V
 into the question. Defaults to \code{FALSE}. Ignored for other question
 types. Accepts PNG, JPEG, GIF, WebP, or BMP (whatever the reader's
 platform actually put on the clipboard -- this varies, and isn't
-guaranteed to be PNG just because they took a screenshot) and re-encodes
-it as PNG before storing it, so what ends up saved is always PNG
-regardless of the source format. Capped at 2MB.}
+guaranteed to be PNG just because they took a screenshot) and
+re-encodes it as PNG before storing it, so what ends up saved is
+always PNG regardless of the source format. Capped at 2MB.}
 
 \item{validate}{Client-side format check applied before the reader can
 submit a \code{"text"}, \code{"reflection"}, or \code{"reflection_editable"} answer.
@@ -126,8 +126,8 @@ Every page also gets a "Start Over" button, appended automatically to
 the bottom of Quarto's TOC sidebar (nothing to opt into -- it's added by
 the same JavaScript that renders \code{\link[=question]{question()}}/\code{\link[=student_info]{student_info()}}, as long
 as the tutorial has a sidebar to put it in, i.e. \code{toc: true}). Clicking
-it, after a confirmation prompt, clears every \code{\link[=question]{question()}}/
-\code{\link[=student_info]{student_info()}} answer \emph{and} every \verb{{webr}} exercise's persisted code
+it, after a confirmation prompt, clears every \code{question()}/
+\code{\link[=student_info]{student_info()}} answer \emph{and} every \code{{webr}} exercise's persisted code
 (\code{persist: true}) for this page on this device, then reloads -- a clean
 slate, without needing to know that both live under different
 \code{localStorage} key prefixes. It deliberately leaves alone the random
