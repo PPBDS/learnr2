@@ -1,6 +1,30 @@
 (function () {
   "use strict";
 
+  // Captured once, at script-evaluation time (page load), not re-read on
+  // every storage access. quarto-live's own WebRExerciseEditor does the
+  // same for its `editor-${window.location.href}#${id}` persistence key --
+  // it's set once in the constructor, not recomputed on every keystroke
+  // (confirmed by reading its bundled live-runtime.js source). Reading
+  // `window.location.href` fresh at click time instead, as this file used
+  // to everywhere below, silently broke both Start Over and the exercises
+  // in a download: Quarto's own TOC sidebar links change the URL's hash on
+  // every click (a completely normal way to move around a tutorial), so a
+  // reader who saved an answer while the hash pointed at one section and
+  // then clicked to another section before downloading or starting over
+  // ended up computing a different storage key than the one the data was
+  // actually saved under -- the data was never touched, but neither
+  // feature could find it. Stripping the hash keeps every learnr2-owned
+  // key (and every `editor-` lookup into quarto-live's own keys) stable
+  // for the lifetime of the page view, matching quarto-live's own
+  // behavior -- as long as the page itself was first loaded without a
+  // hash (true for every normal run_tutorial()/GitHub Pages entry point;
+  // a reader arriving via a deep link straight to a `#section` anchor is a
+  // known remaining gap, since quarto-live would then cache *that* hash
+  // into its own key for the whole session and there is no way to read
+  // quarto-live's internal state to match it).
+  var pageUrl = window.location.href.split("#")[0];
+
   function decodeBase64Json(value) {
     var binary = atob(value);
     var bytes = new Uint8Array(binary.length);
@@ -69,7 +93,7 @@
   // semantic prefix (e.g. "learnr2-question-...", "learnr2-info-...").
 
   function storageKey(data) {
-    return "learnr2-" + window.location.href + "#" + data.id;
+    return "learnr2-" + pageUrl + "#" + data.id;
   }
 
   function loadState(data) {
@@ -462,7 +486,13 @@
       .filter(function (a) { return a.correct; })
       .map(function (a) { return a.text; });
 
-    var textarea = el("textarea", { class: "learnr2-text-input learnr2-textarea", rows: "4" });
+    // `validate: "integer"` (e.g. "how many minutes did this take?") expects
+    // a short numeric answer, not prose -- a single-line box sized like
+    // student_info()'s fields (same "learnr2-text-input" class, no
+    // "learnr2-textarea") fits that better than a 4-row textarea.
+    var textarea = data.validate === "integer"
+      ? el("input", { type: "text", class: "learnr2-text-input" })
+      : el("textarea", { class: "learnr2-text-input learnr2-textarea", rows: "4" });
     var reveal = el("div", { class: "learnr2-model-answer d-none" });
     var feedback = el("div", { class: "learnr2-feedback d-none" });
     var submit = el("button", { type: "button", class: "learnr2-submit", text: data.submitLabel });
@@ -806,7 +836,7 @@
         if (!attr.exercise || !attr.persist) {
           return;
         }
-        var storageKey = "editor-" + window.location.href + "#" + (attr.id || scriptEl.type);
+        var storageKey = "editor-" + pageUrl + "#" + (attr.id || scriptEl.type);
         var code = window.localStorage.getItem(storageKey);
         exercises.push({
           id: attr.exercise,
@@ -949,7 +979,7 @@
   // "learnr2-device-id" key alone: that identifies this browser/device
   // across every tutorial and visit, not this one tutorial's progress.
   function clearAllProgress() {
-    var prefixes = ["learnr2-" + window.location.href + "#", "editor-" + window.location.href + "#"];
+    var prefixes = ["learnr2-" + pageUrl + "#", "editor-" + pageUrl + "#"];
     var keysToRemove = [];
     for (var i = 0; i < window.localStorage.length; i++) {
       var key = window.localStorage.key(i);
@@ -959,6 +989,46 @@
     }
     keysToRemove.forEach(function (key) {
       window.localStorage.removeItem(key);
+    });
+  }
+
+  // A confirm() substitute built from plain DOM/CSS (the <dialog> element,
+  // not a browser-chrome-level dialog) rather than window.confirm().
+  // window.confirm() is a native, out-of-process browser dialog -- several
+  // real surfaces a rendered tutorial ends up viewed in (VS Code's built-in
+  // Simple Browser webview in particular, see item 0's notes on how
+  // run_tutorial() ends up opening there) don't support it at all and
+  // silently resolve it to `false` with no dialog ever appearing, which
+  // made Start Over look completely inert: the click registered, nothing
+  // asked for confirmation, and clearAllProgress() was simply never
+  // reached. A <dialog> is ordinary page content, so it renders the same
+  // everywhere a tutorial itself renders.
+  function showConfirmDialog(message) {
+    return new Promise(function (resolve) {
+      var settled = false;
+      function settle(result) {
+        if (settled) {
+          return;
+        }
+        settled = true;
+        dialog.close();
+        dialog.remove();
+        resolve(result);
+      }
+      var cancelButton = el("button", { type: "button", class: "learnr2-confirm-dialog-cancel", text: "Cancel" });
+      var confirmButton = el("button", { type: "button", class: "learnr2-confirm-dialog-confirm", text: "Start Over" });
+      cancelButton.addEventListener("click", function () { settle(false); });
+      confirmButton.addEventListener("click", function () { settle(true); });
+      var dialog = el("dialog", { class: "learnr2-confirm-dialog" }, [
+        el("p", { class: "learnr2-confirm-dialog-message", text: message }),
+        el("div", { class: "learnr2-confirm-dialog-actions" }, [cancelButton, confirmButton])
+      ]);
+      // Esc, or any other way the dialog closes itself, is a dismissal.
+      dialog.addEventListener("cancel", function () { settle(false); });
+      dialog.addEventListener("close", function () { settle(false); });
+      document.body.appendChild(dialog);
+      dialog.showModal();
+      confirmButton.focus();
     });
   }
 
@@ -972,16 +1042,17 @@
     }
     var button = el("button", { type: "button", class: "learnr2-start-over", text: "Start Over" });
     button.addEventListener("click", function () {
-      var confirmed = window.confirm(
-        "Start over this entire tutorial?\n\n" +
-        "Every saved answer, pasted image, and exercise on this device will " +
-        "be permanently cleared. This cannot be undone."
-      );
-      if (!confirmed) {
-        return;
-      }
-      clearAllProgress();
-      window.location.reload();
+      showConfirmDialog(
+        "Start over this entire tutorial? Every saved answer, pasted " +
+        "image, and exercise on this device will be permanently cleared. " +
+        "This cannot be undone."
+      ).then(function (confirmed) {
+        if (!confirmed) {
+          return;
+        }
+        clearAllProgress();
+        window.location.reload();
+      });
     });
     sidebar.appendChild(el("div", { class: "learnr2-start-over-container" }, [button]));
   }

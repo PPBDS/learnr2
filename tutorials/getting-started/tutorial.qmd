@@ -53,9 +53,9 @@ click **Run Code** to see the result. Clicking **Hint** gives you a hint
 about what to type.
 
 ```{webr}
+#| label: exercises-1
 #| exercise: exercise_1
 #| persist: true
-______
 ```
 
 ::: { .hint exercise="exercise_1" }
@@ -77,12 +77,12 @@ assigned 5 to `x` and 4 to `y`. On the blank line, add the two variables by
 typing `x + y`. Click **Run Code** to see your result.
 
 ```{webr}
+#| label: exercises-2
 #| exercise: exercise_2
 #| persist: true
 x <- 5
 y <- 4
 
-______
 ```
 
 ::: { .hint exercise="exercise_2" }
@@ -97,9 +97,9 @@ Now change the values to `x <- 6` and `y <- 10` and add them together.
 Click **Run Code**. You should get the answer `[1] 16`.
 
 ```{webr}
+#| label: exercises-3
 #| exercise: exercise_3
 #| persist: true
-______
 ```
 
 ::: { .hint exercise="exercise_3" }
@@ -126,9 +126,9 @@ Let's run a command that reports the version of R powering the code cells
 on this page.
 
 ```{webr}
+#| label: exercises-4
 #| exercise: exercise_4
 #| persist: true
-______
 ```
 
 ::: { .hint exercise="exercise_4" }
@@ -148,7 +148,7 @@ Not every exercise involves code. Sometimes we'll ask you to write a
 sentence or two of prose instead, with no strict right answer to match.
 
 ```{r}
-#| label: exercises-1
+#| label: exercises-5
 #| echo: false
 learnr2::question(
   "In your own words, what is the difference between a coding exercise
@@ -176,9 +176,9 @@ distance for cars in the 1920s --- no package needed). Type `plot(cars)`
 into the code cell below and click **Run Code**.
 
 ```{webr}
+#| label: exercises-6
 #| exercise: exercise_6
 #| persist: true
-______
 ```
 
 ::: { .hint exercise="exercise_6" }
@@ -195,7 +195,7 @@ Tool or `Win+Shift+S` on Windows), then click the box and press
 to click; pasting is the whole mechanism.
 
 ```{r}
-#| label: exercises-2
+#| label: exercises-7
 #| echo: false
 learnr2::question(
   "Paste a screenshot of the plot you made above.",

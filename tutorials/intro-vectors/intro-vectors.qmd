@@ -26,6 +26,7 @@ couple of summary functions.
 The `c()` function ("combine") builds a vector out of individual values:
 
 ```{webr}
+#| label: creating-vectors-1
 scores <- c(88, 92, 79, 95, 61)
 scores
 ```
@@ -34,18 +35,19 @@ You can pull out one element with `[ ]` and a position (R counts from 1,
 not 0):
 
 ```{webr}
+#| label: creating-vectors-2
 scores[2]
 ```
 
 ## Exercise: total and average
 
 ```{webr}
+#| label: exercise-total-and-average-1
 #| exercise: ex_total
 #| persist: true
 scores <- c(88, 92, 79, 95, 61)
 
 # Compute the sum of `scores`.
-______
 ```
 
 ::: { .hint exercise="ex_total" }
@@ -59,12 +61,12 @@ sum(scores)
 :::
 
 ```{webr}
+#| label: exercise-total-and-average-2
 #| exercise: ex_average
 #| persist: true
 scores <- c(88, 92, 79, 95, 61)
 
 # Compute the average (mean) of `scores`.
-______
 ```
 
 ::: { .hint exercise="ex_average" }
