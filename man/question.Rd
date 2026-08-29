@@ -68,10 +68,15 @@ rather than submitting for the first time. Ignored for every other
 \code{type}, since only \code{"reflection_editable"} stays open for revision
 after the model answer is revealed.}
 
-\item{id}{Stable identifier used to key the reader's saved answer (see
-"Progress persistence" below). Defaults to a slug derived from \code{text}.
-Set this explicitly if you plan to edit the question wording later and
-want readers' saved answers to survive the edit.}
+\item{id}{Stable identifier for this question: it keys the reader's saved
+answer (see "Progress persistence" below) and is the \code{id} the question
+appears under in a \code{\link[=download_answers_button]{download_answers_button()}} submission. Defaults to
+the label of the \code{{r}} chunk the \code{question()} call sits in --- which,
+following \code{tutorial.helpers}' \code{section-header-N} chunk-naming
+convention, is already a unique, readable identifier (\verb{## Quiz questions} -> \code{quiz-questions-1}, \code{quiz-questions-2}, ...). Falls back
+to a slug of \code{text} when there is no usable chunk label, e.g. when
+printing a \code{question()} at the console. Pass \code{id} explicitly to pin it
+regardless of where the call sits.}
 
 \item{allow_image}{For \code{"reflection"}/\code{"reflection_editable"} questions,
 let the reader paste an image (e.g. a screenshot) from their clipboard,
@@ -107,9 +112,10 @@ questions, graded entirely in the reader's browser.
 
 Once a reader submits an answer, it is saved in the browser's
 \code{localStorage} (keyed by page URL and \code{id}) and restored on the next
-visit. Because the default \code{id} is derived from \code{text}, editing a
-question's wording changes its \code{id} and resets any saved answers for it;
-pass \code{id} explicitly to avoid that.
+visit. Because the default \code{id} is the enclosing \code{{r}} chunk's label,
+renaming that chunk (or moving the question into a different one) resets
+any saved answers for it --- but editing only the question's wording
+does not. Pass \code{id} explicitly to pin it.
 
 \code{localStorage} is written straight to disk, not held only in memory, so
 this survives closing and reopening the browser, and restarting the

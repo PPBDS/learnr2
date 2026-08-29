@@ -78,10 +78,16 @@ print.learnr2_answer <- function(x, ...) {
 #'   rather than submitting for the first time. Ignored for every other
 #'   `type`, since only `"reflection_editable"` stays open for revision
 #'   after the model answer is revealed.
-#' @param id Stable identifier used to key the reader's saved answer (see
-#'   "Progress persistence" below). Defaults to a slug derived from `text`.
-#'   Set this explicitly if you plan to edit the question wording later and
-#'   want readers' saved answers to survive the edit.
+#' @param id Stable identifier for this question: it keys the reader's saved
+#'   answer (see "Progress persistence" below) and is the `id` the question
+#'   appears under in a [download_answers_button()] submission. Defaults to
+#'   the label of the `{r}` chunk the `question()` call sits in --- which,
+#'   following `tutorial.helpers`' `section-header-N` chunk-naming
+#'   convention, is already a unique, readable identifier (`## Quiz
+#'   questions` -> `quiz-questions-1`, `quiz-questions-2`, ...). Falls back
+#'   to a slug of `text` when there is no usable chunk label, e.g. when
+#'   printing a `question()` at the console. Pass `id` explicitly to pin it
+#'   regardless of where the call sits.
 #' @param allow_image For `"reflection"`/`"reflection_editable"` questions,
 #'   let the reader paste an image (e.g. a screenshot) from their clipboard,
 #'   alongside their typed response -- not a file upload, just Ctrl+V/Cmd+V
@@ -107,9 +113,10 @@ print.learnr2_answer <- function(x, ...) {
 #' @section Progress persistence:
 #' Once a reader submits an answer, it is saved in the browser's
 #' `localStorage` (keyed by page URL and `id`) and restored on the next
-#' visit. Because the default `id` is derived from `text`, editing a
-#' question's wording changes its `id` and resets any saved answers for it;
-#' pass `id` explicitly to avoid that.
+#' visit. Because the default `id` is the enclosing `{r}` chunk's label,
+#' renaming that chunk (or moving the question into a different one) resets
+#' any saved answers for it --- but editing only the question's wording
+#' does not. Pass `id` explicitly to pin it.
 #'
 #' `localStorage` is written straight to disk, not held only in memory, so
 #' this survives closing and reopening the browser, and restarting the
@@ -230,11 +237,16 @@ question <- function(text,
   structure(list(payload = payload), class = "learnr2_question")
 }
 
-# Deterministic ids (stable across re-renders, so saved answers in
-# localStorage survive re-rendering the same tutorial) with disambiguation
-# for repeats within one render.
+# lowercase; every run of non-alphanumerics (including any already-present
+# dashes) collapsed to a single dash; no leading/trailing dash; capped at
+# 60 chars. This is the same shape tutorial.helpers' `section-header-N`
+# chunk-label convention already produces, so applying it to a chunk label
+# is a no-op -- it's here to defend against a hand-written `id` or a slug
+# taken from free text.
 slugify <- function(text) {
   slug <- tolower(text)
+  # `-` is itself non-alphanumeric, so a run like " - " or "--" collapses
+  # to one `-` here too.
   slug <- gsub("[^a-z0-9]+", "-", slug)
   slug <- gsub("^-+|-+$", "", slug)
   if (!nzchar(slug)) {
@@ -243,10 +255,43 @@ slugify <- function(text) {
   substr(slug, 1, 60)
 }
 
+# The label of the `{r}` chunk currently being knit, or NULL when there
+# isn't a meaningful one -- not rendering at all (a bare console `print()`),
+# or an unlabelled chunk (knitr auto-names those "unnamed-chunk-N", which
+# is neither stable nor readable, so it's no better than a text slug).
+current_chunk_label <- function() {
+  if (!isTRUE(getOption("knitr.in.progress"))) {
+    return(NULL)
+  }
+  label <- knitr::opts_current$get("label")
+  if (is.null(label) || !nzchar(label) ||
+      grepl("^unnamed-chunk-[0-9]+$", label)) {
+    return(NULL)
+  }
+  label
+}
+
 question_registry <- new.env(parent = emptyenv())
 
+# Resolve a question's id -- deterministic, so a reader's saved answer in
+# localStorage survives re-rendering the same tutorial. Most specific
+# source first:
+#   1. an explicit `id =` argument,
+#   2. the enclosing chunk's label -- in a real tutorial every question()
+#      sits in its own chunk labelled `section-header-N` (see AGENTS.md),
+#      so the label is already a unique, human-meaningful identifier and
+#      the natural thing to key saved answers / downloads on,
+#   3. a slug of the question text, for when there is no usable label
+#      (printing a question() at the console, an unlabelled chunk).
+# A numeric suffix disambiguates repeats within one render -- e.g. a quiz()
+# of several question()s all sharing their chunk's one label.
 question_id <- function(id, text) {
-  base <- paste0("learnr2-question-", slugify(if (!is.null(id)) id else text))
+  base <- if (!is.null(id)) {
+    slugify(id)
+  } else {
+    label <- current_chunk_label()
+    slugify(if (!is.null(label)) label else text)
+  }
   candidate <- base
   n <- 1L
   while (exists(candidate, envir = question_registry, inherits = FALSE)) {

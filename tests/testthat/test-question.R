@@ -194,14 +194,46 @@ test_that("non-reflection types still require at least one answer() at all", {
   expect_error(question("Prompt?", type = "text"), "at least one")
 })
 
-test_that("question ids are deterministic slugs of the text", {
+test_that("question ids fall back to a deterministic slug of the text outside a chunk", {
   q <- question("The Deterministic ID Test Case!!", answer("x", correct = TRUE))
-  expect_equal(q$payload$id, "learnr2-question-the-deterministic-id-test-case")
+  expect_equal(q$payload$id, "the-deterministic-id-test-case")
 })
 
-test_that("explicit id overrides the text-derived slug", {
+test_that("question id defaults to the enclosing chunk label when knitting", {
+  saved <- knitr::opts_current$get()
+  saved_opt <- options(knitr.in.progress = TRUE)
+  knitr::opts_current$set(label = "quiz-questions-1")
+  on.exit({
+    knitr::opts_current$restore(saved)
+    options(saved_opt)
+  }, add = TRUE)
+
+  q <- question("Wording that is ignored in favour of the chunk label",
+                answer("x", correct = TRUE))
+  expect_equal(q$payload$id, "quiz-questions-1")
+})
+
+test_that("an unlabelled (auto-named) chunk falls back to the text slug", {
+  saved <- knitr::opts_current$get()
+  saved_opt <- options(knitr.in.progress = TRUE)
+  knitr::opts_current$set(label = "unnamed-chunk-7")
+  on.exit({
+    knitr::opts_current$restore(saved)
+    options(saved_opt)
+  }, add = TRUE)
+
+  q <- question("Auto Named Chunk Fallback", answer("x", correct = TRUE))
+  expect_equal(q$payload$id, "auto-named-chunk-fallback")
+})
+
+test_that("explicit id overrides both the chunk label and the text slug", {
   q <- question("Ignored text", answer("x", correct = TRUE), id = "custom-id-xyz")
-  expect_equal(q$payload$id, "learnr2-question-custom-id-xyz")
+  expect_equal(q$payload$id, "custom-id-xyz")
+})
+
+test_that("explicit id is slugified (weird characters and duplicate dashes collapsed)", {
+  q <- question("t", answer("x", correct = TRUE), id = "My Section -- Part 2!")
+  expect_equal(q$payload$id, "my-section-part-2")
 })
 
 test_that("repeated wording within a render gets disambiguated ids", {

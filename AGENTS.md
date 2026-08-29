@@ -137,12 +137,19 @@ for why it matters).
 
 ## Every chunk needs a unique `#| label:`
 
-learnr2 itself never reads a chunk's label -- unlike the `#| exercise:`
-option on a `{webr}` cell (which really is load-bearing: it's what ties a
-`.hint`/`.solution` div to its exercise), a chunk's label has no runtime
-effect here at all. Give every chunk one anyway -- `{r}` chunks calling
-`question()`/`student_info()`/`download_answers_button()`, *and* every
-`{webr}` chunk, including exercise ones (alongside their load-bearing
+A `{r}` chunk calling `question()` *is* read by learnr2: with no explicit
+`id =`, the question defaults its `id` to the enclosing chunk's label (see
+`question_id()` / `current_chunk_label()` in `R/question.R`). That `id` is
+the `localStorage` key for the reader's saved answer *and* the `id` the
+question appears under in a `download_answers_button()` submission -- so
+the label is load-bearing there, the same way `#| exercise:` is on a
+`{webr}` cell. Renaming such a chunk resets saved progress for its
+question; the section-header convention below keeps the labels stable and
+meaningful. The other widget chunks (`student_info()`,
+`download_answers_button()`) and plain `{webr}` demo cells still have no
+label-driven runtime behavior. Give every chunk one anyway -- `{r}` chunks
+calling `question()`/`student_info()`/`download_answers_button()`, *and*
+every `{webr}` chunk, including exercise ones (alongside their load-bearing
 `#| exercise:`, which stays exactly as it was) and plain non-exercise demo
 cells that carry no other identifying option at all. On its own
 `#| label:` line (not the old inline `` ```{r some-label} `` header style

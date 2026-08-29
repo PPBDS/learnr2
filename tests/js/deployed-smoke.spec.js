@@ -56,16 +56,13 @@ test.describe("deployed hello-learnr2 smoke test", () => {
     expect(contents.info.name).toBe(knownName);
     expect(contents.info.email).toBe(knownEmail);
 
-    // Entries are { id, answer } now; ids are slugified from the question
-    // text (no explicit id set in the deployed tutorial).
-    const choiceAnswer = contents.answers.find(
-      (a) => a.id.indexOf("arithmetic-mean") !== -1
-    );
+    // Entries are { id, answer } now, and each id is the enclosing {r}
+    // chunk's label -- hello-learnr2.qmd's quiz section is chunks
+    // quiz-questions-1 (arithmetic mean) and quiz-questions-3 (gradethis).
+    const choiceAnswer = contents.answers.find((a) => a.id === "quiz-questions-1");
     expect(choiceAnswer.answer).toEqual(["mean()"]);
 
-    const textAnswer = contents.answers.find(
-      (a) => a.id.indexOf("powers-grading") !== -1
-    );
+    const textAnswer = contents.answers.find((a) => a.id === "quiz-questions-3");
     expect(textAnswer.answer).toBe("gradethis");
   });
 });

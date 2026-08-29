@@ -143,8 +143,8 @@ write_valid_submission <- function(path, info = list(name = "Ada Lovelace", emai
     downloadedAt = "2026-01-15T12:00:00.000Z",
     info = info,
     answers = list(
-      list(id = "learnr2-question-2-2", answer = list("4")),
-      list(id = "ex_sum", answer = "sum(1:100)")
+      list(id = "quiz-questions-1", answer = list("4")),
+      list(id = "exercise-total-and-average-1", answer = "sum(1:100)")
     ),
     metadata = list(
       capturedAt = "2026-01-15T12:00:00.000Z",

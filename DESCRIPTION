@@ -10,7 +10,6 @@ Description: Create interactive R tutorials that run entirely in the
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.3
 Imports:
     fs,
     htmltools,
@@ -31,3 +30,4 @@ SystemRequirements: Quarto command line tool
     (https://github.com/quarto-dev/quarto-cli).
 URL: https://github.com/PPBDS/learnr2, https://ppbds.github.io/learnr2/
 BugReports: https://github.com/PPBDS/learnr2/issues
+Config/roxygen2/version: 8.1.0
