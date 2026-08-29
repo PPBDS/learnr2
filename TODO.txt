@@ -1,17 +1,17 @@
 Big Picture: We hope to replace both learnr and tutorial.helpers with learnr2. There is no reason to have two packages, or to not have learnr2 do everything we want a tutorial package to do.
 
-1) Smaller, more discrete Start Over button.
+1) Smaller, more discrete Start Over button. - Done
 
-2) Use Continue button of some kind, like in the current tutorial.
+2) Use Continue button of some kind, like in the current tutorial. - Done
 
-3) Use new version of Getting Started. Needs to use the same images.
+3) Use new version of Getting Started. Needs to use the same images. - ?
 
-4) Add a copy image question to Getting Started. 
+4) Add a copy image question to Getting Started. - Done
 
 5) Is there really a test case framework? Does it have a lot of examples that you created?
 
 
-6) Shouldn't every question have a code chunk name? Yes. Shouldn't they be unique? Yes. Shouldn't they follow the usual tutorial.helpers convention of section-header (lower cased and weird characters to dashes, and duplicate dashes simoplified to one dash()) dash exercise number?
+6) Shouldn't every question have a code chunk name? Yes. Shouldn't they be unique? Yes. Shouldn't they follow the usual tutorial.helpers convention of section-header (lower cased and weird characters to dashes, and duplicate dashes simoplified to one dash()) dash exercise number? - Done
 
 
 

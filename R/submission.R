@@ -124,13 +124,19 @@ print.learnr2_info <- function(x, ...) {
 #' this is meant for a reader to save and turn in themselves (e.g. attach
 #' to an email or upload to an LMS).
 #'
-#' The download's `exercises` array also includes every `{webr}` code
-#' exercise's current code, under the same condition quarto-live itself
-#' requires to keep a record of it at all: `#| persist: true` (already the
-#' convention every bundled tutorial follows). An exercise without
-#' `persist: true` has no saved copy of the reader's code anywhere --
-#' `learnr2` included -- so it can't appear in the download; this is a
-#' structural limit of quarto-live's own editor, not something
+#' The download's `answers` array is one flat list: every [question()] plus
+#' every `{webr}` code exercise, each as a `{ id, answer }` pair keyed by
+#' the widget's (or exercise's) stable id. A question never submitted has
+#' `answer: null`; a choice question's `answer` is an array of the picked
+#' options; an image-paste reflection's `answer` is the pasted screenshot
+#' as a PNG data-URL string.
+#'
+#' A `{webr}` exercise appears only under the condition quarto-live itself
+#' requires to keep a record of the reader's code at all: `#| persist:
+#' true` (already the convention every bundled tutorial follows). An
+#' exercise without `persist: true` has no saved copy of the reader's code
+#' anywhere -- `learnr2` included -- so it can't appear in the download;
+#' this is a structural limit of quarto-live's own editor, not something
 #' `download_answers_button()` chooses to skip.
 #'
 #' The download includes a `metadata` block (timestamp, timezone, browser
@@ -253,7 +259,7 @@ verify_submission <- function(path) {
     jsonlite::fromJSON(integrity$hashedContent, simplifyVector = FALSE),
     error = function(e) NULL
   )
-  visible_fields <- c("page", "downloadedAt", "info", "answers", "exercises", "metadata")
+  visible_fields <- c("page", "downloadedAt", "info", "answers", "metadata")
   visible_ok <- !is.null(hashed_parsed) &&
     isTRUE(all.equal(hashed_parsed, parsed[visible_fields]))
 

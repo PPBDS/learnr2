@@ -29,11 +29,17 @@ this is meant for a reader to save and turn in themselves (e.g. attach
 to an email or upload to an LMS).
 }
 \details{
-The download's \code{exercises} array also includes every \code{{webr}} code
-exercise's current code, under the same condition quarto-live itself
-requires to keep a record of it at all: \verb{#| persist: true} (already the
-convention every bundled tutorial follows). An exercise without
-\code{persist: true} has no saved copy of the reader's code anywhere --
+The download's \code{answers} array is one flat list: every \code{\link[=question]{question()}} plus
+every \code{{webr}} code exercise, each as a \code{{ id, answer }} pair keyed by
+the widget's (or exercise's) stable id. A question never submitted has
+\code{answer: null}; a choice question's \code{answer} is an array of the picked
+options; an image-paste reflection's \code{answer} is the pasted screenshot
+as a PNG data-URL string.
+
+A \code{{webr}} exercise appears only under the condition quarto-live itself
+requires to keep a record of the reader's code at all: \verb{#| persist: true}
+(already the convention every bundled tutorial follows). An exercise
+without \code{persist: true} has no saved copy of the reader's code anywhere --
 \code{learnr2} included -- so it can't appear in the download; this is a
 structural limit of quarto-live's own editor, not something
 \code{download_answers_button()} chooses to skip.

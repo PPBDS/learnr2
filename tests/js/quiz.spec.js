@@ -438,6 +438,11 @@ test.describe("download answers button", () => {
 
     const downloadPromise = page.waitForEvent("download");
     await page.locator(".learnr2-download-answers-btn").click();
+    // The reflection question above was left unanswered on purpose, so the
+    // "make sure you submitted" check should warn before letting this
+    // through -- confirm it anyway to get the download.
+    await expect(page.locator(".learnr2-confirm-dialog")).toContainText("Explain why the sky is blue");
+    await page.locator(".learnr2-confirm-dialog-confirm").click();
     const download = await downloadPromise;
 
     expect(download.suggestedFilename()).toMatch(/^class-101-.*\.json$/);
@@ -450,16 +455,15 @@ test.describe("download answers button", () => {
     const contents = JSON.parse(Buffer.concat(chunks).toString("utf8"));
 
     expect(contents.info).toEqual({ name: "Ada Lovelace", email: "ada@example.com", id: null });
-    expect(contents.answers).toHaveLength(2);
+    // Two question() widgets plus the two persist:true {webr} exercises in
+    // the fixture -- all one flat list now, each entry just { id, answer }.
+    expect(contents.answers).toHaveLength(4);
 
-    const choiceAnswer = contents.answers.find((a) => a.question === "What is 6 times 7?");
-    expect(choiceAnswer.answered).toBe(true);
-    expect(choiceAnswer.correct).toBe(true);
-    expect(choiceAnswer.yourAnswer).toEqual(["42"]);
+    const choiceAnswer = contents.answers.find((a) => a.id === "single-choice");
+    expect(choiceAnswer.answer).toEqual(["42"]);
 
-    const reflectionAnswer = contents.answers.find((a) => a.question.indexOf("sky is blue") !== -1);
-    expect(reflectionAnswer.answered).toBe(false);
-    expect(reflectionAnswer.yourAnswer).toBeNull();
+    const reflectionAnswer = contents.answers.find((a) => a.id === "reflection-locked");
+    expect(reflectionAnswer.answer).toBeNull();
 
     // Integrity block: independently recompute SHA-256 with Node's own
     // crypto module (not our own JS's sha256Hex) as a cross-check that the
@@ -479,7 +483,6 @@ test.describe("download answers button", () => {
       downloadedAt: contents.downloadedAt,
       info: contents.info,
       answers: contents.answers,
-      exercises: contents.exercises,
       metadata: contents.metadata
     });
 
@@ -506,6 +509,9 @@ test.describe("download answers button", () => {
 
     const downloadPromise = page.waitForEvent("download");
     await page.locator(".learnr2-download-answers-btn").click();
+    // Neither question was answered -- confirm past the unanswered-questions
+    // warning to get the download.
+    await page.locator(".learnr2-confirm-dialog-confirm").click();
     const download = await downloadPromise;
     const stream = await download.createReadStream();
     const chunks = [];
@@ -516,11 +522,45 @@ test.describe("download answers button", () => {
 
     // "ex-not-persisted" and the plain non-exercise cell (fixture block ids
     // 3 and 4) must not appear at all -- neither has anywhere a code could
-    // have been recorded.
-    expect(contents.exercises).toEqual([
-      { id: "ex-attempted", attempted: true, yourCode: "sum(1:100)" },
-      { id: "ex-untouched", attempted: false, yourCode: null }
+    // have been recorded. Exercises share the one `answers` list with
+    // question() widgets now, appended after them.
+    const exerciseAnswers = contents.answers.filter((a) => a.id.indexOf("ex-") === 0);
+    expect(exerciseAnswers).toEqual([
+      { id: "ex-attempted", answer: "sum(1:100)" },
+      { id: "ex-untouched", answer: null }
     ]);
+  });
+
+  test("records a pasted image as the question's answer (the PNG data URL string)", async ({ page, context }) => {
+    await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+    await page.goto("/download-answers-image");
+
+    await page.locator("#learnr2-info-student-info-name").fill("Ada Lovelace");
+    await page.locator("#learnr2-info-student-info-email").fill("ada@example.com");
+    await page.locator("body").click();
+
+    const imageQuestion = page.locator(".learnr2-question", {
+      has: page.locator(".learnr2-image-paste")
+    });
+    await writeImageToClipboard(page, TINY_PNG_BASE64, "image/png");
+    await imageQuestion.locator(".learnr2-image-paste").click();
+    await page.keyboard.press("Control+V");
+    await expect(imageQuestion.locator(".learnr2-image-paste-preview")).toBeVisible();
+    await imageQuestion.locator(".learnr2-submit").click();
+    await expect(imageQuestion.locator(".learnr2-image-paste")).toHaveClass(
+      /learnr2-image-paste-disabled/
+    );
+
+    const downloadPromise = page.waitForEvent("download");
+    await page.locator(".learnr2-download-answers-btn").click();
+    const download = await downloadPromise;
+    const stream = await download.createReadStream();
+    const chunks = [];
+    for await (const chunk of stream) chunks.push(chunk);
+    const contents = JSON.parse(Buffer.concat(chunks).toString("utf8"));
+
+    const imageAnswer = contents.answers.find((a) => a.id === "reflection-image");
+    expect(imageAnswer.answer).toMatch(/^data:image\/png;base64,/);
   });
 
   test("still finds a saved answer and exercise after the reader navigates to a different TOC section (URL hash change) before downloading", async ({ page }) => {
@@ -555,16 +595,17 @@ test.describe("download answers button", () => {
 
     const downloadPromise = page.waitForEvent("download");
     await page.locator(".learnr2-download-answers-btn").click();
+    // The reflection question is still unanswered -- confirm past the warning.
+    await page.locator(".learnr2-confirm-dialog-confirm").click();
     const download = await downloadPromise;
     const stream = await download.createReadStream();
     const chunks = [];
     for await (const chunk of stream) chunks.push(chunk);
     const contents = JSON.parse(Buffer.concat(chunks).toString("utf8"));
 
-    const choiceAnswer = contents.answers.find((a) => a.question === "What is 6 times 7?");
-    expect(choiceAnswer.answered).toBe(true);
-    expect(choiceAnswer.yourAnswer).toEqual(["42"]);
-    expect(contents.exercises).toContainEqual({ id: "ex-attempted", attempted: true, yourCode: "sum(1:100)" });
+    const choiceAnswer = contents.answers.find((a) => a.id === "single-choice");
+    expect(choiceAnswer.answer).toEqual(["42"]);
+    expect(contents.answers).toContainEqual({ id: "ex-attempted", answer: "sum(1:100)" });
   });
 
   test("the device id is stable across repeated downloads (same browser/profile)", async ({ page }) => {
@@ -576,6 +617,9 @@ test.describe("download answers button", () => {
     async function download() {
       const downloadPromise = page.waitForEvent("download");
       await page.locator(".learnr2-download-answers-btn").click();
+      // Neither question is answered in this test -- confirm past the
+      // unanswered-questions warning each time.
+      await page.locator(".learnr2-confirm-dialog-confirm").click();
       const dl = await downloadPromise;
       const stream = await dl.createReadStream();
       const chunks = [];
@@ -611,6 +655,9 @@ test.describe("download answers button", () => {
 
     const downloadPromise = page.waitForEvent("download");
     await page.locator(".learnr2-download-answers-btn").click();
+    // Neither question is answered in this test -- confirm past the
+    // unanswered-questions warning to get the download.
+    await page.locator(".learnr2-confirm-dialog-confirm").click();
     await downloadPromise;
     await expect(page.locator(".learnr2-download-error")).toBeHidden();
   });
@@ -637,8 +684,48 @@ test.describe("download answers button", () => {
 
     const downloadPromise = page.waitForEvent("download");
     await page.locator(".learnr2-download-answers-btn").click();
+    // Neither question is answered in this test -- confirm past the
+    // unanswered-questions warning to get the download.
+    await page.locator(".learnr2-confirm-dialog-confirm").click();
     await downloadPromise;
     await expect(page.locator(".learnr2-download-error")).toBeHidden();
+  });
+
+  test("warns before downloading if a question hasn't been submitted, and lets the reader cancel", async ({ page }) => {
+    await page.goto("/download-answers");
+    await page.locator("#learnr2-info-student-info-name").fill("Ada Lovelace");
+    await page.locator("#learnr2-info-student-info-email").fill("ada@example.com");
+    await page.locator("body").click();
+
+    let downloadHappened = false;
+    page.once("download", () => {
+      downloadHappened = true;
+    });
+
+    await page.locator(".learnr2-download-answers-btn").click();
+    await expect(page.locator(".learnr2-confirm-dialog")).toBeVisible();
+    await expect(page.locator(".learnr2-confirm-dialog")).toContainText("2 questions");
+    await expect(page.locator(".learnr2-confirm-dialog")).toContainText("What is 6 times 7?");
+    await expect(page.locator(".learnr2-confirm-dialog")).toContainText("Explain why the sky is blue");
+
+    await page.locator(".learnr2-confirm-dialog-cancel").click();
+    expect(downloadHappened).toBe(false);
+
+    // Answer both questions, then downloading should go straight through
+    // with no warning at all.
+    const singleChoiceQuestion = page.locator(".learnr2-question", {
+      has: page.locator("#single-choice-answer-0")
+    });
+    await singleChoiceQuestion.locator("#single-choice-answer-0").check();
+    await singleChoiceQuestion.locator(".learnr2-submit").click();
+
+    const reflectionQuestion = page.locator(".learnr2-question", { hasText: "Explain why the sky is blue" });
+    await reflectionQuestion.locator("textarea").fill("Rayleigh scattering.");
+    await reflectionQuestion.locator(".learnr2-submit").click();
+
+    const downloadPromise = page.waitForEvent("download");
+    await page.locator(".learnr2-download-answers-btn").click();
+    await downloadPromise;
   });
 });
 
@@ -748,5 +835,152 @@ test.describe("Start Over", () => {
 
     await page.locator(".learnr2-confirm-dialog-cancel").click();
     await expect(page.locator(".learnr2-confirm-dialog")).toHaveCount(0);
+  });
+});
+
+test.describe("progressive sections (Continue buttons)", () => {
+  test("only the first section is visible on first load, with a Continue button naming the next one", async ({ page }) => {
+    await page.goto("/progressive-sections");
+
+    await expect(page.locator("#introduction")).toBeVisible();
+    await expect(page.locator("#student-information")).toBeHidden();
+    await expect(page.locator("#running-r-code")).toBeHidden();
+    await expect(page.locator("#exercise-1")).toBeHidden();
+    await expect(page.locator("#exercise-2")).toBeHidden();
+    await expect(page.locator("#summary")).toBeHidden();
+
+    const button = page.locator("#introduction .learnr2-continue");
+    await expect(button).toBeVisible();
+    await expect(button).toContainText("Student Information");
+  });
+
+  test("clicking Continue reveals only the next section, not everything", async ({ page }) => {
+    await page.goto("/progressive-sections");
+
+    await page.locator("#introduction .learnr2-continue").click();
+
+    await expect(page.locator("#student-information")).toBeVisible();
+    await expect(page.locator("#running-r-code")).toBeHidden();
+
+    const button = page.locator("#student-information .learnr2-continue");
+    await expect(button).toBeVisible();
+    await expect(button).toContainText("Running R Code");
+  });
+
+  test("a Continue button inside a section with nested subsections lands before the first subsection, not after the last one", async ({ page }) => {
+    // "Running R Code" (level2) contains "Exercise 1"/"Exercise 2" (level3)
+    // nested inside it, mirroring getting-started's real structure. Reveal
+    // through to "Running R Code" itself and confirm its own intro content
+    // shows immediately while both exercises stay locked -- i.e. the button
+    // sits right after the level2's own content, not dumped at the very end
+    // of the whole subtree after Exercise 2.
+    await page.goto("/progressive-sections");
+    await page.locator("#introduction .learnr2-continue").click();
+    await page.locator("#student-information .learnr2-continue").click();
+
+    await expect(page.locator("#running-r-code")).toBeVisible();
+    await expect(page.locator("#running-r-code")).toContainText("Running R code intro.");
+    await expect(page.locator("#exercise-1")).toBeHidden();
+    await expect(page.locator("#exercise-2")).toBeHidden();
+
+    const button = page.locator("#running-r-code .learnr2-continue");
+    await expect(button).toBeVisible();
+    await expect(button).toContainText("Exercise 1");
+
+    // The button must be a direct child of #running-r-code, positioned
+    // before the (still-hidden) #exercise-1 section -- not appended after
+    // #exercise-2, which would put it at the wrong end of the section.
+    const order = await page.locator("#running-r-code > *").evaluateAll((nodes) =>
+      nodes.map((n) => n.id || n.className)
+    );
+    expect(order.indexOf("learnr2-continue-container")).toBeLessThan(order.indexOf("exercise-1"));
+
+    // Continuing twice more steps through both exercises one at a time.
+    await button.click();
+    await expect(page.locator("#exercise-1")).toBeVisible();
+    await expect(page.locator("#exercise-2")).toBeHidden();
+    await expect(page.locator("#exercise-1 .learnr2-continue")).toContainText("Exercise 2");
+
+    await page.locator("#exercise-1 .learnr2-continue").click();
+    await expect(page.locator("#exercise-2")).toBeVisible();
+    await expect(page.locator("#exercise-2 .learnr2-continue")).toContainText("Summary");
+  });
+
+  test("no Continue button remains once every section has been revealed", async ({ page }) => {
+    await page.goto("/progressive-sections");
+    await page.locator("#introduction .learnr2-continue").click();
+    await page.locator("#student-information .learnr2-continue").click();
+    await page.locator("#running-r-code .learnr2-continue").click();
+    await page.locator("#exercise-1 .learnr2-continue").click();
+    await page.locator("#exercise-2 .learnr2-continue").click();
+
+    await expect(page.locator("#summary")).toBeVisible();
+    await expect(page.locator(".learnr2-continue")).toHaveCount(0);
+  });
+
+  test("progress survives a reload", async ({ page }) => {
+    await page.goto("/progressive-sections");
+    await page.locator("#introduction .learnr2-continue").click();
+    await page.locator("#student-information .learnr2-continue").click();
+
+    await page.reload();
+
+    await expect(page.locator("#running-r-code")).toBeVisible();
+    await expect(page.locator("#exercise-1")).toBeHidden();
+    await expect(page.locator("#running-r-code .learnr2-continue")).toContainText("Exercise 1");
+  });
+
+  test("Start Over resets progress back to only the first section", async ({ page }) => {
+    await page.goto("/progressive-sections");
+    await page.locator("#introduction .learnr2-continue").click();
+    await page.locator("#student-information .learnr2-continue").click();
+    await expect(page.locator("#running-r-code")).toBeVisible();
+
+    await page.locator(".learnr2-start-over").click();
+    await Promise.all([
+      page.waitForLoadState(),
+      page.locator(".learnr2-confirm-dialog-confirm").click()
+    ]);
+
+    await expect(page.locator("#introduction")).toBeVisible();
+    await expect(page.locator("#student-information")).toBeHidden();
+    await expect(page.locator("#running-r-code")).toBeHidden();
+  });
+
+  test("clicking a TOC sidebar link skips ahead and reveals every section up through the target", async ({ page }) => {
+    await page.goto("/progressive-sections");
+
+    // Nothing continued through yet -- jump straight to Exercise 2 via the
+    // TOC, same as a reader using the sidebar instead of Continue.
+    await page.locator('#TOC a[href="#exercise-2"]').click();
+
+    await expect(page.locator("#student-information")).toBeVisible();
+    await expect(page.locator("#running-r-code")).toBeVisible();
+    await expect(page.locator("#exercise-1")).toBeVisible();
+    await expect(page.locator("#exercise-2")).toBeVisible();
+    await expect(page.locator("#summary")).toBeHidden();
+  });
+
+  test("Hints/Solutions subsections don't get their own Continue stop -- they show as soon as their exercise section is unlocked", async ({ page }) => {
+    // Regression test: an earlier version gated every level2/level3 section
+    // uniformly, so reaching "4. Setup cells" from "3. Exercises" took two
+    // extra, easy-to-miss clicks through bare "Hints"/"Solutions" stops with
+    // no number of their own -- reported as the numbering "jumping" (e.g.
+    // straight from 2 to 5 in hello-learnr2, skipping what looked like 3 and
+    // 4). Confirmed against a real hello-learnr2 render before fixing.
+    await page.goto("/progressive-sections-hints");
+
+    await expect(page.locator("#exercises")).toBeVisible();
+    await expect(page.locator("#hints")).toBeVisible();
+    await expect(page.locator("#solutions")).toBeVisible();
+    await expect(page.locator("#setup-cells")).toBeHidden();
+
+    // Exactly one Continue click reaches "4. Setup cells" -- not one to
+    // reveal Hints, another for Solutions, then a third for Setup cells.
+    const button = page.locator(".learnr2-continue");
+    await expect(button).toHaveCount(1);
+    await expect(button).toContainText("4. Setup cells");
+    await button.click();
+    await expect(page.locator("#setup-cells")).toBeVisible();
   });
 });

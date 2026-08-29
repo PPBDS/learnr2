@@ -56,18 +56,16 @@ test.describe("deployed hello-learnr2 smoke test", () => {
     expect(contents.info.name).toBe(knownName);
     expect(contents.info.email).toBe(knownEmail);
 
+    // Entries are { id, answer } now; ids are slugified from the question
+    // text (no explicit id set in the deployed tutorial).
     const choiceAnswer = contents.answers.find(
-      (a) => a.question.indexOf("arithmetic mean") !== -1
+      (a) => a.id.indexOf("arithmetic-mean") !== -1
     );
-    expect(choiceAnswer.answered).toBe(true);
-    expect(choiceAnswer.correct).toBe(true);
-    expect(choiceAnswer.yourAnswer).toEqual(["mean()"]);
+    expect(choiceAnswer.answer).toEqual(["mean()"]);
 
     const textAnswer = contents.answers.find(
-      (a) => a.question.indexOf("powers grading") !== -1
+      (a) => a.id.indexOf("powers-grading") !== -1
     );
-    expect(textAnswer.answered).toBe(true);
-    expect(textAnswer.correct).toBe(true);
-    expect(textAnswer.yourAnswer).toBe("gradethis");
+    expect(textAnswer.answer).toBe("gradethis");
   });
 });
