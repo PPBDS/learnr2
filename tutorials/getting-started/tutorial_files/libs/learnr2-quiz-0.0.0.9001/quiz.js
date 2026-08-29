@@ -713,6 +713,23 @@
     return problems;
   }
 
+  // Every question, across every .learnr2-question on the page, that has no
+  // saved state yet -- i.e. was never submitted. Unlike infoFieldProblems(),
+  // this doesn't block the download outright: a reader legitimately might
+  // download a partial attempt (see collectAnswers()'s own `answer: null`
+  // reporting for exactly that case). It's just what buildDownloadButton
+  // warns about before letting an incomplete download through.
+  function unansweredQuestionLabels() {
+    var labels = [];
+    document.querySelectorAll(".learnr2-question[data-learnr2-question]").forEach(function (node) {
+      var data = decodeBase64Json(node.getAttribute("data-learnr2-question"));
+      if (!loadState(data)) {
+        labels.push(data.text);
+      }
+    });
+    return labels;
+  }
+
   function renderInfo(node) {
     var encoded = node.getAttribute("data-learnr2-info");
     if (!encoded) {
@@ -840,8 +857,7 @@
         var code = window.localStorage.getItem(storageKey);
         exercises.push({
           id: attr.exercise,
-          attempted: code !== null,
-          yourCode: code
+          answer: code
         });
       });
     return exercises;
@@ -860,22 +876,27 @@
       });
     });
 
+    // One flat list keyed by each question's stable id, mixing
+    // question()/student_info-style widgets and {webr} exercises together --
+    // every entry is just `{ id, answer }`. An unsubmitted question reports
+    // `answer: null` (saveState() only runs from a submit handler, so no
+    // saved state means it was never submitted).
     var answers = [];
     document.querySelectorAll(".learnr2-question[data-learnr2-question]").forEach(function (node) {
       var data = decodeBase64Json(node.getAttribute("data-learnr2-question"));
       var saved = loadState(data);
       answers.push({
-        question: data.text,
-        type: data.type,
-        // `saveState()` is only ever called from inside a submit handler,
-        // for every question type -- so any saved state at all means the
-        // reader submitted this question. (Not all types store a
-        // `submitted` field; reflection questions do, choice/text don't.)
-        answered: !!saved,
-        yourAnswer: saved ? (saved.selected || saved.value || null) : null,
-        correct: saved && typeof saved.correct === "boolean" ? saved.correct : null,
-        hasImage: !!(saved && saved.image)
+        id: data.id,
+        // Choice questions save an array of picked texts in `saved.selected`;
+        // an image-paste reflection saves the screenshot as a PNG data-URL
+        // string in `saved.image`; everything else saves a string in
+        // `saved.value`. For an image-paste answer the data URL *is* the
+        // answer we record.
+        answer: saved ? (saved.selected || saved.image || saved.value || null) : null
       });
+    });
+    collectExerciseAnswers().forEach(function (exercise) {
+      answers.push(exercise);
     });
 
     var content = {
@@ -883,7 +904,6 @@
       downloadedAt: new Date().toISOString(),
       info: info,
       answers: answers,
-      exercises: collectExerciseAnswers(),
       metadata: captureMetadata()
     };
 
@@ -926,6 +946,19 @@
         return;
       }
       error.classList.add("d-none");
+
+      var unanswered = unansweredQuestionLabels();
+      if (unanswered.length > 0) {
+        var confirmed = await showConfirmDialog(
+          "You haven't submitted an answer for " + unanswered.length +
+          " question" + (unanswered.length === 1 ? "" : "s") + ": " +
+          unanswered.join("; ") + ". Download anyway?",
+          "Download Anyway"
+        );
+        if (!confirmed) {
+          return;
+        }
+      }
 
       var payload = await collectAnswers();
       var stamp = new Date().toISOString().replace(/[:.]/g, "-");
@@ -1003,7 +1036,7 @@
   // asked for confirmation, and clearAllProgress() was simply never
   // reached. A <dialog> is ordinary page content, so it renders the same
   // everywhere a tutorial itself renders.
-  function showConfirmDialog(message) {
+  function showConfirmDialog(message, confirmLabel) {
     return new Promise(function (resolve) {
       var settled = false;
       function settle(result) {
@@ -1016,7 +1049,7 @@
         resolve(result);
       }
       var cancelButton = el("button", { type: "button", class: "learnr2-confirm-dialog-cancel", text: "Cancel" });
-      var confirmButton = el("button", { type: "button", class: "learnr2-confirm-dialog-confirm", text: "Start Over" });
+      var confirmButton = el("button", { type: "button", class: "learnr2-confirm-dialog-confirm", text: confirmLabel });
       cancelButton.addEventListener("click", function () { settle(false); });
       confirmButton.addEventListener("click", function () { settle(true); });
       var dialog = el("dialog", { class: "learnr2-confirm-dialog" }, [
@@ -1045,7 +1078,8 @@
       showConfirmDialog(
         "Start over this entire tutorial? Every saved answer, pasted " +
         "image, and exercise on this device will be permanently cleared. " +
-        "This cannot be undone."
+        "This cannot be undone.",
+        "Start Over"
       ).then(function (confirmed) {
         if (!confirmed) {
           return;
@@ -1055,6 +1089,181 @@
       });
     });
     sidebar.appendChild(el("div", { class: "learnr2-start-over-container" }, [button]));
+  }
+
+  // ---- Progressive section reveal ("Continue" buttons) ------------------
+  // Every level-2 (##) and level-3 (###) heading in the tutorial becomes its
+  // own gated section: hidden until the reader clicks a "Continue" button at
+  // the end of the section before it. Quarto's HTML output wraps each
+  // heading and everything under it in its own
+  // <section id="..." class="level2"|"level3">, nested for subsections (a
+  // "### Exercise 1" section renders *inside* its enclosing "## Running R
+  // Code" section) -- so a still-locked nested section stays hidden even
+  // once its parent section is revealed, and revealing a parent never forces
+  // open a child that hasn't been unlocked on its own: `.d-none` on one
+  // element has no effect on how its ancestors render, only its own
+  // descendants.
+  //
+  // Verified against a real rendered hello-learnr2.html (not just the JS
+  // test fixtures) -- see AGENTS.md for both this confirmation and a real
+  // regression it caught (Hints/Solutions wrongly getting their own gate).
+  var PROGRESS_ID = "progressive-sections";
+
+  function sectionHeading(section) {
+    return section.querySelector("h2, h3");
+  }
+
+  // Where the "Continue to <next>" button for `section` belongs: as its own
+  // last child, unless `next` sits *inside* `section` (the nested-subsection
+  // case above), in which case the button goes right before whichever of
+  // `next`'s ancestors is `section`'s own direct child -- so it lands after
+  // `section`'s own intro content but before its first subsection, not after
+  // every subsection that follows.
+  function continueButtonAnchor(section, next) {
+    if (!section.contains(next)) {
+      return null;
+    }
+    var node = next;
+    while (node.parentElement !== section) {
+      node = node.parentElement;
+    }
+    return node;
+  }
+
+  function initProgressiveSections() {
+    var sections = Array.prototype.slice.call(
+      document.querySelectorAll("section.level2, section.level3")
+    ).filter(function (section) {
+      // A "### Hints"/"### Solutions" section (quarto-live's own rendering
+      // of a `.hint`/`.solution` fenced div tied to an exercise -- see
+      // AGENTS.md's translation guide) exists purely as a supplementary,
+      // reader-toggled aside for the exercise right before it, not a step
+      // to progress through in its own right -- confirmed by an actual
+      // hello-learnr2 render, where each one wraps a div already hidden by
+      // quarto-live itself pending its own separate "show hint"/"show
+      // solution" reveal (`class="... exercise-hint d-none"` /
+      // `"... exercise-solution d-none"`). Leaving one out of the gated
+      // list here means it simply inherits its enclosing section's
+      // visibility once that's unlocked, instead of demanding its own
+      // extra Continue click first -- verified against that same render:
+      // without this filter, reaching "5. Automatic grading" from "2.
+      // Non-editable cells" took two extra, easy-to-miss intermediate
+      // clicks through bare "Hints"/"Solutions" stops with no number of
+      // their own, which is what read as the numbering "jumping". Checked
+      // only for level3 sections themselves -- an *enclosing* level2
+      // section (e.g. "3. Exercises") also matches `querySelector` here
+      // simply because a Hints/Solutions section is nested somewhere
+      // inside it, which would wrongly exclude the enclosing section too.
+      return !(section.classList.contains("level3") &&
+        section.querySelector(".exercise-hint, .exercise-solution"));
+    });
+    // Nothing to gate: a one-section tutorial (or one with `toc: false` and
+    // no headings at all) already shows everything there is to show.
+    if (sections.length < 2) {
+      return;
+    }
+
+    var saved = loadState({ id: PROGRESS_ID });
+    // Clamp -- a tutorial edited to have fewer sections since this was saved
+    // shouldn't leave every remaining section permanently hidden.
+    var unlocked = Math.min(Math.max(typeof saved === "number" ? saved : 1, 1), sections.length);
+
+    function applyVisibility() {
+      sections.forEach(function (section, i) {
+        section.classList.toggle("d-none", i >= unlocked);
+      });
+    }
+
+    function clearContinueButtons() {
+      document.querySelectorAll(".learnr2-continue-container").forEach(function (node) {
+        node.parentNode.removeChild(node);
+      });
+    }
+
+    function placeContinueButton() {
+      clearContinueButtons();
+      if (unlocked >= sections.length) {
+        return;
+      }
+      var current = sections[unlocked - 1];
+      var next = sections[unlocked];
+      var heading = sectionHeading(next);
+      var button = el("button", {
+        type: "button",
+        class: "learnr2-continue",
+        text: heading ? "Continue: " + heading.textContent.trim() : "Continue"
+      });
+      button.addEventListener("click", function () {
+        unlockThrough(unlocked, true);
+      });
+      var container = el("div", { class: "learnr2-continue-container" }, [button]);
+
+      var anchor = continueButtonAnchor(current, next);
+      if (anchor) {
+        current.insertBefore(container, anchor);
+      } else {
+        current.appendChild(container);
+      }
+    }
+
+    // `index` is the 0-based section to reveal. `scroll` is true only for an
+    // explicit Continue click -- a TOC link's own default action already
+    // scrolls to its target once that target stops being display:none, so a
+    // second, JS-driven scroll there would just fight the native one.
+    function unlockThrough(index, scroll) {
+      if (index + 1 <= unlocked) {
+        return;
+      }
+      unlocked = index + 1;
+      saveState({ id: PROGRESS_ID }, unlocked);
+      applyVisibility();
+      placeContinueButton();
+      if (scroll) {
+        var heading = sectionHeading(sections[index]);
+        if (heading) {
+          heading.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      }
+    }
+
+    applyVisibility();
+    placeContinueButton();
+
+    // Quarto's own TOC sidebar links jump straight to a heading's id via a
+    // plain <a href="#id">, bypassing Continue entirely -- honor that as a
+    // deliberate skip-ahead (a translated tutorial's learnr frontmatter
+    // always set allow_skip: yes, see AGENTS.md) rather than leaving the
+    // reader looking at a hash change with nothing visible to show for it.
+    var toc = document.getElementById("quarto-margin-sidebar");
+    if (toc) {
+      toc.addEventListener("click", function (event) {
+        var link = event.target;
+        while (link && link !== toc && link.tagName !== "A") {
+          link = link.parentElement;
+        }
+        if (!link || link.tagName !== "A") {
+          return;
+        }
+        var href = link.getAttribute("href") || "";
+        if (href.charAt(0) !== "#" || href.length < 2) {
+          return;
+        }
+        var target = document.getElementById(href.slice(1));
+        if (!target) {
+          return;
+        }
+        // Scan from the end, not the start: a nested section's ancestor
+        // (e.g. "Running R Code" containing "Exercise 2") also satisfies
+        // `.contains(target)`, but at a lower, too-shallow index -- the
+        // last (deepest/most specific) match is the actual target section.
+        for (var i = sections.length - 1; i >= 0; i--) {
+          if (sections[i] === target || sections[i].contains(target)) {
+            unlockThrough(i, false);
+            break;
+          }
+        }
+      });
+    }
   }
 
   function init() {
@@ -1068,6 +1277,7 @@
       .querySelectorAll(".learnr2-download-answers:not([data-learnr2-initialized])")
       .forEach(renderDownloadButton);
     injectStartOverButton();
+    initProgressiveSections();
   }
 
   if (document.readyState === "loading") {

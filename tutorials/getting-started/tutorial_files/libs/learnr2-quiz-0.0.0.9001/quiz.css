@@ -197,6 +197,7 @@
 .learnr2-controls {
   display: flex;
   gap: 0.5rem;
+  margin-top: 0.75rem;
 }
 
 .learnr2-submit,
@@ -249,26 +250,44 @@
   display: none !important;
 }
 
+.learnr2-continue-container {
+  margin: 1.5rem 0;
+}
+
+.learnr2-continue {
+  padding: 0.5rem 1.1rem;
+  border: 1px solid #0d6efd;
+  border-radius: 0.3rem;
+  background: #0d6efd;
+  color: #fff;
+  cursor: pointer;
+  font-size: 0.95rem;
+}
+
+.learnr2-continue:hover {
+  background: #0b5ed7;
+}
+
 .learnr2-start-over-container {
   margin-top: 1.5rem;
   padding-top: 1rem;
   border-top: 1px solid #dee2e6;
+  text-align: center;
 }
 
 .learnr2-start-over {
-  width: 100%;
-  padding: 0.4rem 0.9rem;
-  border: 1px solid #dc3545;
-  border-radius: 0.3rem;
+  width: auto;
+  padding: 0.1rem 0.5rem;
+  border: none;
   background: transparent;
-  color: #dc3545;
+  color: #adb5bd;
   cursor: pointer;
-  font-size: 0.85rem;
+  font-size: 0.75rem;
 }
 
 .learnr2-start-over:hover {
-  background: #dc3545;
-  color: #fff;
+  color: #6c757d;
+  text-decoration: underline;
 }
 
 .learnr2-confirm-dialog {

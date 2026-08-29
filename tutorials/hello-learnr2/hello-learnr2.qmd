@@ -235,10 +235,10 @@ learnr2::question(
 
 Submitted answers are saved automatically (again via `localStorage`, keyed
 by page URL and question) and restored on the reader's next visit. The
-default key is derived from the question text, so editing a question's
-wording resets its saved answers --- pass `id = "some-stable-slug"` to
-`question()` if you want to reword a question without losing readers'
-progress.
+default key is the question's `{r}` chunk label, so rewording a question
+is safe --- but renaming its chunk resets that question's saved answers.
+Pass `id = "some-stable-slug"` to `question()` to pin the key regardless
+of the chunk label.
 
 Group related questions with `learnr2::quiz()`:
 

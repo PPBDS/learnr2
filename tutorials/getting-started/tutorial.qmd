@@ -101,6 +101,35 @@ on its own does not erase anything, on purpose, so you can close a
 tutorial partway through and pick it up again later without losing
 progress. Only Start Over does that, and only after asking you to confirm.
 
+### Exercise 3
+
+Not every answer is text. Run the code below --- it draws a simple plot ---
+then take a screenshot of it (e.g. `Cmd+Shift+4` on a Mac, `Win+Shift+S` on
+Windows, or your Chromebook's screenshot tool) and paste it directly into
+the question underneath: click into the response box and press Ctrl+V (or
+Cmd+V). There's no upload button; pasting is the whole mechanism.
+
+```{webr}
+#| label: running-r-code-3
+#| exercise: exercise_3
+#| persist: true
+plot(1:10, 1:10)
+```
+
+```{r}
+#| label: running-r-code-4
+#| echo: false
+learnr2::question(
+  "Paste a screenshot of the plot you made above.",
+  learnr2::answer(
+    "A simple scatterplot going from the bottom-left to the top-right corner.",
+    correct = TRUE
+  ),
+  type = "reflection",
+  allow_image = TRUE
+)
+```
+
 ## Your Answers
 
 At the end of every tutorial, you will save your work (and submit it, at
