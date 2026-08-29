@@ -9,6 +9,18 @@ test_that("answer() validates and constructs a learnr2_answer", {
   expect_error(answer(1), "single string")
 })
 
+test_that("answer() defaults correct to FALSE and message to NULL", {
+  a <- answer("x")
+  expect_false(a$correct)
+  expect_null(a$message)
+})
+
+test_that("answer() rejects a missing, multi-element, or NA text", {
+  expect_error(answer(), "single string")
+  expect_error(answer(c("a", "b")), "single string")
+  expect_error(answer(NA_character_), "single string")
+})
+
 test_that("question() requires answer() objects and at least one correct", {
   expect_error(question("Prompt?"), "at least one")
   expect_error(question("Prompt?", "not an answer"), "created with `answer\\(\\)`")
@@ -337,4 +349,55 @@ test_that("print.learnr2_quiz and knit_print.learnr2_quiz behave the same way as
   kp <- knitr::knit_print(qz)
   expect_s3_class(kp, "knit_asis")
   expect_match(as.character(kp), "learnr2-quiz-caption")
+})
+
+# ---- internal helpers (question.R) ----------------------------------
+
+test_that("slugify() lowercases, collapses runs of non-alphanumerics to one dash, trims, and caps at 60", {
+  expect_equal(learnr2:::slugify("Hello, World!"), "hello-world")
+  expect_equal(learnr2:::slugify("  leading & trailing  "), "leading-trailing")
+  expect_equal(learnr2:::slugify("multiple---dashes___here"), "multiple-dashes-here")
+  expect_equal(learnr2:::slugify("6. Quiz Questions"), "6-quiz-questions")
+  expect_equal(learnr2:::slugify("!!!"), "question")   # nothing survives -> fallback
+  expect_equal(learnr2:::slugify(""), "question")
+  expect_lte(nchar(learnr2:::slugify(strrep("a", 200))), 60)
+})
+
+test_that("current_chunk_label() is NULL when not knitting", {
+  # The test suite itself is not run through knitr.
+  expect_null(learnr2:::current_chunk_label())
+})
+
+test_that("current_chunk_label() returns the running chunk's label, but rejects knitr's auto-names", {
+  saved <- knitr::opts_current$get()
+  saved_opt <- options(knitr.in.progress = TRUE)
+  on.exit({
+    knitr::opts_current$restore(saved)
+    options(saved_opt)
+  }, add = TRUE)
+
+  knitr::opts_current$set(label = "creating-vectors-2")
+  expect_equal(learnr2:::current_chunk_label(), "creating-vectors-2")
+
+  knitr::opts_current$set(label = "unnamed-chunk-12")
+  expect_null(learnr2:::current_chunk_label())
+})
+
+test_that("learnr2_dependency() bundles quiz.js and quiz.css as an htmlDependency", {
+  dep <- learnr2:::learnr2_dependency()
+  expect_s3_class(dep, "html_dependency")
+  expect_equal(dep$name, "learnr2-quiz")
+  expect_equal(dep$script, "quiz.js")
+  expect_equal(dep$stylesheet, "quiz.css")
+  expect_true(fs::file_exists(fs::path(dep$src$file, dep$script)))
+  expect_true(fs::file_exists(fs::path(dep$src$file, dep$stylesheet)))
+})
+
+test_that("question_id() disambiguates within one render but is stable across question texts", {
+  # Fresh registry state is not guaranteed between test files, so use ids
+  # unlikely to have been claimed already.
+  a <- learnr2:::question_id("zzz-unique-base", "irrelevant")
+  b <- learnr2:::question_id("zzz-unique-base", "irrelevant")
+  expect_equal(a, "zzz-unique-base")
+  expect_equal(b, "zzz-unique-base-2")
 })

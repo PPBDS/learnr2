@@ -482,6 +482,35 @@ for a quick check. But if verifying (or asking a user to verify) via
 instead, the package must be reinstalled or `load_all()`-loaded first, or
 the "verification" is silently checking stale, pre-edit content.
 
+## Test suite layout
+
+Two layers, both run in CI (`.github/workflows/R-CMD-check.yaml`,
+`js-tests.yaml`):
+
+- **R (`testthat`, edition 3), `tests/testthat/`** -- one `test-*.R` file per
+  `R/*.R` source file: `test-question.R`, `test-submission.R`,
+  `test-tutorials.R`, `test-extension.R`, `test-create-tutorial.R`. Every
+  exported function *and* every internal helper has a test; call internals
+  as `learnr2:::helper()`. Heavy/external calls are mocked with
+  `testthat::local_mocked_bindings(..., .package = "<pkg>")` -- `quarto`,
+  `httpuv` for `run_tutorial()`, `utils`/`rstudioapi` for `open_file()` --
+  so no test renders with Quarto, boots WebR, launches a browser, or hits
+  the network. Two defensive guards are deliberately left untested (noted in
+  a comment where they live): `live_extension_dir()`'s missing-package
+  branch and `verify_submission()`'s missing-`digest` branch -- both need a
+  broken install to reach, and `base::` bindings can't be mocked.
+- **JS (`Playwright`), `tests/js/`** -- `quiz.js` (the browser runtime) has
+  no unit layer; it's covered end-to-end through `quiz.spec.js` (against a
+  local fixture server, `server.js` + `fixtures.js`) and
+  `persistence.spec.js` (real browser close/relaunch). `deployed-smoke.spec.js`
+  runs separately against the live GitHub Pages deploy (see its own section
+  below). Fixture question `id`s in `fixtures.js` are written chunk-label
+  style (`single-choice`, `reflection-locked`) to match what
+  `question_id()` now emits.
+
+Run them: `R -q -e 'devtools::test()'` (or `pkgload::load_all()` +
+`testthat::test_dir("tests/testthat")`), and `cd tests/js && npx playwright test`.
+
 ## Progressive section reveal ("Continue" buttons)
 
 `initProgressiveSections()` in `quiz.js` gates every `##`/`###` heading

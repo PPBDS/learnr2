@@ -234,5 +234,34 @@ test_that("verify_submission() reports not-ok for a file with no integrity block
 
 test_that("verify_submission() errors on a missing file or bad path", {
   expect_error(verify_submission(123), "single non-empty string")
+  expect_error(verify_submission(character(0)), "single non-empty string")
+  expect_error(verify_submission(""), "single non-empty string")
   expect_error(verify_submission("this-file-does-not-exist.json"), "not found")
 })
+
+test_that("verify_submission() reports FAILED (not an error) for a file that isn't valid JSON", {
+  tmp <- withr::local_tempfile(fileext = ".json")
+  writeLines("this is not json {{{", tmp)
+
+  expect_message(res <- verify_submission(tmp), "could not parse")
+  expect_false(res$ok)
+  expect_null(res$content)
+})
+
+test_that("verify_submission() prints the reader's name, email, and device id from the file", {
+  skip_if_not_installed("digest")
+  tmp <- withr::local_tempfile(fileext = ".json")
+  write_valid_submission(
+    tmp,
+    info = list(name = "Grace Hopper", email = "grace@example.com")
+  )
+
+  expect_message(verify_submission(tmp), "Grace Hopper")
+  expect_message(verify_submission(tmp), "grace@example.com")
+  expect_message(verify_submission(tmp), "test-device-id")
+})
+
+# NOTE: verify_submission()'s `if (!requireNamespace("digest"))` guard can't
+# be exercised here -- write_valid_submission() (the fixture builder) needs
+# digest itself to compute a valid hash, so any environment that can set up
+# this test already has digest. Left as untested defensive code by design.
