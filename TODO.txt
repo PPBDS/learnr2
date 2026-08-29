@@ -1,31 +1,23 @@
 Big Picture: We hope to replace both learnr and tutorial.helpers with learnr2. There is no reason to have two packages, or to not have learnr2 do everything we want a tutorial package to do.
 
-1) Smaller, more discrete Start Over button. - Done
+* hash of just download time
 
-2) Use Continue button of some kind, like in the current tutorial. - Done
+* answer files in order or questions
 
-3) Use new version of Getting Started. Needs to use the same images. - ?
+* ponder the name learnr2
 
-4) Add a copy image question to Getting Started. - Done
+0) Write a note in a couple places announcing the project and seeking requests. 
 
-5) Is there really a test case framework? Does it have a lot of examples that you created?
+https://github.com/rstudio/learnr/discussions
+https://forum.posit.co/
 
+1) Submit a PR for adding a new chapter to Primer, after current Getting Started, called Getting Started Tutorial.  Details as we discussed.
 
-6) Shouldn't every question have a code chunk name? Yes. Shouldn't they be unique? Yes. Shouldn't they follow the usual tutorial.helpers convention of section-header (lower cased and weird characters to dashes, and duplicate dashes simoplified to one dash()) dash exercise number? - Done
+2) Is there really a test case framework? Does it have a lot of examples that you created? Check R Packages. Ask AI for a summary. You must use an R-friendly testing framework.
 
+3) Update AGENTS.md so that it helps any AI to translate a learnr tutorial into a learnr2 tutorial.
 
-
-11) Left over topic to investigate wrt using AGENTS.md to create a new tutorial:
-
-    Not yet verified end-to-end: couldn't confirm live WebR code execution
-    (clicking Run on a {webr} cell and seeing computed output) in this
-    sandbox -- the WebR runtime never finished initializing, which looks
-    like a restricted-network sandbox limitation rather than a defect in the
-    tutorial itself. Worth a manual click-through to fully close the loop.
-
-
-
-14) Fork PPBDS/vscode.tutorials. Rename your forked version vscode.tutorials2.  Use your new translation skills to translate 01-code/tutorial.Rmd to 01-code/tutorial.qmd. Again, the first attempt will fail. Provide feedback so that your AI can both improve AGENTS.md and also edit tutorial.qmd until the latter looks good to you. After some work, your AI may help you create an entire vscode.tutorials2 package.
+4) More details on 3). Fork PPBDS/vscode.tutorials. Rename your forked version vscode.tutorials2.  Use your new translation skills to translate 01-code/tutorial.Rmd to 01-code/tutorial.qmd. Again, the first attempt will fail. Provide feedback so that your AI can both improve AGENTS.md and also edit tutorial.qmd until the latter looks good to you. After some work, your AI may help you create an entire vscode.tutorials2 package.
 
 Note that, from a student point of view, vscode.tutorials and vscode.tutorials2 look identical. Same questions. Same images. Doesn't have to be perfect, like with fonts and colors. But the substance is the same.
 
