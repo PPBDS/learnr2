@@ -451,6 +451,115 @@ and
 add the extension and render on demand, and none of the bundled
 tutorials in this repo commit those generated files.
 
+### `run_tutorial()`/`library(learnr2)` reads the *installed* package, not this checkout
+
+A real mistake, caught only after a user reported edited content simply
+not showing up: after editing
+`inst/tutorials/getting-started/tutorial.qmd` (adding a question),
+`inst/extdata/quiz/quiz.css`, and `quiz.js` directly in this git working
+tree, none of the changes appeared when the user ran
+`learnr2::run_tutorial("getting-started")` in their own R session –
+`git status` confirmed the edits were genuinely there, uncommitted, in
+the source tree the whole time.
+
+The cause:
+[`run_tutorial()`](https://ppbds.github.io/learnr2/reference/run_tutorial.md)
+(`R/tutorials.R`) locates a tutorial with
+`system.file("tutorials", name, package = package)`, and every
+`{r}`/[webr](https://github.com/cardiomoon/webr) asset (`quiz.js`,
+`quiz.css`, the `quarto-live` extension) is likewise resolved via
+[`system.file()`](https://rdrr.io/r/base/system.file.html) inside the
+package’s own R functions.
+[`system.file()`](https://rdrr.io/r/base/system.file.html) always
+resolves against whichever copy of the package is *installed* in the R
+library currently in use – a separate, already-built copy, entirely
+distinct from this git checkout – regardless of how recently this
+checkout was edited. Plain
+[`library(learnr2)`](https://github.com/PPBDS/learnr2) after editing
+source files does **not** pick up the edits; nothing here re-reads this
+working tree automatically.
+
+Two ways to actually see a local edit reflected:
+
+- Reinstall from this checkout, then start a fresh R session (or at
+  minimum `unloadNamespace("learnr2")`) before calling
+  [`run_tutorial()`](https://ppbds.github.io/learnr2/reference/run_tutorial.md)
+  again. `devtools::install(".")` and `pak::pak("local::.")` both need
+  their respective package already installed – confirmed a plain setup
+  can have neither
+  (`Error in loadNamespace(x) : there is no package called 'devtools'`).
+  Base R needs nothing extra and always works from inside the package
+  directory:
+
+  ``` r
+
+  install.packages(".", repos = NULL, type = "source")
+  ```
+
+- Iterating on several edits: `devtools::load_all(".")` instead –
+  `pkgload` patches
+  [`system.file()`](https://rdrr.io/r/base/system.file.html) for a
+  `load_all()`-loaded package to resolve straight to this source tree’s
+  `inst/`, so
+  [`run_tutorial()`](https://ppbds.github.io/learnr2/reference/run_tutorial.md)
+  picks up changes with no reinstall step, as long as the same R session
+  that ran `load_all()` is the one calling it.
+
+The `quarto render path/to/tutorial/dir/tutorial.qmd` verification
+command in the rule just above this one sidesteps this problem entirely,
+since it renders the `.qmd` file directly and never calls
+[`system.file()`](https://rdrr.io/r/base/system.file.html) – prefer it
+for a quick check. But if verifying (or asking a user to verify) via
+[`run_tutorial()`](https://ppbds.github.io/learnr2/reference/run_tutorial.md)/[`available_tutorials()`](https://ppbds.github.io/learnr2/reference/available_tutorials.md)/any
+other exported function instead, the package must be reinstalled or
+`load_all()`-loaded first, or the “verification” is silently checking
+stale, pre-edit content.
+
+## Progressive section reveal (“Continue” buttons)
+
+`initProgressiveSections()` in `quiz.js` gates every `##`/`###` heading
+behind a “Continue” button, hidden until the reader clicks through the
+section before it – relying on Quarto wrapping each heading in its own
+`<section id="..." class="level2"|"level3">`, nested for subsections.
+Confirmed against a real rendered `hello-learnr2.html` (found at
+`tools::R_user_dir("learnr2", "cache")` after running
+[`run_tutorial()`](https://ppbds.github.io/learnr2/reference/run_tutorial.md)
+– see the section above – and served locally to click through in a real
+browser), not just the JS test fixtures in `tests/js/fixtures.js`: the
+`section.levelN` nesting those fixtures assume is exactly what a real
+render produces.
+
+That same real-render check caught a genuine regression in the first
+version of this feature: it gated every
+`section.level2`/`section.level3` uniformly, with no exception for a
+`### Hints`/`### Solutions` section (a `.hint`/`.solution` fenced div
+tied to one exercise – see “Quiz questions” below for the fenced-div
+syntax, or `hello-learnr2.qmd`’s own “3. Exercises”). Those exist purely
+as a supplementary, reader-toggled aside for the exercise right before
+them (quarto-live already hides the actual hint/solution content behind
+its own “Show Hint”/reveal-solution toggle, independent of anything
+here) – not a step of their own to progress through. Gating them anyway
+meant reaching “4. Setup cells” from “3. Exercises” took two extra,
+easy-to-miss clicks through bare “Hints”/ “Solutions” stops with no
+number of their own, reported by a user as the visible numbering jumping
+straight from section “2” to section “5” and skipping “3”/“4” entirely –
+when what actually happened was two invisible intermediate stops in
+between, not a skip. Fixed by excluding any `section.level3` that itself
+contains quarto-live’s own `.exercise-hint`/`.exercise-solution` marker
+(confirmed from the real render – note bare `.hint`/`.solution` is *not*
+what actually ends up in the rendered class list, only the `exercise-`
+prefixed ones) from the gated list entirely, so it simply inherits its
+enclosing section’s visibility instead of demanding a Continue click of
+its own.
+
+The general lesson, not just about this one feature: a synthetic JS test
+fixture built from a *description* of what Quarto’s output looks like
+can still miss a real structural detail the description didn’t account
+for (here, that hint/solution asides are themselves heading sections).
+Prefer checking against an actual rendered tutorial when one is
+available (as above) over trusting a hand-built fixture alone,
+especially for anything that walks heading/section structure.
+
 ## Publishing tutorials via GitHub Pages
 
 Every bundled tutorial is also published as static HTML, so students can

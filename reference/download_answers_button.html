@@ -83,11 +83,16 @@ HTML button.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>The download's <code>exercises</code> array also includes every <code>{webr}</code> code
-exercise's current code, under the same condition quarto-live itself
-requires to keep a record of it at all: <code>#| persist: true</code> (already the
-convention every bundled tutorial follows). An exercise without
-<code>persist: true</code> has no saved copy of the reader's code anywhere –
+    <p>The download's <code>answers</code> array is one flat list: every <code><a href="question.html">question()</a></code> plus
+every <code>{webr}</code> code exercise, each as a <code>{ id, answer }</code> pair keyed by
+the widget's (or exercise's) stable id. A question never submitted has
+<code>answer: null</code>; a choice question's <code>answer</code> is an array of the picked
+options; an image-paste reflection's <code>answer</code> is the pasted screenshot
+as a PNG data-URL string.</p>
+<p>A <code>{webr}</code> exercise appears only under the condition quarto-live itself
+requires to keep a record of the reader's code at all: <code>#| persist: true</code>
+(already the convention every bundled tutorial follows). An exercise
+without <code>persist: true</code> has no saved copy of the reader's code anywhere –
 <code>learnr2</code> included – so it can't appear in the download; this is a
 structural limit of quarto-live's own editor, not something
 <code>download_answers_button()</code> chooses to skip.</p>

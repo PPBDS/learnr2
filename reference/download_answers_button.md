@@ -38,14 +38,21 @@ button.
 
 ## Details
 
-The download's `exercises` array also includes every `{webr}` code
-exercise's current code, under the same condition quarto-live itself
-requires to keep a record of it at all: `#| persist: true` (already the
-convention every bundled tutorial follows). An exercise without
-`persist: true` has no saved copy of the reader's code anywhere –
-`learnr2` included – so it can't appear in the download; this is a
-structural limit of quarto-live's own editor, not something
-`download_answers_button()` chooses to skip.
+The download's `answers` array is one flat list: every
+[`question()`](https://ppbds.github.io/learnr2/reference/question.md)
+plus every `{webr}` code exercise, each as a `{ id, answer }` pair keyed
+by the widget's (or exercise's) stable id. A question never submitted
+has `answer: null`; a choice question's `answer` is an array of the
+picked options; an image-paste reflection's `answer` is the pasted
+screenshot as a PNG data-URL string.
+
+A `{webr}` exercise appears only under the condition quarto-live itself
+requires to keep a record of the reader's code at all:
+`#| persist: true` (already the convention every bundled tutorial
+follows). An exercise without `persist: true` has no saved copy of the
+reader's code anywhere – `learnr2` included – so it can't appear in the
+download; this is a structural limit of quarto-live's own editor, not
+something `download_answers_button()` chooses to skip.
 
 The download includes a `metadata` block (timestamp, timezone, browser
 info, and a random per-device id persisted across the reader's visits)
