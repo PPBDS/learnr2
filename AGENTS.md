@@ -146,11 +146,24 @@ below, for why it matters).
 
 ## Every chunk needs a unique `#| label:`
 
-learnr2 itself never reads a chunk’s label – unlike the `#| exercise:`
-option on a [webr](https://github.com/cardiomoon/webr) cell (which
-really is load-bearing: it’s what ties a `.hint`/`.solution` div to its
-exercise), a chunk’s label has no runtime effect here at all. Give every
-chunk one anyway – `{r}` chunks calling
+A `{r}` chunk calling
+[`question()`](https://ppbds.github.io/learnr2/reference/question.md)
+*is* read by learnr2: with no explicit `id =`, the question defaults its
+`id` to the enclosing chunk’s label (see `question_id()` /
+`current_chunk_label()` in `R/question.R`). That `id` is the
+`localStorage` key for the reader’s saved answer *and* the `id` the
+question appears under in a
+[`download_answers_button()`](https://ppbds.github.io/learnr2/reference/download_answers_button.md)
+submission – so the label is load-bearing there, the same way
+`#| exercise:` is on a [webr](https://github.com/cardiomoon/webr) cell.
+Renaming such a chunk resets saved progress for its question; the
+section-header convention below keeps the labels stable and meaningful.
+The other widget chunks
+([`student_info()`](https://ppbds.github.io/learnr2/reference/student_info.md),
+[`download_answers_button()`](https://ppbds.github.io/learnr2/reference/download_answers_button.md))
+and plain [webr](https://github.com/cardiomoon/webr) demo cells still
+have no label-driven runtime behavior. Give every chunk one anyway –
+`{r}` chunks calling
 [`question()`](https://ppbds.github.io/learnr2/reference/question.md)/[`student_info()`](https://ppbds.github.io/learnr2/reference/student_info.md)/[`download_answers_button()`](https://ppbds.github.io/learnr2/reference/download_answers_button.md),
 *and* every [webr](https://github.com/cardiomoon/webr) chunk, including
 exercise ones (alongside their load-bearing `#| exercise:`, which stays

@@ -18,3 +18,7 @@ Useful links:
 ## Author
 
 **Maintainer**: David Kane <dave.kane@gmail.com>
+
+Authors:
+
+- David Kane <dave.kane@gmail.com>

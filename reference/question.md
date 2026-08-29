@@ -100,10 +100,17 @@ question(
 
 - id:
 
-  Stable identifier used to key the reader's saved answer (see "Progress
-  persistence" below). Defaults to a slug derived from `text`. Set this
-  explicitly if you plan to edit the question wording later and want
-  readers' saved answers to survive the edit.
+  Stable identifier for this question: it keys the reader's saved answer
+  (see "Progress persistence" below) and is the `id` the question
+  appears under in a
+  [`download_answers_button()`](https://ppbds.github.io/learnr2/reference/download_answers_button.md)
+  submission. Defaults to the label of the `{r}` chunk the `question()`
+  call sits in — which, following `tutorial.helpers`' `section-header-N`
+  chunk-naming convention, is already a unique, readable identifier
+  (`## Quiz questions` -\> `quiz-questions-1`, `quiz-questions-2`, ...).
+  Falls back to a slug of `text` when there is no usable chunk label,
+  e.g. when printing a `question()` at the console. Pass `id` explicitly
+  to pin it regardless of where the call sits.
 
 - allow_image:
 
@@ -138,9 +145,10 @@ console.
 
 Once a reader submits an answer, it is saved in the browser's
 `localStorage` (keyed by page URL and `id`) and restored on the next
-visit. Because the default `id` is derived from `text`, editing a
-question's wording changes its `id` and resets any saved answers for it;
-pass `id` explicitly to avoid that.
+visit. Because the default `id` is the enclosing `{r}` chunk's label,
+renaming that chunk (or moving the question into a different one) resets
+any saved answers for it — but editing only the question's wording does
+not. Pass `id` explicitly to pin it.
 
 `localStorage` is written straight to disk, not held only in memory, so
 this survives closing and reopening the browser, and restarting the

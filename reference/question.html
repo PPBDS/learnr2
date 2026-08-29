@@ -133,10 +133,15 @@ after the model answer is revealed.</p></dd>
 
 
 <dt id="arg-id">id<a class="anchor" aria-label="anchor" href="#arg-id"></a></dt>
-<dd><p>Stable identifier used to key the reader's saved answer (see
-"Progress persistence" below). Defaults to a slug derived from <code>text</code>.
-Set this explicitly if you plan to edit the question wording later and
-want readers' saved answers to survive the edit.</p></dd>
+<dd><p>Stable identifier for this question: it keys the reader's saved
+answer (see "Progress persistence" below) and is the <code>id</code> the question
+appears under in a <code><a href="download_answers_button.html">download_answers_button()</a></code> submission. Defaults to
+the label of the <code>{r}</code> chunk the <code>question()</code> call sits in — which,
+following <code>tutorial.helpers</code>' <code>section-header-N</code> chunk-naming
+convention, is already a unique, readable identifier (<code>## Quiz questions</code> -&gt; <code>quiz-questions-1</code>, <code>quiz-questions-2</code>, ...). Falls back
+to a slug of <code>text</code> when there is no usable chunk label, e.g. when
+printing a <code>question()</code> at the console. Pass <code>id</code> explicitly to pin it
+regardless of where the call sits.</p></dd>
 
 
 <dt id="arg-allow-image">allow_image<a class="anchor" aria-label="anchor" href="#arg-allow-image"></a></dt>
@@ -174,9 +179,10 @@ at the R console.</p>
 
 <p>Once a reader submits an answer, it is saved in the browser's
 <code>localStorage</code> (keyed by page URL and <code>id</code>) and restored on the next
-visit. Because the default <code>id</code> is derived from <code>text</code>, editing a
-question's wording changes its <code>id</code> and resets any saved answers for it;
-pass <code>id</code> explicitly to avoid that.</p>
+visit. Because the default <code>id</code> is the enclosing <code>{r}</code> chunk's label,
+renaming that chunk (or moving the question into a different one) resets
+any saved answers for it — but editing only the question's wording
+does not. Pass <code>id</code> explicitly to pin it.</p>
 <p><code>localStorage</code> is written straight to disk, not held only in memory, so
 this survives closing and reopening the browser, and restarting the
 computer – confirmed with automated tests
