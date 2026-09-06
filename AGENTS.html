@@ -91,7 +91,69 @@
 <div class="section level2">
 <h2 id="translating-a-learnrtutorialhelpers-rmd-tutorial-to-learnr2-qmd">Translating a learnr/tutorial.helpers <code>.Rmd</code> tutorial to learnr2 <code>.qmd</code>
 <a class="anchor" aria-label="anchor" href="#translating-a-learnrtutorialhelpers-rmd-tutorial-to-learnr2-qmd"></a></h2>
-<p>Tutorials from <code>tutorial.helpers</code>-based packages live at <code>tutorials/&lt;name&gt;/tutorial.Rmd</code> inside the installed package (find them with <code>system.file("tutorials", package = "tutorial.helpers")</code>, or similar for other <code>*.tutorials</code> packages). Translate one into <code>inst/tutorials/&lt;name&gt;/tutorial.qmd</code> in learnr2.</p>
+<p>Tutorials from <code>tutorial.helpers</code>-based packages live at <code>tutorials/&lt;name&gt;/tutorial.Rmd</code> inside the installed package (find them with <code>system.file("tutorials", package = "tutorial.helpers")</code>, or similar for other <code>*.tutorials</code> packages). Translate one into <code>&lt;pkg&gt;/inst/tutorials/&lt;name&gt;/&lt;name&gt;.qmd</code> – <code>&lt;pkg&gt;</code> is learnr2 itself for a bundled tutorial, or a separate <code>*.tutorials2</code>-style content package that depends on <code>learnr2</code>. Keep any <code>images/</code> (or other asset) subdirectory next to the <code>.qmd</code>, exactly as the source had it. The file may be named <code>&lt;name&gt;.qmd</code> (matches <code>hello-learnr2</code>, <code>intro-vectors</code>) or <code>tutorial.qmd</code> (matches <code>getting-started</code>) – <code><a href="reference/available_tutorials.html">available_tutorials()</a></code> / <code><a href="reference/run_tutorial.html">run_tutorial()</a></code> just take the first <code>*.qmd</code> in the directory, so either works; prefer <code>&lt;name&gt;.qmd</code> for a new translation.</p>
+<div class="section level3">
+<h3 id="quick-reference-what-maps-to-what">Quick reference: what maps to what<a class="anchor" aria-label="anchor" href="#quick-reference-what-maps-to-what"></a></h3>
+<table class="table"><colgroup><col width="50%"><col width="50%"></colgroup><thead><tr><th>learnr / tutorial.helpers source</th>
+<th>learnr2 <code>.qmd</code> equivalent</th>
+</tr></thead><tbody><tr><td>
+<code>output: learnr::tutorial</code>, <code>runtime: shiny_prerendered</code>
+</td>
+<td>
+<code>format: live-html</code> + <code>engine: knitr</code> (see YAML below)</td>
+</tr><tr><td>
+<code><a href="https://rstudio.github.io/learnr/" class="external-link">library(learnr)</a></code> / <code><a href="https://ppbds.github.io/tutorial.helpers/" class="external-link">library(tutorial.helpers)</a></code> setup chunk</td>
+<td>delete it; call functions as <code>learnr2::fn()</code>
+</td>
+</tr><tr><td>
+<code>knitr::opts_chunk$set(echo = FALSE)</code> in setup</td>
+<td>a per-chunk <code>echo: false</code> option on every widget <code>{r}</code> chunk (never a doc-wide override)</td>
+</tr><tr><td><code>child = system.file("info_section.Rmd", ...)</code></td>
+<td>a <code>{r}</code> chunk calling <code><a href="reference/student_info.html">learnr2::student_info()</a></code>
+</td>
+</tr><tr><td><code>child = system.file("download_answers.Rmd", ...)</code></td>
+<td>a <code>{r}</code> chunk: minutes <code><a href="reference/question.html">question()</a></code> + <code><a href="reference/download_answers_button.html">learnr2::download_answers_button()</a></code>
+</td>
+</tr><tr><td><code>```{r ex1, exercise = TRUE}</code></td>
+<td>a <a href="https://github.com/cardiomoon/webr" class="external-link">webr</a> cell with <code>label</code>, <code>exercise</code>, and <code>persist: true</code> chunk options</td>
+</tr><tr><td>a shared <code>```{r ex1-setup}</code> chunk</td>
+<td>a <a href="https://github.com/cardiomoon/webr" class="external-link">webr</a> cell with <code>setup: true</code> + the same <code>exercise:</code> label (or inline the setup into the exercise cell)</td>
+</tr><tr><td>
+<code>```{r ex1-hint, eval = FALSE}</code> / <code>ex1-hint-1</code>, <code>-2</code>, …</td>
+<td>
+<code>::: { .hint exercise="ex1" }</code> div(s)</td>
+</tr><tr><td>
+<code>```{r ex1-solution}</code> (ungraded exercise)</td>
+<td>
+<code>::: { .solution exercise="ex1" }</code> div with an <code>```r</code> block</td>
+</tr><tr><td>
+<code>```{r ex1-solution}</code> (exercise that also has a check)</td>
+<td>a <a href="https://github.com/cardiomoon/webr" class="external-link">webr</a> cell with <code>solution: true</code> – the div form leaves the grader with no solution</td>
+</tr><tr><td>
+<code>```{r ex1-check}</code>, <code>gradethis::grade_this_code()</code>
+</td>
+<td>a <a href="https://github.com/cardiomoon/webr" class="external-link">webr</a> cell with <code>check: true</code> for the same exercise + include <code>_gradethis.qmd</code> (and a <code>solution: true</code> cell, per the row above)</td>
+</tr><tr><td><code>question("...", answer("a", correct = TRUE), ...)</code></td>
+<td><code>learnr2::question("...", learnr2::answer("a", correct = TRUE), ...)</code></td>
+</tr><tr><td><code>question_text("...", answer("model answer", correct = TRUE), allow_retry = TRUE)</code></td>
+<td>
+<code>learnr2::question("...", learnr2::answer("model answer", correct = TRUE), type = "reflection")</code> (or <code>"reflection_editable"</code>)</td>
+</tr><tr><td><code>question_numeric("...", answer(90, correct = TRUE))</code></td>
+<td>
+<code>learnr2::question("...", type = "reflection_editable", validate = "integer")</code>, no <code><a href="reference/answer.html">answer()</a></code>
+</td>
+</tr><tr><td><code>question(..., allow_retry, random_answer_order, incorrect, correct)</code></td>
+<td>same argument names on <code><a href="reference/question.html">learnr2::question()</a></code>
+</td>
+</tr><tr><td>bare <code>###</code> progressive-reveal divider (no real heading text)</td>
+<td>delete; keep genuinely-titled <code>##</code>/<code>###</code> sections (learnr2 gates them itself – see “Progressive section reveal”)</td>
+</tr><tr><td>
+<code>knitr::include_graphics("images/x.png")</code> in an <code>{r}</code> chunk</td>
+<td>plain Markdown <code>![alt](images/x.png)</code> (drop the chunk)</td>
+</tr><tr><td>prose telling the reader to use “the RStudio Console”, <code>rstudioapi::*</code>, <code>tutorial.helpers::show_file()</code>, etc.</td>
+<td>rewrite around an on-page <a href="https://github.com/cardiomoon/webr" class="external-link">webr</a> cell, or drop – see “No local R/RStudio dependency”</td>
+</tr></tbody></table><p>The sections below expand on the non-obvious rows.</p>
+</div>
 <div class="section level3">
 <h3 id="yaml-frontmatter">YAML frontmatter<a class="anchor" aria-label="anchor" href="#yaml-frontmatter"></a></h3>
 <p>Replace the learnr frontmatter:</p>
@@ -106,11 +168,12 @@
 <p>with:</p>
 <div class="sourceCode" id="cb3"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="pp">---</span></span>
 <span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a><span class="fu">title</span><span class="kw">:</span><span class="at"> </span><span class="st">"Some Title"</span></span>
-<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a><span class="fu">format</span><span class="kw">:</span><span class="at"> live-html</span></span>
-<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a><span class="fu">engine</span><span class="kw">:</span><span class="at"> knitr</span></span>
-<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a><span class="fu">toc</span><span class="kw">:</span><span class="at"> </span><span class="ch">true</span></span>
-<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a><span class="pp">---</span></span></code></pre></div>
-<p>Drop <code>tutorial: id:</code>, <code>output:</code>/<code>runtime: shiny_prerendered</code> entirely – none of it applies without a Shiny server. Add a <code>webr: packages: [...]</code> block only if the tutorial actually attaches non-base packages inside exercises.</p>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a><span class="fu">subtitle</span><span class="kw">:</span><span class="at"> </span><span class="st">"A short description, if the source had one"</span></span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a><span class="fu">format</span><span class="kw">:</span><span class="at"> live-html</span></span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a><span class="fu">engine</span><span class="kw">:</span><span class="at"> knitr</span></span>
+<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a><span class="fu">toc</span><span class="kw">:</span><span class="at"> </span><span class="ch">true</span></span>
+<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a><span class="pp">---</span></span></code></pre></div>
+<p>Drop <code>tutorial: id:</code>, <code>output:</code>/<code>runtime: shiny_prerendered</code> and the <code>progressive:</code> / <code>allow_skip:</code> keys entirely – none of it applies without a Shiny server, and learnr2 does progressive reveal itself (see “Section dividers and progressive reveal”). Keep <code>subtitle:</code> if the source had one, but update its wording along with <code>title:</code> so neither still describes RStudio-only content (see “No local R/RStudio dependency”). Add a <code>webr: packages: [...]</code> block listing every non-base package any <a href="https://github.com/cardiomoon/webr" class="external-link">webr</a> cell uses (see its own section below).</p>
 <p>Immediately after the frontmatter, include the <code>quarto-live</code> runtime partial(s):</p>
 <pre><code>{{&lt; include _extensions/r-wasm/live/_knitr.qmd &gt;}}</code></pre>
 <p>Add <code>{{&lt; include _extensions/r-wasm/live/_gradethis.qmd &gt;}}</code> too if any exercise uses <code>check: true</code> / <code>gradethis::grade_this_code()</code>.</p>
@@ -124,36 +187,95 @@
 <p>learnr’s <code>exercise = TRUE</code> R chunks:</p>
 <pre><code>```{r exercise-1, exercise = TRUE}
 ```</code></pre>
-<p>become <a href="https://github.com/cardiomoon/webr" class="external-link">webr</a> chunks with an <code>exercise:</code> option and a stable label. The chunk starts empty for the student to fill in (or with a leading <code>#</code> comment describing the task, if that helps set up the exercise):</p>
+<p>become <a href="https://github.com/cardiomoon/webr" class="external-link">webr</a> chunks. Every one needs three options: a <code>#| label:</code> (the <code>section-header-N</code> convention – see “Every chunk needs a unique <code>#| label:</code>”), a <code>#| exercise:</code> id (any stable slug; the bundled tutorials use <code>snake_case</code> like <code>ex_total</code>, distinct from the dashed chunk label), and <code>#| persist: true</code> so the reader’s typed code survives a page reload (saved to <code>localStorage</code>, and picked up by <code><a href="reference/download_answers_button.html">download_answers_button()</a></code> – without it there is <em>no</em> saved copy of their code anywhere):</p>
 <pre><code>```{webr}
-#| exercise: exercise_1
+#| label: functions-and-packages-2
+#| exercise: ex_load_tidyverse
+#| persist: true
+______
+glimpse(mtcars)
 ```</code></pre>
-<p>Add <code>#| persist: true</code> so the reader’s edits survive a page reload (saved to <code>localStorage</code>).</p>
+<p>The cell body is the starter code the reader sees. Keep whatever the source put there: an empty body, a leading <code>#</code> comment describing the task, or <code>tutorial.helpers</code>’s <code>____</code> blanks (they carry over verbatim as literal text for the reader to replace). Drop learnr chunk options with no client-side meaning – <code>exercise.lines</code>, <code>exercise.timelimit</code>, <code>exercise.cap</code>, <code>exercise.df_print</code>, <code>exercise.blanks</code>, <code>message</code>, <code>warning</code>.</p>
+</div>
+<div class="section level3">
+<h3 id="exercise-setup-chunks">Exercise setup chunks<a class="anchor" aria-label="anchor" href="#exercise-setup-chunks"></a></h3>
+<p>learnr’s paired <code>```{r ex1-setup}</code> chunk (shared objects an exercise needs before the reader’s code runs – loading a dataset, defining a helper) has two possible translations:</p>
+<ol style="list-style-type: decimal"><li>
+<p><strong>A <a href="https://github.com/cardiomoon/webr" class="external-link">webr</a> <code>#| setup: true</code> cell</strong> carrying the <em>same</em> <code>#| exercise:</code> label. quarto-live runs it, invisibly, in that exercise’s environment before the reader’s submission:</p>
+<pre><code>```{webr}
+#| label: analysis-3
+#| setup: true
+#| exercise: ex_summarise
+library(dplyr)
+flights &lt;- nycflights13::flights
+```</code></pre>
+</li>
+<li><p><strong>Inlining the setup lines at the top of the exercise cell itself</strong> (what <code>intro-vectors/</code> does with <code>scores &lt;- c(...)</code>). Simplest when it’s a line or two; it also makes the cell self-contained and visible.</p></li>
+</ol><p>Which to use is a judgement call, but be aware of <em>why</em> it matters: <strong><a href="https://github.com/cardiomoon/webr" class="external-link">webr</a> cells do not share state.</strong> Each exercise runs in its own environment (<code>exercise-env-&lt;label&gt;</code>), separate from every other exercise and from any earlier non-exercise <a href="https://github.com/cardiomoon/webr" class="external-link">webr</a> demo cell, and a page reload wipes all of it – only the reader’s typed code persists. So anything an exercise depends on must be created by that exercise’s own <code>setup: true</code> cell or its own body; you cannot rely on an earlier cell on the page having “already run <code><a href="https://rdrr.io/r/base/library.html" class="external-link">library()</a></code>” the way a single shared R session would.</p>
 </div>
 <div class="section level3">
 <h3 id="hints-and-solutions">Hints and solutions<a class="anchor" aria-label="anchor" href="#hints-and-solutions"></a></h3>
-<p>An <code>exercise-1-hint-1</code> chunk (<code>eval = FALSE</code>) becomes a fenced div tied to the exercise label:</p>
-<pre><code>::: { .hint exercise="exercise_1" }
+<p>An <code>exercise-1-hint</code> chunk (<code>eval = FALSE</code>) becomes a fenced div tied to the exercise label:</p>
+<pre><code>::: { .hint exercise="ex_load_tidyverse" }
 Some hint text, or an inline code sample.
 :::</code></pre>
-<p>A model answer becomes a <code>.solution</code> div:</p>
-<pre><code>::: { .solution exercise="exercise_1" }
+<p>learnr’s <em>progressively numbered</em> hints (<code>ex1-hint-1</code>, <code>ex1-hint-2</code>, …) become several consecutive <code>.hint</code> divs with the same <code>exercise=</code> – quarto-live reveals them one at a time (“Next Hint”) – or collapse them into one div if the sequencing doesn’t add much.</p>
+<p>A model answer becomes a <code>.solution</code> div (the inner <code>```r</code> block is required – it’s what gets syntax-highlighted and offered as “Show solution”):</p>
+<pre><code>::: { .solution exercise="ex_load_tidyverse" }
 ```r
-the_solution_code()
+library(tidyverse)
+glimpse(mtcars)
 ```
 :::</code></pre>
+<p><strong>Exception – a graded exercise:</strong> if the exercise also has a <code>check: true</code> cell (next section), its solution must be a <code>solution: true</code> <strong><a href="https://github.com/cardiomoon/webr" class="external-link">webr</a> cell</strong>, <em>not</em> the <code>.solution</code> div:</p>
+<pre><code>```{webr}
+#| label: &lt;section&gt;-N
+#| exercise: ex_load_tidyverse
+#| solution: true
+library(tidyverse)
+glimpse(mtcars)
+```</code></pre>
+<p>Only the cell form emits the hidden <code>&lt;code class="solution-code"&gt;</code> that quarto-live’s grader reads; the <code>.solution</code> div renders a “Show solution” button but leaves <code>solution_code</code> empty, so <code>gradethis::grade_this_code()</code> fails at submit time with <em>“No solution code was found.”</em> (Verified against a real render – <code>live.lua</code>’s <code>Proof()</code> filter passes the div through untouched, while its <code>WebRCodeBlock</code> <code>solution: true</code> branch adds the <code>solution-code</code> node.) The cell still shows the reader a “Show solution” button, same as the div. <code>#| hint: true</code> cells are likewise an equivalent to the <code>.hint</code> div; use whichever, but for a <em>graded</em> exercise the solution has to be the cell.</p>
+</div>
+<div class="section level3">
+<h3 id="grading-check-chunks">Grading (<code>check</code> chunks)<a class="anchor" aria-label="anchor" href="#grading-check-chunks"></a></h3>
+<p>If a source exercise has a <code>```{r ex1-check}</code> chunk with <code>gradethis::grade_this_code()</code> (or similar), add <code>{{&lt; include _extensions/r-wasm/live/_gradethis.qmd &gt;}}</code> after the <code>_knitr.qmd</code> include, and translate the check to a <a href="https://github.com/cardiomoon/webr" class="external-link">webr</a> cell with <code>#| check: true</code> and the exercise’s label. Its solution must be a <code>solution: true</code> cell, not a <code>.solution</code> div (see the exception under “Hints and solutions” above) – otherwise submit fails with <em>“No solution code was found.”</em> If the source check is trivial or absent, just leave it out – a learnr2 exercise does not require grading to be useful, and most bundled ones have none.</p>
 </div>
 <div class="section level3">
 <h3 id="quiz-questions">Quiz questions<a class="anchor" aria-label="anchor" href="#quiz-questions"></a></h3>
-<p>learnr’s <code><a href="reference/question.html">question()</a></code> / <code>question_text()</code> / <code>question_numeric()</code> become <code><a href="reference/question.html">learnr2::question()</a></code> calls inside a plain <code>{r}</code> chunk (this runs once at render time, not per-reader – see <code>hello-learnr2.qmd</code> section 6 for the full set of examples: single/multiple choice, <code>type = "text"</code>, <code>type = "reflection"</code>, <code>type = "reflection_editable"</code>). Group related ones with <code><a href="reference/quiz.html">learnr2::quiz()</a></code>.</p>
+<p>learnr <code><a href="reference/question.html">question()</a></code> calls become <code><a href="reference/question.html">learnr2::question()</a></code> inside a plain <code>{r}</code> chunk (it runs once at render time, not per-reader). <code><a href="reference/answer.html">learnr2::answer()</a></code> replaces <code><a href="reference/answer.html">answer()</a></code>. Argument names that carry over unchanged: <code>allow_retry</code>, <code>random_answer_order</code> (choice questions only), <code>correct</code>, <code>incorrect</code>. Group related questions with <code><a href="reference/quiz.html">learnr2::quiz()</a></code>.</p>
+<p>Type mapping:</p>
+<ul><li>
+<strong><code><a href="reference/question.html">question()</a></code> with <code>answer(correct = TRUE)</code> choices</strong> -&gt; <code><a href="reference/question.html">learnr2::question()</a></code>; leave <code>type</code> at its default (<code>"auto"</code> picks single vs. multiple by how many answers are correct), or set <code>type = "text"</code> for a typed exact-match answer.</li>
+<li>
+<strong><code>question_text()</code></strong> – <code>tutorial.helpers</code>’s workhorse for “In your own words, explain…” prompts, almost always written with a single <code>answer("a model paragraph", correct = TRUE)</code> and <code>allow_retry = TRUE</code> – maps to <code>type = "reflection"</code> (locks after submit) or <code>type = "reflection_editable"</code> (stays editable). The <code>correct</code> answer’s text becomes the model answer revealed after the reader submits; it is not graded against their wording. Drop <code>question_text()</code>-only options with no equivalent: <code>try_again_button</code>, <code>rows</code>, <code>options = list(...)</code>, <code>trim</code>, <code>placeholder</code>.</li>
+<li>
+<strong><code>question_numeric()</code></strong> -&gt; <code>type = "reflection_editable"</code>, <code>validate = "integer"</code>, and <em>no</em> <code><a href="reference/answer.html">answer()</a></code> (see the “minutes spent” discussion under “Authoring a new tutorial”).</li>
+<li>
+<strong>Custom <code>answer_fn</code> / regex / multi-correct-with-partial checkers</strong> have no learnr2 equivalent – reduce to plain <code><a href="reference/answer.html">answer()</a></code> matches, or to a <code>"reflection"</code> question if the point was open-ended.</li>
+</ul><p>See <code>hello-learnr2.qmd</code>’s quiz section for a worked example of every type.</p>
 </div>
 <div class="section level3">
 <h3 id="student-info-and-submission">Student info and submission<a class="anchor" aria-label="anchor" href="#student-info-and-submission"></a></h3>
-<p><code>tutorial.helpers</code>’s <code>info_section.Rmd</code> child document becomes <code><a href="reference/student_info.html">learnr2::student_info()</a></code>. Its <code>download_answers.Rmd</code> child document becomes <code>learnr2::download_answers_button(filename_prefix = "&lt;name&gt;")</code>. Both are plain function calls in a <code>{r}</code> chunk – no child document, no <code>context = "server"</code> chunk.</p>
+<p><code>tutorial.helpers</code>’s <code>info_section.Rmd</code> child document becomes <code><a href="reference/student_info.html">learnr2::student_info()</a></code>. Its <code>download_answers.Rmd</code> child document becomes <code>learnr2::download_answers_button(filename_prefix = "&lt;name&gt;")</code>. Both are plain function calls in a <code>{r}</code> chunk – no child document, no <code>context = "server"</code> chunk. See “Authoring a new tutorial” above for the exact boilerplate blocks (including the “minutes spent” question that sits with the download button).</p>
 </div>
 <div class="section level3">
-<h3 id="section-dividers">Section dividers<a class="anchor" aria-label="anchor" href="#section-dividers"></a></h3>
-<p>learnr’s bare <code>###</code> dividers (used for its section-by-section progressive reveal) can just be deleted – collapse the prose into the enclosing <code>##</code> section.</p>
+<h3 id="images-and-other-assets">Images and other assets<a class="anchor" aria-label="anchor" href="#images-and-other-assets"></a></h3>
+<p>Keep the source tutorial’s <code>images/</code> directory (or any other asset folder) next to the translated <code>.qmd</code>. Reference images with plain Markdown – <code>![alt text](images/thing.png)</code> – rather than a <code>knitr::include_graphics("images/thing.png")</code> <code>{r}</code> chunk; the chunk form would also need <code>#| echo: false</code> to hide its source, and the Markdown form just works. Relative paths resolve against the <code>.qmd</code>’s own directory, the same as in the source.</p>
+</div>
+<div class="section level3">
+<h3 id="section-dividers-and-progressive-reveal">Section dividers and progressive reveal<a class="anchor" aria-label="anchor" href="#section-dividers-and-progressive-reveal"></a></h3>
+<p>learnr drove its section-by-section reveal from <code>progressive: yes</code> / <code>allow_skip: yes</code> in the YAML plus bare <code>###</code> dividers. learnr2 does progressive reveal itself: <code>quiz.js</code> gates every <code>##</code> and <code>###</code> heading behind a “Continue” button (see “Progressive section reveal” below). So:</p>
+<ul><li>Delete the YAML <code>progressive</code>/<code>allow_skip</code> keys and any <em>content-free</em> <code>###</code> divider (a heading used purely as a pacing break, with no real title) – fold its prose up into the enclosing <code>##</code>.</li>
+<li>
+<strong>Keep</strong> every genuinely-titled <code>##</code>/<code>###</code> section. It becomes one Continue step automatically; you don’t add anything to opt in.</li>
+<li>
+<code>### Hints</code> / <code>### Solutions</code> subsections that only wrap a <code>.hint</code>/<code>.solution</code> div are <em>not</em> gated (quarto-live already has its own show/hide toggle for them) – leaving them in place is fine.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="webr-packages-must-list-every-package-any-exercise-uses">
+<code>webr: packages:</code> must list every package any exercise uses<a class="anchor" aria-label="anchor" href="#webr-packages-must-list-every-package-any-exercise-uses"></a></h3>
+<p>The <code>webr: packages: [...]</code> frontmatter block is the only place WebR learns what to install into the browser session. List <em>every</em> non-base package named in <em>any</em> <a href="https://github.com/cardiomoon/webr" class="external-link">webr</a> cell (exercise, setup, check, or demo) – if an exercise calls <code><a href="https://dplyr.tidyverse.org" class="external-link">library(dplyr)</a></code> or <code>nycflights13::flights</code>, both <code>dplyr</code> and <code>nycflights13</code> belong in the list. Conversely, a render-time <code>{r}</code> chunk should only ever be a <code>learnr2::</code> widget call: do <strong>not</strong> port <code><a href="https://rdrr.io/r/base/library.html" class="external-link">library(...)</a></code> or data-loading into <code>{r}</code> chunks, since those run in the render environment (CI), not the reader’s browser, and would make the tutorial fail to build unless that package is installed for rendering too.</p>
 </div>
 <div class="section level3">
 <h3 id="hide-source-code-on-widget-chunks-echo-false">Hide source code on widget chunks (<code>echo: false</code>)<a class="anchor" aria-label="anchor" href="#hide-source-code-on-widget-chunks-echo-false"></a></h3>
@@ -177,8 +299,8 @@ learnr2::student_info()
 <div class="section level3">
 <h3 id="general-rule-verify-by-actually-rendering">General rule: verify by actually rendering<a class="anchor" aria-label="anchor" href="#general-rule-verify-by-actually-rendering"></a></h3>
 <p>Syntax that merely <em>looks</em> plausible can still be wrong in ways that are only visible in the rendered HTML (like the <code>echo</code> issue above). After translating (or hand-authoring), actually render the tutorial with Quarto and open the result, rather than relying on visual inspection of the <code>.qmd</code> source alone:</p>
-<div class="sourceCode" id="cb10"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a><span class="ex">Rscript</span> <span class="at">-e</span> <span class="st">"learnr2::add_live_extension('path/to/tutorial/dir')"</span></span>
-<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a><span class="ex">quarto</span> render path/to/tutorial/dir/tutorial.qmd</span></code></pre></div>
+<div class="sourceCode" id="cb12"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a><span class="ex">Rscript</span> <span class="at">-e</span> <span class="st">"learnr2::add_live_extension('path/to/tutorial/dir')"</span></span>
+<span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a><span class="ex">quarto</span> render path/to/tutorial/dir/tutorial.qmd</span></code></pre></div>
 <p>Then check the rendered <code>.html</code> (e.g. serve the directory and open it in a browser) for anything that shouldn’t be visible to a student – most importantly, source code above a widget that should be output-only. Don’t commit the render artifacts (<code>_extensions/</code>, <code>*.html</code>, <code>*_files/</code>, <code>.quarto/</code>, <code>*.knit.md</code>) alongside the tutorial’s <code>.qmd</code> – <code><a href="reference/run_tutorial.html">run_tutorial()</a></code> and <code><a href="reference/create_tutorial.html">create_tutorial()</a></code> add the extension and render on demand, and none of the bundled tutorials in this repo commit those generated files.</p>
 </div>
 <div class="section level3">
@@ -189,18 +311,19 @@ learnr2::student_info()
 <p>Two ways to actually see a local edit reflected:</p>
 <ul><li>
 <p>Reinstall from this checkout, then start a fresh R session (or at minimum <code>unloadNamespace("learnr2")</code>) before calling <code><a href="reference/run_tutorial.html">run_tutorial()</a></code> again. <code>devtools::install(".")</code> and <code>pak::pak("local::.")</code> both need their respective package already installed – confirmed a plain setup can have neither (<code>Error in loadNamespace(x) : there is no package called 'devtools'</code>). Base R needs nothing extra and always works from inside the package directory:</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"."</span>, repos <span class="op">=</span> <span class="cn">NULL</span>, type <span class="op">=</span> <span class="st">"source"</span><span class="op">)</span></span></code></pre></div>
 </li>
 <li><p>Iterating on several edits: <code>devtools::load_all(".")</code> instead – <code>pkgload</code> patches <code><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file()</a></code> for a <code>load_all()</code>-loaded package to resolve straight to this source tree’s <code>inst/</code>, so <code><a href="reference/run_tutorial.html">run_tutorial()</a></code> picks up changes with no reinstall step, as long as the same R session that ran <code>load_all()</code> is the one calling it.</p></li>
 </ul><p>The <code>quarto render path/to/tutorial/dir/tutorial.qmd</code> verification command in the rule just above this one sidesteps this problem entirely, since it renders the <code>.qmd</code> file directly and never calls <code><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file()</a></code> – prefer it for a quick check. But if verifying (or asking a user to verify) via <code><a href="reference/run_tutorial.html">run_tutorial()</a></code>/<code><a href="reference/available_tutorials.html">available_tutorials()</a></code>/any other exported function instead, the package must be reinstalled or <code>load_all()</code>-loaded first, or the “verification” is silently checking stale, pre-edit content.</p>
+<p>One more staleness trap, caught for real: even <em>after</em> a correct reinstall, <code><a href="reference/run_tutorial.html">run_tutorial()</a></code> re-rendering into its cache dir (<code>tools::R_user_dir("learnr2", "cache")/&lt;name&gt;/</code>) can still serve an old <code>quiz.js</code>. Quarto writes the JS/CSS dependency into <code>&lt;name&gt;_files/libs/learnr2-quiz-&lt;version&gt;/</code>, and if a previous render left a directory there for the same version string, the new render does not necessarily overwrite it. After editing <code>inst/extdata/quiz/quiz.{js,css}</code>, <code>rm -rf</code> the tutorial’s cache dir before re-rendering (or bump the package version so the <code>libs/learnr2-quiz-&lt;version&gt;/</code> path changes). Confirm by grepping the served <code>quiz.js</code> for something you just added.</p>
 </div>
 </div>
 <div class="section level2">
 <h2 id="test-suite-layout">Test suite layout<a class="anchor" aria-label="anchor" href="#test-suite-layout"></a></h2>
 <p>Two layers, both run in CI (<code>.github/workflows/R-CMD-check.yaml</code>, <code>js-tests.yaml</code>):</p>
 <ul><li>
-<strong>R (<code>testthat</code>, edition 3), <code>tests/testthat/</code></strong> – one <code>test-*.R</code> file per <code>R/*.R</code> source file: <code>test-question.R</code>, <code>test-submission.R</code>, <code>test-tutorials.R</code>, <code>test-extension.R</code>, <code>test-create-tutorial.R</code>. Every exported function <em>and</em> every internal helper has a test; call internals as <code>learnr2:::helper()</code>. Heavy/external calls are mocked with <code>testthat::local_mocked_bindings(..., .package = "&lt;pkg&gt;")</code> – <code>quarto</code>, <code>httpuv</code> for <code><a href="reference/run_tutorial.html">run_tutorial()</a></code>, <code>utils</code>/<code>rstudioapi</code> for <code>open_file()</code> – so no test renders with Quarto, boots WebR, launches a browser, or hits the network. Two defensive guards are deliberately left untested (noted in a comment where they live): <code><a href="reference/live_extension_dir.html">live_extension_dir()</a></code>’s missing-package branch and <code><a href="reference/verify_submission.html">verify_submission()</a></code>’s missing-<code>digest</code> branch – both need a broken install to reach, and <code>base::</code> bindings can’t be mocked.</li>
+<strong>R (<code>testthat</code>, edition 3), <code>tests/testthat/</code></strong> – one <code>test-*.R</code> file per <code>R/*.R</code> source file: <code>test-question.R</code>, <code>test-submission.R</code>, <code>test-tutorials.R</code>, <code>test-extension.R</code>, <code>test-create-tutorial.R</code>. Every exported function <em>and</em> every internal helper has a test; call internals as <code>learnr2:::helper()</code>. Heavy/external calls are mocked with <code>testthat::local_mocked_bindings(..., .package = "&lt;pkg&gt;")</code> – <code>quarto</code>, <code>httpuv</code> for <code><a href="reference/run_tutorial.html">run_tutorial()</a></code>, <code>utils</code>/<code>rstudioapi</code> for <code>open_file()</code> – so no test renders with Quarto, boots WebR, launches a browser, or hits the network. One defensive guard is deliberately left untested (noted in a comment where it lives): <code><a href="reference/live_extension_dir.html">live_extension_dir()</a></code>’s missing-package branch – it needs a broken install to reach, and <code>base::</code> bindings can’t be mocked.</li>
 <li>
 <strong>JS (<code>Playwright</code>), <code>tests/js/</code></strong> – <code>quiz.js</code> (the browser runtime) has no unit layer; it’s covered end-to-end through <code>quiz.spec.js</code> (against a local fixture server, <code>server.js</code> + <code>fixtures.js</code>) and <code>persistence.spec.js</code> (real browser close/relaunch). <code>deployed-smoke.spec.js</code> runs separately against the live GitHub Pages deploy (see its own section below). Fixture question <code>id</code>s in <code>fixtures.js</code> are written chunk-label style (<code>single-choice</code>, <code>reflection-locked</code>) to match what <code>question_id()</code> now emits.</li>
 </ul><p>Run them: <code>R -q -e 'devtools::test()'</code> (or <code><a href="https://pkgload.r-lib.org/reference/load_all.html" class="external-link">pkgload::load_all()</a></code> + <code>testthat::test_dir("tests/testthat")</code>), and <code>cd tests/js &amp;&amp; npx playwright test</code>.</p>
@@ -226,8 +349,8 @@ learnr2::student_info()
 <li>Runs <code>tests/js/deployed-smoke.spec.js</code> (via <code>tests/js/playwright.smoke.config.js</code>, a separate config from the rest of <code>tests/js/</code> since this targets a real URL with no local dev server to manage) against that live page in a real browser: fills in known <code><a href="reference/student_info.html">student_info()</a></code> values and answers a couple of <code><a href="reference/question.html">question()</a></code>s with known answers, clicks the download button, and asserts those exact known values – and nothing else – come back out of the downloaded JSON. This is exactly the manual “fill in a couple of answers at random, download, confirm they’re in the file” check, just automated and run on every push instead of by hand occasionally.</li>
 <li>Deliberately only exercises <code><a href="reference/question.html">question()</a></code>/<code><a href="reference/student_info.html">student_info()</a></code>/ <code><a href="reference/download_answers_button.html">download_answers_button()</a></code> – plain JS, not <a href="https://github.com/cardiomoon/webr" class="external-link">webr</a> – so it can’t flake on WebR’s WebAssembly runtime being slow to boot in CI, the same limitation noted earlier in this file for rendering checks in a restricted-network sandbox.</li>
 </ol><p>Run it locally against any deployed (or <code><a href="reference/run_tutorial.html">run_tutorial()</a></code>-served) URL with:</p>
-<div class="sourceCode" id="cb12"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a><span class="bu">cd</span> tests/js</span>
-<span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a><span class="va">SMOKE_URL</span><span class="op">=</span><span class="st">"https://ppbds.github.io/learnr2/tutorials/hello-learnr2/hello-learnr2.html"</span> <span class="ex">npm</span> run test:smoke</span></code></pre></div>
+<div class="sourceCode" id="cb14"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb14-1"><a href="#cb14-1" tabindex="-1"></a><span class="bu">cd</span> tests/js</span>
+<span id="cb14-2"><a href="#cb14-2" tabindex="-1"></a><span class="va">SMOKE_URL</span><span class="op">=</span><span class="st">"https://ppbds.github.io/learnr2/tutorials/hello-learnr2/hello-learnr2.html"</span> <span class="ex">npm</span> run test:smoke</span></code></pre></div>
 <p>Not yet verified against a real push to the actual repo (this sandbox can’t trigger or observe a live GitHub Actions run) – worth watching the first real run of the <code>smoke-test</code> job after this lands, both to confirm the wait loop’s timing is long enough and that the live selectors still match.</p>
 </div>
 </div>

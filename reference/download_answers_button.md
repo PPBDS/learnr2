@@ -54,16 +54,14 @@ reader's code anywhere – `learnr2` included – so it can't appear in the
 download; this is a structural limit of quarto-live's own editor, not
 something `download_answers_button()` chooses to skip.
 
-The download includes a `metadata` block (timestamp, timezone, browser
-info, and a random per-device id persisted across the reader's visits)
-and a SHA-256 `integrity` hash over the content. Check a downloaded file
-with
-[`verify_submission()`](https://ppbds.github.io/learnr2/reference/verify_submission.md).
-This is tamper-*evidence*, not proof of identity: since everything runs
-in the reader's own browser with no server-held secret, a technical
-reader could reproduce the hash themselves. What it reliably catches is
-editing the file afterward (e.g. changing a wrong answer to a right one
-before turning it in).
+The download also carries a `metadata` block (timezone, browser info,
+and a random per-device id persisted across the reader's visits) and a
+`time` field: the moment the reader clicked "Download", lightly
+obfuscated so the raw timestamp isn't readable or hand-editable in the
+file. Recover it with
+[`submission_time()`](https://ppbds.github.io/learnr2/reference/submission_time.md).
+Nothing else is hashed or signed – a determined reader can still edit
+their answers; this only keeps the submission time honest at a glance.
 
 ## Examples
 

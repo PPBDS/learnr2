@@ -231,7 +231,42 @@ Tutorials from `tutorial.helpers`-based packages live at
 `tutorials/<name>/tutorial.Rmd` inside the installed package (find them
 with `system.file("tutorials", package = "tutorial.helpers")`, or
 similar for other `*.tutorials` packages). Translate one into
-`inst/tutorials/<name>/tutorial.qmd` in learnr2.
+`<pkg>/inst/tutorials/<name>/<name>.qmd` – `<pkg>` is learnr2 itself for
+a bundled tutorial, or a separate `*.tutorials2`-style content package
+that depends on `learnr2`. Keep any `images/` (or other asset)
+subdirectory next to the `.qmd`, exactly as the source had it. The file
+may be named `<name>.qmd` (matches `hello-learnr2`, `intro-vectors`) or
+`tutorial.qmd` (matches `getting-started`) –
+[`available_tutorials()`](https://ppbds.github.io/learnr2/reference/available_tutorials.md)
+/
+[`run_tutorial()`](https://ppbds.github.io/learnr2/reference/run_tutorial.md)
+just take the first `*.qmd` in the directory, so either works; prefer
+`<name>.qmd` for a new translation.
+
+### Quick reference: what maps to what
+
+| learnr / tutorial.helpers source | learnr2 `.qmd` equivalent |
+|----|----|
+| `output: learnr::tutorial`, `runtime: shiny_prerendered` | `format: live-html` + `engine: knitr` (see YAML below) |
+| [`library(learnr)`](https://rstudio.github.io/learnr/) / [`library(tutorial.helpers)`](https://ppbds.github.io/tutorial.helpers/) setup chunk | delete it; call functions as `learnr2::fn()` |
+| `knitr::opts_chunk$set(echo = FALSE)` in setup | a per-chunk `echo: false` option on every widget `{r}` chunk (never a doc-wide override) |
+| `child = system.file("info_section.Rmd", ...)` | a `{r}` chunk calling [`learnr2::student_info()`](https://ppbds.github.io/learnr2/reference/student_info.md) |
+| `child = system.file("download_answers.Rmd", ...)` | a `{r}` chunk: minutes [`question()`](https://ppbds.github.io/learnr2/reference/question.md) + [`learnr2::download_answers_button()`](https://ppbds.github.io/learnr2/reference/download_answers_button.md) |
+| ```` ```{r ex1, exercise = TRUE} ```` | a [webr](https://github.com/cardiomoon/webr) cell with `label`, `exercise`, and `persist: true` chunk options |
+| a shared ```` ```{r ex1-setup} ```` chunk | a [webr](https://github.com/cardiomoon/webr) cell with `setup: true` + the same `exercise:` label (or inline the setup into the exercise cell) |
+| ```` ```{r ex1-hint, eval = FALSE} ```` / `ex1-hint-1`, `-2`, … | `::: { .hint exercise="ex1" }` div(s) |
+| ```` ```{r ex1-solution} ```` (ungraded exercise) | `::: { .solution exercise="ex1" }` div with an ```` ```r ```` block |
+| ```` ```{r ex1-solution} ```` (exercise that also has a check) | a [webr](https://github.com/cardiomoon/webr) cell with `solution: true` – the div form leaves the grader with no solution |
+| ```` ```{r ex1-check} ````, `gradethis::grade_this_code()` | a [webr](https://github.com/cardiomoon/webr) cell with `check: true` for the same exercise + include `_gradethis.qmd` (and a `solution: true` cell, per the row above) |
+| `question("...", answer("a", correct = TRUE), ...)` | `learnr2::question("...", learnr2::answer("a", correct = TRUE), ...)` |
+| `question_text("...", answer("model answer", correct = TRUE), allow_retry = TRUE)` | `learnr2::question("...", learnr2::answer("model answer", correct = TRUE), type = "reflection")` (or `"reflection_editable"`) |
+| `question_numeric("...", answer(90, correct = TRUE))` | `learnr2::question("...", type = "reflection_editable", validate = "integer")`, no [`answer()`](https://ppbds.github.io/learnr2/reference/answer.md) |
+| `question(..., allow_retry, random_answer_order, incorrect, correct)` | same argument names on [`learnr2::question()`](https://ppbds.github.io/learnr2/reference/question.md) |
+| bare `###` progressive-reveal divider (no real heading text) | delete; keep genuinely-titled `##`/`###` sections (learnr2 gates them itself – see “Progressive section reveal”) |
+| `knitr::include_graphics("images/x.png")` in an `{r}` chunk | plain Markdown `![alt](images/x.png)` (drop the chunk) |
+| prose telling the reader to use “the RStudio Console”, `rstudioapi::*`, `tutorial.helpers::show_file()`, etc. | rewrite around an on-page [webr](https://github.com/cardiomoon/webr) cell, or drop – see “No local R/RStudio dependency” |
+
+The sections below expand on the non-obvious rows.
 
 ### YAML frontmatter
 
@@ -253,16 +288,22 @@ with:
 ``` yaml
 ---
 title: "Some Title"
+subtitle: "A short description, if the source had one"
 format: live-html
 engine: knitr
 toc: true
 ---
 ```
 
-Drop `tutorial: id:`, `output:`/`runtime: shiny_prerendered` entirely –
-none of it applies without a Shiny server. Add a `webr: packages: [...]`
-block only if the tutorial actually attaches non-base packages inside
-exercises.
+Drop `tutorial: id:`, `output:`/`runtime: shiny_prerendered` and the
+`progressive:` / `allow_skip:` keys entirely – none of it applies
+without a Shiny server, and learnr2 does progressive reveal itself (see
+“Section dividers and progressive reveal”). Keep `subtitle:` if the
+source had one, but update its wording along with `title:` so neither
+still describes RStudio-only content (see “No local R/RStudio
+dependency”). Add a `webr: packages: [...]` block listing every non-base
+package any [webr](https://github.com/cardiomoon/webr) cell uses (see
+its own section below).
 
 Immediately after the frontmatter, include the `quarto-live` runtime
 partial(s):
@@ -290,47 +331,175 @@ learnr’s `exercise = TRUE` R chunks:
     ```{r exercise-1, exercise = TRUE}
     ```
 
-become [webr](https://github.com/cardiomoon/webr) chunks with an
-`exercise:` option and a stable label. The chunk starts empty for the
-student to fill in (or with a leading `#` comment describing the task,
-if that helps set up the exercise):
+become [webr](https://github.com/cardiomoon/webr) chunks. Every one
+needs three options: a `#| label:` (the `section-header-N` convention –
+see “Every chunk needs a unique `#| label:`”), a `#| exercise:` id (any
+stable slug; the bundled tutorials use `snake_case` like `ex_total`,
+distinct from the dashed chunk label), and `#| persist: true` so the
+reader’s typed code survives a page reload (saved to `localStorage`, and
+picked up by
+[`download_answers_button()`](https://ppbds.github.io/learnr2/reference/download_answers_button.md)
+– without it there is *no* saved copy of their code anywhere):
 
     ```{webr}
-    #| exercise: exercise_1
+    #| label: functions-and-packages-2
+    #| exercise: ex_load_tidyverse
+    #| persist: true
+    ______
+    glimpse(mtcars)
     ```
 
-Add `#| persist: true` so the reader’s edits survive a page reload
-(saved to `localStorage`).
+The cell body is the starter code the reader sees. Keep whatever the
+source put there: an empty body, a leading `#` comment describing the
+task, or `tutorial.helpers`’s `____` blanks (they carry over verbatim as
+literal text for the reader to replace). Drop learnr chunk options with
+no client-side meaning – `exercise.lines`, `exercise.timelimit`,
+`exercise.cap`, `exercise.df_print`, `exercise.blanks`, `message`,
+`warning`.
+
+### Exercise setup chunks
+
+learnr’s paired ```` ```{r ex1-setup} ```` chunk (shared objects an
+exercise needs before the reader’s code runs – loading a dataset,
+defining a helper) has two possible translations:
+
+1.  **A [webr](https://github.com/cardiomoon/webr) `#| setup: true`
+    cell** carrying the *same* `#| exercise:` label. quarto-live runs
+    it, invisibly, in that exercise’s environment before the reader’s
+    submission:
+
+        ```{webr}
+        #| label: analysis-3
+        #| setup: true
+        #| exercise: ex_summarise
+        library(dplyr)
+        flights <- nycflights13::flights
+        ```
+
+2.  **Inlining the setup lines at the top of the exercise cell itself**
+    (what `intro-vectors/` does with `scores <- c(...)`). Simplest when
+    it’s a line or two; it also makes the cell self-contained and
+    visible.
+
+Which to use is a judgement call, but be aware of *why* it matters:
+**[webr](https://github.com/cardiomoon/webr) cells do not share state.**
+Each exercise runs in its own environment (`exercise-env-<label>`),
+separate from every other exercise and from any earlier non-exercise
+[webr](https://github.com/cardiomoon/webr) demo cell, and a page reload
+wipes all of it – only the reader’s typed code persists. So anything an
+exercise depends on must be created by that exercise’s own `setup: true`
+cell or its own body; you cannot rely on an earlier cell on the page
+having “already run [`library()`](https://rdrr.io/r/base/library.html)”
+the way a single shared R session would.
 
 ### Hints and solutions
 
-An `exercise-1-hint-1` chunk (`eval = FALSE`) becomes a fenced div tied
-to the exercise label:
+An `exercise-1-hint` chunk (`eval = FALSE`) becomes a fenced div tied to
+the exercise label:
 
-    ::: { .hint exercise="exercise_1" }
+    ::: { .hint exercise="ex_load_tidyverse" }
     Some hint text, or an inline code sample.
     :::
 
-A model answer becomes a `.solution` div:
+learnr’s *progressively numbered* hints (`ex1-hint-1`, `ex1-hint-2`, …)
+become several consecutive `.hint` divs with the same `exercise=` –
+quarto-live reveals them one at a time (“Next Hint”) – or collapse them
+into one div if the sequencing doesn’t add much.
 
-    ::: { .solution exercise="exercise_1" }
+A model answer becomes a `.solution` div (the inner ```` ```r ```` block
+is required – it’s what gets syntax-highlighted and offered as “Show
+solution”):
+
+    ::: { .solution exercise="ex_load_tidyverse" }
     ```r
-    the_solution_code()
+    library(tidyverse)
+    glimpse(mtcars)
     ```
     :::
 
+**Exception – a graded exercise:** if the exercise also has a
+`check: true` cell (next section), its solution must be a
+`solution: true` **[webr](https://github.com/cardiomoon/webr) cell**,
+*not* the `.solution` div:
+
+    ```{webr}
+    #| label: <section>-N
+    #| exercise: ex_load_tidyverse
+    #| solution: true
+    library(tidyverse)
+    glimpse(mtcars)
+    ```
+
+Only the cell form emits the hidden `<code class="solution-code">` that
+quarto-live’s grader reads; the `.solution` div renders a “Show
+solution” button but leaves `solution_code` empty, so
+`gradethis::grade_this_code()` fails at submit time with *“No solution
+code was found.”* (Verified against a real render – `live.lua`’s
+`Proof()` filter passes the div through untouched, while its
+`WebRCodeBlock` `solution: true` branch adds the `solution-code` node.)
+The cell still shows the reader a “Show solution” button, same as the
+div. `#| hint: true` cells are likewise an equivalent to the `.hint`
+div; use whichever, but for a *graded* exercise the solution has to be
+the cell.
+
+### Grading (`check` chunks)
+
+If a source exercise has a ```` ```{r ex1-check} ```` chunk with
+`gradethis::grade_this_code()` (or similar), add
+`{{< include _extensions/r-wasm/live/_gradethis.qmd >}}` after the
+`_knitr.qmd` include, and translate the check to a
+[webr](https://github.com/cardiomoon/webr) cell with `#| check: true`
+and the exercise’s label. Its solution must be a `solution: true` cell,
+not a `.solution` div (see the exception under “Hints and solutions”
+above) – otherwise submit fails with *“No solution code was found.”* If
+the source check is trivial or absent, just leave it out – a learnr2
+exercise does not require grading to be useful, and most bundled ones
+have none.
+
 ### Quiz questions
 
-learnr’s
-[`question()`](https://ppbds.github.io/learnr2/reference/question.md) /
-`question_text()` / `question_numeric()` become
+learnr
+[`question()`](https://ppbds.github.io/learnr2/reference/question.md)
+calls become
 [`learnr2::question()`](https://ppbds.github.io/learnr2/reference/question.md)
-calls inside a plain `{r}` chunk (this runs once at render time, not
-per-reader – see `hello-learnr2.qmd` section 6 for the full set of
-examples: single/multiple choice, `type = "text"`,
-`type = "reflection"`, `type = "reflection_editable"`). Group related
-ones with
+inside a plain `{r}` chunk (it runs once at render time, not
+per-reader).
+[`learnr2::answer()`](https://ppbds.github.io/learnr2/reference/answer.md)
+replaces
+[`answer()`](https://ppbds.github.io/learnr2/reference/answer.md).
+Argument names that carry over unchanged: `allow_retry`,
+`random_answer_order` (choice questions only), `correct`, `incorrect`.
+Group related questions with
 [`learnr2::quiz()`](https://ppbds.github.io/learnr2/reference/quiz.md).
+
+Type mapping:
+
+- **[`question()`](https://ppbds.github.io/learnr2/reference/question.md)
+  with `answer(correct = TRUE)` choices** -\>
+  [`learnr2::question()`](https://ppbds.github.io/learnr2/reference/question.md);
+  leave `type` at its default (`"auto"` picks single vs. multiple by how
+  many answers are correct), or set `type = "text"` for a typed
+  exact-match answer.
+- **`question_text()`** – `tutorial.helpers`’s workhorse for “In your
+  own words, explain…” prompts, almost always written with a single
+  `answer("a model paragraph", correct = TRUE)` and `allow_retry = TRUE`
+  – maps to `type = "reflection"` (locks after submit) or
+  `type = "reflection_editable"` (stays editable). The `correct`
+  answer’s text becomes the model answer revealed after the reader
+  submits; it is not graded against their wording. Drop
+  `question_text()`-only options with no equivalent: `try_again_button`,
+  `rows`, `options = list(...)`, `trim`, `placeholder`.
+- **`question_numeric()`** -\> `type = "reflection_editable"`,
+  `validate = "integer"`, and *no*
+  [`answer()`](https://ppbds.github.io/learnr2/reference/answer.md) (see
+  the “minutes spent” discussion under “Authoring a new tutorial”).
+- **Custom `answer_fn` / regex / multi-correct-with-partial checkers**
+  have no learnr2 equivalent – reduce to plain
+  [`answer()`](https://ppbds.github.io/learnr2/reference/answer.md)
+  matches, or to a `"reflection"` question if the point was open-ended.
+
+See `hello-learnr2.qmd`’s quiz section for a worked example of every
+type.
 
 ### Student info and submission
 
@@ -339,13 +508,50 @@ ones with
 Its `download_answers.Rmd` child document becomes
 `learnr2::download_answers_button(filename_prefix = "<name>")`. Both are
 plain function calls in a `{r}` chunk – no child document, no
-`context = "server"` chunk.
+`context = "server"` chunk. See “Authoring a new tutorial” above for the
+exact boilerplate blocks (including the “minutes spent” question that
+sits with the download button).
 
-### Section dividers
+### Images and other assets
 
-learnr’s bare `###` dividers (used for its section-by-section
-progressive reveal) can just be deleted – collapse the prose into the
-enclosing `##` section.
+Keep the source tutorial’s `images/` directory (or any other asset
+folder) next to the translated `.qmd`. Reference images with plain
+Markdown – `![alt text](images/thing.png)` – rather than a
+`knitr::include_graphics("images/thing.png")` `{r}` chunk; the chunk
+form would also need `#| echo: false` to hide its source, and the
+Markdown form just works. Relative paths resolve against the `.qmd`’s
+own directory, the same as in the source.
+
+### Section dividers and progressive reveal
+
+learnr drove its section-by-section reveal from `progressive: yes` /
+`allow_skip: yes` in the YAML plus bare `###` dividers. learnr2 does
+progressive reveal itself: `quiz.js` gates every `##` and `###` heading
+behind a “Continue” button (see “Progressive section reveal” below). So:
+
+- Delete the YAML `progressive`/`allow_skip` keys and any *content-free*
+  `###` divider (a heading used purely as a pacing break, with no real
+  title) – fold its prose up into the enclosing `##`.
+- **Keep** every genuinely-titled `##`/`###` section. It becomes one
+  Continue step automatically; you don’t add anything to opt in.
+- `### Hints` / `### Solutions` subsections that only wrap a
+  `.hint`/`.solution` div are *not* gated (quarto-live already has its
+  own show/hide toggle for them) – leaving them in place is fine.
+
+### `webr: packages:` must list every package any exercise uses
+
+The `webr: packages: [...]` frontmatter block is the only place WebR
+learns what to install into the browser session. List *every* non-base
+package named in *any* [webr](https://github.com/cardiomoon/webr) cell
+(exercise, setup, check, or demo) – if an exercise calls
+[`library(dplyr)`](https://dplyr.tidyverse.org) or
+`nycflights13::flights`, both `dplyr` and `nycflights13` belong in the
+list. Conversely, a render-time `{r}` chunk should only ever be a
+`learnr2::` widget call: do **not** port
+[`library(...)`](https://rdrr.io/r/base/library.html) or data-loading
+into `{r}` chunks, since those run in the render environment (CI), not
+the reader’s browser, and would make the tutorial fail to build unless
+that package is installed for rendering too.
 
 ### Hide source code on widget chunks (`echo: false`)
 
@@ -528,6 +734,20 @@ other exported function instead, the package must be reinstalled or
 `load_all()`-loaded first, or the “verification” is silently checking
 stale, pre-edit content.
 
+One more staleness trap, caught for real: even *after* a correct
+reinstall,
+[`run_tutorial()`](https://ppbds.github.io/learnr2/reference/run_tutorial.md)
+re-rendering into its cache dir
+(`tools::R_user_dir("learnr2", "cache")/<name>/`) can still serve an old
+`quiz.js`. Quarto writes the JS/CSS dependency into
+`<name>_files/libs/learnr2-quiz-<version>/`, and if a previous render
+left a directory there for the same version string, the new render does
+not necessarily overwrite it. After editing
+`inst/extdata/quiz/quiz.{js,css}`, `rm -rf` the tutorial’s cache dir
+before re-rendering (or bump the package version so the
+`libs/learnr2-quiz-<version>/` path changes). Confirm by grepping the
+served `quiz.js` for something you just added.
+
 ## Test suite layout
 
 Two layers, both run in CI (`.github/workflows/R-CMD-check.yaml`,
@@ -542,13 +762,11 @@ Two layers, both run in CI (`.github/workflows/R-CMD-check.yaml`,
   `quarto`, `httpuv` for
   [`run_tutorial()`](https://ppbds.github.io/learnr2/reference/run_tutorial.md),
   `utils`/`rstudioapi` for `open_file()` – so no test renders with
-  Quarto, boots WebR, launches a browser, or hits the network. Two
-  defensive guards are deliberately left untested (noted in a comment
-  where they live):
+  Quarto, boots WebR, launches a browser, or hits the network. One
+  defensive guard is deliberately left untested (noted in a comment
+  where it lives):
   [`live_extension_dir()`](https://ppbds.github.io/learnr2/reference/live_extension_dir.md)’s
-  missing-package branch and
-  [`verify_submission()`](https://ppbds.github.io/learnr2/reference/verify_submission.md)’s
-  missing-`digest` branch – both need a broken install to reach, and
+  missing-package branch – it needs a broken install to reach, and
   `base::` bindings can’t be mocked.
 - **JS (`Playwright`), `tests/js/`** – `quiz.js` (the browser runtime)
   has no unit layer; it’s covered end-to-end through `quiz.spec.js`
