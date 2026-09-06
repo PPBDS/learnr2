@@ -243,6 +243,49 @@ may be named `<name>.qmd` (matches `hello-learnr2`, `intro-vectors`) or
 just take the first `*.qmd` in the directory, so either works; prefer
 `<name>.qmd` for a new translation.
 
+### Dropping one `.qmd` into an otherwise-`.Rmd` (classic learnr) package
+
+The `<pkg>` above assumes learnr2 itself or a `*.tutorials2` package
+built on it. A third case works but has blind spots worth knowing:
+adding a single learnr2 `.qmd` tutorial into a package that is otherwise
+all classic-learnr `.Rmd` – done for real in `PPBDS/primer.tutorials`
+(the `getting-started-tutorial` dir, 2026-09), imported from this repo’s
+own `getting-started`.
+
+**What still works.** `learnr2`’s own finders scan *every* subdirectory
+of `inst/tutorials/` and pick `.qmd` before `.Rmd`
+(`tutorials_in_package()` -\> `tutorial_doc()`), so
+`learnr2::run_tutorial("<name>", package = "<host-pkg>")` finds the
+`.qmd`, copies the dir,
+[`add_live_extension()`](https://ppbds.github.io/learnr2/reference/add_live_extension.md)s
+it, and
+[`quarto::quarto_render()`](https://quarto-dev.github.io/quarto-r/reference/quarto_render.html)s
+it – `package=` only has to point at the host package, and `learnr2` +
+the `quarto` CLI have to be installed. `R CMD check` on the host package
+ignores the file (it is just data under `inst/`; the `{{< include >}}`
+shortcode is inert text).
+
+**What silently skips it.** The classic-learnr tooling only ever globs
+for `.Rmd`:
+
+- `learnr::available_tutorials("<host-pkg>")` does not list a
+  `.qmd`-only dir, so
+  `learnr::run_tutorial(..., package = "<host-pkg>")` cannot launch it.
+- `tutorial.helpers::return_tutorial_paths()` is
+  `list.files(<available_tutorials names>, pattern = "Rmd$")` – the
+  `.qmd` never enters the list, so a host package whose render test / CI
+  job is `return_tutorial_paths()` \|\> `knit_tutorials()` (e.g.
+  `primer.tutorials`’s `student-env-render`) neither renders nor fails
+  on it. It just goes uncovered.
+
+**So when you do this, also:** add `learnr2` to the host `DESCRIPTION`
+`Suggests` + `PPBDS/learnr2` to `Remotes`; `.Rbuildignore` and
+`.gitignore` the on-demand `inst/tutorials/*/_extensions/` (and
+`.quarto`); and add a dedicated CI job that runs
+`learnr2::run_tutorial("<name>", package = "<host-pkg>", open = FALSE)`
+and `stopifnot(file.exists(<returned html>))`, since the host’s existing
+`.Rmd`-only render job will not touch it.
+
 ### Quick reference: what maps to what
 
 | learnr / tutorial.helpers source | learnr2 `.qmd` equivalent |
