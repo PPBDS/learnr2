@@ -22,11 +22,21 @@ test.describe("deployed hello-learnr2 smoke test", () => {
   test("known answers survive a real download from the live page", async ({ page }) => {
     await page.goto(SMOKE_URL);
 
+    // hello-learnr2 gates every section behind a "Continue" button
+    // (initProgressiveSections() in quiz.js); the student-info form and the
+    // quiz are several sections in, so reveal everything first.
+    for (let i = 0; i < 30; i++) {
+      const next = page.locator(".learnr2-continue").first();
+      if (!(await next.count())) break;
+      await next.click();
+    }
+
     const knownName = "Smoke Test Reader";
     const knownEmail = "smoke-test@example.com";
 
     await page.locator("#learnr2-info-student-info-name").fill(knownName);
     await page.locator("#learnr2-info-student-info-email").fill(knownEmail);
+    await page.locator("body").click();
 
     const choiceQuestion = page.locator(".learnr2-question", {
       hasText: "Which function computes the arithmetic mean in base R?"
@@ -44,6 +54,12 @@ test.describe("deployed hello-learnr2 smoke test", () => {
 
     const downloadPromise = page.waitForEvent("download");
     await page.locator(".learnr2-download-answers-btn").click();
+    // Only two of the page's questions were answered, so the button warns
+    // about the unanswered ones first -- confirm past it.
+    const confirmBtn = page.locator(".learnr2-confirm-dialog-confirm");
+    if (await confirmBtn.count()) {
+      await confirmBtn.click();
+    }
     const download = await downloadPromise;
 
     const stream = await download.createReadStream();

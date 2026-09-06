@@ -30,7 +30,7 @@ reference:
     contents:
       - student_info
       - download_answers_button
-      - verify_submission
+      - submission_time
   - title: Quarto-live extension
     desc: Manage the bundled quarto-live Quarto extension.
     contents:
