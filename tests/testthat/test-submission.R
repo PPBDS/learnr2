@@ -134,134 +134,99 @@ test_that("print.learnr2_download_button and knit_print.learnr2_download_button 
   expect_match(html, "data-learnr2-download")
 })
 
-# Builds a submission JSON file exactly like the one quiz.js's
-# collectAnswers() produces, with a correctly-computed integrity hash, so
-# tests can start from something genuinely valid and then tamper with it.
-write_valid_submission <- function(path, info = list(name = "Ada Lovelace", email = "ada@example.com")) {
-  content <- list(
+# Builds a submission JSON file in the shape quiz.js's collectAnswers()
+# produces: no hashing, a `time` field carrying the obfuscated download time.
+write_submission <- function(path,
+                             info = list(name = "Ada Lovelace", email = "ada@example.com"),
+                             when = as.POSIXct("2026-01-15 12:00:00", tz = "UTC")) {
+  full <- list(
     page = "http://localhost/tutorial.html",
-    downloadedAt = "2026-01-15T12:00:00.000Z",
     info = info,
     answers = list(
       list(id = "quiz-questions-1", answer = list("4")),
       list(id = "exercise-total-and-average-1", answer = "sum(1:100)")
     ),
     metadata = list(
-      capturedAt = "2026-01-15T12:00:00.000Z",
       timezone = "America/New_York",
       userAgent = "test-agent",
       language = "en-US",
       screen = "1920x1080",
       deviceId = "test-device-id"
-    )
+    ),
+    time = learnr2:::encode_submission_time(when)
   )
-  hashed_content <- as.character(jsonlite::toJSON(content, auto_unbox = TRUE, null = "null"))
-  hash <- digest::digest(hashed_content, algo = "sha256", serialize = FALSE)
-
-  full <- c(content, list(integrity = list(algorithm = "sha256", hash = hash, hashedContent = hashed_content)))
-  writeLines(as.character(jsonlite::toJSON(full, auto_unbox = TRUE, null = "null")), path, useBytes = TRUE)
-  invisible(list(content = content, hashed_content = hashed_content, hash = hash))
+  writeLines(
+    as.character(jsonlite::toJSON(full, auto_unbox = TRUE, null = "null")),
+    path, useBytes = TRUE
+  )
+  invisible(list(full = full, when = when))
 }
 
-test_that("verify_submission() reports ok for an untampered file", {
-  skip_if_not_installed("digest")
-  tmp <- tempfile(fileext = ".json")
-  on.exit(unlink(tmp))
-  write_valid_submission(tmp)
-
-  result <- suppressMessages(verify_submission(tmp))
-  expect_true(result$ok)
+test_that("encode_base36() matches JavaScript's Number.prototype.toString(36)", {
+  expect_equal(learnr2:::encode_base36(0), "0")
+  expect_equal(learnr2:::encode_base36(35), "z")
+  expect_equal(learnr2:::encode_base36(36), "10")
+  # (1736942400 * 8093 + 1000003).toString(36) in Node:
+  expect_equal(learnr2:::encode_base36(1736942400 * 8093 + 1000003), "4zdqc0i9v")
 })
 
-test_that("verify_submission() detects a tampered hash", {
-  skip_if_not_installed("digest")
-  tmp <- tempfile(fileext = ".json")
-  on.exit(unlink(tmp))
-  built <- write_valid_submission(tmp)
-
-  # Simulate someone editing the visible answer without recomputing the hash:
-  # corrupt the stored hash directly.
-  raw <- jsonlite::fromJSON(tmp, simplifyVector = FALSE)
-  raw$integrity$hash <- "0000000000000000000000000000000000000000000000000000000000000"
-  writeLines(as.character(jsonlite::toJSON(raw, auto_unbox = TRUE, null = "null")), tmp, useBytes = TRUE)
-
-  result <- suppressMessages(verify_submission(tmp))
-  expect_false(result$ok)
+test_that("encode/decode_submission_time() round-trips at second resolution", {
+  when <- as.POSIXct("2026-03-04 09:41:07", tz = "UTC")
+  code <- learnr2:::encode_submission_time(when)
+  expect_type(code, "character")
+  expect_no_match(code, "[^0-9a-z]")
+  expect_equal(learnr2:::decode_submission_time(code), when)
 })
 
-test_that("verify_submission() detects visible content edited without updating hashedContent", {
-  skip_if_not_installed("digest")
-  tmp <- tempfile(fileext = ".json")
-  on.exit(unlink(tmp))
-  write_valid_submission(tmp)
-
-  raw <- jsonlite::fromJSON(tmp, simplifyVector = FALSE)
-  raw$info$name <- "Someone Else"
-  # integrity block deliberately left untouched -- still matches the
-  # *original* hashedContent, but no longer matches the visible info.
-  writeLines(as.character(jsonlite::toJSON(raw, auto_unbox = TRUE, null = "null")), tmp, useBytes = TRUE)
-
-  result <- suppressMessages(verify_submission(tmp))
-  expect_false(result$ok)
+test_that("decode_submission_time() rejects codes that don't fit the scheme", {
+  expect_null(learnr2:::decode_submission_time("not base 36 !!"))
+  expect_null(learnr2:::decode_submission_time("zzzz"))          # valid base36, wrong residue
+  expect_true(is.na(learnr2:::decode_base36("hello world")))
 })
 
-test_that("verify_submission() detects answers edited without updating hashedContent", {
-  skip_if_not_installed("digest")
-  tmp <- tempfile(fileext = ".json")
-  on.exit(unlink(tmp))
-  write_valid_submission(tmp)
-
-  # Same tamper pattern as the info-editing test above, but for an
-  # answer/exercise entry specifically -- visible_fields (in
-  # verify_submission()) has to be kept in sync with the submission format
-  # by hand for this to actually be checked.
-  raw <- jsonlite::fromJSON(tmp, simplifyVector = FALSE)
-  raw$answers[[2]]$answer <- "sum(1:1000000)"
-  writeLines(as.character(jsonlite::toJSON(raw, auto_unbox = TRUE, null = "null")), tmp, useBytes = TRUE)
-
-  result <- suppressMessages(verify_submission(tmp))
-  expect_false(result$ok)
+test_that("submission_time() decodes a bare time code", {
+  code <- learnr2:::encode_submission_time(as.POSIXct("2026-01-15 12:00:00", tz = "UTC"))
+  res <- withVisible(suppressMessages(submission_time(code)))
+  expect_false(res$visible)
+  expect_s3_class(res$value, "POSIXct")
+  expect_equal(format(res$value, "%Y-%m-%d %H:%M:%S", tz = "UTC"), "2026-01-15 12:00:00")
+  expect_message(submission_time(code), "Submitted: 2026-01-15 12:00:00 UTC")
 })
 
-test_that("verify_submission() reports not-ok for a file with no integrity block", {
-  tmp <- tempfile(fileext = ".json")
-  on.exit(unlink(tmp))
-  writeLines('{"page": "http://example.com", "info": {}}', tmp)
-
-  result <- suppressMessages(verify_submission(tmp))
-  expect_false(result$ok)
-})
-
-test_that("verify_submission() errors on a missing file or bad path", {
-  expect_error(verify_submission(123), "single non-empty string")
-  expect_error(verify_submission(character(0)), "single non-empty string")
-  expect_error(verify_submission(""), "single non-empty string")
-  expect_error(verify_submission("this-file-does-not-exist.json"), "not found")
-})
-
-test_that("verify_submission() reports FAILED (not an error) for a file that isn't valid JSON", {
+test_that("submission_time() reads a downloaded file and prints a summary", {
   tmp <- withr::local_tempfile(fileext = ".json")
-  writeLines("this is not json {{{", tmp)
-
-  expect_message(res <- verify_submission(tmp), "could not parse")
-  expect_false(res$ok)
-  expect_null(res$content)
-})
-
-test_that("verify_submission() prints the reader's name, email, and device id from the file", {
-  skip_if_not_installed("digest")
-  tmp <- withr::local_tempfile(fileext = ".json")
-  write_valid_submission(
+  write_submission(
     tmp,
-    info = list(name = "Grace Hopper", email = "grace@example.com")
+    info = list(name = "Grace Hopper", email = "grace@example.com"),
+    when = as.POSIXct("2026-01-15 12:00:00", tz = "UTC")
   )
 
-  expect_message(verify_submission(tmp), "Grace Hopper")
-  expect_message(verify_submission(tmp), "grace@example.com")
-  expect_message(verify_submission(tmp), "test-device-id")
+  res <- suppressMessages(submission_time(tmp))
+  expect_equal(format(res, "%Y-%m-%d %H:%M:%S", tz = "UTC"), "2026-01-15 12:00:00")
+  expect_message(submission_time(tmp), "Submitted: 2026-01-15 12:00:00 UTC")
+  expect_message(submission_time(tmp), "Grace Hopper")
+  expect_message(submission_time(tmp), "grace@example.com")
+  expect_message(submission_time(tmp), "test-device-id")
 })
 
-# NOTE: verify_submission()'s `if (!requireNamespace("digest"))` guard can't
-# be exercised here -- write_valid_submission() (the fixture builder) needs
-# digest itself to compute a valid hash, so any environment that can set up
-# this test already has digest. Left as untested defensive code by design.
+test_that("submission_time() validates its argument", {
+  expect_error(submission_time(123), "single non-empty string")
+  expect_error(submission_time(character(0)), "single non-empty string")
+  expect_error(submission_time(""), "single non-empty string")
+})
+
+test_that("submission_time() errors on a file with no `time` field", {
+  tmp <- withr::local_tempfile(fileext = ".json")
+  writeLines('{"page": "http://example.com", "info": {}}', tmp)
+  expect_error(submission_time(tmp), "no `time` field")
+})
+
+test_that("submission_time() errors on a file that isn't valid JSON", {
+  tmp <- withr::local_tempfile(fileext = ".json")
+  writeLines("this is not json {{{", tmp)
+  expect_error(submission_time(tmp), "[Cc]ould not parse")
+})
+
+test_that("submission_time() errors on a non-file string that isn't a valid code", {
+  expect_error(submission_time("definitely not a code"), "not a valid learnr2 time code")
+})

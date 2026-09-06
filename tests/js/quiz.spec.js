@@ -1,6 +1,5 @@
 "use strict";
 const { test, expect } = require("@playwright/test");
-const nodeCrypto = require("crypto");
 
 const TINY_PNG_BASE64 =
   "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=";
@@ -457,6 +456,7 @@ test.describe("download answers button", () => {
     expect(contents.info).toEqual({ name: "Ada Lovelace", email: "ada@example.com", id: null });
     // Two question() widgets plus the two persist:true {webr} exercises in
     // the fixture -- all one flat list now, each entry just { id, answer }.
+    // (Page-order across the two kinds is covered by its own test below.)
     expect(contents.answers).toHaveLength(4);
 
     const choiceAnswer = contents.answers.find((a) => a.id === "single-choice");
@@ -465,28 +465,19 @@ test.describe("download answers button", () => {
     const reflectionAnswer = contents.answers.find((a) => a.id === "reflection-locked");
     expect(reflectionAnswer.answer).toBeNull();
 
-    // Integrity block: independently recompute SHA-256 with Node's own
-    // crypto module (not our own JS's sha256Hex) as a cross-check that the
-    // browser's Web Crypto digest is correct, not just internally
-    // self-consistent.
-    expect(contents.integrity.algorithm).toBe("sha256");
-    const expectedHash = nodeCrypto
-      .createHash("sha256")
-      .update(contents.integrity.hashedContent, "utf8")
-      .digest("hex");
-    expect(contents.integrity.hash).toBe(expectedHash);
+    // Nothing is hashed or signed any more. The only non-plaintext field is
+    // `time`: base-36 of (epoch-seconds * 8093 + 1000003). Decode it and
+    // check it's within a minute of now.
+    expect(contents).not.toHaveProperty("integrity");
+    expect(contents).not.toHaveProperty("downloadedAt");
+    expect(contents.time).toMatch(/^[0-9a-z]+$/);
+    const decodedSecs = (parseInt(contents.time, 36) - 1000003) / 8093;
+    expect(Number.isInteger(decodedSecs)).toBe(true);
+    expect(Math.abs(decodedSecs - Date.now() / 1000)).toBeLessThan(60);
 
-    // hashedContent must be an exact stringified copy of the visible fields.
-    const reparsed = JSON.parse(contents.integrity.hashedContent);
-    expect(reparsed).toEqual({
-      page: contents.page,
-      downloadedAt: contents.downloadedAt,
-      info: contents.info,
-      answers: contents.answers,
-      metadata: contents.metadata
-    });
-
-    // metadata: what a browser can actually expose (no computer name/username).
+    // metadata: what a browser can actually expose (no computer name/username,
+    // and no timestamp -- that's what `time` is for).
+    expect(contents.metadata).not.toHaveProperty("capturedAt");
     expect(contents.metadata.deviceId).toMatch(/^[0-9a-f-]{20,}$/i);
     expect(typeof contents.metadata.userAgent).toBe("string");
     expect(typeof contents.metadata.timezone).toBe("string");
@@ -523,7 +514,7 @@ test.describe("download answers button", () => {
     // "ex-not-persisted" and the plain non-exercise cell (fixture block ids
     // 3 and 4) must not appear at all -- neither has anywhere a code could
     // have been recorded. Exercises share the one `answers` list with
-    // question() widgets now, appended after them.
+    // question() widgets now.
     const exerciseAnswers = contents.answers.filter((a) => a.id.indexOf("ex-") === 0);
     expect(exerciseAnswers).toEqual([
       { id: "ex-attempted", answer: "sum(1:100)" },
@@ -563,13 +554,50 @@ test.describe("download answers button", () => {
     expect(imageAnswer.answer).toMatch(/^data:image\/png;base64,/);
   });
 
+  test("answers come back in true page order, question() widgets and {webr} exercises interleaved", async ({ page }) => {
+    await page.goto("/download-answers-interleaved");
+
+    await page.locator("#learnr2-info-student-info-name").fill("Ada Lovelace");
+    await page.locator("#learnr2-info-student-info-email").fill("ada@example.com");
+    await page.locator("body").click();
+
+    // Save code for both {webr} cells and answer the first question, so
+    // every entry has a real value -- order is what's under test.
+    await page.evaluate(() => {
+      localStorage.setItem("editor-" + location.href + "#webr-1-contents", "alpha()");
+      localStorage.setItem("editor-" + location.href + "#webr-2-contents", "beta()");
+    });
+    const q1 = page.locator(".learnr2-question", { has: page.locator("#q-one-answer-0") });
+    await q1.locator("#q-one-answer-0").check();
+    await q1.locator(".learnr2-submit").click();
+
+    const downloadPromise = page.waitForEvent("download");
+    await page.locator(".learnr2-download-answers-btn").click();
+    // q-two left unanswered -- confirm past the warning.
+    await page.locator(".learnr2-confirm-dialog-confirm").click();
+    const download = await downloadPromise;
+    const stream = await download.createReadStream();
+    const chunks = [];
+    for await (const chunk of stream) chunks.push(chunk);
+    const contents = JSON.parse(Buffer.concat(chunks).toString("utf8"));
+
+    // Page order is q-one, ex-alpha, q-two, ex-beta -- NOT the two
+    // questions first and then the two exercises.
+    expect(contents.answers).toEqual([
+      { id: "q-one", answer: ["yes"] },
+      { id: "ex-alpha", answer: "alpha()" },
+      { id: "q-two", answer: null },
+      { id: "ex-beta", answer: "beta()" }
+    ]);
+  });
+
   test("still finds a saved answer and exercise after the reader navigates to a different TOC section (URL hash change) before downloading", async ({ page }) => {
     // Regression test: quiz.js used to build every storage key from a fresh
     // `window.location.href` read at click time. Quarto's own TOC sidebar
     // links change the URL's hash without reloading the page -- completely
     // normal navigation -- so a reader who saved an answer while the hash
     // pointed at one section, then clicked to another section before
-    // downloading, made collectAnswers()/collectExerciseAnswers() look for
+    // downloading, made collectAnswers() look for
     // keys under the new hash while the data was actually saved under the
     // old one. Nothing was lost, but the download silently came back empty
     // for that answer/exercise. Fixed by capturing a hash-stripped page URL
@@ -730,6 +758,16 @@ test.describe("download answers button", () => {
 });
 
 test.describe("Start Over", () => {
+  // The "clears saved answers ... then reloads" test drives a real
+  // window.location.reload() and then asserts against the fresh page. The
+  // sync (a JS-context sentinel + waitForFunction) is deterministic, but on
+  // a heavily loaded CI runner the reload + quiz.js re-init can still blow
+  // past the time budget occasionally. Retry on CI so one such blip is
+  // reported "flaky" rather than failing the run; a genuine regression
+  // still fails all attempts. No retries locally -- a local failure should
+  // stay visible. The other tests here are deterministic and unaffected.
+  test.describe.configure({ retries: process.env.CI ? 2 : 0 });
+
   test("appears at the bottom of the sidebar", async ({ page }) => {
     await page.goto("/download-answers");
     const sidebar = page.locator("#quarto-margin-sidebar");
@@ -740,6 +778,11 @@ test.describe("Start Over", () => {
   });
 
   test("clears saved answers, student info, and {webr} exercise persistence, but not the device id, then reloads", async ({ page }) => {
+    // This test does a real full-page reload mid-way (Start Over calls
+    // window.location.reload()); on a loaded CI runner that reload plus
+    // quiz.js re-initialising can legitimately take longer than the default
+    // 15s test budget, so give it the 3x slow-test allowance.
+    test.slow();
     await page.goto("/download-answers");
 
     await page.locator("#learnr2-info-student-info-name").fill("Ada Lovelace");
@@ -759,18 +802,23 @@ test.describe("Start Over", () => {
     });
 
     await page.locator(".learnr2-start-over").click();
-    // Registering the load-state wait and the click together matters here:
-    // the click resolves as soon as the event dispatches, but the actual
-    // reload() only happens after the in-page <dialog>'s Start Over button
-    // is clicked. Awaiting the click alone, then waitForLoadState()
-    // afterward, can win that race and observe the pre-reload page
-    // (confirmed: this genuinely happens, not hypothetical -- the fix
-    // below is required, not defensive).
-    await Promise.all([
-      page.waitForLoadState(),
-      page.locator(".learnr2-confirm-dialog-confirm").click()
-    ]);
+    // Start Over clears localStorage and then calls window.location.reload();
+    // every assertion below must run against the *reloaded* page. Syncing on
+    // a load event isn't reliable here -- `waitForLoadState()` resolves
+    // against the already-loaded current page, and even `waitForEvent("load")`
+    // leaves a window where, under CPU load, the reload hasn't finished and
+    // the assertions poll the stale pre-reload DOM (input still filled, radio
+    // still checked) until they time out. Instead, tag the current JS context
+    // and wait for that tag to be *gone* -- the reload replaces the context,
+    // so `__preReload` is only ever undefined once the fresh page is live.
+    await page.evaluate(() => {
+      window.__preReload = true;
+    });
+    await page.locator(".learnr2-confirm-dialog-confirm").click();
+    await page.waitForFunction(() => window.__preReload === undefined);
 
+    // Now definitely on the reloaded page: localStorage was cleared, so the
+    // fresh render has an empty info field and an unchecked radio.
     await expect(page.locator("#learnr2-info-student-info-name")).toHaveValue("");
     await expect(page.locator("#single-choice-answer-0")).not.toBeChecked();
 

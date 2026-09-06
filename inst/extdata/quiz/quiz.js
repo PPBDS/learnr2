@@ -744,8 +744,8 @@
 
   // A random id generated once and persisted in localStorage, so it stays
   // the same across a reader's sessions on this browser/device -- not tied
-  // to their real identity, just "this is the same device that did the
-  // work" signal for the integrity metadata below.
+  // to their real identity, just a "this is the same device that did the
+  // work" signal in the download's metadata.
   var DEVICE_ID_KEY = "learnr2-device-id";
 
   function randomId() {
@@ -784,7 +784,6 @@
       // Ignore; leave "unknown".
     }
     return {
-      capturedAt: new Date().toISOString(),
       timezone: timezone,
       userAgent: navigator.userAgent,
       language: navigator.language,
@@ -793,33 +792,30 @@
     };
   }
 
-  async function sha256Hex(text) {
-    var bytes = new TextEncoder().encode(text);
-    var digest = await window.crypto.subtle.digest("SHA-256", bytes);
-    return Array.prototype.map
-      .call(new Uint8Array(digest), function (b) {
-        return b.toString(16).padStart(2, "0");
-      })
-      .join("");
+  // The download time, obfuscated: base-36 of (epoch-seconds * MUL + ADD).
+  // NOT cryptographic -- these constants are public, right here -- just
+  // enough that the raw timestamp isn't sitting in the downloaded file and a
+  // student can neither read it nor swap in a different valid one by hand.
+  // `learnr2::submission_time()` reverses it. Keep MUL/ADD in sync with
+  // R/submission.R. (epoch-seconds * MUL stays well under 2^53, so the
+  // base-36 round-trips exactly.)
+  var TIME_MUL = 8093;
+  var TIME_ADD = 1000003;
+
+  function encodeDownloadTime() {
+    return (Math.floor(Date.now() / 1000) * TIME_MUL + TIME_ADD).toString(36);
   }
 
   // Gathers every learnr2 question/info answer currently on *this* page
   // (cross-referencing each element's own payload against its saved
   // localStorage state, so the export is human-readable, not just raw ids)
-  // into one JSON object, plus a SHA-256 integrity hash over that content.
-  //
-  // This is tamper-EVIDENCE, not proof of identity: everything here runs in
-  // the reader's own browser with no server-held secret, so a technical
-  // reader could in principle reproduce the hash function themselves. What
-  // it does catch is the much more common case -- editing the downloaded
-  // file afterward (e.g. changing a wrong answer to a right one before
-  // turning it in) -- since that invalidates the hash. See
-  // `learnr2::verify_submission()` on the R side to check a downloaded file.
-  // {webr} exercises are entirely quarto-live's own markup -- learnr2 adds
+  // into one JSON object. The only non-plaintext field is `time` -- the
+  // download timestamp, obfuscated (see encodeDownloadTime() above) so it
+  // isn't readable or editable at a glance; nothing else is hashed or
+  // signed. {webr} exercises are entirely quarto-live's own markup -- learnr2 adds
   // no data-learnr2-* attributes to them the way it does for its own
-  // question()/student_info() widgets, so there's no learnr2-side registry
-  // of "what exercises exist on this page" to iterate. Discover them from
-  // quarto-live's own static markup instead: every {webr} cell embeds a
+  // question()/student_info() widgets. Discover them from quarto-live's own
+  // static markup instead: every {webr} cell embeds a
   // `<script type="webr-<block-id>-contents">` tag holding a base64-encoded
   // JSON blob of its starter code and chunk options (`{attr, code}`,
   // confirmed by reading quarto-live's own webr-exercise.ojs template and
@@ -827,40 +823,30 @@
   // WebR has finished booting, unlike anything that depends on the live
   // editor having initialized.
   //
-  // Only cells with `#| exercise: <label>` in their chunk options (not
-  // every {webr} cell -- plain demo/non-editable cells have no `exercise`
-  // attr and are skipped) and `#| persist: true` can be captured at all:
-  // quarto-live's own editor only ever writes the reader's current code to
-  // `localStorage` when `persist` is enabled (see its `WebRExerciseEditor`
-  // constructor/`onInput` handler) -- there is no other record of it
-  // anywhere, live-DOM or otherwise, for a non-persisted cell. The key is
-  // `editor-${location.href}#${id}`, where `id` defaults to the script
-  // tag's own `type` (e.g. "webr-4-contents") -- *not* the `exercise:`
-  // label -- unless a chunk sets its own `#| id:` option to override it.
-  // The stored value is the plain code string itself, not JSON.
-  function collectExerciseAnswers() {
-    var exercises = [];
-    document
-      .querySelectorAll('script[type^="webr-"][type$="-contents"]')
-      .forEach(function (scriptEl) {
-        var block;
-        try {
-          block = decodeBase64Json(scriptEl.textContent);
-        } catch (e) {
-          return;
-        }
-        var attr = block.attr || {};
-        if (!attr.exercise || !attr.persist) {
-          return;
-        }
-        var storageKey = "editor-" + pageUrl + "#" + (attr.id || scriptEl.type);
-        var code = window.localStorage.getItem(storageKey);
-        exercises.push({
-          id: attr.exercise,
-          answer: code
-        });
-      });
-    return exercises;
+  // Reads one such tag and returns `{ id, answer }`, or null for a cell
+  // that can't be captured: a plain demo/non-editable cell (no `#| exercise:`
+  // attr), or one without `#| persist: true` -- quarto-live's own editor
+  // only ever writes the reader's current code to `localStorage` when
+  // `persist` is enabled (see its `WebRExerciseEditor` constructor/`onInput`
+  // handler), so there is no record of it anywhere, live-DOM or otherwise,
+  // for a non-persisted cell. The key is `editor-${location.href}#${id}`,
+  // where `id` defaults to the script tag's own `type` (e.g.
+  // "webr-4-contents") -- *not* the `exercise:` label -- unless a chunk
+  // sets its own `#| id:` option. The stored value is the plain code
+  // string itself, not JSON.
+  function exerciseAnswerFromScript(scriptEl) {
+    var block;
+    try {
+      block = decodeBase64Json(scriptEl.textContent);
+    } catch (e) {
+      return null;
+    }
+    var attr = block.attr || {};
+    if (!attr.exercise || !attr.persist) {
+      return null;
+    }
+    var storageKey = "editor-" + pageUrl + "#" + (attr.id || scriptEl.type);
+    return { id: attr.exercise, answer: window.localStorage.getItem(storageKey) };
   }
 
   async function collectAnswers() {
@@ -876,51 +862,46 @@
       });
     });
 
-    // One flat list keyed by each question's stable id, mixing
-    // question()/student_info-style widgets and {webr} exercises together --
-    // every entry is just `{ id, answer }`. An unsubmitted question reports
-    // `answer: null` (saveState() only runs from a submit handler, so no
-    // saved state means it was never submitted).
+    // One flat list, in the order things appear on the page, mixing
+    // question()/reflection widgets and {webr} exercises together -- every
+    // entry is just `{ id, answer }`. A single combined selector so the
+    // browser hands the nodes back in document order (querySelectorAll
+    // always does); branch per node on which kind it is. An unsubmitted
+    // question reports `answer: null` (saveState() only runs from a submit
+    // handler, so no saved state means it was never submitted).
     var answers = [];
-    document.querySelectorAll(".learnr2-question[data-learnr2-question]").forEach(function (node) {
-      var data = decodeBase64Json(node.getAttribute("data-learnr2-question"));
-      var saved = loadState(data);
-      answers.push({
-        id: data.id,
-        // Choice questions save an array of picked texts in `saved.selected`;
-        // an image-paste reflection saves the screenshot as a PNG data-URL
-        // string in `saved.image`; everything else saves a string in
-        // `saved.value`. For an image-paste answer the data URL *is* the
-        // answer we record.
-        answer: saved ? (saved.selected || saved.image || saved.value || null) : null
+    document
+      .querySelectorAll(
+        '.learnr2-question[data-learnr2-question], script[type^="webr-"][type$="-contents"]'
+      )
+      .forEach(function (node) {
+        if (node.tagName === "SCRIPT") {
+          var exercise = exerciseAnswerFromScript(node);
+          if (exercise) {
+            answers.push(exercise);
+          }
+          return;
+        }
+        var data = decodeBase64Json(node.getAttribute("data-learnr2-question"));
+        var saved = loadState(data);
+        answers.push({
+          id: data.id,
+          // Choice questions save an array of picked texts in
+          // `saved.selected`; an image-paste reflection saves the screenshot
+          // as a PNG data-URL string in `saved.image`; everything else saves
+          // a string in `saved.value`. For an image-paste answer the data
+          // URL *is* the answer we record.
+          answer: saved ? (saved.selected || saved.image || saved.value || null) : null
+        });
       });
-    });
-    collectExerciseAnswers().forEach(function (exercise) {
-      answers.push(exercise);
-    });
 
-    var content = {
+    return {
       page: window.location.href,
-      downloadedAt: new Date().toISOString(),
       info: info,
       answers: answers,
-      metadata: captureMetadata()
+      metadata: captureMetadata(),
+      time: encodeDownloadTime()
     };
-
-    // Hash the exact string below, not a re-serialized copy of `content` --
-    // verification must hash this same string byte-for-byte, and JSON
-    // key/number formatting isn't guaranteed identical across languages
-    // (e.g. R re-encoding the parsed object could silently produce a
-    // different string and a false "tampered" result).
-    var hashedContent = JSON.stringify(content);
-    var hash = await sha256Hex(hashedContent);
-
-    var result = {};
-    Object.keys(content).forEach(function (key) {
-      result[key] = content[key];
-    });
-    result.integrity = { algorithm: "sha256", hash: hash, hashedContent: hashedContent };
-    return result;
   }
 
   function triggerDownload(filename, dataObj) {

@@ -139,14 +139,13 @@ print.learnr2_info <- function(x, ...) {
 #' this is a structural limit of quarto-live's own editor, not something
 #' `download_answers_button()` chooses to skip.
 #'
-#' The download includes a `metadata` block (timestamp, timezone, browser
-#' info, and a random per-device id persisted across the reader's visits)
-#' and a SHA-256 `integrity` hash over the content. Check a downloaded file
-#' with [verify_submission()]. This is tamper-*evidence*, not proof of
-#' identity: since everything runs in the reader's own browser with no
-#' server-held secret, a technical reader could reproduce the hash
-#' themselves. What it reliably catches is editing the file afterward (e.g.
-#' changing a wrong answer to a right one before turning it in).
+#' The download also carries a `metadata` block (timezone, browser info, and
+#' a random per-device id persisted across the reader's visits) and a `time`
+#' field: the moment the reader clicked "Download", lightly obfuscated so the
+#' raw timestamp isn't readable or hand-editable in the file. Recover it with
+#' [submission_time()]. Nothing else is hashed or signed -- a determined
+#' reader can still edit their answers; this only keeps the submission time
+#' honest at a glance.
 #'
 #' @param filename_prefix Prefix for the downloaded file's name. Defaults
 #'   to `"learnr2-answers"`.
@@ -195,96 +194,135 @@ print.learnr2_download_button <- function(x, ...) {
   invisible(x)
 }
 
-#' Verify a downloaded submission's integrity hash
+#' Recover a submission's download time
 #'
-#' Checks a JSON file downloaded via [download_answers_button()] against its
-#' embedded SHA-256 hash, to detect whether it was edited after being
-#' downloaded (e.g. a wrong answer quietly changed to a right one before
-#' being turned in). This is tamper-*evidence*, not proof of identity: the
-#' hash is computed entirely in the reader's own browser with no
-#' server-held secret, so a technical reader could in principle reproduce
-#' it themselves -- this is a deterrent and a check against casual editing,
-#' not real cryptographic security.
+#' [download_answers_button()] writes the moment the reader clicked
+#' "Download" into the JSON as a `time` field, lightly obfuscated: base-36 of
+#' the epoch second run through a fixed multiply-and-offset. It is *not*
+#' encrypted --- the scheme is public, in `inst/extdata/quiz/quiz.js` ---
+#' just enough that the raw timestamp isn't sitting in the file where a
+#' student could read it, or swap in a different plausible time without
+#' re-running the encoder. This function reverses it.
 #'
-#' @param path Path to a JSON file downloaded via [download_answers_button()].
+#' Nothing else in the file is hashed or signed, so this does **not** detect
+#' edited answers. If you need that, compare against work submitted through a
+#' channel you control.
 #'
-#' @return Invisibly, a list with `ok` (logical) and the parsed submission
-#'   `content`. Also prints a human-readable summary.
+#' @param x Path to a JSON file downloaded via [download_answers_button()],
+#'   or the raw `time` string from one.
+#'
+#' @return The download time as a `POSIXct` (UTC), invisibly. Also prints a
+#'   short summary --- with the reader's name, email, and device id when `x`
+#'   is a file.
 #' @export
 #' @examples
 #' \dontrun{
-#' verify_submission("class-101-2026-01-15T12-00-00-000Z.json")
+#' submission_time("class-101-answers.json")
 #' }
-verify_submission <- function(path) {
-  if (!is.character(path) || length(path) != 1 || !nzchar(path)) {
-    stop("`path` must be a single non-empty string.", call. = FALSE)
-  }
-  if (!file.exists(path)) {
-    stop("File not found: ", path, call. = FALSE)
-  }
-  if (!requireNamespace("digest", quietly = TRUE)) {
+#' # Decode a bare time code:
+#' submission_time(learnr2:::encode_submission_time(as.POSIXct("2026-01-15 12:00:00", tz = "UTC")))
+submission_time <- function(x) {
+  if (!is.character(x) || length(x) != 1 || !nzchar(x)) {
     stop(
-      "The 'digest' package is required to verify submissions. ",
-      "Install it with install.packages(\"digest\").",
+      "`x` must be a single non-empty string (a file path or a `time` code).",
       call. = FALSE
     )
   }
 
-  raw_text <- paste(readLines(path, warn = FALSE, encoding = "UTF-8"), collapse = "\n")
-  parsed <- tryCatch(
-    jsonlite::fromJSON(raw_text, simplifyVector = FALSE),
-    error = function(e) NULL
-  )
-  if (is.null(parsed)) {
-    message("FAILED: could not parse '", path, "' as JSON.")
-    return(invisible(list(ok = FALSE, content = NULL)))
-  }
-
-  integrity <- parsed$integrity
-  if (is.null(integrity$hash) || is.null(integrity$hashedContent)) {
-    message(
-      "FAILED: '", path, "' has no integrity hash -- not downloaded via ",
-      "learnr2::download_answers_button(), or it predates this feature."
+  info <- NULL
+  metadata <- NULL
+  is_file <- file.exists(x)
+  if (is_file) {
+    raw_text <- paste(readLines(x, warn = FALSE, encoding = "UTF-8"), collapse = "\n")
+    parsed <- tryCatch(
+      jsonlite::fromJSON(raw_text, simplifyVector = FALSE),
+      error = function(e) NULL
     )
-    return(invisible(list(ok = FALSE, content = parsed)))
+    if (is.null(parsed)) {
+      stop("Could not parse '", x, "' as JSON.", call. = FALSE)
+    }
+    code <- parsed$time
+    info <- parsed$info
+    metadata <- parsed$metadata
+    if (is.null(code) || !is.character(code) || length(code) != 1) {
+      stop(
+        "'", x, "' has no `time` field -- not downloaded via ",
+        "learnr2::download_answers_button(), or it predates this feature.",
+        call. = FALSE
+      )
+    }
+  } else {
+    code <- x
   }
 
-  computed_hash <- digest::digest(integrity$hashedContent, algo = "sha256", serialize = FALSE)
-  hash_ok <- identical(computed_hash, integrity$hash)
+  when <- decode_submission_time(code)
+  if (is.null(when)) {
+    stop("'", code, "' is not a valid learnr2 time code.", call. = FALSE)
+  }
 
-  # The hash only certifies `hashedContent` itself; separately confirm the
-  # human-readable top-level fields match it, in case only *those* were
-  # hand-edited after download, leaving the integrity block untouched.
-  hashed_parsed <- tryCatch(
-    jsonlite::fromJSON(integrity$hashedContent, simplifyVector = FALSE),
-    error = function(e) NULL
-  )
-  visible_fields <- c("page", "downloadedAt", "info", "answers", "metadata")
-  visible_ok <- !is.null(hashed_parsed) &&
-    isTRUE(all.equal(hashed_parsed, parsed[visible_fields]))
-
-  ok <- hash_ok && visible_ok
-
-  if (ok) {
-    message("OK: '", path, "' matches its integrity hash -- unedited since download.")
-  } else if (!hash_ok) {
+  stamp <- format(when, "%Y-%m-%d %H:%M:%S", tz = "UTC")
+  if (is_file) {
     message(
-      "TAMPERED: '", path, "'s hash does not match its content.\n",
-      "  Expected: ", integrity$hash, "\n",
-      "  Computed: ", computed_hash
+      "Submitted: ", stamp, " UTC\n",
+      "  Name: ", if (is.null(info$name)) "(none)" else info$name, "\n",
+      "  Email: ", if (is.null(info$email)) "(none)" else info$email, "\n",
+      "  Device id: ", if (is.null(metadata$deviceId)) "(unknown)" else metadata$deviceId
     )
   } else {
-    message("TAMPERED: '", path, "'s visible content does not match its hashed content.")
+    message("Submitted: ", stamp, " UTC")
   }
 
-  info <- parsed$info
-  metadata <- parsed$metadata
-  message(
-    "  Name: ", if (is.null(info$name)) "(none)" else info$name, "\n",
-    "  Email: ", if (is.null(info$email)) "(none)" else info$email, "\n",
-    "  Captured at: ", if (is.null(metadata$capturedAt)) "(unknown)" else metadata$capturedAt, "\n",
-    "  Device id: ", if (is.null(metadata$deviceId)) "(unknown)" else metadata$deviceId
-  )
+  invisible(when)
+}
 
-  invisible(list(ok = ok, content = parsed))
+# The obfuscation scheme shared with encodeDownloadTime() in
+# inst/extdata/quiz/quiz.js -- keep the two constants in sync.
+.time_mul <- 8093
+.time_add <- 1000003
+
+# Base-36 string -> numeric (double). The encoded values (~1.4e13) exceed
+# .Machine$integer.max so strtoi() can't be used, but a double holds them
+# exactly (well under 2^53). Returns NA for any non-[0-9a-z] character.
+decode_base36 <- function(x) {
+  chars <- utf8ToInt(tolower(x))
+  vals <- ifelse(
+    chars >= 48L & chars <= 57L, chars - 48L,
+    ifelse(chars >= 97L & chars <= 122L, chars - 87L, NA_real_)
+  )
+  if (length(vals) == 0 || anyNA(vals)) {
+    return(NA_real_)
+  }
+  Reduce(function(acc, d) acc * 36 + d, vals)
+}
+
+# time code -> POSIXct (UTC), or NULL if `code` isn't a valid one.
+decode_submission_time <- function(code) {
+  n <- decode_base36(code)
+  if (is.na(n) || (n - .time_add) %% .time_mul != 0) {
+    return(NULL)
+  }
+  as.POSIXct((n - .time_add) / .time_mul, origin = "1970-01-01", tz = "UTC")
+}
+
+# Numeric -> lowercase base-36 string, matching JavaScript's
+# Number.prototype.toString(36). Input stays under 2^53, so the %% / division
+# below are exact.
+encode_base36 <- function(n) {
+  n <- floor(n)
+  if (n <= 0) {
+    return("0")
+  }
+  out <- character(0)
+  while (n > 0) {
+    r <- n %% 36
+    out <- c(if (r < 10) as.character(r) else intToUtf8(87 + r), out)
+    n <- (n - r) / 36
+  }
+  paste0(out, collapse = "")
+}
+
+# POSIXct/numeric -> time code. Mirrors encodeDownloadTime() in quiz.js;
+# used by tests and the roxygen example.
+encode_submission_time <- function(when) {
+  encode_base36(floor(as.numeric(when)) * .time_mul + .time_add)
 }

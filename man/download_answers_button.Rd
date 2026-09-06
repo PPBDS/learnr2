@@ -43,14 +43,13 @@ anywhere -- \code{learnr2} included -- so it can't appear in the download;
 this is a structural limit of quarto-live's own editor, not something
 \code{download_answers_button()} chooses to skip.
 
-The download includes a \code{metadata} block (timestamp, timezone, browser
-info, and a random per-device id persisted across the reader's visits)
-and a SHA-256 \code{integrity} hash over the content. Check a downloaded file
-with \code{\link[=verify_submission]{verify_submission()}}. This is tamper-\emph{evidence}, not proof of
-identity: since everything runs in the reader's own browser with no
-server-held secret, a technical reader could reproduce the hash
-themselves. What it reliably catches is editing the file afterward (e.g.
-changing a wrong answer to a right one before turning it in).
+The download also carries a \code{metadata} block (timezone, browser info, and
+a random per-device id persisted across the reader's visits) and a \code{time}
+field: the moment the reader clicked "Download", lightly obfuscated so the
+raw timestamp isn't readable or hand-editable in the file. Recover it with
+\code{\link[=submission_time]{submission_time()}}. Nothing else is hashed or signed -- a determined
+reader can still edit their answers; this only keeps the submission time
+honest at a glance.
 }
 \examples{
 download_answers_button()

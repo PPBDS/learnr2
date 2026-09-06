@@ -6,10 +6,12 @@ Big Picture: We hope to replace both learnr and tutorial.helpers with learnr2. T
 
 * ponder the name learnr2
 
-0) Write a note in a couple places announcing the project and seeking requests. 
+0) Write a note in a couple places announcing the project and seeking requests. - Done
 
-https://github.com/rstudio/learnr/discussions
-https://forum.posit.co/
+https://github.com/rstudio/learnr/discussions & https://forum.posit.co/
+
+https://forum.posit.co/t/learnr2-feedback/217617 & https://github.com/rstudio/learnr/discussions/832
+
 
 1) Submit a PR for adding a new chapter to Primer, after current Getting Started, called Getting Started Tutorial.  Details as we discussed.
 

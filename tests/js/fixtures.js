@@ -88,7 +88,7 @@ function downloadBlock(payload) {
 // live-runtime.js/webr-exercise.ojs: `blockId` is what quarto-live's own
 // editor uses as the default persistence id (not the `exercise:` label),
 // so it's what a real "editor-<page>#<blockId>" localStorage key is keyed
-// on too -- see collectExerciseAnswers() in quiz.js.
+// on too -- see exerciseAnswerFromScript() in quiz.js.
 function webrExerciseScript(blockId, attr, code) {
   const type = "webr-" + blockId + "-contents";
   return '<script type="' + type + '">' + encode({ attr: attr, code: code }) + "</script>\n";
@@ -244,7 +244,7 @@ const FIXTURES = {
         answers: [answer("Rayleigh scattering.", true)]
       })
     ),
-    // Four {webr} cells covering every case collectExerciseAnswers() needs
+    // Four {webr} cells covering every case exerciseAnswerFromScript() needs
     // to handle: a real exercise the reader has saved code for, one they
     // haven't touched, one with no persist: true (excluded -- there is no
     // record of it to find), and a plain non-exercise cell (no `exercise`
@@ -253,6 +253,32 @@ const FIXTURES = {
     webrExerciseScript("2", { exercise: "ex-untouched", persist: true }, "______"),
     webrExerciseScript("3", { exercise: "ex-not-persisted", persist: false }, "______"),
     webrExerciseScript("4", { edit: false }, "sample(1:10)"),
+    downloadBlock(downloadButton({ filenamePrefix: "class-101" }))
+  ],
+  // Deliberately interleaves question() widgets and {webr} exercise cells so
+  // the download's page-order guarantee is actually exercised: on the page
+  // the order is q-one, ex-alpha, q-two, ex-beta, so contents.answers must
+  // come back in exactly that order (not "all questions, then all exercises").
+  "download-answers-interleaved": [
+    infoBlock(info({ id: "learnr2-info-student-info" })),
+    questionBlock(
+      question({
+        id: "q-one",
+        text: "First question.",
+        type: "single",
+        answers: [answer("yes", true), answer("no")]
+      })
+    ),
+    webrExerciseScript("1", { exercise: "ex-alpha", persist: true }, "______"),
+    questionBlock(
+      question({
+        id: "q-two",
+        text: "Second question.",
+        type: "reflection",
+        answers: [answer("A model answer.", true)]
+      })
+    ),
+    webrExerciseScript("2", { exercise: "ex-beta", persist: true }, "______"),
     downloadBlock(downloadButton({ filenamePrefix: "class-101" }))
   ],
   // An image-paste reflection plus a download button: the download must
