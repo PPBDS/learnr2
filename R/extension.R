@@ -30,6 +30,11 @@ live_extension_dir <- function() {
 #'
 #' @return The path to the project's `_extensions` directory, invisibly.
 #' @export
+#' @examples
+#' dir <- tempfile()
+#' add_live_extension(dir)
+#' list.files(dir, recursive = TRUE, all.files = TRUE)[1:3]
+#' unlink(dir, recursive = TRUE)
 add_live_extension <- function(dir = ".", overwrite = TRUE) {
   dir <- fs::path_abs(dir)
   fs::dir_create(dir)

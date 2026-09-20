@@ -21,3 +21,9 @@ Copies the bundled 'quarto-live' extension into \verb{dir/_extensions/} so that
 Quarto documents in \code{dir} can use \code{format: live-html}. This is the
 non-interactive equivalent of \verb{quarto add r-wasm/quarto-live}.
 }
+\examples{
+dir <- tempfile()
+add_live_extension(dir)
+list.files(dir, recursive = TRUE, all.files = TRUE)[1:3]
+unlink(dir, recursive = TRUE)
+}

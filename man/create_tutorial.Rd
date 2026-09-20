@@ -33,7 +33,9 @@ The starter document opens with \code{\link[=student_info]{student_info()}} and 
 default; delete either section if a given tutorial doesn't need it.
 }
 \examples{
-\dontrun{
-create_tutorial("my-first-tutorial")
-}
+# Scaffold into a temporary directory, without opening the new file.
+dir <- tempfile()
+qmd <- create_tutorial("my-first-tutorial", dir = dir, open = FALSE)
+list.files(dirname(qmd), all.files = TRUE, no.. = TRUE)
+unlink(dir, recursive = TRUE)
 }

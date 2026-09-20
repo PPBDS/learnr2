@@ -4,9 +4,9 @@
 \name{learnr2-package}
 \alias{learnr2}
 \alias{learnr2-package}
-\title{learnr2: Interactive Tutorials with Quarto and WebR}
+\title{learnr2: Interactive Tutorials with 'Quarto' and 'WebR'}
 \description{
-Create interactive R tutorials that run entirely in the browser using Quarto and WebR via the 'quarto-live' extension. Provides learnr-style authoring conveniences -- scaffolding, exercises, hints, solutions, and quizzes -- without Shiny, R Markdown, or a server.
+Create interactive R tutorials that run entirely in the browser using 'Quarto' \url{https://quarto.org} and 'WebR' \url{https://docs.r-wasm.org/webr/latest/} via the 'quarto-live' extension. Provides 'learnr'-style authoring conveniences -- scaffolding, exercises, hints, solutions, and quizzes -- without 'Shiny', 'R Markdown', or a server.
 }
 \seealso{
 Useful links:
@@ -18,11 +18,21 @@ Useful links:
 
 }
 \author{
-\strong{Maintainer}: David Kane \email{dave.kane@gmail.com}
+\strong{Maintainer}: David Kane \email{dave.kane@gmail.com} (\href{https://orcid.org/0000-0002-6660-3934}{ORCID}) [copyright holder]
 
 Authors:
 \itemize{
-  \item David Kane \email{dave.kane@gmail.com}
+  \item Minh Vu \email{minhvu0514@gmail.com}
+}
+
+Other contributors:
+\itemize{
+  \item George Stagg (Author of the bundled 'quarto-live' extension) [contributor, copyright holder]
+  \item peposso (Author of the bundled 'tinyyaml' library) [contributor, copyright holder]
+  \item Marijn Haverbeke (Author of the bundled 'CodeMirror' and 'Lezer' libraries) [contributor, copyright holder]
+  \item Travis Harrison (Author of the bundled 'codemirror-lang-r' and 'lezer-r' libraries) [contributor, copyright holder]
+  \item Google LLC (Bundled 'Comlink' library) [copyright holder]
+  \item Pyodide contributors and Mozilla (Bundled 'Pyodide' loader) [copyright holder]
 }
 
 }

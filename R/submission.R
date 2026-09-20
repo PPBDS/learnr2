@@ -216,11 +216,17 @@ print.learnr2_download_button <- function(x, ...) {
 #'   is a file.
 #' @export
 #' @examples
-#' \dontrun{
-#' submission_time("class-101-answers.json")
-#' }
 #' # Decode a bare time code:
-#' submission_time(learnr2:::encode_submission_time(as.POSIXct("2026-01-15 12:00:00", tz = "UTC")))
+#' submission_time("52mz7x0xv")
+#'
+#' # Or read it, along with the reader's details, from a downloaded file:
+#' answers <- tempfile(fileext = ".json")
+#' writeLines(
+#'   '{"time": "52mz7x0xv", "info": {"name": "Ada", "email": "ada@example.com"}}',
+#'   answers
+#' )
+#' submission_time(answers)
+#' unlink(answers)
 submission_time <- function(x) {
   if (!is.character(x) || length(x) != 1 || !nzchar(x)) {
     stop(

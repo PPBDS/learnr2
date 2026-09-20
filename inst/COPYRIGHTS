@@ -1,0 +1,44 @@
+learnr2 itself is released under the MIT license; see the LICENSE file.
+Copyright (c) 2026 learnr2 authors.
+
+The package bundles the following third-party components, all under
+inst/extdata/_extensions/r-wasm/live/. Each remains under its own license.
+
+----------------------------------------------------------------------------
+quarto-live 0.1.3-dev (the whole directory, except as noted below)
+  https://github.com/r-wasm/quarto-live
+  Copyright (c) 2024 quarto-live authors (George Stagg)
+  License: MIT
+
+resources/tinyyaml.lua
+  https://github.com/api7/lua-tinyyaml
+  Copyright (c) 2017 peposso
+  License: MIT (full text retained in the file header)
+
+resources/live-runtime.js and resources/pyodide-worker.js are minified
+bundles built by quarto-live from its own TypeScript sources
+(https://github.com/r-wasm/quarto-live/tree/main/live-runtime) together with
+these libraries:
+
+  CodeMirror 6 (codemirror, @codemirror/*) and Lezer (@lezer/*)
+    https://codemirror.net/, https://lezer.codemirror.net/
+    Copyright (c) Marijn Haverbeke and others
+    License: MIT
+
+  codemirror-lang-r, lezer-r
+    https://github.com/TravisYeah/lang-r, https://github.com/TravisYeah/lezer-r
+    Copyright (c) Travis Harrison and others
+    License: MIT
+
+  Comlink
+    https://github.com/GoogleChromeLabs/comlink
+    Copyright 2017 Google Inc.
+    License: Apache-2.0
+
+  Pyodide (JavaScript loader only)
+    https://github.com/pyodide/pyodide
+    Copyright (c) Pyodide contributors and Mozilla
+    License: MPL-2.0
+
+WebR, the Pyodide runtime, and any R or Python packages a tutorial uses are
+not bundled; the rendered page downloads them in the reader's browser.

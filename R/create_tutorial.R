@@ -21,9 +21,11 @@
 #' @return The path to the created `.qmd` file, invisibly.
 #' @export
 #' @examples
-#' \dontrun{
-#' create_tutorial("my-first-tutorial")
-#' }
+#' # Scaffold into a temporary directory, without opening the new file.
+#' dir <- tempfile()
+#' qmd <- create_tutorial("my-first-tutorial", dir = dir, open = FALSE)
+#' list.files(dirname(qmd), all.files = TRUE, no.. = TRUE)
+#' unlink(dir, recursive = TRUE)
 create_tutorial <- function(name,
                             dir = ".",
                             title = name,

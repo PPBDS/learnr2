@@ -166,6 +166,11 @@ tutorial_title <- function(doc) {
 #'
 #' @export
 #' @examples
+#' # With no `name`, just lists the tutorials that can be run.
+#' run_tutorial()
+#'
+#' # Not run: needs the Quarto command line tool, and, when `open = TRUE`,
+#' # starts a local web server that blocks the session until interrupted.
 #' \dontrun{
 #' run_tutorial("hello-learnr2")
 #' }

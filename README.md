@@ -14,6 +14,16 @@ Markdown, or a server**. A rendered tutorial is a self-contained HTML page.
 
 ## Installation
 
+Install the released version of learnr2 from
+[CRAN](https://CRAN.R-project.org):
+
+```r
+install.packages("learnr2")
+```
+
+Or install the development version from
+[GitHub](https://github.com/PPBDS/learnr2):
+
 ```r
 # install.packages("pak")
 pak::pak("PPBDS/learnr2")
@@ -47,7 +57,7 @@ copied alongside it, so it renders out of the box with Quarto or
 - **Live code cells** — editable, runnable R that executes in the browser.
 - **Exercises** — cells with blanks, plus `.hint` and `.solution` blocks.
 - **Automatic grading** — powered by
-  [gradethis](https://pkgs.rstudio.com/gradethis/).
+  [gradethis](https://rstudio.github.io/gradethis/).
 - **Quiz questions** — `question()` / `quiz()`, graded in the browser with
   plain JavaScript, including single/multiple choice, free-text, and
   reflection questions. Answers persist in the browser's `localStorage`.
