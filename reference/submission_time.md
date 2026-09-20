@@ -38,10 +38,20 @@ through a channel you control.
 ## Examples
 
 ``` r
-if (FALSE) { # \dontrun{
-submission_time("class-101-answers.json")
-} # }
 # Decode a bare time code:
-submission_time(learnr2:::encode_submission_time(as.POSIXct("2026-01-15 12:00:00", tz = "UTC")))
+submission_time("52mz7x0xv")
 #> Submitted: 2026-01-15 12:00:00 UTC
+
+# Or read it, along with the reader's details, from a downloaded file:
+answers <- tempfile(fileext = ".json")
+writeLines(
+  '{"time": "52mz7x0xv", "info": {"name": "Ada", "email": "ada@example.com"}}',
+  answers
+)
+submission_time(answers)
+#> Submitted: 2026-01-15 12:00:00 UTC
+#>   Name: Ada
+#>   Email: ada@example.com
+#>   Device id: (unknown)
+unlink(answers)
 ```

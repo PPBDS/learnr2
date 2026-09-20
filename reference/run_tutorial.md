@@ -90,6 +90,15 @@ app) behaved – stop the server to get your prompt back.
 ## Examples
 
 ``` r
+# With no `name`, just lists the tutorials that can be run.
+run_tutorial()
+#> Available tutorials in learnr2:
+#>   - getting-started
+#>   - hello-learnr2
+#>   - intro-vectors
+
+# Not run: needs the Quarto command line tool, and, when `open = TRUE`,
+# starts a local web server that blocks the session until interrupted.
 if (FALSE) { # \dontrun{
 run_tutorial("hello-learnr2")
 } # }

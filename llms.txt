@@ -11,6 +11,17 @@ self-contained HTML page.
 
 ## Installation
 
+Install the released version of learnr2 from
+[CRAN](https://CRAN.R-project.org):
+
+``` r
+
+install.packages("learnr2")
+```
+
+Or install the development version from
+[GitHub](https://github.com/PPBDS/learnr2):
+
 ``` r
 
 # install.packages("pak")
@@ -51,7 +62,7 @@ or
 - **Exercises** — cells with blanks, plus `.hint` and `.solution`
   blocks.
 - **Automatic grading** — powered by
-  [gradethis](https://pkgs.rstudio.com/gradethis/).
+  [gradethis](https://rstudio.github.io/gradethis/).
 - **Quiz questions** —
   [`question()`](https://ppbds.github.io/learnr2/reference/question.md)
   / [`quiz()`](https://ppbds.github.io/learnr2/reference/quiz.md),
