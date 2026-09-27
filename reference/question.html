@@ -13,7 +13,7 @@ questions, graded entirely in the reader's browser."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">learnr2</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.0.9003</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9001</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -170,8 +170,8 @@ questions.</p></dd>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A <code>learnr2_question</code> object. Printed as an interactive HTML
-widget, both in a rendered Quarto document and (via a browser preview)
-at the R console.</p>
+widget in a rendered Quarto document; at the console it opens a browser
+preview in an interactive session and prints the HTML source otherwise.</p>
     </div>
     <div class="section level2">
     <h2 id="progress-persistence">Progress persistence<a class="anchor" aria-label="anchor" href="#progress-persistence"></a></h2>
@@ -216,6 +216,9 @@ visit, not this one tutorial's progress.</p>
 <span class="r-in"><span>  <span class="fu"><a href="answer.html">answer</a></span><span class="op">(</span><span class="st">"48"</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>  allow_retry <span class="op">=</span> <span class="cn">TRUE</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;div class="learnr2-question" data-learnr2-question="eyJpZCI6IndoYXQtaXMtNi10aW1lcy03IiwidGV4dCI6IldoYXQgaXMgNiB0aW1lcyA3PyIs&amp;#10;InR5cGUiOiJzaW5nbGUiLCJhbnN3ZXJzIjpbeyJ0ZXh0IjoiNDIiLCJjb3JyZWN0Ijp0cnVl&amp;#10;LCJtZXNzYWdlIjpudWxsfSx7InRleHQiOiIzNiIsImNvcnJlY3QiOmZhbHNlLCJtZXNzYWdl&amp;#10;IjpudWxsfSx7InRleHQiOiI0OCIsImNvcnJlY3QiOmZhbHNlLCJtZXNzYWdlIjpudWxsfV0s&amp;#10;ImNvcnJlY3RNZXNzYWdlIjoiQ29ycmVjdCEiLCJpbmNvcnJlY3RNZXNzYWdlIjoiSW5jb3Jy&amp;#10;ZWN0LiIsImFsbG93UmV0cnkiOnRydWUsInJhbmRvbUFuc3dlck9yZGVyIjpmYWxzZSwic3Vi&amp;#10;bWl0TGFiZWwiOiJTdWJtaXQgQW5zd2VyIiwidHJ5QWdhaW5MYWJlbCI6IlRyeSBBZ2FpbiIs&amp;#10;ImVkaXRMYWJlbCI6IkVkaXQgQW5zd2VyIiwiYWxsb3dJbWFnZSI6ZmFsc2UsInZhbGlkYXRl&amp;#10;Ijoibm9uZSJ9"&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   &lt;noscript&gt;This quiz question requires JavaScript.&lt;/noscript&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;/div&gt;</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># No answer() at all -- a genuinely open-ended prompt with nothing to</span></span></span>
 <span class="r-in"><span><span class="co"># reveal after the reader submits.</span></span></span>
@@ -224,6 +227,9 @@ visit, not this one tutorial's progress.</p>
 <span class="r-in"><span>  type <span class="op">=</span> <span class="st">"reflection_editable"</span>,</span></span>
 <span class="r-in"><span>  validate <span class="op">=</span> <span class="st">"integer"</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;div class="learnr2-question" data-learnr2-question="eyJpZCI6Imhvdy1tYW55LW1pbnV0ZXMtYXBwcm94aW1hdGVseS1kaWQtdGhpcy10YWtlIiwi&amp;#10;dGV4dCI6IkhvdyBtYW55IG1pbnV0ZXMsIGFwcHJveGltYXRlbHksIGRpZCB0aGlzIHRha2U/&amp;#10;IiwidHlwZSI6InJlZmxlY3Rpb25fZWRpdGFibGUiLCJhbnN3ZXJzIjpbXSwiY29ycmVjdE1l&amp;#10;c3NhZ2UiOiJDb3JyZWN0ISIsImluY29ycmVjdE1lc3NhZ2UiOiJJbmNvcnJlY3QuIiwiYWxs&amp;#10;b3dSZXRyeSI6ZmFsc2UsInJhbmRvbUFuc3dlck9yZGVyIjpmYWxzZSwic3VibWl0TGFiZWwi&amp;#10;OiJTdWJtaXQgQW5zd2VyIiwidHJ5QWdhaW5MYWJlbCI6IlRyeSBBZ2FpbiIsImVkaXRMYWJl&amp;#10;bCI6IkVkaXQgQW5zd2VyIiwiYWxsb3dJbWFnZSI6ZmFsc2UsInZhbGlkYXRlIjoiaW50ZWdl&amp;#10;ciJ9"&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   &lt;noscript&gt;This quiz question requires JavaScript.&lt;/noscript&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;/div&gt;</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

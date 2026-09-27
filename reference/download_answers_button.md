@@ -67,4 +67,7 @@ their answers; this only keeps the submission time honest at a glance.
 
 ``` r
 download_answers_button()
+#> <div class="learnr2-download-answers" data-learnr2-download="eyJmaWxlbmFtZVByZWZpeCI6ImxlYXJucjItYW5zd2VycyIsImxhYmVsIjoiRG93bmxvYWQg&#10;TXkgQW5zd2VycyJ9">
+#>   <noscript>This button requires JavaScript.</noscript>
+#> </div>
 ```

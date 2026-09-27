@@ -79,5 +79,11 @@ A `learnr2_info` object, printed as an interactive HTML form.
 
 ``` r
 student_info()
+#> <div class="learnr2-info" data-learnr2-info="eyJpZCI6ImxlYXJucjItaW5mby1zdHVkZW50LWluZm8iLCJmaWVsZHMiOlt7ImtleSI6Im5h&#10;bWUiLCJsYWJlbCI6Ik5hbWU6IiwicmVxdWlyZWQiOnRydWV9LHsia2V5IjoiZW1haWwiLCJs&#10;YWJlbCI6IkVtYWlsOiIsInJlcXVpcmVkIjp0cnVlfSx7ImtleSI6ImlkIiwibGFiZWwiOiJJ&#10;RCAoaWYgcmVxdWVzdGVkIGJ5IHlvdXIgaW5zdHJ1Y3Rvcik6IiwicmVxdWlyZWQiOmZhbHNl&#10;fV0sInN1Ym1pdExhYmVsIjoiU3VibWl0IiwiZWRpdExhYmVsIjoiRWRpdCJ9">
+#>   <noscript>This form requires JavaScript.</noscript>
+#> </div>
 student_info(fields = c(name = "Full name:", section = "Section:"), required = "name")
+#> <div class="learnr2-info" data-learnr2-info="eyJpZCI6ImxlYXJucjItaW5mby1zdHVkZW50LWluZm8iLCJmaWVsZHMiOlt7ImtleSI6Im5h&#10;bWUiLCJsYWJlbCI6IkZ1bGwgbmFtZToiLCJyZXF1aXJlZCI6dHJ1ZX0seyJrZXkiOiJzZWN0&#10;aW9uIiwibGFiZWwiOiJTZWN0aW9uOiIsInJlcXVpcmVkIjpmYWxzZX1dLCJzdWJtaXRMYWJl&#10;bCI6IlN1Ym1pdCIsImVkaXRMYWJlbCI6IkVkaXQifQ==">
+#>   <noscript>This form requires JavaScript.</noscript>
+#> </div>
 ```

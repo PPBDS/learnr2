@@ -137,9 +137,9 @@ question(
 
 ## Value
 
-A `learnr2_question` object. Printed as an interactive HTML widget, both
-in a rendered Quarto document and (via a browser preview) at the R
-console.
+A `learnr2_question` object. Printed as an interactive HTML widget in a
+rendered Quarto document; at the console it opens a browser preview in
+an interactive session and prints the HTML source otherwise.
 
 ## Progress persistence
 
@@ -187,6 +187,9 @@ question(
   answer("48"),
   allow_retry = TRUE
 )
+#> <div class="learnr2-question" data-learnr2-question="eyJpZCI6IndoYXQtaXMtNi10aW1lcy03IiwidGV4dCI6IldoYXQgaXMgNiB0aW1lcyA3PyIs&#10;InR5cGUiOiJzaW5nbGUiLCJhbnN3ZXJzIjpbeyJ0ZXh0IjoiNDIiLCJjb3JyZWN0Ijp0cnVl&#10;LCJtZXNzYWdlIjpudWxsfSx7InRleHQiOiIzNiIsImNvcnJlY3QiOmZhbHNlLCJtZXNzYWdl&#10;IjpudWxsfSx7InRleHQiOiI0OCIsImNvcnJlY3QiOmZhbHNlLCJtZXNzYWdlIjpudWxsfV0s&#10;ImNvcnJlY3RNZXNzYWdlIjoiQ29ycmVjdCEiLCJpbmNvcnJlY3RNZXNzYWdlIjoiSW5jb3Jy&#10;ZWN0LiIsImFsbG93UmV0cnkiOnRydWUsInJhbmRvbUFuc3dlck9yZGVyIjpmYWxzZSwic3Vi&#10;bWl0TGFiZWwiOiJTdWJtaXQgQW5zd2VyIiwidHJ5QWdhaW5MYWJlbCI6IlRyeSBBZ2FpbiIs&#10;ImVkaXRMYWJlbCI6IkVkaXQgQW5zd2VyIiwiYWxsb3dJbWFnZSI6ZmFsc2UsInZhbGlkYXRl&#10;Ijoibm9uZSJ9">
+#>   <noscript>This quiz question requires JavaScript.</noscript>
+#> </div>
 
 # No answer() at all -- a genuinely open-ended prompt with nothing to
 # reveal after the reader submits.
@@ -195,4 +198,7 @@ question(
   type = "reflection_editable",
   validate = "integer"
 )
+#> <div class="learnr2-question" data-learnr2-question="eyJpZCI6Imhvdy1tYW55LW1pbnV0ZXMtYXBwcm94aW1hdGVseS1kaWQtdGhpcy10YWtlIiwi&#10;dGV4dCI6IkhvdyBtYW55IG1pbnV0ZXMsIGFwcHJveGltYXRlbHksIGRpZCB0aGlzIHRha2U/&#10;IiwidHlwZSI6InJlZmxlY3Rpb25fZWRpdGFibGUiLCJhbnN3ZXJzIjpbXSwiY29ycmVjdE1l&#10;c3NhZ2UiOiJDb3JyZWN0ISIsImluY29ycmVjdE1lc3NhZ2UiOiJJbmNvcnJlY3QuIiwiYWxs&#10;b3dSZXRyeSI6ZmFsc2UsInJhbmRvbUFuc3dlck9yZGVyIjpmYWxzZSwic3VibWl0TGFiZWwi&#10;OiJTdWJtaXQgQW5zd2VyIiwidHJ5QWdhaW5MYWJlbCI6IlRyeSBBZ2FpbiIsImVkaXRMYWJl&#10;bCI6IkVkaXQgQW5zd2VyIiwiYWxsb3dJbWFnZSI6ZmFsc2UsInZhbGlkYXRlIjoiaW50ZWdl&#10;ciJ9">
+#>   <noscript>This quiz question requires JavaScript.</noscript>
+#> </div>
 ```

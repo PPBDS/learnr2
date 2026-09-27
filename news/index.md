@@ -1,8 +1,16 @@
 # Changelog
 
-## learnr2 (development version)
+## learnr2 0.1.0
 
-- Initial CRAN submission.
+- Printing a
+  [`question()`](https://ppbds.github.io/learnr2/reference/question.md),
+  [`quiz()`](https://ppbds.github.io/learnr2/reference/quiz.md),
+  [`student_info()`](https://ppbds.github.io/learnr2/reference/student_info.md),
+  or
+  [`download_answers_button()`](https://ppbds.github.io/learnr2/reference/download_answers_button.md)
+  at the console now opens a browser preview only in an interactive
+  session; non-interactive prints (scripts, `R CMD check`) emit the HTML
+  source instead of launching the system browser.
 
 ## learnr2 0.0.0
 
