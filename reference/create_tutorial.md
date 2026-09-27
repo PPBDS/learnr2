@@ -49,7 +49,7 @@ The path to the created `.qmd` file, invisibly.
 # Scaffold into a temporary directory, without opening the new file.
 dir <- tempfile()
 qmd <- create_tutorial("my-first-tutorial", dir = dir, open = FALSE)
-#> Created tutorial: /tmp/RtmpEnoxfy/file197459ab9028/my-first-tutorial/my-first-tutorial.qmd
+#> Created tutorial: /tmp/RtmpZ2PWmI/file1a426e31ff9e/my-first-tutorial/my-first-tutorial.qmd
 list.files(dirname(qmd), all.files = TRUE, no.. = TRUE)
 #> [1] "_extensions"           "my-first-tutorial.qmd"
 unlink(dir, recursive = TRUE)
