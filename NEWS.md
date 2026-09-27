@@ -1,4 +1,4 @@
-# learnr2 (development version)
+# learnr2 0.1.0
 
 * Initial CRAN submission.
 
