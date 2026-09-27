@@ -1,0 +1,23 @@
+The learnr2 package as a whole is released under the MIT license
+(see the LICENSE file; copyright holder: learnr2 authors).
+
+It bundles the 'quarto-live' Quarto extension, unmodified, under
+inst/extdata/_extensions/r-wasm/live/ (copied into a tutorial's directory by
+add_live_extension() and create_tutorial()). That directory keeps its own
+LICENSE.md. Its components, and the libraries compiled into its two minified
+JavaScript bundles, are under the following licenses -- all permissive and
+compatible with MIT:
+
+  Component                                   License
+  ------------------------------------------  -------------
+  quarto-live (the extension itself)          MIT
+  tinyyaml.lua                                MIT
+  CodeMirror 6 and Lezer                      MIT
+  codemirror-lang-r and lezer-r               MIT
+  Comlink                                     Apache-2.0
+  @jupyter-widgets/html-manager               BSD-3-Clause
+  Pyodide (JavaScript loader only)            MPL-2.0
+
+Copyright holders, upstream URLs, and the location of the unminified sources
+for each component are listed in inst/COPYRIGHTS, and the copyright holders
+appear with 'cph' roles in the Authors@R field of DESCRIPTION.
