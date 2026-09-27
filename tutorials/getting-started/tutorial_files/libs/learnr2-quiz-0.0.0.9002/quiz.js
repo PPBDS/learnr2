@@ -330,7 +330,10 @@
   // just above handlePaste(), below -- a handful of screenshots shouldn't
   // blow past the browser's localStorage quota (pasted images are
   // persisted as base64 data URLs, like everything else).
-  function buildImagePasteArea() {
+  //
+  // `onChange(hasImage)` fires whenever an image is set or removed, so the
+  // caller can hide its response textarea while an image is the answer.
+  function buildImagePasteArea(onChange) {
     var MAX_BYTES = 2 * 1024 * 1024;
     var wrapper = el("div", { class: "learnr2-image-paste", tabindex: "0" });
     var placeholder = el("div", {
@@ -367,6 +370,9 @@
         remove.classList.remove("d-none");
       }
       clearError();
+      if (onChange) {
+        onChange(true);
+      }
     }
 
     function clearImage() {
@@ -375,6 +381,9 @@
       preview.classList.add("d-none");
       placeholder.classList.remove("d-none");
       remove.classList.add("d-none");
+      if (onChange) {
+        onChange(false);
+      }
     }
 
     // Which raster types get accepted: verified (MDN, web.dev) that only
@@ -496,7 +505,15 @@
     var reveal = el("div", { class: "learnr2-model-answer d-none" });
     var feedback = el("div", { class: "learnr2-feedback d-none" });
     var submit = el("button", { type: "button", class: "learnr2-submit", text: data.submitLabel });
-    var imagePaste = data.allowImage ? buildImagePasteArea() : null;
+    var answers = el("div", { class: "learnr2-answers" }, [textarea]);
+    // Once an image is pasted it *is* the answer: hide the text box so the
+    // reader sees only the image (plus "Remove image", which brings the
+    // text box back).
+    var imagePaste = data.allowImage
+      ? buildImagePasteArea(function (hasImage) {
+          answers.classList.toggle("d-none", hasImage);
+        })
+      : null;
     if (imagePaste) {
       textarea.addEventListener("paste", function (event) {
         imagePaste.handlePaste(event);
@@ -542,14 +559,17 @@
       }
       feedback.className = "learnr2-feedback d-none";
       applyOutcome(!editable);
+      var image = imagePaste ? imagePaste.getDataUrl() : null;
       saveState(data, {
-        value: textarea.value,
-        image: imagePaste ? imagePaste.getDataUrl() : null,
+        // Text typed before pasting is hidden along with the text box, so
+        // don't submit it alongside the image.
+        value: image ? "" : textarea.value,
+        image: image,
         submitted: true
       });
     });
 
-    container.appendChild(el("div", { class: "learnr2-answers" }, [textarea]));
+    container.appendChild(answers);
     if (imagePaste) {
       container.appendChild(imagePaste.element);
     }
