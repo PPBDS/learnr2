@@ -25,22 +25,3 @@ Useful links:
 Authors:
 
 - Minh Vu <minhvu0514@gmail.com>
-
-Other contributors:
-
-- George Stagg (Author of the bundled 'quarto-live' extension)
-  \[contributor, copyright holder\]
-
-- peposso (Author of the bundled 'tinyyaml' library) \[contributor,
-  copyright holder\]
-
-- Marijn Haverbeke (Author of the bundled 'CodeMirror' and 'Lezer'
-  libraries) \[contributor, copyright holder\]
-
-- Travis Harrison (Author of the bundled 'codemirror-lang-r' and
-  'lezer-r' libraries) \[contributor, copyright holder\]
-
-- Google LLC (Bundled 'Comlink' library) \[copyright holder\]
-
-- Pyodide contributors and Mozilla (Bundled 'Pyodide' loader)
-  \[copyright holder\]
