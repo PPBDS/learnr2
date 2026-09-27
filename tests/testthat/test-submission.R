@@ -105,10 +105,11 @@ test_that("rendered info/button HTML embeds a decodable payload with the quiz de
 })
 
 test_that("print.learnr2_info and knit_print.learnr2_info behave like question()'s print/knit_print", {
+  withr::local_options(viewer = function(...) stop("browser preview opened non-interactively"))
   info <- student_info()
 
-  expect_no_error(print(info))
-  result <- withVisible(print(info))
+  expect_output(print(info), "data-learnr2-info")
+  capture.output(result <- withVisible(print(info)))
   expect_false(result$visible)
   expect_identical(result$value, info)
 
@@ -120,10 +121,11 @@ test_that("print.learnr2_info and knit_print.learnr2_info behave like question()
 })
 
 test_that("print.learnr2_download_button and knit_print.learnr2_download_button behave like question()'s print/knit_print", {
+  withr::local_options(viewer = function(...) stop("browser preview opened non-interactively"))
   btn <- download_answers_button()
 
-  expect_no_error(print(btn))
-  result <- withVisible(print(btn))
+  expect_output(print(btn), "data-learnr2-download")
+  capture.output(result <- withVisible(print(btn)))
   expect_false(result$visible)
   expect_identical(result$value, btn)
 

@@ -110,7 +110,7 @@ knit_print.learnr2_info <- function(x, ...) {
 
 #' @export
 print.learnr2_info <- function(x, ...) {
-  print(htmltools::browsable(info_html(x)))
+  print(info_html(x), browse = interactive())
   invisible(x)
 }
 
@@ -190,7 +190,7 @@ knit_print.learnr2_download_button <- function(x, ...) {
 
 #' @export
 print.learnr2_download_button <- function(x, ...) {
-  print(htmltools::browsable(download_button_html(x)))
+  print(download_button_html(x), browse = interactive())
   invisible(x)
 }
 

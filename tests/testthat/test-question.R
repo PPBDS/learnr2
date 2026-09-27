@@ -320,11 +320,17 @@ test_that("print.learnr2_answer prints a one-line summary, with [correct] only w
   expect_identical(print(correct_answer), correct_answer)
 })
 
-test_that("print.learnr2_question opens a browser preview without erroring, and returns its input invisibly", {
+# Non-interactive print (tests, R CMD check, Rscript) must emit the HTML
+# source and never hand a temp file to the system browser -- on CRAN's
+# Debian checker the "browser" is Calibre, whose leftover `calibre-*` temp
+# directories earned a "detritus in the temp directory" NOTE. `viewer` is
+# what htmltools::html_print() calls, so a failing one catches that path.
+test_that("print.learnr2_question prints HTML source non-interactively, without opening a browser, and returns its input invisibly", {
+  withr::local_options(viewer = function(...) stop("browser preview opened non-interactively"))
   q <- question("6 * 7?", answer("42", correct = TRUE), answer("36"))
-  expect_no_error(print(q))
+  expect_output(print(q), "data-learnr2-question")
 
-  result <- withVisible(print(q))
+  capture.output(result <- withVisible(print(q)))
   expect_false(result$visible)
   expect_identical(result$value, q)
 })
@@ -339,10 +345,11 @@ test_that("knit_print.learnr2_question renders via quiz_html(), tagged for knitr
 })
 
 test_that("print.learnr2_quiz and knit_print.learnr2_quiz behave the same way as the single-question versions", {
+  withr::local_options(viewer = function(...) stop("browser preview opened non-interactively"))
   qz <- quiz(question("2 + 2?", answer("4", correct = TRUE)), caption = "Arithmetic")
 
-  expect_no_error(print(qz))
-  result <- withVisible(print(qz))
+  expect_output(print(qz), "learnr2-quiz-caption")
+  capture.output(result <- withVisible(print(qz)))
   expect_false(result$visible)
   expect_identical(result$value, qz)
 

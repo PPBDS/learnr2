@@ -1,6 +1,9 @@
 # learnr2 0.1.0
 
-* Initial CRAN submission.
+* Printing a `question()`, `quiz()`, `student_info()`, or
+  `download_answers_button()` at the console now opens a browser preview only
+  in an interactive session; non-interactive prints (scripts, `R CMD check`)
+  emit the HTML source instead of launching the system browser.
 
 # learnr2 0.0.0
 

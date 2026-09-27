@@ -107,8 +107,8 @@ print.learnr2_answer <- function(x, ...) {
 #'   questions.
 #'
 #' @return A `learnr2_question` object. Printed as an interactive HTML
-#'   widget, both in a rendered Quarto document and (via a browser preview)
-#'   at the R console.
+#'   widget in a rendered Quarto document; at the console it opens a browser
+#'   preview in an interactive session and prints the HTML source otherwise.
 #'
 #' @section Progress persistence:
 #' Once a reader submits an answer, it is saved in the browser's
@@ -379,14 +379,21 @@ knit_print.learnr2_quiz <- function(x, ...) {
   knitr::knit_print(quiz_html(x), ...)
 }
 
+# Console printing previews the widget in a browser only in an interactive
+# session. htmltools::browsable() would open the browser unconditionally,
+# which in a non-interactive session (R CMD check, Rscript, CI) launches
+# whatever handles HTML on that machine -- on CRAN's Debian checker that is
+# Calibre, which leaves `calibre-*` directories in the temp dir and earned
+# a "detritus in the temp directory" NOTE on submission. Non-interactive
+# prints emit the HTML source instead, same as print(htmltools::tags$div()).
 #' @export
 print.learnr2_question <- function(x, ...) {
-  print(htmltools::browsable(quiz_html(x)))
+  print(quiz_html(x), browse = interactive())
   invisible(x)
 }
 
 #' @export
 print.learnr2_quiz <- function(x, ...) {
-  print(htmltools::browsable(quiz_html(x)))
+  print(quiz_html(x), browse = interactive())
   invisible(x)
 }

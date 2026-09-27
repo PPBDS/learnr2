@@ -99,8 +99,8 @@ questions.}
 }
 \value{
 A \code{learnr2_question} object. Printed as an interactive HTML
-widget, both in a rendered Quarto document and (via a browser preview)
-at the R console.
+widget in a rendered Quarto document; at the console it opens a browser
+preview in an interactive session and prints the HTML source otherwise.
 }
 \description{
 A learnr-style quiz question, rendered as a small self-contained,
