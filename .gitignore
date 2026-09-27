@@ -3,3 +3,4 @@ tests/js/node_modules
 tests/js/test-results
 tests/js/playwright-report
 AGENTS.md
+TODO.txt
