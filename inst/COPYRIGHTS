@@ -20,7 +20,8 @@ bundles built by quarto-live from its own TypeScript sources
 (https://github.com/r-wasm/quarto-live/tree/main/live-runtime) together with
 these libraries:
 
-  CodeMirror 6 (codemirror, @codemirror/*) and Lezer (@lezer/*)
+  CodeMirror 6 (codemirror, @codemirror/*, including @codemirror/lang-python)
+  and Lezer (@lezer/*, including @lezer/python)
     https://codemirror.net/, https://lezer.codemirror.net/
     Copyright (c) Marijn Haverbeke and others
     License: MIT
@@ -34,6 +35,11 @@ these libraries:
     https://github.com/GoogleChromeLabs/comlink
     Copyright 2017 Google Inc.
     License: Apache-2.0
+
+  @jupyter-widgets/html-manager (Jupyter widgets HTML manager)
+    https://github.com/jupyter-widgets/ipywidgets
+    Copyright (c) 2015 Project Jupyter Contributors
+    License: BSD-3-Clause
 
   Pyodide (JavaScript loader only)
     https://github.com/pyodide/pyodide

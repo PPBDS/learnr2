@@ -93,6 +93,7 @@ test_that("create_tutorial(open = TRUE) opens the new file via open_file()", {
 })
 
 test_that("open_file() falls back to utils::browseURL() outside RStudio", {
+  skip_if_not_installed("rstudioapi")
   f <- withr::local_tempfile(fileext = ".qmd")
   file.create(f)
   withr::local_envvar(RSTUDIO = "")
@@ -114,6 +115,7 @@ test_that("open_file() falls back to utils::browseURL() outside RStudio", {
 })
 
 test_that("open_file() uses rstudioapi::navigateToFile() when RStudio is available", {
+  skip_if_not_installed("rstudioapi")
   f <- withr::local_tempfile(fileext = ".qmd")
   file.create(f)
 
@@ -133,6 +135,7 @@ test_that("open_file() uses rstudioapi::navigateToFile() when RStudio is availab
 })
 
 test_that("open_file() uses utils::file.edit() when RSTUDIO env var is set but the API isn't", {
+  skip_if_not_installed("rstudioapi")
   f <- withr::local_tempfile(fileext = ".qmd")
   file.create(f)
   withr::local_envvar(RSTUDIO = "1")

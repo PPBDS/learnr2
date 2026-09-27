@@ -1,0 +1,8 @@
+Find the old TODO.txt and put it here.
+
+
+When you run 
+
+devtools::check(remote = TRUE, manual = TRUE)
+
+it seems like your browser is taken ovr and a bunch of garbage tabs are created.

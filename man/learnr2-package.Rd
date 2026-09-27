@@ -25,15 +25,5 @@ Authors:
   \item Minh Vu \email{minhvu0514@gmail.com}
 }
 
-Other contributors:
-\itemize{
-  \item George Stagg (Author of the bundled 'quarto-live' extension) [contributor, copyright holder]
-  \item peposso (Author of the bundled 'tinyyaml' library) [contributor, copyright holder]
-  \item Marijn Haverbeke (Author of the bundled 'CodeMirror' and 'Lezer' libraries) [contributor, copyright holder]
-  \item Travis Harrison (Author of the bundled 'codemirror-lang-r' and 'lezer-r' libraries) [contributor, copyright holder]
-  \item Google LLC (Bundled 'Comlink' library) [copyright holder]
-  \item Pyodide contributors and Mozilla (Bundled 'Pyodide' loader) [copyright holder]
-}
-
 }
 \keyword{internal}
