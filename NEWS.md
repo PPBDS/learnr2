@@ -1,4 +1,4 @@
-# learnr2 0.1.0
+# learnr2 0.1.1
 
 * Printing a `question()`, `quiz()`, `student_info()`, or
   `download_answers_button()` at the console now opens a browser preview only
