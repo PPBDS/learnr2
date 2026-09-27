@@ -31,8 +31,8 @@ The path to the project's `_extensions` directory, invisibly.
 dir <- tempfile()
 add_live_extension(dir)
 list.files(dir, recursive = TRUE, all.files = TRUE)[1:3]
-#> [1] "_extensions/r-wasm/live/_extension.yml"
-#> [2] "_extensions/r-wasm/live/_gradethis.qmd"
-#> [3] "_extensions/r-wasm/live/_knitr.qmd"    
+#> [1] "_extensions/r-wasm/live/LICENSE.md"    
+#> [2] "_extensions/r-wasm/live/_extension.yml"
+#> [3] "_extensions/r-wasm/live/_gradethis.qmd"
 unlink(dir, recursive = TRUE)
 ```
