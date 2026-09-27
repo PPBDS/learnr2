@@ -308,7 +308,21 @@ test.describe("image paste (allow_image)", () => {
     await expect(page.locator(".learnr2-image-paste-error")).toContainText("too large");
   });
 
-  test("submitting saves text and image together and both survive a reload", async ({ page }) => {
+  test("pasting an image hides the text box; removing it brings the box back", async ({ page }) => {
+    await page.goto("/reflection-image");
+    await writeImageToClipboard(page, TINY_PNG_BASE64, "image/png");
+
+    await page.locator("textarea").click();
+    await page.keyboard.press("Control+V");
+    await expect(page.locator(".learnr2-image-paste-preview")).toBeVisible();
+    await expect(page.locator("textarea")).toBeHidden();
+
+    await page.locator(".learnr2-image-paste-remove").click();
+    await expect(page.locator(".learnr2-image-paste-preview")).toBeHidden();
+    await expect(page.locator("textarea")).toBeVisible();
+  });
+
+  test("submitting saves only the image, which survives a reload", async ({ page }) => {
     await page.goto("/reflection-image");
     await writeImageToClipboard(page, TINY_PNG_BASE64, "image/png");
 
@@ -321,7 +335,8 @@ test.describe("image paste (allow_image)", () => {
     await expect(page.locator("textarea")).toBeDisabled();
 
     await page.reload();
-    await expect(page.locator("textarea")).toHaveValue("Here is my plot.");
+    await expect(page.locator("textarea")).toBeHidden();
+    await expect(page.locator("textarea")).toHaveValue("");
     await expect(page.locator(".learnr2-image-paste-preview")).toBeVisible();
     const src = await page.locator(".learnr2-image-paste-preview").getAttribute("src");
     expect(src).toMatch(/^data:image\/png;base64,/);

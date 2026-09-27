@@ -746,6 +746,18 @@ Two layers, both run in CI (`.github/workflows/R-CMD-check.yaml`,
 Run them: `R -q -e 'devtools::test()'` (or `pkgload::load_all()` +
 `testthat::test_dir("tests/testthat")`), and `cd tests/js && npx playwright test`.
 
+## Image-paste reflections (`allow_image = TRUE`)
+
+Once a reader pastes an image into a `reflection`/`reflection_editable`
+question, the image *is* the answer: `quiz.js` hides the response textarea
+(via `buildImagePasteArea()`'s `onChange` callback) so only the image
+preview and "Remove image" show, and "Remove image" brings the textarea
+back. Any text typed before the paste is hidden too, so it is *not* saved
+or submitted alongside the image (`value` is saved as `""`). This was a
+user-reported UX bug: the textarea used to stay visible above the pasted
+image, which read as a second, still-empty box to fill in. Don't
+reintroduce a visible text box next to a pasted image.
+
 ## Progressive section reveal ("Continue" buttons)
 
 `initProgressiveSections()` in `quiz.js` gates every `##`/`###` heading
