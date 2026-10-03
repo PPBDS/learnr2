@@ -97,6 +97,13 @@ print.learnr2_answer <- function(x, ...) {
 #'   guaranteed to be PNG just because they took a screenshot) and
 #'   re-encodes it as PNG before storing it, so what ends up saved is
 #'   always PNG regardless of the source format. Capped at 2MB.
+#' @param show_text Show `text` as the question's prompt inside the widget?
+#'   Defaults to `TRUE`. Set it to `FALSE` when the prompt is written as
+#'   ordinary text on the page, just above the question, and should not be
+#'   repeated inside the box. `text` is still required: it is kept (and read
+#'   by screen readers, via visually hidden text) and is what the reader is
+#'   reminded of if they try to download their answers without submitting
+#'   this question.
 #' @param validate Client-side format check applied before the reader can
 #'   submit a `"text"`, `"reflection"`, or `"reflection_editable"` answer.
 #'   `"none"` (the default) accepts anything. `"integer"` requires the typed
@@ -175,6 +182,7 @@ question <- function(text,
                       edit_button = "Edit Answer",
                       id = NULL,
                       allow_image = FALSE,
+                      show_text = TRUE,
                       validate = c("none", "integer")) {
   type <- match.arg(type)
   validate <- match.arg(validate)
@@ -231,6 +239,7 @@ question <- function(text,
     tryAgainLabel = try_again_button,
     editLabel = edit_button,
     allowImage = isTRUE(allow_image) && is_reflection_type,
+    showText = isTRUE(show_text),
     validate = if (is_free_text_type) validate else "none"
   )
 

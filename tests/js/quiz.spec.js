@@ -344,6 +344,30 @@ test.describe("image paste (allow_image)", () => {
   });
 });
 
+test.describe("show_text = FALSE", () => {
+  test("the prompt is hidden visually but stays in the DOM", async ({ page }) => {
+    await page.goto("/reflection-hidden-text");
+
+    const prompt = page.locator(".learnr2-question-text");
+    await expect(prompt).toHaveText("Paste a screenshot of a new browser tab.");
+    await expect(prompt).toHaveClass(/learnr2-visually-hidden/);
+    const box = await prompt.boundingBox();
+    expect(box.width).toBeLessThanOrEqual(1);
+    expect(box.height).toBeLessThanOrEqual(1);
+    // The rest of the widget still renders normally.
+    await expect(page.locator("textarea")).toBeVisible();
+    await expect(page.locator(".learnr2-submit")).toBeVisible();
+  });
+
+  test("a normal question (showText true) still shows its prompt", async ({ page }) => {
+    await page.goto("/reflection-image");
+
+    const prompt = page.locator(".learnr2-question-text");
+    await expect(prompt).toBeVisible();
+    await expect(prompt).not.toHaveClass(/learnr2-visually-hidden/);
+  });
+});
+
 test.describe("student info form", () => {
   test("fields auto-save on blur and are restored on reload", async ({ page }) => {
     await page.goto("/student-info");

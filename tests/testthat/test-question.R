@@ -110,6 +110,25 @@ test_that("allow_image is carried through for reflection types", {
   expect_true(q2$payload$allowImage)
 })
 
+test_that("show_text defaults to TRUE and is carried through when FALSE", {
+  q <- question(
+    "Paste a screenshot of your plot.",
+    type = "reflection",
+    allow_image = TRUE
+  )
+  expect_true(q$payload$showText)
+
+  q2 <- question(
+    "Paste a screenshot of your plot.",
+    type = "reflection",
+    allow_image = TRUE,
+    show_text = FALSE
+  )
+  expect_false(q2$payload$showText)
+  # The prompt is kept in the payload even when it isn't shown in the widget.
+  expect_equal(q2$payload$text, "Paste a screenshot of your plot.")
+})
+
 test_that("allow_image is ignored for non-reflection question types", {
   q <- question(
     "2 + 2?",

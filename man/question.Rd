@@ -17,6 +17,7 @@ question(
   edit_button = "Edit Answer",
   id = NULL,
   allow_image = FALSE,
+  show_text = TRUE,
   validate = c("none", "integer")
 )
 }
@@ -87,6 +88,14 @@ platform actually put on the clipboard -- this varies, and isn't
 guaranteed to be PNG just because they took a screenshot) and
 re-encodes it as PNG before storing it, so what ends up saved is
 always PNG regardless of the source format. Capped at 2MB.}
+
+\item{show_text}{Show \code{text} as the question's prompt inside the widget?
+Defaults to \code{TRUE}. Set it to \code{FALSE} when the prompt is written as
+ordinary text on the page, just above the question, and should not be
+repeated inside the box. \code{text} is still required: it is kept (and read
+by screen readers, via visually hidden text) and is what the reader is
+reminded of if they try to download their answers without submitting
+this question.}
 
 \item{validate}{Client-side format check applied before the reader can
 submit a \code{"text"}, \code{"reflection"}, or \code{"reflection_editable"} answer.
