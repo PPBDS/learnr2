@@ -2,6 +2,11 @@
 
 ## learnr2 0.1.0
 
+- [`question()`](https://ppbds.github.io/learnr2/reference/question.md)
+  gains `show_text`. Set `show_text = FALSE` to keep the prompt out of
+  the widget box when it is already written as ordinary text on the page
+  above it; the prompt stays in the saved data and is still read by
+  screen readers.
 - Printing a
   [`question()`](https://ppbds.github.io/learnr2/reference/question.md),
   [`quiz()`](https://ppbds.github.io/learnr2/reference/quiz.md),

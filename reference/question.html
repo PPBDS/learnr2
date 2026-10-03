@@ -61,6 +61,7 @@ questions, graded entirely in the reader's browser.</p>
 <span>  edit_button <span class="op">=</span> <span class="st">"Edit Answer"</span>,</span>
 <span>  id <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  allow_image <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  show_text <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  validate <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"none"</span>, <span class="st">"integer"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -156,6 +157,16 @@ re-encodes it as PNG before storing it, so what ends up saved is
 always PNG regardless of the source format. Capped at 2MB.</p></dd>
 
 
+<dt id="arg-show-text">show_text<a class="anchor" aria-label="anchor" href="#arg-show-text"></a></dt>
+<dd><p>Show <code>text</code> as the question's prompt inside the widget?
+Defaults to <code>TRUE</code>. Set it to <code>FALSE</code> when the prompt is written as
+ordinary text on the page, just above the question, and should not be
+repeated inside the box. <code>text</code> is still required: it is kept (and read
+by screen readers, via visually hidden text) and is what the reader is
+reminded of if they try to download their answers without submitting
+this question.</p></dd>
+
+
 <dt id="arg-validate">validate<a class="anchor" aria-label="anchor" href="#arg-validate"></a></dt>
 <dd><p>Client-side format check applied before the reader can
 submit a <code>"text"</code>, <code>"reflection"</code>, or <code>"reflection_editable"</code> answer.
@@ -216,7 +227,7 @@ visit, not this one tutorial's progress.</p>
 <span class="r-in"><span>  <span class="fu"><a href="answer.html">answer</a></span><span class="op">(</span><span class="st">"48"</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>  allow_retry <span class="op">=</span> <span class="cn">TRUE</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;div class="learnr2-question" data-learnr2-question="eyJpZCI6IndoYXQtaXMtNi10aW1lcy03IiwidGV4dCI6IldoYXQgaXMgNiB0aW1lcyA3PyIs&amp;#10;InR5cGUiOiJzaW5nbGUiLCJhbnN3ZXJzIjpbeyJ0ZXh0IjoiNDIiLCJjb3JyZWN0Ijp0cnVl&amp;#10;LCJtZXNzYWdlIjpudWxsfSx7InRleHQiOiIzNiIsImNvcnJlY3QiOmZhbHNlLCJtZXNzYWdl&amp;#10;IjpudWxsfSx7InRleHQiOiI0OCIsImNvcnJlY3QiOmZhbHNlLCJtZXNzYWdlIjpudWxsfV0s&amp;#10;ImNvcnJlY3RNZXNzYWdlIjoiQ29ycmVjdCEiLCJpbmNvcnJlY3RNZXNzYWdlIjoiSW5jb3Jy&amp;#10;ZWN0LiIsImFsbG93UmV0cnkiOnRydWUsInJhbmRvbUFuc3dlck9yZGVyIjpmYWxzZSwic3Vi&amp;#10;bWl0TGFiZWwiOiJTdWJtaXQgQW5zd2VyIiwidHJ5QWdhaW5MYWJlbCI6IlRyeSBBZ2FpbiIs&amp;#10;ImVkaXRMYWJlbCI6IkVkaXQgQW5zd2VyIiwiYWxsb3dJbWFnZSI6ZmFsc2UsInZhbGlkYXRl&amp;#10;Ijoibm9uZSJ9"&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;div class="learnr2-question" data-learnr2-question="eyJpZCI6IndoYXQtaXMtNi10aW1lcy03IiwidGV4dCI6IldoYXQgaXMgNiB0aW1lcyA3PyIs&amp;#10;InR5cGUiOiJzaW5nbGUiLCJhbnN3ZXJzIjpbeyJ0ZXh0IjoiNDIiLCJjb3JyZWN0Ijp0cnVl&amp;#10;LCJtZXNzYWdlIjpudWxsfSx7InRleHQiOiIzNiIsImNvcnJlY3QiOmZhbHNlLCJtZXNzYWdl&amp;#10;IjpudWxsfSx7InRleHQiOiI0OCIsImNvcnJlY3QiOmZhbHNlLCJtZXNzYWdlIjpudWxsfV0s&amp;#10;ImNvcnJlY3RNZXNzYWdlIjoiQ29ycmVjdCEiLCJpbmNvcnJlY3RNZXNzYWdlIjoiSW5jb3Jy&amp;#10;ZWN0LiIsImFsbG93UmV0cnkiOnRydWUsInJhbmRvbUFuc3dlck9yZGVyIjpmYWxzZSwic3Vi&amp;#10;bWl0TGFiZWwiOiJTdWJtaXQgQW5zd2VyIiwidHJ5QWdhaW5MYWJlbCI6IlRyeSBBZ2FpbiIs&amp;#10;ImVkaXRMYWJlbCI6IkVkaXQgQW5zd2VyIiwiYWxsb3dJbWFnZSI6ZmFsc2UsInNob3dUZXh0&amp;#10;Ijp0cnVlLCJ2YWxpZGF0ZSI6Im5vbmUifQ=="&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   &lt;noscript&gt;This quiz question requires JavaScript.&lt;/noscript&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;/div&gt;</span>
 <span class="r-in"><span></span></span>
@@ -227,7 +238,7 @@ visit, not this one tutorial's progress.</p>
 <span class="r-in"><span>  type <span class="op">=</span> <span class="st">"reflection_editable"</span>,</span></span>
 <span class="r-in"><span>  validate <span class="op">=</span> <span class="st">"integer"</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;div class="learnr2-question" data-learnr2-question="eyJpZCI6Imhvdy1tYW55LW1pbnV0ZXMtYXBwcm94aW1hdGVseS1kaWQtdGhpcy10YWtlIiwi&amp;#10;dGV4dCI6IkhvdyBtYW55IG1pbnV0ZXMsIGFwcHJveGltYXRlbHksIGRpZCB0aGlzIHRha2U/&amp;#10;IiwidHlwZSI6InJlZmxlY3Rpb25fZWRpdGFibGUiLCJhbnN3ZXJzIjpbXSwiY29ycmVjdE1l&amp;#10;c3NhZ2UiOiJDb3JyZWN0ISIsImluY29ycmVjdE1lc3NhZ2UiOiJJbmNvcnJlY3QuIiwiYWxs&amp;#10;b3dSZXRyeSI6ZmFsc2UsInJhbmRvbUFuc3dlck9yZGVyIjpmYWxzZSwic3VibWl0TGFiZWwi&amp;#10;OiJTdWJtaXQgQW5zd2VyIiwidHJ5QWdhaW5MYWJlbCI6IlRyeSBBZ2FpbiIsImVkaXRMYWJl&amp;#10;bCI6IkVkaXQgQW5zd2VyIiwiYWxsb3dJbWFnZSI6ZmFsc2UsInZhbGlkYXRlIjoiaW50ZWdl&amp;#10;ciJ9"&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;div class="learnr2-question" data-learnr2-question="eyJpZCI6Imhvdy1tYW55LW1pbnV0ZXMtYXBwcm94aW1hdGVseS1kaWQtdGhpcy10YWtlIiwi&amp;#10;dGV4dCI6IkhvdyBtYW55IG1pbnV0ZXMsIGFwcHJveGltYXRlbHksIGRpZCB0aGlzIHRha2U/&amp;#10;IiwidHlwZSI6InJlZmxlY3Rpb25fZWRpdGFibGUiLCJhbnN3ZXJzIjpbXSwiY29ycmVjdE1l&amp;#10;c3NhZ2UiOiJDb3JyZWN0ISIsImluY29ycmVjdE1lc3NhZ2UiOiJJbmNvcnJlY3QuIiwiYWxs&amp;#10;b3dSZXRyeSI6ZmFsc2UsInJhbmRvbUFuc3dlck9yZGVyIjpmYWxzZSwic3VibWl0TGFiZWwi&amp;#10;OiJTdWJtaXQgQW5zd2VyIiwidHJ5QWdhaW5MYWJlbCI6IlRyeSBBZ2FpbiIsImVkaXRMYWJl&amp;#10;bCI6IkVkaXQgQW5zd2VyIiwiYWxsb3dJbWFnZSI6ZmFsc2UsInNob3dUZXh0Ijp0cnVlLCJ2&amp;#10;YWxpZGF0ZSI6ImludGVnZXIifQ=="&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   &lt;noscript&gt;This quiz question requires JavaScript.&lt;/noscript&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;/div&gt;</span>
 </code></pre></div>

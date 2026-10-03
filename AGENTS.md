@@ -544,6 +544,40 @@ Type mapping:
 See `hello-learnr2.qmd`’s quiz section for a worked example of every
 type.
 
+### Screenshot (“image”) reflection questions
+
+`learnr2::question(type = "reflection", allow_image = TRUE)` lets a
+reader paste a screenshot (Ctrl+V/Cmd+V) as their answer instead of
+typing one – useful for verifying a real-world environment step a
+tutorial has no other way to check (signed into an account, a particular
+app or page open, a particular UI state), since there’s no code to run
+and grade.
+
+**Ask for one firm, specific screenshot – never an example-hedged one.**
+A question phrased as “paste a screenshot showing X – for example, A, or
+B” leaves the reader guessing which of several loosely-related
+screenshots would actually count. Name the one concrete
+screen/page/window directly, and, if it isn’t obvious, say *why* that
+one proves the step happened – e.g. “paste a screenshot of your GitHub
+dashboard” (not “a screenshot showing you’re signed in – for example
+your profile page, or the account menu”), because the dashboard itself
+looks different signed in vs. signed out, which is what actually proves
+the step. Real correction, from authoring the screenshot questions in
+`PPBDS/primer`’s `getting-started-2.qmd` chapter (2026-09): every one of
+them first shipped with “– for example, …” phrasing, and the reviewer
+asked for one firm screenshot per question instead of a hedged list of
+options, across all of them at once – treat this as the default for any
+new screenshot question, not a per-question judgment call.
+
+If the prompt is better written as ordinary text on the page (so it sits
+outside the question box, as a normal paragraph), write it there and
+pass `show_text = FALSE` to
+[`question()`](https://ppbds.github.io/learnr2/reference/question.md).
+`text` is still required – it is kept in the saved data and the “you
+haven’t submitted this yet” warning, and is exposed to screen readers
+via visually hidden text – so repeat the same wording in `text` rather
+than leaving it empty.
+
 ### Student info and submission
 
 `tutorial.helpers`’s `info_section.Rmd` child document becomes
