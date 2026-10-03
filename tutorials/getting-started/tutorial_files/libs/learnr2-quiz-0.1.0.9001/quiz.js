@@ -991,7 +991,11 @@
 
     node.textContent = "";
     node.classList.add("learnr2-question-rendered");
-    node.appendChild(el("div", { class: "learnr2-question-text", text: data.text }));
+    // show_text = FALSE: the prompt is written on the page itself, so keep it
+    // out of the box visually, but leave it in the DOM for screen readers.
+    var textClass =
+      data.showText === false ? "learnr2-question-text learnr2-visually-hidden" : "learnr2-question-text";
+    node.appendChild(el("div", { class: textClass, text: data.text }));
 
     if (data.type === "text") {
       buildTextQuestion(node, data);
