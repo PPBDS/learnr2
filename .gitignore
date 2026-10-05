@@ -1,0 +1,21 @@
+# macOS
+.DS_Store
+
+# R / RStudio session files
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+
+# Quarto render artifacts (run_tutorial()/create_tutorial() regenerate these;
+# the bundled extension under inst/extdata/_extensions/ is tracked, not this)
+.quarto
+inst/tutorials/*/_extensions
+inst/tutorials/*/*.html
+inst/tutorials/*/*_files
+inst/tutorials/*/*.knit.md
+
+# Playwright
+tests/js/node_modules
+tests/js/test-results
+tests/js/playwright-report
