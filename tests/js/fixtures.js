@@ -25,6 +25,7 @@ function question(overrides) {
       tryAgainLabel: "Try Again",
       editLabel: "Edit Answer",
       allowImage: false,
+      showText: true,
       validate: "none"
     },
     overrides
@@ -222,6 +223,18 @@ const FIXTURES = {
         type: "reflection",
         answers: [answer("A scatterplot with a downward trend.", true)],
         allowImage: true
+      })
+    )
+  ],
+  "reflection-hidden-text": [
+    questionBlock(
+      question({
+        id: "reflection-hidden-text",
+        text: "Paste a screenshot of a new browser tab.",
+        type: "reflection",
+        answers: [],
+        allowImage: true,
+        showText: false
       })
     )
   ],
