@@ -28,9 +28,15 @@ available_tutorials(package = NULL, type = "all")
 ## Value
 
 A data frame with one row per tutorial and columns `package`, `name`,
-`title` (`NA` if the tutorial's `.qmd`/`.Rmd` has no YAML `title`), and
-`format` (`"quarto"` or `"rmarkdown"`). `name` can be passed to
-[`run_tutorial()`](https://ppbds.github.io/learnr2/reference/run_tutorial.md).
+`title` (`NA` if the tutorial's `.qmd`/`.Rmd` has no YAML `title`),
+`format` (`"quarto"` or `"rmarkdown"`), and `path` (the installed
+`.qmd`/`.Rmd` file; `NA` if the directory has neither). `name` can be
+passed to
+[`run_tutorial()`](https://ppbds.github.io/learnr2/reference/run_tutorial.md);
+`path` to
+[`render_tutorials()`](https://ppbds.github.io/learnr2/reference/render_tutorials.md)
+and
+[`check_tutorial()`](https://ppbds.github.io/learnr2/reference/check_tutorial.md).
 
 ## Examples
 
@@ -43,9 +49,17 @@ learnr2::available_tutorials(package = "learnr2")
 #> 1 learnr2 getting-started       Getting Started quarto
 #> 2 learnr2   hello-learnr2        Hello, learnr2 quarto
 #> 3 learnr2   intro-vectors Intro to Vectors in R quarto
+#>                                                                                path
+#> 1    /home/runner/work/_temp/Library/learnr2/tutorials/getting-started/tutorial.qmd
+#> 2 /home/runner/work/_temp/Library/learnr2/tutorials/hello-learnr2/hello-learnr2.qmd
+#> 3 /home/runner/work/_temp/Library/learnr2/tutorials/intro-vectors/intro-vectors.qmd
 learnr2::available_tutorials(package = "learnr2", type = "quarto")
 #>   package            name                 title format
 #> 1 learnr2 getting-started       Getting Started quarto
 #> 2 learnr2   hello-learnr2        Hello, learnr2 quarto
 #> 3 learnr2   intro-vectors Intro to Vectors in R quarto
+#>                                                                                path
+#> 1    /home/runner/work/_temp/Library/learnr2/tutorials/getting-started/tutorial.qmd
+#> 2 /home/runner/work/_temp/Library/learnr2/tutorials/hello-learnr2/hello-learnr2.qmd
+#> 3 /home/runner/work/_temp/Library/learnr2/tutorials/intro-vectors/intro-vectors.qmd
 ```

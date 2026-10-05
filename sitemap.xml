@@ -8,6 +8,7 @@
 <url><loc>https://ppbds.github.io/learnr2/reference/add_live_extension.html</loc></url>
 <url><loc>https://ppbds.github.io/learnr2/reference/answer.html</loc></url>
 <url><loc>https://ppbds.github.io/learnr2/reference/available_tutorials.html</loc></url>
+<url><loc>https://ppbds.github.io/learnr2/reference/check_tutorial.html</loc></url>
 <url><loc>https://ppbds.github.io/learnr2/reference/create_tutorial.html</loc></url>
 <url><loc>https://ppbds.github.io/learnr2/reference/download_answers_button.html</loc></url>
 <url><loc>https://ppbds.github.io/learnr2/reference/index.html</loc></url>
@@ -15,7 +16,9 @@
 <url><loc>https://ppbds.github.io/learnr2/reference/live_extension_dir.html</loc></url>
 <url><loc>https://ppbds.github.io/learnr2/reference/question.html</loc></url>
 <url><loc>https://ppbds.github.io/learnr2/reference/quiz.html</loc></url>
+<url><loc>https://ppbds.github.io/learnr2/reference/render_tutorials.html</loc></url>
 <url><loc>https://ppbds.github.io/learnr2/reference/run_tutorial.html</loc></url>
+<url><loc>https://ppbds.github.io/learnr2/reference/show_file.html</loc></url>
 <url><loc>https://ppbds.github.io/learnr2/reference/student_info.html</loc></url>
 <url><loc>https://ppbds.github.io/learnr2/reference/submission_time.html</loc></url>
 </urlset>

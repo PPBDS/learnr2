@@ -10,6 +10,17 @@ Scaffold and run interactive tutorials.
   : Render and open a bundled tutorial
 - [`available_tutorials()`](https://ppbds.github.io/learnr2/reference/available_tutorials.md)
   : List tutorials bundled with learnr2 (or any installed package)
+- [`show_file()`](https://ppbds.github.io/learnr2/reference/show_file.md)
+  : Display all or part of a text file
+
+## Testing tutorials
+
+Confirm tutorials render and follow the authoring rules.
+
+- [`render_tutorials()`](https://ppbds.github.io/learnr2/reference/render_tutorials.md)
+  : Render tutorials, as a test that they build
+- [`check_tutorial()`](https://ppbds.github.io/learnr2/reference/check_tutorial.md)
+  : Check that a tutorial has the recommended components
 
 ## Quiz questions
 

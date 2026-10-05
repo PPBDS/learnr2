@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">learnr2</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9001</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.1.9001</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -33,7 +33,14 @@
     </div>
 
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="0.1.0" id="learnr2-010">learnr2 0.1.0<a class="anchor" aria-label="anchor" href="#learnr2-010"></a></h2>
+<h2 class="pkg-version" data-toc-text="development version" id="learnr2-development-version">learnr2 (development version)<a class="anchor" aria-label="anchor" href="#learnr2-development-version"></a></h2>
+<ul><li>New <code><a href="../reference/render_tutorials.html">render_tutorials()</a></code> and <code><a href="../reference/check_tutorial.html">check_tutorial()</a></code>, learnr2’s counterparts of ‘tutorial.helpers’’ <code>knit_tutorials()</code> and <code>check_tutorial_defaults()</code>, so a content package can test its tutorials: <code><a href="../reference/render_tutorials.html">render_tutorials()</a></code> copies each tutorial to a work directory, adds the ‘quarto-live’ extension, renders it with Quarto, and errors naming any tutorial that fails; <code><a href="../reference/check_tutorial.html">check_tutorial()</a></code> runs static checks for the authoring mistakes a successful render does not catch (missing <code>#| label:</code>, <code>echo: false</code>, <code>persist: true</code>, a graded exercise without a <code>solution: true</code> cell, a <a href="https://github.com/cardiomoon/webr" class="external-link">webr</a> package missing from <code>webr: packages:</code>, and the standard boilerplate). <code><a href="../reference/run_tutorial.html">run_tutorial()</a></code> and the package’s own GitHub Pages publishing now render through <code><a href="../reference/render_tutorials.html">render_tutorials()</a></code>, and learnr2’s test suite renders every bundled tutorial for real (skipped on CRAN and where Quarto is not installed).</li>
+<li>
+<code><a href="../reference/available_tutorials.html">available_tutorials()</a></code> gains a <code>path</code> column, the installed <code>.qmd</code>/<code>.Rmd</code> file, ready to pass to <code><a href="../reference/render_tutorials.html">render_tutorials()</a></code> and <code><a href="../reference/check_tutorial.html">check_tutorial()</a></code>.</li>
+<li>New <code><a href="../reference/show_file.html">show_file()</a></code>, ported from ‘tutorial.helpers’ together with its tests: print all or part of a text file, rows matching a pattern, its code chunks, or its YAML header. Two changes from the original: the default (<code>chunk = "auto"</code>) now shows the <em>last code chunk</em> of a file that has chunks – the overwhelmingly common use – and the whole file otherwise (pass <code>chunk = "None"</code> or <code>start = 0</code> for the whole file of a <code>.qmd</code>; supplying <code>start</code>, <code>end</code>, or <code>pattern</code> also switches back to rows); and <code>chunk = "&lt;label&gt;"</code> shows the chunk with that label, which some existing tutorials already call as if it worked.</li>
+</ul></div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.1.1" id="learnr2-011">learnr2 0.1.1<a class="anchor" aria-label="anchor" href="#learnr2-011"></a></h2>
 <ul><li>
 <code><a href="../reference/question.html">question()</a></code> gains <code>show_text</code>. Set <code>show_text = FALSE</code> to keep the prompt out of the widget box when it is already written as ordinary text on the page above it; the prompt stays in the saved data and is still read by screen readers.</li>
 <li>Printing a <code><a href="../reference/question.html">question()</a></code>, <code><a href="../reference/quiz.html">quiz()</a></code>, <code><a href="../reference/student_info.html">student_info()</a></code>, or <code><a href="../reference/download_answers_button.html">download_answers_button()</a></code> at the console now opens a browser preview only in an interactive session; non-interactive prints (scripts, <code>R CMD check</code>) emit the HTML source instead of launching the system browser.</li>
