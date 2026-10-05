@@ -17,8 +17,10 @@ whose top-level document is a \code{.qmd}), \code{"rmarkdown"} (a \code{.Rmd}), 
 \value{
 A data frame with one row per tutorial and columns \code{package},
 \code{name}, \code{title} (\code{NA} if the tutorial's \code{.qmd}/\code{.Rmd} has no YAML
-\code{title}), and \code{format} (\code{"quarto"} or \code{"rmarkdown"}). \code{name} can be
-passed to \code{\link[=run_tutorial]{run_tutorial()}}.
+\code{title}), \code{format} (\code{"quarto"} or \code{"rmarkdown"}), and \code{path} (the
+installed \code{.qmd}/\code{.Rmd} file; \code{NA} if the directory has neither).
+\code{name} can be passed to \code{\link[=run_tutorial]{run_tutorial()}}; \code{path} to
+\code{\link[=render_tutorials]{render_tutorials()}} and \code{\link[=check_tutorial]{check_tutorial()}}.
 }
 \description{
 Scans one package -- or, by default, every package installed -- for a

@@ -19,6 +19,12 @@ reference:
       - create_tutorial
       - run_tutorial
       - available_tutorials
+      - show_file
+  - title: Testing tutorials
+    desc: Confirm tutorials render and follow the authoring rules.
+    contents:
+      - render_tutorials
+      - check_tutorial
   - title: Quiz questions
     desc: learnr-style quiz questions, graded in the browser.
     contents:

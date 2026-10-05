@@ -14,8 +14,10 @@
 #'
 #' @return A data frame with one row per tutorial and columns `package`,
 #'   `name`, `title` (`NA` if the tutorial's `.qmd`/`.Rmd` has no YAML
-#'   `title`), and `format` (`"quarto"` or `"rmarkdown"`). `name` can be
-#'   passed to [run_tutorial()].
+#'   `title`), `format` (`"quarto"` or `"rmarkdown"`), and `path` (the
+#'   installed `.qmd`/`.Rmd` file; `NA` if the directory has neither).
+#'   `name` can be passed to [run_tutorial()]; `path` to
+#'   [render_tutorials()] and [check_tutorial()].
 #' @export
 #' @examples
 #' # Qualified with learnr2:: because the learnr package exports a function of
@@ -47,6 +49,7 @@ available_tutorials <- function(package = NULL, type = "all") {
       name = character(0),
       title = character(0),
       format = character(0),
+      path = character(0),
       stringsAsFactors = FALSE
     ))
   }
@@ -76,6 +79,7 @@ tutorials_in_package <- function(pkg) {
     name = fs::path_file(dirs),
     title = vapply(docs, tutorial_title, character(1), USE.NAMES = FALSE),
     format = vapply(docs, tutorial_format, character(1), USE.NAMES = FALSE),
+    path = unname(unlist(docs)),
     stringsAsFactors = FALSE
   )
 }
@@ -193,20 +197,12 @@ run_tutorial <- function(name = NULL,
 
   src <- system.file("tutorials", name, package = package)
   output_dir <- fs::path_abs(output_dir)
-  fs::dir_create(output_dir)
 
-  # fs::dir_copy() copies the *contents* of `src` into the destination,
-  # so point it at `work_dir` directly to get work_dir/<name>.qmd.
-  work_dir <- fs::path(output_dir, name)
-  fs::dir_copy(src, work_dir, overwrite = TRUE)
-
-  add_live_extension(work_dir)
-
-  qmd <- fs::dir_ls(work_dir, glob = "*.qmd")[1]
-  quarto::quarto_render(input = as.character(qmd), quiet = TRUE)
-
-  html <- fs::path_ext_set(qmd, "html")
-  message("Rendered: ", html)
+  # render_tutorials() copies `src` to output_dir/<name>/, adds the
+  # quarto-live extension there, and renders -- the same steps the package's
+  # own Pages publishing and a content package's tests use.
+  html <- render_tutorials(src, output_dir = output_dir)[[1]]
+  work_dir <- fs::path_dir(html)
 
   if (!isTRUE(open)) {
     return(invisible(as.character(html)))

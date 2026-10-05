@@ -16,37 +16,24 @@ if (nrow(tutorials) == 0) {
   stop("No tutorials found via learnr2::available_tutorials().", call. = FALSE)
 }
 
-rendered <- data.frame(name = character(0), title = character(0), html = character(0))
-
+# Fail the build on any authoring mistake the static checks catch, before
+# spending time rendering. hello-learnr2 is a feature tour that deliberately
+# shows the R source of its widget chunks and has no "minutes" question.
 for (i in seq_len(nrow(tutorials))) {
-  name <- tutorials$name[i]
-  title <- tutorials$title[i]
-  if (is.na(title)) {
-    title <- name
-  }
-
-  src <- system.file("tutorials", name, package = "learnr2")
-  work_dir <- fs::path(site_dir, name)
-  fs::dir_copy(src, work_dir, overwrite = TRUE)
-
-  learnr2::add_live_extension(work_dir)
-
-  qmd <- fs::dir_ls(work_dir, glob = "*.qmd")[1]
-  message("Rendering ", name, " (", qmd, ")...")
-  quarto::quarto_render(input = as.character(qmd), quiet = FALSE)
-
-  html <- fs::path_ext_set(qmd, "html")
-  if (!fs::file_exists(html)) {
-    stop("Expected rendered file not found: ", html, call. = FALSE)
-  }
-
-  rendered <- rbind(rendered, data.frame(
-    name = name,
-    title = title,
-    html = fs::path(name, fs::path_file(html)),
-    stringsAsFactors = FALSE
-  ))
+  skip <- if (tutorials$name[i] == "hello-learnr2") c("echo", "minutes") else NULL
+  learnr2::check_tutorial(tutorials$path[i], skip = skip)
 }
+
+# render_tutorials() copies each tutorial to site_dir/<name>/, adds the
+# extension, renders it, and errors naming the tutorial on failure.
+html <- learnr2::render_tutorials(tutorials$path, output_dir = site_dir, quiet = FALSE)
+
+rendered <- data.frame(
+  name = tutorials$name,
+  title = ifelse(is.na(tutorials$title), tutorials$name, tutorials$title),
+  html = as.character(fs::path(tutorials$name, fs::path_file(html[tutorials$name]))),
+  stringsAsFactors = FALSE
+)
 
 links <- paste0(
   "<li><a href=\"", rendered$html, "\">", rendered$title, "</a></li>",

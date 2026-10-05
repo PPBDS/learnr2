@@ -256,11 +256,19 @@ shortcode is inert text).
 
 **So when you do this, also:** add `learnr2` to the host `DESCRIPTION`
 `Suggests` + `PPBDS/learnr2` to `Remotes`; `.Rbuildignore` and `.gitignore`
-the on-demand `inst/tutorials/*/_extensions/` (and `.quarto`); and add a
-dedicated CI job that runs
-`learnr2::run_tutorial("<name>", package = "<host-pkg>", open = FALSE)` and
-`stopifnot(file.exists(<returned html>))`, since the host's existing
-`.Rmd`-only render job will not touch it.
+the on-demand `inst/tutorials/*/_extensions/` (and `.quarto`); and give the
+`.qmd` its own test, since the host's existing `.Rmd`-only render job will
+not touch it -- the learnr2 counterpart of the `return_tutorial_paths()` |>
+`knit_tutorials()` + `check_tutorial_defaults()` pattern is:
+
+```r
+tutorials <- learnr2::available_tutorials(package = "<host-pkg>", type = "quarto")
+learnr2::check_tutorial(tutorials$path)
+learnr2::render_tutorials(tutorials$path)
+```
+
+(`skip_on_cran()` + `skip_if(is.null(quarto::quarto_path()))` it, as
+learnr2's own `tests/testthat/test-render-tutorials.R` does.)
 
 ### Quick reference: what maps to what
 
@@ -283,7 +291,7 @@ dedicated CI job that runs
 | `question(..., allow_retry, random_answer_order, incorrect, correct)` | same argument names on `learnr2::question()` |
 | bare `### ` progressive-reveal divider (no real heading text) | delete; keep genuinely-titled `##`/`###` sections (learnr2 gates them itself -- see "Progressive section reveal") |
 | `knitr::include_graphics("images/x.png")` in an `{r}` chunk | plain Markdown `![alt](images/x.png)` (drop the chunk) |
-| prose telling the reader to use "the RStudio Console", `rstudioapi::*`, `tutorial.helpers::show_file()`, etc. | rewrite around an on-page `{webr}` cell, or drop -- see "No local R/RStudio dependency" |
+| prose telling the reader to use "the RStudio Console", `rstudioapi::*`, `show_file()` (from `tutorial.helpers`, or learnr2's own port -- see "No local R/RStudio dependency"), etc. | rewrite around an on-page `{webr}` cell, or drop -- see "No local R/RStudio dependency" |
 
 The sections below expand on the non-obvious rows.
 
@@ -603,7 +611,7 @@ left several exercises' prose untouched from the source -- telling the
 reader to open "the R Console" (i.e. a separate, locally-installed RStudio)
 and run commands like `tutorial.helpers::set_rstudio_settings()`,
 `rstudioapi::readRStudioPreference(...)`, or
-`tutorial.helpers::show_file(...)`. Those are real functions from a
+`tutorial.helpers::show_file(...)`. The first two are real functions from a
 *different, unrelated R package* (`tutorial.helpers`) that has nothing to
 do with learnr2 and is not installed for a learnr2 reader. A reader who
 opened this tutorial from a link with no R installed at all -- which
@@ -611,6 +619,23 @@ learnr2's whole pitch says should work fine -- would hit a wall at that
 exercise. It also left the document's `title:` as the source's literal
 `"Tutorials in RStudio"`, which is wrong once the content no longer assumes
 RStudio.
+
+`show_file()` is a slightly different case, and the distinction matters:
+learnr2 now ships its own copy (`learnr2::show_file()`, in `R/show_file.R`,
+ported from `tutorial.helpers` along with its tests in
+`tests/testthat/test-show_file.R` and the `tests/testthat/fixtures/show_file_*`
+files). It exists for *authors and instructors* working in a local R
+session -- e.g. printing the last code chunk of a student's `.qmd` -- not
+for readers. The problem with "run `show_file("analysis.qmd", chunk =
+"Last")` in the Console" prose was never which package the function came
+from; it's that the instruction presumes a local R session and a local file
+to read, neither of which a browser-only reader has. `learnr2::show_file()`
+is not available inside a `{webr}` cell either (learnr2 isn't installed
+into WebR, and there's no local file for it to read there), so the function
+being "ours" now changes nothing about the rule: prose telling the *reader*
+to run `show_file()` still has to be rewritten around an on-page `{webr}`
+cell or dropped, exactly as before. Don't "fix" such a line by swapping the
+`tutorial.helpers::` prefix for `learnr2::`.
 
 When translating, actively look for and remove/rewrite anything that
 assumes:
@@ -645,7 +670,22 @@ Syntax that merely *looks* plausible can still be wrong in ways that are
 only visible in the rendered HTML (like the `echo` issue above). After
 translating (or hand-authoring), actually render the tutorial with Quarto
 and open the result, rather than relying on visual inspection of the `.qmd`
-source alone:
+source alone. The programmatic way, and what a content package's tests
+should call (see "Test suite layout"):
+
+```r
+learnr2::check_tutorial("path/to/tutorial/dir")    # static checks first
+learnr2::render_tutorials("path/to/tutorial/dir")  # then a real Quarto render
+```
+
+`check_tutorial()` encodes the rules in this file that a render alone
+doesn't catch -- a missing `#| label:`, `echo: false`, or `persist: true`;
+a graded exercise with a `.solution` div instead of a `solution: true`
+cell; a package used in a `{webr}` cell but absent from `webr: packages:`;
+the `student_info()`/minutes/`download_answers_button()` boilerplate.
+`render_tutorials()` is what `run_tutorial()` and the Pages publishing
+script render through, so passing it means the tutorial builds the same
+way everywhere. Or by hand:
 
 ```sh
 Rscript -e "learnr2::add_live_extension('path/to/tutorial/dir')"
@@ -725,13 +765,26 @@ Two layers, both run in CI (`.github/workflows/R-CMD-check.yaml`,
 
 - **R (`testthat`, edition 3), `tests/testthat/`** -- one `test-*.R` file per
   `R/*.R` source file: `test-question.R`, `test-submission.R`,
-  `test-tutorials.R`, `test-extension.R`, `test-create-tutorial.R`. Every
-  exported function *and* every internal helper has a test; call internals
-  as `learnr2:::helper()`. Heavy/external calls are mocked with
+  `test-tutorials.R`, `test-extension.R`, `test-create-tutorial.R`,
+  `test-show_file.R`, `test-render-tutorials.R`, `test-check-tutorial.R`.
+  Every exported function *and* every internal helper has a test; call
+  internals as `learnr2:::helper()`. Heavy/external calls are mocked with
   `testthat::local_mocked_bindings(..., .package = "<pkg>")` -- `quarto`,
   `httpuv` for `run_tutorial()`, `utils`/`rstudioapi` for `open_file()` --
-  so no test renders with Quarto, boots WebR, launches a browser, or hits
-  the network. One defensive guard is deliberately left untested (noted in a
+  so no test boots WebR, launches a browser, or hits the network. **One
+  exception renders for real:** the last test in
+  `test-render-tutorials.R` runs `check_tutorial()` and
+  `render_tutorials()` over every bundled tutorial with actual Quarto. It
+  is `skip_on_cran()` and skipped when Quarto isn't installed, so it runs
+  in `R-CMD-check.yaml` (which sets Quarto up) and under
+  `devtools::test()`/`check()` locally, but not in a plain
+  `R CMD check` (no `NOT_CRAN`) and never on CRAN. It is the only thing in
+  the suite that catches a bundled tutorial that is plausible-looking but
+  won't build; before it existed, that was caught only by the Pages
+  workflow, and only on pushes touching certain paths. `hello-learnr2` is
+  checked with `skip = c("echo", "minutes")`: it's a feature tour that
+  deliberately shows its widget chunks' source and has no minutes
+  question. One defensive guard is deliberately left untested (noted in a
   comment where it lives): `live_extension_dir()`'s missing-package branch --
   it needs a broken install to reach, and `base::` bindings can't be mocked.
 - **JS (`Playwright`), `tests/js/`** -- `quiz.js` (the browser runtime) has

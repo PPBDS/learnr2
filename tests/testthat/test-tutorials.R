@@ -8,9 +8,12 @@
 test_that("available_tutorials(package = 'learnr2') lists the bundled tutorials", {
   tutorials <- available_tutorials(package = "learnr2")
   expect_s3_class(tutorials, "data.frame")
-  expect_true(all(c("package", "name", "title", "format") %in% names(tutorials)))
+  expect_true(all(c("package", "name", "title", "format", "path") %in% names(tutorials)))
   expect_true("hello-learnr2" %in% tutorials$name)
   expect_true(all(tutorials$package == "learnr2"))
+  # `path` is the installed document itself, ready for render_tutorials().
+  expect_true(all(fs::file_exists(tutorials$path)))
+  expect_match(tutorials$path[tutorials$name == "hello-learnr2"], "hello-learnr2\\.qmd$")
 })
 
 test_that("available_tutorials() with no package scans every installed package", {
@@ -51,7 +54,7 @@ test_that("available_tutorials() returns a typed zero-row frame for a package wi
   res <- available_tutorials(package = "utils")
   expect_s3_class(res, "data.frame")
   expect_identical(nrow(res), 0L)
-  expect_named(res, c("package", "name", "title", "format"))
+  expect_named(res, c("package", "name", "title", "format", "path"))
 })
 
 # ---- internal helpers ---------------------------------------------------
