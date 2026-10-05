@@ -2,7 +2,7 @@
 % Please edit documentation in R/tutorials.R
 \name{run_tutorial}
 \alias{run_tutorial}
-\title{Render and open a bundled tutorial}
+\title{Run a bundled tutorial}
 \usage{
 run_tutorial(
   name = NULL,
@@ -19,31 +19,58 @@ run_tutorial(
 to \code{"learnr2"}; set this to run a tutorial from another installed
 package (e.g. a 'primer.tutorials'-style content package).}
 
-\item{output_dir}{Directory in which to render the tutorial. Defaults to a
-persistent per-user cache directory (see \code{\link[tools:R_user_dir]{tools::R_user_dir()}}), \emph{not}
-\code{\link[=tempfile]{tempfile()}} -- R deletes its own session temp directory as soon as the
-R process exits, which races with (and often loses to) the browser
-actually loading the page when \code{open = TRUE} is used non-interactively
-(e.g. via \code{Rscript}), producing a "file not found" page. Pass your own
-\code{output_dir} for a one-off location instead.}
+\item{output_dir}{Directory in which to render a \code{"quarto"} tutorial
+(ignored for an \code{"rmarkdown"} one). Defaults to a persistent per-user
+cache directory (see \code{\link[tools:userdir]{tools::R_user_dir()}}), \emph{not} \code{\link[=tempfile]{tempfile()}} -- R
+deletes its own session temp directory as soon as the R process exits,
+which races with (and often loses to) the browser actually loading the
+page when \code{open = TRUE} is used non-interactively (e.g. via \code{Rscript}),
+producing a "file not found" page. Pass your own \code{output_dir} for a
+one-off location instead.}
 
-\item{open}{Whether to serve the rendered tutorial and open it in a
-browser. Defaults to \code{TRUE} when interactive. When \code{TRUE}, this call
-blocks (like \code{\link[httpuv:runStaticServer]{httpuv::runStaticServer()}} or \code{shiny::runApp()}) until you
-interrupt it (Ctrl+C, or the console's Stop button) -- see the section
-below for why. When \code{FALSE}, the tutorial is rendered and the path
-returned without serving or blocking.}
+\item{open}{Whether to serve the tutorial and open it in a browser.
+Defaults to \code{TRUE} when interactive. When \code{TRUE}, this call blocks (like
+\code{\link[httpuv:runStaticServer]{httpuv::runStaticServer()}} or \code{shiny::runApp()}) until you interrupt it
+(Ctrl+C, or the console's Stop button) -- see the section below for why.
+When \code{FALSE}, a \code{"quarto"} tutorial is rendered and its path returned
+without serving or blocking; an \code{"rmarkdown"} tutorial has no
+render-only mode (it is a Shiny app), so \code{open = FALSE} is an error.
+Note that under \code{Rscript} the default is \code{FALSE}, so pass \code{open = TRUE}
+explicitly there.}
 }
 \value{
-Path to the rendered HTML file, invisibly.
+Path to the rendered HTML file for a \code{"quarto"} tutorial, or to
+the \code{.Rmd} source for an \code{"rmarkdown"} one, invisibly.
 }
 \description{
-Renders a tutorial bundled with an installed package to a temporary
-directory and, in an interactive session, opens the result in a browser.
-Because installed tutorials live in a read-only package library, the
-tutorial is copied to a writable location and the 'quarto-live' extension
-is added before rendering.
+Runs a tutorial bundled with an installed package, whichever of the two
+formats \code{\link[=available_tutorials]{available_tutorials()}} reports it is. A \code{"quarto"} tutorial
+(learnr2's own format) is rendered to \code{output_dir} and, when \code{open} is
+\code{TRUE}, served to a browser. Because installed tutorials live in a
+read-only package library, the tutorial is copied to a writable location
+and the 'quarto-live' extension is added before rendering. An
+\code{"rmarkdown"} tutorial -- a classic 'learnr' tutorial -- is handed to
+\code{learnr::run_tutorial()}, so a tool built on learnr2 (such as the "R
+Tutorials" VS Code extension) can run both kinds through this one function
+and depend only on learnr2. See the section below.
 }
+\section{Classic learnr tutorials}{
+
+Many existing content packages (those built on 'tutorial.helpers', for
+instance) bundle classic 'learnr' tutorials: \code{.Rmd} files with
+\code{runtime: shiny_prerendered} that run as a Shiny app in the local R
+session. learnr2 cannot run those itself -- the Shiny machinery lives in
+'learnr' -- so for an \code{"rmarkdown"} tutorial this function calls
+\code{learnr::run_tutorial(name, package = package)}, which blocks while the
+app runs just as the \code{"quarto"} path blocks while serving.
+
+'learnr' is only a suggested dependency of learnr2, not a required one,
+because a package that bundles classic learnr tutorials already depends
+on 'learnr' itself (directly, or via 'tutorial.helpers'). So whenever an
+\code{"rmarkdown"} tutorial is installed, 'learnr' is too; this function only
+errors with an install hint if that invariant is somehow broken.
+}
+
 \section{Why this blocks and serves over local HTTP instead of opening the file directly}{
 
 Every \code{{webr}} exercise compiles down to Observable JS (OJS), which
@@ -78,5 +105,8 @@ run_tutorial()
 # starts a local web server that blocks the session until interrupted.
 \dontrun{
 run_tutorial("hello-learnr2")
+
+# A classic learnr tutorial from a content package is handed to learnr.
+run_tutorial("hello", package = "learnr", open = TRUE)
 }
 }

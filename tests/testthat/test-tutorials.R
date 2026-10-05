@@ -8,7 +8,9 @@
 test_that("available_tutorials(package = 'learnr2') lists the bundled tutorials", {
   tutorials <- available_tutorials(package = "learnr2")
   expect_s3_class(tutorials, "data.frame")
-  expect_true(all(c("package", "name", "title", "format", "path") %in% names(tutorials)))
+  expect_true(all(
+    c("package", "name", "title", "format", "path", "package_dependencies") %in% names(tutorials)
+  ))
   expect_true("hello-learnr2" %in% tutorials$name)
   expect_true(all(tutorials$package == "learnr2"))
   # `path` is the installed document itself, ready for render_tutorials().
@@ -54,7 +56,58 @@ test_that("available_tutorials() returns a typed zero-row frame for a package wi
   res <- available_tutorials(package = "utils")
   expect_s3_class(res, "data.frame")
   expect_identical(nrow(res), 0L)
-  expect_named(res, c("package", "name", "title", "format", "path"))
+  expect_named(res, c("package", "name", "title", "format", "path", "package_dependencies"))
+  expect_type(res$package_dependencies, "list")
+})
+
+# ---- package_dependencies ------------------------------------------------
+
+test_that("a quarto tutorial needs no local packages: package_dependencies is character(0)", {
+  tutorials <- available_tutorials(package = "learnr2")
+  expect_type(tutorials$package_dependencies, "list")
+  expect_identical(
+    tutorials$package_dependencies[[which(tutorials$name == "hello-learnr2")]],
+    character(0)
+  )
+})
+
+test_that("an rmarkdown tutorial's package_dependencies come from learnr", {
+  skip_if_not_installed("learnr")
+  # learnr ships its own classic .Rmd tutorials, so it doubles as the fixture
+  # content package here and in the run_tutorial() tests below.
+  tutorials <- available_tutorials(package = "learnr")
+  expect_true(all(tutorials$format == "rmarkdown"))
+  hello_deps <- tutorials$package_dependencies[[which(tutorials$name == "hello")]]
+  expect_type(hello_deps, "character")
+  expect_true("learnr" %in% hello_deps)
+})
+
+test_that("package_dependencies is NA for rmarkdown tutorials when learnr is absent or fails", {
+  skip_if_not_installed("learnr")
+
+  local_mocked_bindings(learnr_installed = function() FALSE)
+  tutorials <- available_tutorials(package = "learnr")
+  expect_true(all(vapply(tutorials$package_dependencies, identical, logical(1), NA_character_)))
+
+  local_mocked_bindings(learnr_installed = function() TRUE)
+  local_mocked_bindings(
+    learnr_available_tutorials = function(package) stop("learnr could not read the package")
+  )
+  tutorials <- available_tutorials(package = "learnr")
+  expect_true(all(vapply(tutorials$package_dependencies, identical, logical(1), NA_character_)))
+})
+
+test_that("learnr_available_tutorials() is a thin seam over learnr::available_tutorials()", {
+  skip_if_not_installed("learnr")
+  res <- learnr2:::learnr_available_tutorials("learnr")
+  expect_true("hello" %in% res$name)
+  expect_true("package_dependencies" %in% names(res))
+})
+
+test_that("tutorial_dependencies() maps quarto to character(0) and a missing doc to NA without touching learnr", {
+  local_mocked_bindings(learnr_installed = function() stop("must not be called"))
+  deps <- learnr2:::tutorial_dependencies("learnr2", c("a", "b"), c("quarto", NA))
+  expect_identical(deps, list(character(0), NA_character_))
 })
 
 # ---- internal helpers ---------------------------------------------------
@@ -200,4 +253,79 @@ test_that("run_tutorial(open = TRUE) serves the rendered work dir over a static 
   # index.html is copied in so browse = TRUE lands on the tutorial itself,
   # not httpuv's bare directory listing.
   expect_true(fs::file_exists(fs::path(work_dir, "index.html")))
+})
+
+# ---- run_tutorial(): classic learnr tutorials ----------------------------
+
+test_that("run_tutorial() hands an rmarkdown tutorial to learnr::run_tutorial()", {
+  skip_if_not_installed("learnr")
+
+  called_with <- NULL
+  local_mocked_bindings(
+    learnr_run_tutorial = function(name, package) {
+      called_with <<- list(name = name, package = package)
+      invisible(NULL)
+    }
+  )
+  # Neither Quarto nor httpuv must be touched on this path.
+  local_mocked_bindings(
+    quarto_render = function(...) stop("quarto must not be called"),
+    .package = "quarto"
+  )
+  local_mocked_bindings(
+    runStaticServer = function(...) stop("httpuv must not be called"),
+    .package = "httpuv"
+  )
+
+  res <- withVisible(suppressMessages(
+    run_tutorial("hello", package = "learnr", open = TRUE)
+  ))
+
+  expect_identical(called_with, list(name = "hello", package = "learnr"))
+  expect_false(res$visible)
+  expect_match(res$value, "hello\\.Rmd$")
+  expect_true(fs::file_exists(res$value))
+})
+
+test_that("run_tutorial() says what is happening before handing off to learnr", {
+  skip_if_not_installed("learnr")
+  local_mocked_bindings(learnr_run_tutorial = function(name, package) invisible(NULL))
+  expect_message(
+    run_tutorial("hello", package = "learnr", open = TRUE),
+    "classic learnr tutorial"
+  )
+})
+
+test_that("run_tutorial() errors with an install hint for an rmarkdown tutorial when learnr is absent", {
+  skip_if_not_installed("learnr")
+  local_mocked_bindings(learnr_installed = function() FALSE)
+  expect_error(
+    run_tutorial("hello", package = "learnr", open = TRUE),
+    'install.packages\\("learnr"\\)'
+  )
+})
+
+test_that("run_tutorial(open = FALSE) is an error for an rmarkdown tutorial", {
+  skip_if_not_installed("learnr")
+  local_mocked_bindings(
+    learnr_run_tutorial = function(name, package) stop("learnr must not be called")
+  )
+  expect_error(
+    run_tutorial("hello", package = "learnr", open = FALSE),
+    "open = TRUE"
+  )
+})
+
+test_that("run_tutorial() errors for a tutorial directory with no document", {
+  local_mocked_bindings(
+    available_tutorials = function(package = NULL, type = "all") {
+      data.frame(
+        package = "x", name = "empty", title = NA_character_,
+        format = NA_character_, path = NA_character_,
+        package_dependencies = I(list(NA_character_)),
+        stringsAsFactors = FALSE
+      )
+    }
+  )
+  expect_error(run_tutorial("empty", package = "x"), "no .qmd or .Rmd document")
 })

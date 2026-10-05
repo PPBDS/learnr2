@@ -17,8 +17,10 @@ whose top-level document is a \code{.qmd}), \code{"rmarkdown"} (a \code{.Rmd}), 
 \value{
 A data frame with one row per tutorial and columns \code{package},
 \code{name}, \code{title} (\code{NA} if the tutorial's \code{.qmd}/\code{.Rmd} has no YAML
-\code{title}), \code{format} (\code{"quarto"} or \code{"rmarkdown"}), and \code{path} (the
-installed \code{.qmd}/\code{.Rmd} file; \code{NA} if the directory has neither).
+\code{title}), \code{format} (\code{"quarto"} or \code{"rmarkdown"}), \code{path} (the
+installed \code{.qmd}/\code{.Rmd} file; \code{NA} if the directory has neither), and
+\code{package_dependencies} (a list column: for each tutorial, the character
+vector of R packages that must be installed locally before it can run).
 \code{name} can be passed to \code{\link[=run_tutorial]{run_tutorial()}}; \code{path} to
 \code{\link[=render_tutorials]{render_tutorials()}} and \code{\link[=check_tutorial]{check_tutorial()}}.
 }
@@ -29,6 +31,19 @@ This lets tools like the "R Tutorials" VS Code extension discover
 tutorials from separately-installed content packages (in the style of
 'primer.tutorials') without knowing their names in advance.
 }
+\section{Classic learnr tutorials}{
+
+A \code{"quarto"} tutorial's exercises run in the reader's browser via WebR, so
+it needs no R packages installed locally beyond learnr2 itself and its
+\code{package_dependencies} is \code{character(0)}. An \code{"rmarkdown"} tutorial is a
+classic 'learnr' tutorial (an \code{.Rmd} with \code{runtime: shiny_prerendered}),
+which runs as a Shiny app in the local R session. Its
+\code{package_dependencies} are whatever 'learnr' finds by scanning the
+tutorial's directory (\code{learnr::available_tutorials()}), which always
+includes 'learnr' itself. If 'learnr' is not installed there is nothing
+to ask, and such a tutorial could not run anyway, so the entry is \code{NA}.
+}
+
 \examples{
 # Qualified with learnr2:: because the learnr package exports a function of
 # the same name; this guarantees learnr2's version is used even if learnr is

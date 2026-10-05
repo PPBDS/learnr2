@@ -14,10 +14,23 @@
 #'
 #' @return A data frame with one row per tutorial and columns `package`,
 #'   `name`, `title` (`NA` if the tutorial's `.qmd`/`.Rmd` has no YAML
-#'   `title`), `format` (`"quarto"` or `"rmarkdown"`), and `path` (the
-#'   installed `.qmd`/`.Rmd` file; `NA` if the directory has neither).
+#'   `title`), `format` (`"quarto"` or `"rmarkdown"`), `path` (the
+#'   installed `.qmd`/`.Rmd` file; `NA` if the directory has neither), and
+#'   `package_dependencies` (a list column: for each tutorial, the character
+#'   vector of R packages that must be installed locally before it can run).
 #'   `name` can be passed to [run_tutorial()]; `path` to
 #'   [render_tutorials()] and [check_tutorial()].
+#'
+#' @section Classic learnr tutorials:
+#' A `"quarto"` tutorial's exercises run in the reader's browser via WebR, so
+#' it needs no R packages installed locally beyond learnr2 itself and its
+#' `package_dependencies` is `character(0)`. An `"rmarkdown"` tutorial is a
+#' classic 'learnr' tutorial (an `.Rmd` with `runtime: shiny_prerendered`),
+#' which runs as a Shiny app in the local R session. Its
+#' `package_dependencies` are whatever 'learnr' finds by scanning the
+#' tutorial's directory (`learnr::available_tutorials()`), which always
+#' includes 'learnr' itself. If 'learnr' is not installed there is nothing
+#' to ask, and such a tutorial could not run anyway, so the entry is `NA`.
 #' @export
 #' @examples
 #' # Qualified with learnr2:: because the learnr package exports a function of
@@ -50,6 +63,7 @@ available_tutorials <- function(package = NULL, type = "all") {
       title = character(0),
       format = character(0),
       path = character(0),
+      package_dependencies = I(list()),
       stringsAsFactors = FALSE
     ))
   }
@@ -74,14 +88,68 @@ tutorials_in_package <- function(pkg) {
     return(NULL)
   }
   docs <- lapply(dirs, tutorial_doc)
+  tutorial_names <- fs::path_file(dirs)
+  format <- vapply(docs, tutorial_format, character(1), USE.NAMES = FALSE)
   data.frame(
     package = pkg,
-    name = fs::path_file(dirs),
+    name = tutorial_names,
     title = vapply(docs, tutorial_title, character(1), USE.NAMES = FALSE),
-    format = vapply(docs, tutorial_format, character(1), USE.NAMES = FALSE),
+    format = format,
     path = unname(unlist(docs)),
+    package_dependencies = I(tutorial_dependencies(pkg, tutorial_names, format)),
     stringsAsFactors = FALSE
   )
+}
+
+# The R packages each of `pkg`'s tutorials needs installed locally, as a list
+# of character vectors parallel to `names`/`format`. A quarto tutorial runs
+# its exercises in the browser (WebR), so it needs nothing beyond learnr2:
+# character(0). An rmarkdown tutorial is a classic learnr tutorial, and learnr
+# is the authority on what it needs (learnr::available_tutorials() scans the
+# directory with renv) -- NA when learnr is not installed to ask, or cannot
+# read the package. A directory with no document at all is NA too.
+tutorial_dependencies <- function(pkg, names, format) {
+  deps <- rep(list(character(0)), length(names))
+  is_rmd <- !is.na(format) & format == "rmarkdown"
+  deps[is.na(format) | is_rmd] <- list(NA_character_)
+  if (!any(is_rmd) || !learnr_installed()) {
+    return(deps)
+  }
+  learnr_tutorials <- tryCatch(
+    learnr_available_tutorials(pkg),
+    error = function(e) NULL
+  )
+  if (is.null(learnr_tutorials)) {
+    return(deps)
+  }
+  idx <- match(names[is_rmd], learnr_tutorials$name)
+  found <- !is.na(idx)
+  deps[which(is_rmd)[found]] <- lapply(
+    learnr_tutorials$package_dependencies[idx[found]],
+    function(d) if (is.null(d)) character(0) else as.character(d)
+  )
+  deps
+}
+
+# Seams around learnr, which is only Suggested, so tests can mock it without
+# loading it. These are the only places learnr is referenced. They are
+# deliberately not named like learnr's own functions: learnr and learnr2 both
+# export available_tutorials() and run_tutorial(), so a
+# local_mocked_bindings(..., .package = "learnr") of either name would also
+# replace learnr2's own binding in the test environment. (base:: bindings
+# can't be mocked, hence the requireNamespace() wrapper too.)
+learnr_installed <- function() {
+  requireNamespace("learnr", quietly = TRUE)
+}
+
+learnr_available_tutorials <- function(package) {
+  learnr::available_tutorials(package = package)
+}
+
+# Blocks while the Shiny app runs, like learnr::run_tutorial() itself. Not
+# unit-tested: calling it for real launches Shiny and a browser.
+learnr_run_tutorial <- function(name, package) {
+  learnr::run_tutorial(name, package = package)
 }
 
 # The first .qmd/.Rmd directly inside `dir` (.qmd takes precedence if a
@@ -115,34 +183,59 @@ tutorial_title <- function(doc) {
   if (is.null(title)) NA_character_ else as.character(title)
 }
 
-#' Render and open a bundled tutorial
+#' Run a bundled tutorial
 #'
-#' Renders a tutorial bundled with an installed package to a temporary
-#' directory and, in an interactive session, opens the result in a browser.
-#' Because installed tutorials live in a read-only package library, the
-#' tutorial is copied to a writable location and the 'quarto-live' extension
-#' is added before rendering.
+#' Runs a tutorial bundled with an installed package, whichever of the two
+#' formats [available_tutorials()] reports it is. A `"quarto"` tutorial
+#' (learnr2's own format) is rendered to `output_dir` and, when `open` is
+#' `TRUE`, served to a browser. Because installed tutorials live in a
+#' read-only package library, the tutorial is copied to a writable location
+#' and the 'quarto-live' extension is added before rendering. An
+#' `"rmarkdown"` tutorial -- a classic 'learnr' tutorial -- is handed to
+#' `learnr::run_tutorial()`, so a tool built on learnr2 (such as the "R
+#' Tutorials" VS Code extension) can run both kinds through this one function
+#' and depend only on learnr2. See the section below.
 #'
 #' @param name Name of the tutorial to run. See [available_tutorials()]. If
 #'   `NULL`, the available tutorials in `package` are listed.
 #' @param package Name of the package the tutorial is bundled with. Defaults
 #'   to `"learnr2"`; set this to run a tutorial from another installed
 #'   package (e.g. a 'primer.tutorials'-style content package).
-#' @param output_dir Directory in which to render the tutorial. Defaults to a
-#'   persistent per-user cache directory (see [tools::R_user_dir()]), *not*
-#'   [tempfile()] -- R deletes its own session temp directory as soon as the
-#'   R process exits, which races with (and often loses to) the browser
-#'   actually loading the page when `open = TRUE` is used non-interactively
-#'   (e.g. via `Rscript`), producing a "file not found" page. Pass your own
-#'   `output_dir` for a one-off location instead.
-#' @param open Whether to serve the rendered tutorial and open it in a
-#'   browser. Defaults to `TRUE` when interactive. When `TRUE`, this call
-#'   blocks (like [httpuv::runStaticServer()] or `shiny::runApp()`) until you
-#'   interrupt it (Ctrl+C, or the console's Stop button) -- see the section
-#'   below for why. When `FALSE`, the tutorial is rendered and the path
-#'   returned without serving or blocking.
+#' @param output_dir Directory in which to render a `"quarto"` tutorial
+#'   (ignored for an `"rmarkdown"` one). Defaults to a persistent per-user
+#'   cache directory (see [tools::R_user_dir()]), *not* [tempfile()] -- R
+#'   deletes its own session temp directory as soon as the R process exits,
+#'   which races with (and often loses to) the browser actually loading the
+#'   page when `open = TRUE` is used non-interactively (e.g. via `Rscript`),
+#'   producing a "file not found" page. Pass your own `output_dir` for a
+#'   one-off location instead.
+#' @param open Whether to serve the tutorial and open it in a browser.
+#'   Defaults to `TRUE` when interactive. When `TRUE`, this call blocks (like
+#'   [httpuv::runStaticServer()] or `shiny::runApp()`) until you interrupt it
+#'   (Ctrl+C, or the console's Stop button) -- see the section below for why.
+#'   When `FALSE`, a `"quarto"` tutorial is rendered and its path returned
+#'   without serving or blocking; an `"rmarkdown"` tutorial has no
+#'   render-only mode (it is a Shiny app), so `open = FALSE` is an error.
+#'   Note that under `Rscript` the default is `FALSE`, so pass `open = TRUE`
+#'   explicitly there.
 #'
-#' @return Path to the rendered HTML file, invisibly.
+#' @return Path to the rendered HTML file for a `"quarto"` tutorial, or to
+#'   the `.Rmd` source for an `"rmarkdown"` one, invisibly.
+#'
+#' @section Classic learnr tutorials:
+#' Many existing content packages (those built on 'tutorial.helpers', for
+#' instance) bundle classic 'learnr' tutorials: `.Rmd` files with
+#' `runtime: shiny_prerendered` that run as a Shiny app in the local R
+#' session. learnr2 cannot run those itself -- the Shiny machinery lives in
+#' 'learnr' -- so for an `"rmarkdown"` tutorial this function calls
+#' `learnr::run_tutorial(name, package = package)`, which blocks while the
+#' app runs just as the `"quarto"` path blocks while serving.
+#'
+#' 'learnr' is only a suggested dependency of learnr2, not a required one,
+#' because a package that bundles classic learnr tutorials already depends
+#' on 'learnr' itself (directly, or via 'tutorial.helpers'). So whenever an
+#' `"rmarkdown"` tutorial is installed, 'learnr' is too; this function only
+#' errors with an install hint if that invariant is somehow broken.
 #'
 #' @section Why this blocks and serves over local HTTP instead of opening the file directly:
 #' Every `{webr}` exercise compiles down to Observable JS (OJS), which
@@ -177,6 +270,9 @@ tutorial_title <- function(doc) {
 #' # starts a local web server that blocks the session until interrupted.
 #' \dontrun{
 #' run_tutorial("hello-learnr2")
+#'
+#' # A classic learnr tutorial from a content package is handed to learnr.
+#' run_tutorial("hello", package = "learnr", open = TRUE)
 #' }
 run_tutorial <- function(name = NULL,
                          package = "learnr2",
@@ -193,6 +289,15 @@ run_tutorial <- function(name = NULL,
   if (!name %in% tutorials$name) {
     stop("Unknown tutorial: ", name, " in package ", package, ".\nAvailable: ",
          paste(tutorials$name, collapse = ", "), call. = FALSE)
+  }
+  tutorial <- tutorials[tutorials$name == name, , drop = FALSE]
+
+  if (is.na(tutorial$format)) {
+    stop("Tutorial ", name, " in package ", package,
+         " has no .qmd or .Rmd document to run.", call. = FALSE)
+  }
+  if (identical(tutorial$format, "rmarkdown")) {
+    return(run_learnr_tutorial(name, package, tutorial$path, open))
   }
 
   src <- system.file("tutorials", name, package = package)
@@ -222,4 +327,33 @@ run_tutorial <- function(name = NULL,
   httpuv::runStaticServer(as.character(work_dir), browse = TRUE, background = FALSE)
 
   invisible(as.character(html))
+}
+
+# The "rmarkdown" branch of run_tutorial(): a classic learnr tutorial, which
+# only learnr can run (it is a Shiny app). See the "Classic learnr tutorials"
+# section of ?run_tutorial for why learnr is merely Suggested.
+run_learnr_tutorial <- function(name, package, path, open) {
+  if (!learnr_installed()) {
+    stop(
+      "Tutorial \"", name, "\" in package \"", package, "\" is a classic ",
+      "learnr tutorial (an .Rmd run as a Shiny app), which needs the learnr ",
+      "package. Install it with: install.packages(\"learnr\")",
+      call. = FALSE
+    )
+  }
+  if (!isTRUE(open)) {
+    stop(
+      "Tutorial \"", name, "\" in package \"", package, "\" is a classic ",
+      "learnr tutorial, which runs as a Shiny app and cannot be rendered ",
+      "without being served. Call run_tutorial() with open = TRUE.",
+      call. = FALSE
+    )
+  }
+  message(
+    "\"", name, "\" is a classic learnr tutorial; handing it to ",
+    "learnr::run_tutorial().\n",
+    "Press Ctrl+C (or the console's Stop button) to stop it."
+  )
+  learnr_run_tutorial(name, package)
+  invisible(as.character(path))
 }
