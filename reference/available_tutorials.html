@@ -15,7 +15,7 @@ tutorials from separately-installed content packages (in the style of
 
     <a class="navbar-brand me-2" href="../index.html">learnr2</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.1.9001</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.1.9002</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -73,10 +73,26 @@ whose top-level document is a <code>.qmd</code>), <code>"rmarkdown"</code> (a <c
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A data frame with one row per tutorial and columns <code>package</code>,
 <code>name</code>, <code>title</code> (<code>NA</code> if the tutorial's <code>.qmd</code>/<code>.Rmd</code> has no YAML
-<code>title</code>), <code>format</code> (<code>"quarto"</code> or <code>"rmarkdown"</code>), and <code>path</code> (the
-installed <code>.qmd</code>/<code>.Rmd</code> file; <code>NA</code> if the directory has neither).
+<code>title</code>), <code>format</code> (<code>"quarto"</code> or <code>"rmarkdown"</code>), <code>path</code> (the
+installed <code>.qmd</code>/<code>.Rmd</code> file; <code>NA</code> if the directory has neither), and
+<code>package_dependencies</code> (a list column: for each tutorial, the character
+vector of R packages that must be installed locally before it can run).
 <code>name</code> can be passed to <code><a href="run_tutorial.html">run_tutorial()</a></code>; <code>path</code> to
 <code><a href="render_tutorials.html">render_tutorials()</a></code> and <code><a href="check_tutorial.html">check_tutorial()</a></code>.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="classic-learnr-tutorials">Classic learnr tutorials<a class="anchor" aria-label="anchor" href="#classic-learnr-tutorials"></a></h2>
+
+
+<p>A <code>"quarto"</code> tutorial's exercises run in the reader's browser via WebR, so
+it needs no R packages installed locally beyond learnr2 itself and its
+<code>package_dependencies</code> is <code>character(0)</code>. An <code>"rmarkdown"</code> tutorial is a
+classic 'learnr' tutorial (an <code>.Rmd</code> with <code>runtime: shiny_prerendered</code>),
+which runs as a Shiny app in the local R session. Its
+<code>package_dependencies</code> are whatever 'learnr' finds by scanning the
+tutorial's directory (<code><a href="https://pkgs.rstudio.com/learnr/reference/available_tutorials.html" class="external-link">learnr::available_tutorials()</a></code>), which always
+includes 'learnr' itself. If 'learnr' is not installed there is nothing
+to ask, and such a tutorial could not run anyway, so the entry is <code>NA</code>.</p>
     </div>
 
     <div class="section level2">
@@ -93,6 +109,10 @@ installed <code>.qmd</code>/<code>.Rmd</code> file; <code>NA</code> if the direc
 <span class="r-out co"><span class="r-pr">#&gt;</span> 1    /home/runner/work/_temp/Library/learnr2/tutorials/getting-started/tutorial.qmd</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 2 /home/runner/work/_temp/Library/learnr2/tutorials/hello-learnr2/hello-learnr2.qmd</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 3 /home/runner/work/_temp/Library/learnr2/tutorials/intro-vectors/intro-vectors.qmd</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   package_dependencies</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1                     </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2                     </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3                     </span>
 <span class="r-in"><span><span class="fu">learnr2</span><span class="fu">::</span><span class="fu">available_tutorials</span><span class="op">(</span>package <span class="op">=</span> <span class="st">"learnr2"</span>, type <span class="op">=</span> <span class="st">"quarto"</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   package            name                 title format</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 1 learnr2 getting-started       Getting Started quarto</span>
@@ -102,6 +122,10 @@ installed <code>.qmd</code>/<code>.Rmd</code> file; <code>NA</code> if the direc
 <span class="r-out co"><span class="r-pr">#&gt;</span> 1    /home/runner/work/_temp/Library/learnr2/tutorials/getting-started/tutorial.qmd</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 2 /home/runner/work/_temp/Library/learnr2/tutorials/hello-learnr2/hello-learnr2.qmd</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 3 /home/runner/work/_temp/Library/learnr2/tutorials/intro-vectors/intro-vectors.qmd</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   package_dependencies</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1                     </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2                     </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3                     </span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

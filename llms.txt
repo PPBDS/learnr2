@@ -82,7 +82,7 @@ Scaffold and run interactive tutorials.
 - [`create_tutorial()`](https://ppbds.github.io/learnr2/reference/create_tutorial.md)
   : Create a new learnr2 tutorial
 - [`run_tutorial()`](https://ppbds.github.io/learnr2/reference/run_tutorial.md)
-  : Render and open a bundled tutorial
+  : Run a bundled tutorial
 - [`available_tutorials()`](https://ppbds.github.io/learnr2/reference/available_tutorials.md)
   : List tutorials bundled with learnr2 (or any installed package)
 - [`show_file()`](https://ppbds.github.io/learnr2/reference/show_file.md)

@@ -29,14 +29,30 @@ available_tutorials(package = NULL, type = "all")
 
 A data frame with one row per tutorial and columns `package`, `name`,
 `title` (`NA` if the tutorial's `.qmd`/`.Rmd` has no YAML `title`),
-`format` (`"quarto"` or `"rmarkdown"`), and `path` (the installed
-`.qmd`/`.Rmd` file; `NA` if the directory has neither). `name` can be
-passed to
+`format` (`"quarto"` or `"rmarkdown"`), `path` (the installed
+`.qmd`/`.Rmd` file; `NA` if the directory has neither), and
+`package_dependencies` (a list column: for each tutorial, the character
+vector of R packages that must be installed locally before it can run).
+`name` can be passed to
 [`run_tutorial()`](https://ppbds.github.io/learnr2/reference/run_tutorial.md);
 `path` to
 [`render_tutorials()`](https://ppbds.github.io/learnr2/reference/render_tutorials.md)
 and
 [`check_tutorial()`](https://ppbds.github.io/learnr2/reference/check_tutorial.md).
+
+## Classic learnr tutorials
+
+A `"quarto"` tutorial's exercises run in the reader's browser via WebR,
+so it needs no R packages installed locally beyond learnr2 itself and
+its `package_dependencies` is `character(0)`. An `"rmarkdown"` tutorial
+is a classic 'learnr' tutorial (an `.Rmd` with
+`runtime: shiny_prerendered`), which runs as a Shiny app in the local R
+session. Its `package_dependencies` are whatever 'learnr' finds by
+scanning the tutorial's directory
+([`learnr::available_tutorials()`](https://pkgs.rstudio.com/learnr/reference/available_tutorials.html)),
+which always includes 'learnr' itself. If 'learnr' is not installed
+there is nothing to ask, and such a tutorial could not run anyway, so
+the entry is `NA`.
 
 ## Examples
 
@@ -53,6 +69,10 @@ learnr2::available_tutorials(package = "learnr2")
 #> 1    /home/runner/work/_temp/Library/learnr2/tutorials/getting-started/tutorial.qmd
 #> 2 /home/runner/work/_temp/Library/learnr2/tutorials/hello-learnr2/hello-learnr2.qmd
 #> 3 /home/runner/work/_temp/Library/learnr2/tutorials/intro-vectors/intro-vectors.qmd
+#>   package_dependencies
+#> 1                     
+#> 2                     
+#> 3                     
 learnr2::available_tutorials(package = "learnr2", type = "quarto")
 #>   package            name                 title format
 #> 1 learnr2 getting-started       Getting Started quarto
@@ -62,4 +82,8 @@ learnr2::available_tutorials(package = "learnr2", type = "quarto")
 #> 1    /home/runner/work/_temp/Library/learnr2/tutorials/getting-started/tutorial.qmd
 #> 2 /home/runner/work/_temp/Library/learnr2/tutorials/hello-learnr2/hello-learnr2.qmd
 #> 3 /home/runner/work/_temp/Library/learnr2/tutorials/intro-vectors/intro-vectors.qmd
+#>   package_dependencies
+#> 1                     
+#> 2                     
+#> 3                     
 ```

@@ -1,10 +1,18 @@
-# Render and open a bundled tutorial
+# Run a bundled tutorial
 
-Renders a tutorial bundled with an installed package to a temporary
-directory and, in an interactive session, opens the result in a browser.
-Because installed tutorials live in a read-only package library, the
-tutorial is copied to a writable location and the 'quarto-live'
-extension is added before rendering.
+Runs a tutorial bundled with an installed package, whichever of the two
+formats
+[`available_tutorials()`](https://ppbds.github.io/learnr2/reference/available_tutorials.md)
+reports it is. A `"quarto"` tutorial (learnr2's own format) is rendered
+to `output_dir` and, when `open` is `TRUE`, served to a browser. Because
+installed tutorials live in a read-only package library, the tutorial is
+copied to a writable location and the 'quarto-live' extension is added
+before rendering. An `"rmarkdown"` tutorial – a classic 'learnr'
+tutorial – is handed to
+[`learnr::run_tutorial()`](https://pkgs.rstudio.com/learnr/reference/run_tutorial.html),
+so a tool built on learnr2 (such as the "R Tutorials" VS Code extension)
+can run both kinds through this one function and depend only on learnr2.
+See the section below.
 
 ## Usage
 
@@ -33,30 +41,49 @@ run_tutorial(
 
 - output_dir:
 
-  Directory in which to render the tutorial. Defaults to a persistent
-  per-user cache directory (see
-  [`tools::R_user_dir()`](https://rdrr.io/r/tools/userdir.html)), *not*
-  [`tempfile()`](https://rdrr.io/r/base/tempfile.html) – R deletes its
-  own session temp directory as soon as the R process exits, which races
-  with (and often loses to) the browser actually loading the page when
-  `open = TRUE` is used non-interactively (e.g. via `Rscript`),
+  Directory in which to render a `"quarto"` tutorial (ignored for an
+  `"rmarkdown"` one). Defaults to a persistent per-user cache directory
+  (see [`tools::R_user_dir()`](https://rdrr.io/r/tools/userdir.html)),
+  *not* [`tempfile()`](https://rdrr.io/r/base/tempfile.html) – R deletes
+  its own session temp directory as soon as the R process exits, which
+  races with (and often loses to) the browser actually loading the page
+  when `open = TRUE` is used non-interactively (e.g. via `Rscript`),
   producing a "file not found" page. Pass your own `output_dir` for a
   one-off location instead.
 
 - open:
 
-  Whether to serve the rendered tutorial and open it in a browser.
-  Defaults to `TRUE` when interactive. When `TRUE`, this call blocks
-  (like
+  Whether to serve the tutorial and open it in a browser. Defaults to
+  `TRUE` when interactive. When `TRUE`, this call blocks (like
   [`httpuv::runStaticServer()`](https://rstudio.github.io/httpuv/reference/runStaticServer.html)
-  or `shiny::runApp()`) until you interrupt it (Ctrl+C, or the console's
-  Stop button) – see the section below for why. When `FALSE`, the
-  tutorial is rendered and the path returned without serving or
-  blocking.
+  or [`shiny::runApp()`](https://rdrr.io/pkg/shiny/man/runApp.html))
+  until you interrupt it (Ctrl+C, or the console's Stop button) – see
+  the section below for why. When `FALSE`, a `"quarto"` tutorial is
+  rendered and its path returned without serving or blocking; an
+  `"rmarkdown"` tutorial has no render-only mode (it is a Shiny app), so
+  `open = FALSE` is an error. Note that under `Rscript` the default is
+  `FALSE`, so pass `open = TRUE` explicitly there.
 
 ## Value
 
-Path to the rendered HTML file, invisibly.
+Path to the rendered HTML file for a `"quarto"` tutorial, or to the
+`.Rmd` source for an `"rmarkdown"` one, invisibly.
+
+## Classic learnr tutorials
+
+Many existing content packages (those built on 'tutorial.helpers', for
+instance) bundle classic 'learnr' tutorials: `.Rmd` files with
+`runtime: shiny_prerendered` that run as a Shiny app in the local R
+session. learnr2 cannot run those itself – the Shiny machinery lives in
+'learnr' – so for an `"rmarkdown"` tutorial this function calls
+`learnr::run_tutorial(name, package = package)`, which blocks while the
+app runs just as the `"quarto"` path blocks while serving.
+
+'learnr' is only a suggested dependency of learnr2, not a required one,
+because a package that bundles classic learnr tutorials already depends
+on 'learnr' itself (directly, or via 'tutorial.helpers'). So whenever an
+`"rmarkdown"` tutorial is installed, 'learnr' is too; this function only
+errors with an install hint if that invariant is somehow broken.
 
 ## Why this blocks and serves over local HTTP instead of opening the file directly
 
@@ -101,5 +128,8 @@ run_tutorial()
 # starts a local web server that blocks the session until interrupted.
 if (FALSE) { # \dontrun{
 run_tutorial("hello-learnr2")
+
+# A classic learnr tutorial from a content package is handed to learnr.
+run_tutorial("hello", package = "learnr", open = TRUE)
 } # }
 ```

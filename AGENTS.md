@@ -913,9 +913,27 @@ Two layers, both run in CI (`.github/workflows/R-CMD-check.yaml`,
   deliberately shows its widget chunks’ source and has no minutes
   question. One defensive guard is deliberately left untested (noted in
   a comment where it lives):
-  [`live_extension_dir()`](https://ppbds.github.io/learnr2/reference/live_extension_dir.md)’s
+  [`live_extension_dir()`](https://ppbds.github.io/learnr2/reference/live_extension_dir.md)‘s
   missing-package branch – it needs a broken install to reach, and
-  `base::` bindings can’t be mocked.
+  `base::` bindings can’t be mocked. Likewise `learnr_run_tutorial()` in
+  `R/tutorials.R`, the seam through which
+  [`run_tutorial()`](https://ppbds.github.io/learnr2/reference/run_tutorial.md)
+  hands a classic `.Rmd` tutorial to
+  [`learnr::run_tutorial()`](https://pkgs.rstudio.com/learnr/reference/run_tutorial.html):
+  calling it for real launches Shiny. **Mocking gotcha:** ’learnr’
+  exports
+  [`available_tutorials()`](https://ppbds.github.io/learnr2/reference/available_tutorials.md)
+  and
+  [`run_tutorial()`](https://ppbds.github.io/learnr2/reference/run_tutorial.md)
+  under the same names as learnr2, so
+  `local_mocked_bindings(run_tutorial = ..., .package = "learnr")` also
+  replaces learnr2’s own binding in the test environment. That is why
+  every learnr call goes through a distinctly named internal seam
+  (`learnr_installed()`, `learnr_available_tutorials()`,
+  `learnr_run_tutorial()`) and tests mock those instead. The tests that
+  need a real classic tutorial use the ones bundled with ‘learnr’ itself
+  (`package = "learnr"`, tutorial `hello`) and
+  `skip_if_not_installed("learnr")`.
 - **JS (`Playwright`), `tests/js/`** – `quiz.js` (the browser runtime)
   has no unit layer; it’s covered end-to-end through `quiz.spec.js`
   (against a local fixture server, `server.js` + `fixtures.js`) and
