@@ -2,6 +2,17 @@
 
 ## learnr2 (development version)
 
+- [`available_tutorials()`](https://ppbds.github.io/learnr2/reference/available_tutorials.md)
+  and
+  [`run_tutorial()`](https://ppbds.github.io/learnr2/reference/run_tutorial.md)
+  now see a package loaded from its source tree with
+  [`pkgload::load_all()`](https://pkgload.r-lib.org/reference/load_all.html),
+  as `devtools::load_all()` and `devtools::test()` do, reading its
+  tutorials from the source `inst/tutorials/`. Previously they resolved
+  only against installed packages, so a content package’s own
+  `devtools::test()` found no tutorials (or silently tested a stale
+  installed copy). Installed packages behave as before, and ‘pkgload’ is
+  not required.
 - [`run_tutorial()`](https://ppbds.github.io/learnr2/reference/run_tutorial.md)
   now runs classic ‘learnr’ tutorials too. When the named tutorial’s
   `format` is `"rmarkdown"` (an `.Rmd` with

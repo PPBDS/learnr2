@@ -17,7 +17,8 @@ available_tutorials(package = NULL, type = "all")
 - package:
 
   Name of a single package to scan. Defaults to `NULL`, which scans
-  every installed package.
+  every installed package, plus any package currently loaded with
+  [`pkgload::load_all()`](https://pkgload.r-lib.org/reference/load_all.html).
 
 - type:
 
@@ -40,6 +41,15 @@ vector of R packages that must be installed locally before it can run).
 and
 [`check_tutorial()`](https://ppbds.github.io/learnr2/reference/check_tutorial.md).
 
+## Details
+
+A package loaded from its source tree with
+[`pkgload::load_all()`](https://pkgload.r-lib.org/reference/load_all.html)
+(as `devtools::load_all()` and `devtools::test()` do) counts as well:
+its tutorials are read from the source `inst/tutorials/`, so a content
+package's own tests see its working tree, not a stale installed copy.
+See the section below.
+
 ## Classic learnr tutorials
 
 A `"quarto"` tutorial's exercises run in the reader's browser via WebR,
@@ -53,6 +63,22 @@ scanning the tutorial's directory
 which always includes 'learnr' itself. If 'learnr' is not installed
 there is nothing to ask, and such a tutorial could not run anyway, so
 the entry is `NA`.
+
+## Packages loaded with pkgload
+
+[`system.file()`](https://rdrr.io/r/base/system.file.html) resolves
+against the *installed* copy of a package, so a content package under
+development used to be invisible here (or, worse, silently read from an
+old install) when its own tests ran under `devtools::test()`: 'pkgload'
+redirects [`system.file()`](https://rdrr.io/r/base/system.file.html)
+only for code inside the package being developed, not for learnr2's
+calls. This function and
+[`run_tutorial()`](https://ppbds.github.io/learnr2/reference/run_tutorial.md)
+therefore check whether `package` is a namespace loaded by
+[`pkgload::load_all()`](https://pkgload.r-lib.org/reference/load_all.html)
+and, if so, read its tutorials from the source tree's `inst/tutorials/`
+directly. Nothing changes for installed packages, and 'pkgload' itself
+is not required.
 
 ## Examples
 

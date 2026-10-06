@@ -37,7 +37,11 @@ run_tutorial(
 
   Name of the package the tutorial is bundled with. Defaults to
   `"learnr2"`; set this to run a tutorial from another installed package
-  (e.g. a 'primer.tutorials'-style content package).
+  (e.g. a 'primer.tutorials'-style content package), or from one loaded
+  with
+  [`pkgload::load_all()`](https://pkgload.r-lib.org/reference/load_all.html)
+  (see
+  [`available_tutorials()`](https://ppbds.github.io/learnr2/reference/available_tutorials.md)).
 
 - output_dir:
 

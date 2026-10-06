@@ -15,7 +15,7 @@ tutorials from separately-installed content packages (in the style of
 
     <a class="navbar-brand me-2" href="../index.html">learnr2</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.1.9002</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.1.9003</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -60,7 +60,8 @@ tutorials from separately-installed content packages (in the style of
 
 <dl><dt id="arg-package">package<a class="anchor" aria-label="anchor" href="#arg-package"></a></dt>
 <dd><p>Name of a single package to scan. Defaults to <code>NULL</code>,
-which scans every installed package.</p></dd>
+which scans every installed package, plus any package currently loaded
+with <code><a href="https://pkgload.r-lib.org/reference/load_all.html" class="external-link">pkgload::load_all()</a></code>.</p></dd>
 
 
 <dt id="arg-type">type<a class="anchor" aria-label="anchor" href="#arg-type"></a></dt>
@@ -81,6 +82,14 @@ vector of R packages that must be installed locally before it can run).
 <code><a href="render_tutorials.html">render_tutorials()</a></code> and <code><a href="check_tutorial.html">check_tutorial()</a></code>.</p>
     </div>
     <div class="section level2">
+    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
+    <p>A package loaded from its source tree with <code><a href="https://pkgload.r-lib.org/reference/load_all.html" class="external-link">pkgload::load_all()</a></code> (as
+<code>devtools::load_all()</code> and <code>devtools::test()</code> do) counts as well: its
+tutorials are read from the source <code>inst/tutorials/</code>, so a content
+package's own tests see its working tree, not a stale installed copy.
+See the section below.</p>
+    </div>
+    <div class="section level2">
     <h2 id="classic-learnr-tutorials">Classic learnr tutorials<a class="anchor" aria-label="anchor" href="#classic-learnr-tutorials"></a></h2>
 
 
@@ -93,6 +102,20 @@ which runs as a Shiny app in the local R session. Its
 tutorial's directory (<code><a href="https://pkgs.rstudio.com/learnr/reference/available_tutorials.html" class="external-link">learnr::available_tutorials()</a></code>), which always
 includes 'learnr' itself. If 'learnr' is not installed there is nothing
 to ask, and such a tutorial could not run anyway, so the entry is <code>NA</code>.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="packages-loaded-with-pkgload">Packages loaded with pkgload<a class="anchor" aria-label="anchor" href="#packages-loaded-with-pkgload"></a></h2>
+
+
+<p><code><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file()</a></code> resolves against the <em>installed</em> copy of a package, so a
+content package under development used to be invisible here (or, worse,
+silently read from an old install) when its own tests ran under
+<code>devtools::test()</code>: 'pkgload' redirects <code><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file()</a></code> only for code
+inside the package being developed, not for learnr2's calls. This
+function and <code><a href="run_tutorial.html">run_tutorial()</a></code> therefore check whether <code>package</code> is a
+namespace loaded by <code><a href="https://pkgload.r-lib.org/reference/load_all.html" class="external-link">pkgload::load_all()</a></code> and, if so, read its tutorials from the
+source tree's <code>inst/tutorials/</code> directly. Nothing changes for installed
+packages, and 'pkgload' itself is not required.</p>
     </div>
 
     <div class="section level2">

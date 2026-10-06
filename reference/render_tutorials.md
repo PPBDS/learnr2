@@ -74,9 +74,9 @@ if (!is.null(quarto::quarto_path())) {
   file.exists(html)
   unlink(c(dir, dirname(html)), recursive = TRUE)
 }
-#> Created tutorial: /tmp/Rtmp2Wh0Y9/file1a627fe9bd84/render-me/render-me.qmd
-#> Rendering render-me (/tmp/Rtmp2Wh0Y9/file1a627fe9bd84/render-me/render-me.qmd) ...
-#> Rendered render-me in 3.6s: /tmp/Rtmp2Wh0Y9/learnr2-render-1a623c3e48a9/render-me/render-me.html
+#> Created tutorial: /tmp/RtmpEeSWCo/file1a677272c16a/render-me/render-me.qmd
+#> Rendering render-me (/tmp/RtmpEeSWCo/file1a677272c16a/render-me/render-me.qmd) ...
+#> Rendered render-me in 3.4s: /tmp/RtmpEeSWCo/learnr2-render-1a6718de57/render-me/render-me.html
 #> Rendered 1 tutorial(s).
 
 # In a content package's tests/testthat/test-tutorials.R:

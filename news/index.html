@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">learnr2</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.1.9002</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.1.9003</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -35,6 +35,8 @@
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="development version" id="learnr2-development-version">learnr2 (development version)<a class="anchor" aria-label="anchor" href="#learnr2-development-version"></a></h2>
 <ul><li>
+<code><a href="../reference/available_tutorials.html">available_tutorials()</a></code> and <code><a href="../reference/run_tutorial.html">run_tutorial()</a></code> now see a package loaded from its source tree with <code><a href="https://pkgload.r-lib.org/reference/load_all.html" class="external-link">pkgload::load_all()</a></code>, as <code>devtools::load_all()</code> and <code>devtools::test()</code> do, reading its tutorials from the source <code>inst/tutorials/</code>. Previously they resolved only against installed packages, so a content package’s own <code>devtools::test()</code> found no tutorials (or silently tested a stale installed copy). Installed packages behave as before, and ‘pkgload’ is not required.</li>
+<li>
 <code><a href="../reference/run_tutorial.html">run_tutorial()</a></code> now runs classic ‘learnr’ tutorials too. When the named tutorial’s <code>format</code> is <code>"rmarkdown"</code> (an <code>.Rmd</code> with <code>runtime: shiny_prerendered</code>), it is handed to <code><a href="https://pkgs.rstudio.com/learnr/reference/run_tutorial.html" class="external-link">learnr::run_tutorial()</a></code> instead of being rendered with Quarto, so a tool such as the “R Tutorials” VS Code extension can list and run both kinds of tutorial through learnr2 alone. ‘learnr’ is only Suggested: any package that bundles classic tutorials already depends on it, so it is installed whenever such a tutorial is. <code>open = FALSE</code> is an error for an <code>"rmarkdown"</code> tutorial, which has no render-only mode.</li>
 <li>
 <code><a href="../reference/available_tutorials.html">available_tutorials()</a></code> gains a <code>package_dependencies</code> list column, the R packages each tutorial needs installed locally: <code>character(0)</code> for a <code>"quarto"</code> tutorial (its exercises run in the browser via WebR), what <code><a href="https://pkgs.rstudio.com/learnr/reference/available_tutorials.html" class="external-link">learnr::available_tutorials()</a></code> reports for an <code>"rmarkdown"</code> one, or <code>NA</code> when ‘learnr’ is not installed to ask.</li>
