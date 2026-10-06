@@ -770,6 +770,24 @@ Two ways to actually see a local edit reflected:
   changes with no reinstall step, as long as the same R session that ran
   `load_all()` is the one calling it.
 
+The same trap bit *content* packages from the other side, and is now fixed
+there (2026-10): a content package's `devtools::test()` loads that package
+with `load_all()` but calls `learnr2::available_tutorials(package = ...)`,
+and pkgload only rewrites `system.file()` for code *inside* the package
+being developed -- learnr2's own call still went to base `system.file()`,
+which found nothing (package never installed; every test skipped with "No
+tutorials yet") or a stale installed copy. `available_tutorials()` and
+`run_tutorial()` now detect a pkgload-loaded namespace (its `.__DEVTOOLS__`
+marker and registered source path, via the internal `pkg_file()` in
+`R/tutorials.R`) and read `inst/tutorials/` from the source tree, so
+`devtools::test()` in a content package tests the working tree with no
+install step. Caught in `PPBDS/ims.tutorials`; covered by the
+"packages loaded with pkgload::load_all()" tests in
+`tests/testthat/test-tutorials.R`. This fixes tutorial *discovery* for
+content packages only -- learnr2's own `quiz.js`/extension assets are still
+read from whichever learnr2 is loaded, so the reinstall advice above still
+applies when editing learnr2 itself.
+
 The `quarto render path/to/tutorial/dir/tutorial.qmd` verification command
 in the rule just above this one sidesteps this problem entirely, since it
 renders the `.qmd` file directly and never calls `system.file()` -- prefer it

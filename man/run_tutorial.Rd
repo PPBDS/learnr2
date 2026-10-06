@@ -17,7 +17,8 @@ run_tutorial(
 
 \item{package}{Name of the package the tutorial is bundled with. Defaults
 to \code{"learnr2"}; set this to run a tutorial from another installed
-package (e.g. a 'primer.tutorials'-style content package).}
+package (e.g. a 'primer.tutorials'-style content package), or from one
+loaded with \code{pkgload::load_all()} (see \code{\link[=available_tutorials]{available_tutorials()}}).}
 
 \item{output_dir}{Directory in which to render a \code{"quarto"} tutorial
 (ignored for an \code{"rmarkdown"} one). Defaults to a persistent per-user

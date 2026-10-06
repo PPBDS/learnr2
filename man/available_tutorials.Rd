@@ -8,7 +8,8 @@ available_tutorials(package = NULL, type = "all")
 }
 \arguments{
 \item{package}{Name of a single package to scan. Defaults to \code{NULL},
-which scans every installed package.}
+which scans every installed package, plus any package currently loaded
+with \code{pkgload::load_all()}.}
 
 \item{type}{Which authoring format to include: \code{"quarto"} (tutorials
 whose top-level document is a \code{.qmd}), \code{"rmarkdown"} (a \code{.Rmd}), or
@@ -31,6 +32,13 @@ This lets tools like the "R Tutorials" VS Code extension discover
 tutorials from separately-installed content packages (in the style of
 'primer.tutorials') without knowing their names in advance.
 }
+\details{
+A package loaded from its source tree with \code{pkgload::load_all()} (as
+\code{devtools::load_all()} and \code{devtools::test()} do) counts as well: its
+tutorials are read from the source \verb{inst/tutorials/}, so a content
+package's own tests see its working tree, not a stale installed copy.
+See the section below.
+}
 \section{Classic learnr tutorials}{
 
 A \code{"quarto"} tutorial's exercises run in the reader's browser via WebR, so
@@ -42,6 +50,19 @@ which runs as a Shiny app in the local R session. Its
 tutorial's directory (\code{learnr::available_tutorials()}), which always
 includes 'learnr' itself. If 'learnr' is not installed there is nothing
 to ask, and such a tutorial could not run anyway, so the entry is \code{NA}.
+}
+
+\section{Packages loaded with pkgload}{
+
+\code{system.file()} resolves against the \emph{installed} copy of a package, so a
+content package under development used to be invisible here (or, worse,
+silently read from an old install) when its own tests ran under
+\code{devtools::test()}: 'pkgload' redirects \code{system.file()} only for code
+inside the package being developed, not for learnr2's calls. This
+function and \code{\link[=run_tutorial]{run_tutorial()}} therefore check whether \code{package} is a
+namespace loaded by \code{pkgload::load_all()} and, if so, read its tutorials from the
+source tree's \verb{inst/tutorials/} directly. Nothing changes for installed
+packages, and 'pkgload' itself is not required.
 }
 
 \examples{

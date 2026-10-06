@@ -150,6 +150,122 @@ test_that("tutorial_title() reads the YAML title, or NA when absent/unparseable"
   expect_true(is.na(learnr2:::tutorial_title(bad)))
 })
 
+# ---- packages loaded with pkgload::load_all() ----------------------------
+
+# A content package's own tests run under devtools::test(), which loads the
+# package from source with pkgload::load_all() without installing it. Base
+# system.file() then knows nothing about it (or finds a stale installed
+# copy), so available_tutorials() and run_tutorial() used to come up empty
+# there. These build a throwaway package in a temp dir, load_all() it, and
+# check both read its tutorials from the source tree.
+local_dev_tutorial_package <- function(name = "fakeTutorials",
+                                      env = parent.frame()) {
+  skip_if_not_installed("pkgload")
+  root <- withr::local_tempdir(.local_envir = env)
+  tutorial_dir <- fs::path(root, "inst", "tutorials", "demo")
+  fs::dir_create(tutorial_dir)
+  fs::dir_create(fs::path(root, "R"))
+  writeLines(
+    c(paste("Package:", name), "Version: 0.0.1", "Title: Fake Tutorials",
+      "Description: A throwaway package for learnr2's tests.",
+      "License: MIT", "Encoding: UTF-8"),
+    fs::path(root, "DESCRIPTION")
+  )
+  writeLines(
+    c("---", "title: \"Demo Tutorial\"", "format: live-html",
+      "engine: knitr", "---", "", "Hello."),
+    fs::path(tutorial_dir, "demo.qmd")
+  )
+  pkgload::load_all(root, quiet = TRUE)
+  withr::defer(pkgload::unload(name), envir = env)
+  root
+}
+
+test_that("available_tutorials() sees a package loaded with pkgload::load_all()", {
+  root <- local_dev_tutorial_package()
+
+  # Not installed, so base system.file() cannot find its tutorials (base::
+  # explicitly: under devtools::test() pkgload shims the bare name in this
+  # test environment). This is exactly the lookup that used to come up empty.
+  expect_false(nzchar(base::system.file("tutorials", package = "fakeTutorials")))
+
+  # ... but the dev package is found, from its source inst/tutorials/.
+  tutorials <- available_tutorials(package = "fakeTutorials")
+  expect_equal(nrow(tutorials), 1)
+  expect_equal(tutorials$package, "fakeTutorials")
+  expect_equal(tutorials$name, "demo")
+  expect_equal(tutorials$title, "Demo Tutorial")
+  expect_equal(tutorials$format, "quarto")
+  # path_real() resolves symlinks (macOS's /var -> /private/var) on both sides.
+  expect_equal(
+    as.character(fs::path_real(tutorials$path)),
+    as.character(fs::path_real(fs::path(root, "inst", "tutorials", "demo", "demo.qmd")))
+  )
+  expect_equal(
+    as.character(fs::path_real(learnr2:::pkg_file("tutorials", package = "fakeTutorials"))),
+    as.character(fs::path_real(fs::path(root, "inst", "tutorials")))
+  )
+  expect_identical(learnr2:::pkg_file("no-such-dir", package = "fakeTutorials"), "")
+
+  # The no-package scan includes it alongside installed packages.
+  all_tutorials <- available_tutorials()
+  expect_true("fakeTutorials" %in% all_tutorials$package)
+  expect_true("learnr2" %in% all_tutorials$package)
+})
+
+test_that("a dev package is invisible again once unloaded", {
+  local({
+    local_dev_tutorial_package()
+    expect_equal(nrow(available_tutorials(package = "fakeTutorials")), 1)
+  })
+  expect_error(available_tutorials(package = "fakeTutorials"), "No package found")
+})
+
+test_that("run_tutorial() renders a dev package's tutorial from its source tree", {
+  root <- local_dev_tutorial_package()
+  out_parent <- withr::local_tempdir()
+
+  rendered_input <- NULL
+  local_mocked_bindings(
+    quarto_render = function(input, ...) {
+      writeLines("<html><body>stub</body></html>", fs::path_ext_set(input, "html"))
+      rendered_input <<- input
+      invisible()
+    },
+    .package = "quarto"
+  )
+
+  html <- suppressMessages(
+    run_tutorial("demo", package = "fakeTutorials",
+                 output_dir = out_parent, open = FALSE)
+  )
+  expect_true(fs::file_exists(html))
+  expect_match(rendered_input, "demo\\.qmd$")
+  # The copy rendered came from the source tree, not from any installed copy.
+  expect_identical(
+    readLines(fs::path(out_parent, "demo", "demo.qmd")),
+    readLines(fs::path(root, "inst", "tutorials", "demo", "demo.qmd"))
+  )
+})
+
+test_that("pkg_file() falls back to system.file() for installed and unknown packages", {
+  # utils is installed and never pkgload-loaded, so both must agree exactly.
+  # (learnr2 itself is a dev package under devtools::test(), so it is not a
+  # clean installed example here.)
+  expect_identical(
+    learnr2:::pkg_file("DESCRIPTION", package = "utils"),
+    base::system.file("DESCRIPTION", package = "utils")
+  )
+  expect_true(nzchar(learnr2:::pkg_file("DESCRIPTION", package = "utils")))
+  expect_identical(
+    learnr2:::pkg_file(package = "utils"),
+    base::system.file(package = "utils")
+  )
+  expect_identical(learnr2:::pkg_file(package = "not-a-real-package-xyz"), "")
+  expect_null(learnr2:::dev_package_path("not-a-real-package-xyz"))
+  expect_null(learnr2:::dev_package_path("utils"))
+})
+
 # ---- hello-learnr2 bundled content ------------------------------------
 
 test_that("the hello-learnr2 tutorial is bundled and demonstrates quiz questions", {

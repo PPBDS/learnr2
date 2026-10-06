@@ -6,8 +6,15 @@
 #' tutorials from separately-installed content packages (in the style of
 #' 'primer.tutorials') without knowing their names in advance.
 #'
+#' A package loaded from its source tree with `pkgload::load_all()` (as
+#' `devtools::load_all()` and `devtools::test()` do) counts as well: its
+#' tutorials are read from the source `inst/tutorials/`, so a content
+#' package's own tests see its working tree, not a stale installed copy.
+#' See the section below.
+#'
 #' @param package Name of a single package to scan. Defaults to `NULL`,
-#'   which scans every installed package.
+#'   which scans every installed package, plus any package currently loaded
+#'   with `pkgload::load_all()`.
 #' @param type Which authoring format to include: `"quarto"` (tutorials
 #'   whose top-level document is a `.qmd`), `"rmarkdown"` (a `.Rmd`), or
 #'   `"all"` (the default) for both.
@@ -31,6 +38,17 @@
 #' tutorial's directory (`learnr::available_tutorials()`), which always
 #' includes 'learnr' itself. If 'learnr' is not installed there is nothing
 #' to ask, and such a tutorial could not run anyway, so the entry is `NA`.
+#'
+#' @section Packages loaded with pkgload:
+#' `system.file()` resolves against the *installed* copy of a package, so a
+#' content package under development used to be invisible here (or, worse,
+#' silently read from an old install) when its own tests ran under
+#' `devtools::test()`: 'pkgload' redirects `system.file()` only for code
+#' inside the package being developed, not for learnr2's calls. This
+#' function and [run_tutorial()] therefore check whether `package` is a
+#' namespace loaded by `pkgload::load_all()` and, if so, read its tutorials from the
+#' source tree's `inst/tutorials/` directly. Nothing changes for installed
+#' packages, and 'pkgload' itself is not required.
 #' @export
 #' @examples
 #' # Qualified with learnr2:: because the learnr package exports a function of
@@ -46,12 +64,12 @@ available_tutorials <- function(package = NULL, type = "all") {
     if (!is.character(package) || length(package) != 1 || !nzchar(package)) {
       stop("`package` must be a single non-empty string.", call. = FALSE)
     }
-    if (!nzchar(system.file(package = package))) {
+    if (!nzchar(pkg_file(package = package))) {
       stop("No package found with name: \"", package, "\".", call. = FALSE)
     }
     packages <- package
   } else {
-    packages <- rownames(utils::installed.packages())
+    packages <- union(dev_packages(), rownames(utils::installed.packages()))
   }
 
   rows <- lapply(packages, tutorials_in_package)
@@ -79,7 +97,7 @@ available_tutorials <- function(package = NULL, type = "all") {
 # One data frame row per tutorial subdirectory of `pkg`'s inst/tutorials/,
 # or NULL if `pkg` bundles no tutorials at all.
 tutorials_in_package <- function(pkg) {
-  root <- system.file("tutorials", package = pkg)
+  root <- pkg_file("tutorials", package = pkg)
   if (!nzchar(root)) {
     return(NULL)
   }
@@ -99,6 +117,49 @@ tutorials_in_package <- function(pkg) {
     package_dependencies = I(tutorial_dependencies(pkg, tutorial_names, format)),
     stringsAsFactors = FALSE
   )
+}
+
+# system.file() that also sees a package loaded from its source tree with
+# pkgload::load_all() -- what devtools::load_all() and devtools::test() do.
+#
+# pkgload makes such a package's *own* system.file() calls resolve to its
+# source inst/, but learnr2's calls are not rewritten, so base system.file()
+# finds either nothing (package not installed) or an installed copy that may
+# be stale. pkgload marks a namespace it loaded with a `.__DEVTOOLS__`
+# binding and registers the source directory as the namespace path; this
+# reads both without needing pkgload itself. With no `...` it returns the
+# package root, like system.file(package = pkg). Everything else goes to
+# base system.file() unchanged.
+pkg_file <- function(..., package) {
+  root <- dev_package_path(package)
+  if (is.null(root)) {
+    return(system.file(..., package = package))
+  }
+  if (...length() == 0) {
+    return(root)
+  }
+  path <- file.path(root, "inst", ...)
+  if (file.exists(path)) path else ""
+}
+
+# The source directory of `package` if pkgload::load_all() loaded it, else
+# NULL. Checking isNamespaceLoaded() first means an unloaded or uninstalled
+# package is simply not a dev package, with no error.
+dev_package_path <- function(package) {
+  if (!isNamespaceLoaded(package)) {
+    return(NULL)
+  }
+  ns <- asNamespace(package)
+  if (!exists(".__DEVTOOLS__", envir = ns, inherits = FALSE)) {
+    return(NULL)
+  }
+  getNamespaceInfo(ns, "path")
+}
+
+# Every namespace currently loaded by pkgload::load_all().
+dev_packages <- function() {
+  loaded <- loadedNamespaces()
+  loaded[!vapply(lapply(loaded, dev_package_path), is.null, logical(1))]
 }
 
 # The R packages each of `pkg`'s tutorials needs installed locally, as a list
@@ -200,7 +261,8 @@ tutorial_title <- function(doc) {
 #'   `NULL`, the available tutorials in `package` are listed.
 #' @param package Name of the package the tutorial is bundled with. Defaults
 #'   to `"learnr2"`; set this to run a tutorial from another installed
-#'   package (e.g. a 'primer.tutorials'-style content package).
+#'   package (e.g. a 'primer.tutorials'-style content package), or from one
+#'   loaded with `pkgload::load_all()` (see [available_tutorials()]).
 #' @param output_dir Directory in which to render a `"quarto"` tutorial
 #'   (ignored for an `"rmarkdown"` one). Defaults to a persistent per-user
 #'   cache directory (see [tools::R_user_dir()]), *not* [tempfile()] -- R
@@ -300,7 +362,7 @@ run_tutorial <- function(name = NULL,
     return(run_learnr_tutorial(name, package, tutorial$path, open))
   }
 
-  src <- system.file("tutorials", name, package = package)
+  src <- pkg_file("tutorials", name, package = package)
   output_dir <- fs::path_abs(output_dir)
 
   # render_tutorials() copies `src` to output_dir/<name>/, adds the
