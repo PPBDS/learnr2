@@ -1079,6 +1079,41 @@ test.describe("progressive sections (Continue buttons)", () => {
     await expect(page.locator("#running-r-code")).toBeHidden();
   });
 
+  test("a bare ### divider is its own Continue stop, with a plain 'Continue' label and no visible heading", async ({ page }) => {
+    await page.goto("/progressive-sections-pauses");
+
+    // Topic one and Exercise 1 need two clicks; then the two bare dividers
+    // each take one more, then Exercise 2.
+    await expect(page.locator("#exercise-1")).toBeHidden();
+    await page.locator(".learnr2-continue").click();
+    await expect(page.locator("#exercise-1")).toBeVisible();
+    await expect(page.locator("#section")).toBeHidden();
+
+    // The button for a bare divider says just "Continue", no trailing colon.
+    const button = page.locator(".learnr2-continue");
+    await expect(button).toHaveCount(1);
+    await expect(button).toHaveText("Continue");
+    // And it sits at the end of Exercise 1, after the question widget.
+    await expect(page.locator("#exercise-1 > :last-child")).toHaveClass(/learnr2-continue-container/);
+
+    await button.click();
+    await expect(page.locator("#section")).toBeVisible();
+    await expect(page.locator("#section")).toContainText("Our answer.");
+    await expect(page.locator("#section")).toHaveClass(/learnr2-pause/);
+    // Its empty heading is hidden, not shown as a blank line.
+    await expect(page.locator("#section > h3")).toBeHidden();
+    await expect(page.locator("#section-1")).toBeHidden();
+
+    await page.locator(".learnr2-continue").click();
+    await expect(page.locator("#section-1")).toContainText("Knowledge drop.");
+    await expect(page.locator("#exercise-2")).toBeHidden();
+    await expect(page.locator(".learnr2-continue")).toHaveText("Continue: Exercise 2");
+
+    // Titled sections are never marked as pauses.
+    await expect(page.locator("#exercise-1")).not.toHaveClass(/learnr2-pause/);
+    await expect(page.locator("#exercise-1 > h3")).toBeVisible();
+  });
+
   test("by default, TOC links to sections not yet reached are dimmed and inert, and come alive as sections unlock", async ({ page }) => {
     await page.goto("/progressive-sections");
 

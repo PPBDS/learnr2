@@ -406,6 +406,37 @@ const FIXTURES = {
   ]
 };
 
+// tutorial.helpers' exercise rhythm, as Quarto renders it: inside a topic,
+// a titled "### Exercise 1" section followed by two bare `###` dividers
+// (sections with an empty <h3> and Quarto's auto ids "section",
+// "section-1"), then "### Exercise 2". Confirmed against a real render
+// (AGENTS.md, "bare ### dividers"); the empty-text TOC entries are what
+// Quarto emits for them too.
+FIXTURES["progressive-sections-pauses"] = [
+  sectionBlock(
+    "topic-one",
+    2,
+    "Topic one",
+    "<p>Topic intro.</p>\n",
+    [
+      sectionBlock("exercise-1", 3, "Exercise 1", "<p>Do the thing.</p>\n" +
+        questionBlock(question({ id: "topic-one-1", type: "reflection_editable", text: "Paste it." }))),
+      sectionBlock("section", 3, "", "<p>Our answer.</p>\n"),
+      sectionBlock("section-1", 3, "", "<p>Knowledge drop.</p>\n"),
+      sectionBlock("exercise-2", 3, "Exercise 2", "<p>Second thing.</p>\n")
+    ]
+  ),
+  sectionBlock("summary", 2, "Summary", "<p>Done.</p>\n"),
+  tocScript([
+    ["topic-one", "Topic one"],
+    ["exercise-1", "Exercise 1"],
+    ["section", ""],
+    ["section-1", ""],
+    ["exercise-2", "Exercise 2"],
+    ["summary", "Summary"]
+  ])
+];
+
 // The same progressive page with learnr2::tutorial_options(allow_skip = TRUE)
 // on it: TOC links unlock and jump instead of being dimmed.
 FIXTURES["progressive-sections-skip"] = FIXTURES["progressive-sections"].concat([

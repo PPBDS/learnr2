@@ -383,6 +383,20 @@ there, like a classic learnr tutorial with `allow_skip: yes`. This page
 leaves the default in place so you can see it in action. Without a TOC the
 setting has no effect, since there is nothing to click.
 
+### Pauses without a heading
+
+Not every Continue stop needs a title. A line holding only `###`, with
+nothing after it, is a *pause*: the content below it stays hidden until
+the reader clicks a button that says just **Continue**, and no heading is
+shown. The tutorial.helpers house style puts two of these inside every
+exercise, one before the author's own answer and one before the knowledge
+drop, so the reader compares before they read on. Here is one now.
+
+###
+
+You just clicked through a pause. In the `.qmd` it is three hash marks on
+a line by themselves; in the sidebar it has no entry.
+
 ### Start Over
 
 Every answer, pasted image, and exercise edit on a page is saved in the

@@ -71,11 +71,158 @@ covered by the boilerplate section below, every time.
 
 ## Reference files to read before translating anything
 
+- **The pedagogy essays** (next section) -- *what a tutorial is for and how
+  it should teach*. Everything else in this file is mechanics; read the
+  essays, or at least the distillation below, before writing any content.
 - `inst/templates/tutorial.qmd` -- the skeleton `create_tutorial()` scaffolds.
 - `inst/tutorials/hello-learnr2/hello-learnr2.qmd` -- a complete worked example
   exercising every learnr2 feature.
 - `R/question.R`, `R/submission.R` -- source of truth for `learnr2::question()`,
   `learnr2::quiz()`, `learnr2::student_info()`, `learnr2::download_answers_button()`.
+
+## How a tutorial should teach (the pedagogy, and where it lives)
+
+This file is about the *machine*: how a learnr2 `.qmd` is put together so
+it renders and runs. It says almost nothing about *what to put in one*,
+and someone could follow every rule here and still write a tutorial that
+violates every principle its author cares about. Those principles are
+written down elsewhere, and this section exists to point there and to
+record the parts that interact with learnr2's mechanics.
+
+**Primary source, read it first:** `vignettes/ai.qmd` in this package,
+"Tutorials in the Age of AI". It is the learnr2 edition of the
+[essay of the same name](https://ppbds.github.io/tutorial.helpers/articles/ai.html)
+in `tutorial.helpers` (copied verbatim at that repo's commit `da79904`,
+2026-07-23, then its learnr mechanics rewritten for learnr2 -- `git log`
+on the file shows both steps). Same pedagogy, learnr2 syntax: every
+template in it is a `.qmd` chunk you can paste. Its thesis: *our purpose
+is no longer to teach students how to code; it is to teach them to use
+AI to create. Students no longer code. They check.* When the upstream
+essay changes, port the change here.
+
+**Background, largely superseded by the above because of AI** (both
+archived; the live site no longer carries them):
+
+- [Instructions for Writing R Tutorials](https://web.archive.org/web/20251008195459/https://ppbds.github.io/tutorial.helpers/articles/instructions.html)
+  -- the classic pre-AI guide. Still the source of the stance and the
+  voice: shallowest possible learning curve, instructions not questions,
+  confidence-building, knowledge drops, the private-lesson test.
+- [Tutorials for Books](https://web.archive.org/web/20251008195807/https://ppbds.github.io/tutorial.helpers/articles/books.html)
+  -- the book-companion layer (link the exact chapter in the first
+  sentence; Summary repeats the Introduction in the past tense).
+
+The `PPBDS/ai-rules` repo's `claude-md/tutorials/CLAUDE.md` distills all
+three into one authoring contract for classic learnr tutorials, and
+`primer.tutorials` / `vscode.tutorials` inherit it. When translating a
+tutorial from one of those packages, that contract is what its author was
+following.
+
+### The stance, in one screen
+
+- **Shallowest possible learning curve.** Almost every student should be
+  able to do almost every exercise, perhaps with the hint. There are no
+  hard questions. There really aren't *questions* at all, only
+  *instructions*: do this, then this, then this.
+- **Confidence-building, not challenging.** A "pit of success": if you
+  complete the tutorials, you learn the material. There is no way not to.
+- **Every word matters.** Students read at most two sentences before they
+  want a Continue button. The sentence or two right before a question is
+  the one place they read closely, so teach there.
+- **The private-lesson test.** You asked a question, the student
+  answered. What would you say next? That is the knowledge drop.
+- **Students don't code. They check.** Describe the *goal* ("a plot of X
+  by Y"), never the implementation (no function names in the prompt, no
+  pipe steps, never a block of analysis code to copy). Teach concepts and
+  packages, not functions; the concept transfers, the function name does
+  not. Modeling tutorials are the recorded exception.
+- **Knowledge drops, every exercise, at most two sentences.** Each does
+  one of three jobs: a key point from the companion chapter, something
+  about the data, or something to notice in the result the student just
+  produced (the most common, and the best lead-in to the next exercise).
+  No road signs ("in the next section we will..."), no rhetorical
+  questions, no recycled infrastructure lessons outside the mechanics
+  tutorials.
+- **Shape of a tutorial.** Introduction (repo + QMD setup, two to four
+  sentences on what they will learn), one or two topics, Summary (the
+  same sentences in the past tense, then publish and submit the URL).
+  Each topic starts from data, follows an exploratory path toward a
+  discoverable anomaly, ends with a polished plot or table plus a
+  one-or-two-sentence interpretation exercise. One evolving working
+  chunk per topic. Every tutorial does the caching arc once. Commit at
+  the end of each topic.
+- **Shape of an exercise.** Prompt (one concrete goal) -> the student
+  renders and inspects -> submits evidence -> Continue -> *our* answer,
+  code and result together, unlabelled -> Continue -> knowledge drop.
+- **Evidence is CP/CR.** Copy/Paste the Command/Response, from the
+  student's *own* R Terminal (`show_file("analysis.qmd", chunk =
+  "Last")`) or bash Terminal (`ls`, `quarto publish ...`). There is no
+  copy-from-the-HTML form.
+- **Formatting.** Keyboard input in backticks; package names bold, the
+  first mention linked to the package site; function names with
+  parentheses; sentence-case headings; "R Terminal" and "bash Terminal"
+  capitalised; "Commit and push".
+
+### Which learnr2 widgets the pedagogy allows
+
+The primary source is blunt: in a normal data-science tutorial there are
+**no multiple-choice or quiz questions** and nothing that tests recall of
+a definition. A concept is taught by an exercise whose output displays
+it, then named in the knowledge drop. So `learnr2::question()`'s choice
+and `"text"` types, and `quiz()`, belong in *mechanics* tutorials (the
+first few `vscode.tutorials`, learnr2's own feature tour) and essentially
+nowhere else. The two question forms a normal tutorial actually uses map
+onto `question()` like this:
+
+| base-guide form | learnr2 |
+| --- | --- |
+| **no-answer** (`question_text(NULL, answer(NULL, correct = TRUE), allow_retry = TRUE, try_again_button = "Edit Answer", rows = N)`) -- evidence submission, student can revise | `learnr2::question("<prompt>", type = "reflection_editable")`, no `answer()` |
+| **yes-answer** (`question_text(NULL, message = "<model answer>", answer(NULL, correct = TRUE), allow_retry = FALSE)`) -- compared against a model answer, then locked | `learnr2::question("<prompt>", learnr2::answer("<model answer>", correct = TRUE), type = "reflection")` |
+| the `question_text(NULL, ...)` + prose-above-the-chunk pattern | put the prompt in `text`; or write the prose on the page and pass `show_text = FALSE` (see "Screenshot reflection questions") |
+
+`validate = "integer"` is for the minutes question only. `allow_image =
+TRUE` is for the rare step that can only be verified by a screenshot.
+
+### Where the pedagogy and learnr2's mechanics collide
+
+Three rules elsewhere in this file were written for translating
+RStudio-configuration tutorials and, read literally, contradict the
+essays. Here is how each resolves.
+
+1. **Render-time `{r}` chunks.** The `webr: packages:` section says a
+   `{r}` chunk should only ever be a widget call. The essays' canonical
+   exercise ends with *our answer*: an `echo: true` chunk that runs real
+   code at render time and shows code and result together. That chunk is
+   allowed and expected. The actual rule is narrower: whatever a `{r}`
+   chunk does runs in the *render* environment (your machine, CI), not
+   the reader's browser, so every package it uses must be installed
+   there (a content package lists it under `Suggests`) and it must not
+   hit the network. Never use a `{r}` chunk to create objects a `{webr}`
+   cell is supposed to see; that is what `setup: true` cells are for.
+2. **Bare `###` dividers.** An earlier version of the translation guide
+   said to delete them. In the essays they are load-bearing: two bare
+   separators inside every exercise, one revealing our answer, the next
+   making the student pause before the knowledge drop. **Keep them; they
+   work.** Quarto renders a bare `###` as a `section.level3` with an
+   empty `<h3>` and an auto id (`section`, `section-1`, ...), so learnr2
+   gates it like any other section; `quiz.js` marks such sections
+   `.learnr2-pause`, hides the empty heading, and labels the button plain
+   "Continue" (no "Continue: <title>"). Quarto's own stylesheet already
+   hides their empty TOC entries (`nav[role=doc-toc] a:empty`). Verified
+   against a real render, 2026-10; fixture `progressive-sections-pauses`.
+   The only thing you still delete is a *titled* heading that exists
+   purely as a pacing break with no content of its own.
+3. **"No local R dependency".** That section bans prose that sends the
+   reader to an R Terminal or to `show_file()`. It is right about two
+   things and wrong if over-read. Right: the tutorial *page* must need
+   nothing installed, and content whose *point* was configuring a local
+   RStudio has no learnr2 translation. Wrong if read as "the student has
+   no local R": in the AI-era model the student works in their *own*
+   repo and QMD, with an AI agent, and submits evidence by running
+   `show_file()` in their own R Terminal and pasting it into the page.
+   That is the whole evidence model, and a `"reflection_editable"`
+   question receives the paste just fine in a browser. So: never make the
+   *page* depend on local software; freely instruct the *student* to work
+   in their own project when that is what the tutorial is about.
 
 ## Authoring a new tutorial (not translating one)
 
@@ -175,7 +322,13 @@ order, counting *every* chunk in the section that gets a label (mixing
 than numbering each chunk type separately). `## Quiz questions` ->
 `quiz-questions-1`, `quiz-questions-2`, .... The bundled `hello-learnr2`
 tutorial and the `create_tutorial()` template follow this now -- match
-their style for a new one rather than inventing another convention.
+their style for a new one rather than inventing another convention. One
+sanctioned variant, for exercise-style tutorials written to
+`vignettes/ai.qmd`: the "our answer" `{r}` chunk that follows an
+exercise's question takes the question's label plus `-answer`
+(`introduction-3`, `introduction-3-answer`), so the exercise number and
+the label number stay in step instead of every answer chunk bumping the
+count.
 
 ## Showing inline-code syntax literally, without triggering it
 
@@ -290,7 +443,7 @@ learnr2's own `tests/testthat/test-render-tutorials.R` does.)
 | `question_text("...", answer("model answer", correct = TRUE), allow_retry = TRUE)` | `learnr2::question("...", learnr2::answer("model answer", correct = TRUE), type = "reflection")` (or `"reflection_editable"`) |
 | `question_numeric("...", answer(90, correct = TRUE))` | `learnr2::question("...", type = "reflection_editable", validate = "integer")`, no `answer()` |
 | `question(..., allow_retry, random_answer_order, incorrect, correct)` | same argument names on `learnr2::question()` |
-| bare `### ` progressive-reveal divider (no real heading text) | delete; keep genuinely-titled `##`/`###` sections (learnr2 gates them itself -- see "Progressive section reveal") |
+| bare `### ` progressive-reveal divider (no real heading text) | keep as-is; it becomes a headingless Continue stop. Titled `##`/`###` sections are gated too (see "Progressive section reveal") |
 | `allow_skip: yes` in the YAML | a `{r}` chunk (`echo: false`) calling `learnr2::tutorial_options(allow_skip = TRUE)`; with no such chunk, TOC entries for unreached sections are dimmed and inert |
 | `knitr::include_graphics("images/x.png")` in an `{r}` chunk | plain Markdown `![alt](images/x.png)` (drop the chunk) |
 | prose telling the reader to use "the RStudio Console", `rstudioapi::*`, `show_file()` (from `tutorial.helpers`, or learnr2's own port -- see "No local R/RStudio dependency"), etc. | rewrite around an on-page `{webr}` cell, or drop -- see "No local R/RStudio dependency" |
@@ -577,9 +730,12 @@ learnr drove its section-by-section reveal from `progressive: yes` /
 progressive reveal itself: `quiz.js` gates every `##` and `###` heading
 behind a "Continue" button (see "Progressive section reveal" below). So:
 
-- Delete the YAML `progressive`/`allow_skip` keys and any *content-free*
-  `### ` divider (a heading used purely as a pacing break, with no real
-  title) -- fold its prose up into the enclosing `##`.
+- Delete the YAML `progressive`/`allow_skip` keys. **Keep every bare
+  `###` divider** exactly where the source had it: each one is a Continue
+  stop (the two pauses inside every exercise, before our answer and
+  before the knowledge drop, that the pedagogy essays call load-bearing),
+  rendered with no visible heading and a plain "Continue" button. See
+  "Where the pedagogy and learnr2's mechanics collide" for how.
 - **Keep** every genuinely-titled `##`/`###` section. It becomes one
   Continue step automatically; you don't add anything to opt in.
 - `### Hints` / `### Solutions` subsections that only wrap a `.hint`/`.solution`
@@ -599,10 +755,16 @@ what to install into the browser session. List *every* non-base package
 named in *any* `{webr}` cell (exercise, setup, check, or demo) -- if an
 exercise calls `library(dplyr)` or `nycflights13::flights`, both `dplyr` and
 `nycflights13` belong in the list. Conversely, a render-time `{r}` chunk
-should only ever be a `learnr2::` widget call: do **not** port
-`library(...)` or data-loading into `{r}` chunks, since those run in the
-render environment (CI), not the reader's browser, and would make the
-tutorial fail to build unless that package is installed for rendering too.
+runs in the render environment (your machine, CI), not the reader's
+browser. Two legitimate uses: a `learnr2::` widget call, and an
+`#| echo: true` "our answer" chunk that runs real code so the reader can
+compare it with their own (see "Where the pedagogy and learnr2's mechanics
+collide"). Anything else -- `library()` calls or data loading meant to set
+up a `{webr}` exercise -- belongs in a `setup: true` cell, not a `{r}`
+chunk, because the browser never sees what a `{r}` chunk did. Every
+package an answer chunk uses must be installed where the tutorial renders
+(a content package lists it under `Suggests`), and it must not reach for
+the network.
 
 ### Hide source code on widget chunks (`echo: false`)
 
@@ -642,11 +804,15 @@ override and a chunk-scoped fix avoids the question entirely.
 
 This is the single most important semantic difference between learnr and
 learnr2, and it is easy to translate the *syntax* correctly while still
-getting this wrong: **a learnr2 tutorial requires no local R install, no
-RStudio, and no other R package** (see the package `DESCRIPTION`: "runs
+getting this wrong: **a learnr2 tutorial page requires no local R install,
+no RStudio, and no other R package** (see the package `DESCRIPTION`: "runs
 entirely in the browser using Quarto and WebR ... without Shiny, R
-Markdown, or a server"). Every exercise runs in a `{webr}` cell, in the
-reader's browser, on the same page.
+Markdown, or a server"). Every on-page exercise runs in a `{webr}` cell,
+in the reader's browser. This is a rule about the *page*. It does not
+forbid a tutorial whose exercises direct the student to work in their own
+repo, QMD and terminals and paste the evidence back -- that is the normal
+AI-era tutorial, see "How a tutorial should teach". The cases below are
+the other kind: content whose point was the local install itself.
 
 A verified real regression: a translation attempt correctly applied every
 mechanical rule above (frontmatter, `{webr}` exercises, `echo: false`, the
@@ -1020,6 +1186,19 @@ render -- note bare `.hint`/`.solution` is *not* what actually ends up in
 the rendered class list, only the `exercise-` prefixed ones) from the
 gated list entirely, so it simply inherits its enclosing section's
 visibility instead of demanding a Continue click of its own.
+
+### Bare `###` dividers are Continue stops
+
+tutorial.helpers' exercise rhythm puts two bare `###` lines inside every
+exercise. Quarto renders each as `<section id="section-N" class="level3">`
+with an empty `<h3>` (confirmed by rendering, 2026-10), so the reveal
+gates them for free. `markPauseSections()` in `quiz.js` adds
+`.learnr2-pause` to any gated section whose heading has no text; the CSS
+hides that heading (and the anchor Quarto's anchor.js would hang on it),
+and `placeContinueButton()` labels the button plain "Continue" instead of
+"Continue: ". Their TOC entries are empty and Quarto's bootstrap already
+hides those. `tutorial_options(allow_skip = FALSE)` treats them like any
+section. Fixture: `progressive-sections-pauses`.
 
 ### `toc: false` is supported; Start Over moves to the top
 

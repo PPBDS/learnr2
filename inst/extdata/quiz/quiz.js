@@ -1177,6 +1177,32 @@
     return section.querySelector("h2, h3");
   }
 
+  // The heading's visible text, or "" for a bare `###` divider (see
+  // markPauseSections() below).
+  function sectionTitle(section) {
+    var heading = sectionHeading(section);
+    return heading ? heading.textContent.trim() : "";
+  }
+
+  // A bare `###` line -- tutorial.helpers' pacing break, used twice inside
+  // every exercise (one before "our answer", one before the knowledge drop)
+  // -- renders as a <section class="level3"> whose <h3> has no text; Quarto
+  // still gives it an id ("section", "section-1", ...) and a TOC entry,
+  // which Quarto's own stylesheet hides (`nav[role=doc-toc] a:empty`).
+  // Gating it works unchanged; what needs fixing is cosmetic: the empty
+  // heading still takes up margin (and anchor.js would hang an anchor on
+  // it), and the Continue button would read "Continue: ". Mark such
+  // sections so CSS can hide the heading and the label can be plain
+  // "Continue". Verified against a real render (AGENTS.md, "bare ###
+  // dividers").
+  function markPauseSections(sections) {
+    sections.forEach(function (section) {
+      if (sectionTitle(section) === "") {
+        section.classList.add("learnr2-pause");
+      }
+    });
+  }
+
   // Where the "Continue to <next>" button for `section` belongs: as its own
   // last child, unless `next` sits *inside* `section` (the nested-subsection
   // case above), in which case the button goes right before whichever of
@@ -1226,6 +1252,7 @@
     if (sections.length < 2) {
       return;
     }
+    markPauseSections(sections);
 
     var saved = loadState({ id: PROGRESS_ID });
     // Clamp -- a tutorial edited to have fewer sections since this was saved
@@ -1301,11 +1328,11 @@
       }
       var current = sections[unlocked - 1];
       var next = sections[unlocked];
-      var heading = sectionHeading(next);
+      var title = sectionTitle(next);
       var button = el("button", {
         type: "button",
         class: "learnr2-continue",
-        text: heading ? "Continue: " + heading.textContent.trim() : "Continue"
+        text: title ? "Continue: " + title : "Continue"
       });
       button.addEventListener("click", function () {
         unlockThrough(unlocked, true);

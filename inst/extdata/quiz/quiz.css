@@ -262,6 +262,14 @@
   display: none !important;
 }
 
+/* A bare `###` divider: a gated section with no heading text (quiz.js
+   adds .learnr2-pause). Hide the empty <h3> -- and the anchor Quarto's
+   anchor.js hangs on it -- so the pause is invisible except as a Continue
+   stop. */
+section.learnr2-pause > h3 {
+  display: none;
+}
+
 .learnr2-continue-container {
   margin: 1.5rem 0;
 }
