@@ -789,10 +789,34 @@ html_escape <- function(x) {
 # "other" and run_tutorial() refused to start at all (caught by R CMD check
 # on windows-latest). Only once something is listening does the HTTP fetch
 # of the marker decide between "learnr2" and "other".
-probe_server <- function(port) {
-  if (!port_listening(port)) {
-    return(list(state = "free", server = NULL))
+#
+# "Listening, but not a learnr2 server" is re-checked a few times before it
+# is believed. httpuv closes a stopped server's listening socket
+# asynchronously, on its background thread, so for a moment after
+# stopServer() (or after httpuv::randomPort(), which starts and stops a
+# server to test a port) the socket can still accept a connection that
+# nothing will ever answer. On Windows that moment is long enough to be
+# seen, and it made a free port look held (R CMD check on windows-latest,
+# 2026-10). A genuinely foreign listener just costs a second before the
+# error.
+probe_server <- function(port, attempts = 5L, wait = 0.2) {
+  result <- list(state = "free", server = NULL)
+  for (attempt in seq_len(attempts)) {
+    if (!port_listening(port)) {
+      return(list(state = "free", server = NULL))
+    }
+    result <- fetch_server_marker(port)
+    if (identical(result$state, "learnr2")) {
+      return(result)
+    }
+    Sys.sleep(wait)
   }
+  result
+}
+
+# GET the marker from a port something listens on: list(state, server)
+# with state "learnr2" (marker read and parsed) or "other" (anything else).
+fetch_server_marker <- function(port) {
   target <- sprintf("http://127.0.0.1:%d/%s", port, SERVER_FILE)
   old <- options(timeout = 2)
   on.exit(options(old), add = TRUE)

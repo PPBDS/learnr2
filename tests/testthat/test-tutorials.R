@@ -723,6 +723,19 @@ test_that("open_in_browser() reports, rather than fails, when no browser can be 
   expect_message(learnr2:::open_in_browser("http://127.0.0.1:7446/x/"), "open http://127.0.0.1:7446/x/ yourself")
 })
 
+# A port nothing listens on. httpuv::randomPort() finds one by starting and
+# stopping a server on it, and httpuv closes the listener asynchronously, so
+# the port can still accept a connection for a moment afterwards (long
+# enough to be seen on Windows). Wait until a connect actually fails.
+free_port <- function() {
+  port <- httpuv::randomPort()
+  for (i in 1:100) {
+    if (!learnr2:::port_listening(port, timeout = 1)) return(port)
+    Sys.sleep(0.05)
+  }
+  stop("port ", port, " never became free after randomPort()")
+}
+
 # ---- the served root, against a real httpuv server -----------------------
 #
 # The tests above stub httpuv, so they can only show that files were written,
@@ -756,7 +769,7 @@ test_that("a cache root with no index page is what used to 404 (documents the mi
   root <- withr::local_tempdir()
   fs::dir_create(fs::path(root, "learnr2", "hello-learnr2"))
   writeLines("<p>tutorial</p>", fs::path(root, "learnr2", "hello-learnr2", "index.html"))
-  port <- httpuv::randomPort()
+  port <- free_port()
   server <- httpuv::runStaticServer(as.character(root), port = port, browse = FALSE, background = TRUE)
   withr::defer(httpuv::stopServer(server))
 
@@ -767,7 +780,7 @@ test_that("a cache root with no index page is what used to 404 (documents the mi
 test_that("run_tutorial(open = TRUE) serves a root that forwards to the tutorial, for real", {
   out_parent <- withr::local_tempdir()
   local_stub_quarto()
-  port <- httpuv::randomPort()
+  port <- free_port()
   withr::local_options(learnr2.port = port)
   base <- sprintf("http://127.0.0.1:%d", port)
 
@@ -809,7 +822,7 @@ test_that("run_tutorial(open = TRUE) serves a root that forwards to the tutorial
 test_that("a second run_tutorial() against a live server reuses it and refreshes the root forward, for real", {
   out_parent <- withr::local_tempdir()
   local_stub_quarto()
-  port <- httpuv::randomPort()
+  port <- free_port()
   withr::local_options(learnr2.port = port)
   base <- sprintf("http://127.0.0.1:%d", port)
 
@@ -837,7 +850,7 @@ test_that("a second run_tutorial() against a live server reuses it and refreshes
 })
 
 test_that("port_listening() is a plain TCP connect: FALSE for a free port, TRUE for a live server", {
-  port <- httpuv::randomPort()
+  port <- free_port()
   expect_false(learnr2:::port_listening(port))
 
   server <- httpuv::startServer("127.0.0.1", port, list(call = function(req) {
@@ -848,21 +861,45 @@ test_that("port_listening() is a plain TCP connect: FALSE for a free port, TRUE 
 })
 
 test_that("probe_server() reports a port nothing listens on as free", {
-  port <- httpuv::randomPort()
+  port <- free_port()
   expect_identical(learnr2:::probe_server(port), list(state = "free", server = NULL))
+})
+
+test_that("probe_server() waits out a listener that is still closing before calling it 'other'", {
+  # Simulate httpuv's asynchronous close: the first look sees a listener
+  # that answers nothing, the next sees nothing listening.
+  state <- new.env()
+  state$looks <- 0
+  state$closes_after <- 2   # looks 1 and 2 see a listener; look 3 does not
+  local_mocked_bindings(
+    port_listening = function(port, ...) {
+      state$looks <- state$looks + 1
+      state$looks <= state$closes_after
+    },
+    fetch_server_marker = function(port) list(state = "other", server = NULL)
+  )
+  expect_identical(learnr2:::probe_server(1, wait = 0), list(state = "free", server = NULL))
+  expect_identical(state$looks, 3)
+
+  # But a listener that stays, and never answers with the marker, is "other"
+  # after `attempts` looks, not forever.
+  state$looks <- 0
+  state$closes_after <- Inf
+  expect_identical(learnr2:::probe_server(1, attempts = 3, wait = 0), list(state = "other", server = NULL))
+  expect_identical(state$looks, 3)
 })
 
 test_that("probe_server() reports a listener that is not a learnr2 server as other", {
   # Something answering, but with no marker (404), and something answering
   # with the marker path but not JSON: both are "other", never "learnr2".
-  port <- httpuv::randomPort()
+  port <- free_port()
   server <- httpuv::startServer("127.0.0.1", port, list(call = function(req) {
     list(status = 404L, headers = list("Content-Type" = "text/plain"), body = "nope")
   }))
   withr::defer(httpuv::stopServer(server))
   expect_identical(learnr2:::probe_server(port), list(state = "other", server = NULL))
 
-  port2 <- httpuv::randomPort()
+  port2 <- free_port()
   server2 <- httpuv::startServer("127.0.0.1", port2, list(call = function(req) {
     list(status = 200L, headers = list("Content-Type" = "text/plain"), body = "not json")
   }))
