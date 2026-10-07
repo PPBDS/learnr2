@@ -2,6 +2,8 @@
 # (tutorials_in_package, tutorial_doc, tutorial_format, tutorial_title), plus
 # run_tutorial(). The heavy render + serve steps of run_tutorial() are mocked
 # -- exercising Quarto/WebR for real belongs in tests/js/deployed-smoke.spec.js.
+# Serving is likewise mocked at learnr2's own seams (probe_server(),
+# open_in_browser(), block_serving()) plus httpuv's runStaticServer().
 
 # ---- available_tutorials() ------------------------------------------------
 
@@ -242,8 +244,9 @@ test_that("run_tutorial() renders a dev package's tutorial from its source tree"
   expect_true(fs::file_exists(html))
   expect_match(rendered_input, "demo\\.qmd$")
   # The copy rendered came from the source tree, not from any installed copy.
+  # (The cache is laid out as <output_dir>/<package>/<name>/.)
   expect_identical(
-    readLines(fs::path(out_parent, "demo", "demo.qmd")),
+    readLines(fs::path(out_parent, "fakeTutorials", "demo", "demo.qmd")),
     readLines(fs::path(root, "inst", "tutorials", "demo", "demo.qmd"))
   )
 })
@@ -306,18 +309,27 @@ test_that("run_tutorial() errors on an unknown tutorial name", {
   )
 })
 
-test_that("run_tutorial(open = FALSE) copies the tutorial, adds the extension, renders, and returns the html path invisibly", {
-  out_parent <- withr::local_tempdir()
-
-  rendered_input <- NULL
+# Stubs quarto::quarto_render so no test runs Quarto; the stub writes the
+# .html that render_tutorials() expects to find and records what it was
+# asked to render.
+local_stub_quarto <- function(env = parent.frame()) {
+  calls <- new.env()
+  calls$inputs <- character(0)
   local_mocked_bindings(
     quarto_render = function(input, ...) {
       writeLines("<html><body>stub</body></html>", fs::path_ext_set(input, "html"))
-      rendered_input <<- input
+      calls$inputs <- c(calls$inputs, as.character(input))
       invisible()
     },
-    .package = "quarto"
+    .package = "quarto",
+    .env = env
   )
+  calls
+}
+
+test_that("run_tutorial(open = FALSE) renders into <output_dir>/<package>/<name>/ with an index.html and a stamp", {
+  out_parent <- withr::local_tempdir()
+  calls <- local_stub_quarto()
 
   res <- withVisible(suppressMessages(
     run_tutorial("hello-learnr2", package = "learnr2",
@@ -325,50 +337,271 @@ test_that("run_tutorial(open = FALSE) copies the tutorial, adds the extension, r
   ))
 
   expect_false(res$visible)
+  work_dir <- fs::path(out_parent, "learnr2", "hello-learnr2")
+  expect_equal(
+    as.character(fs::path_abs(res$value)),
+    as.character(fs::path_abs(fs::path(work_dir, "hello-learnr2.html")))
+  )
   expect_true(fs::file_exists(res$value))
-  expect_match(res$value, "hello-learnr2\\.html$")
-
-  work_dir <- fs::path(out_parent, "hello-learnr2")
   expect_true(fs::file_exists(fs::path(work_dir, "hello-learnr2.qmd")))
   expect_true(fs::dir_exists(fs::path(work_dir, "_extensions", "r-wasm")))
-  expect_match(rendered_input, "hello-learnr2\\.qmd$")
+  expect_match(calls$inputs, "hello-learnr2\\.qmd$")
+  # The tutorial's address is its directory, so index.html must be there.
+  expect_true(fs::file_exists(fs::path(work_dir, "index.html")))
+
+  stamp <- jsonlite::fromJSON(fs::path(work_dir, "learnr2-tutorial.json"))
+  expect_identical(stamp$package, "learnr2")
+  expect_identical(stamp$name, "hello-learnr2")
+  expect_identical(stamp$learnr2_version, as.character(packageVersion("learnr2")))
+  expect_identical(stamp$html, "hello-learnr2.html")
+  expect_type(stamp$fingerprint, "character")
 })
 
-test_that("run_tutorial(open = TRUE) serves the rendered work dir over a static server", {
+test_that("run_tutorial() reuses a current render instead of rendering again", {
   out_parent <- withr::local_tempdir()
+  calls <- local_stub_quarto()
 
-  local_mocked_bindings(
-    quarto_render = function(input, ...) {
-      writeLines("<html></html>", fs::path_ext_set(input, "html"))
-      invisible()
-    },
-    .package = "quarto"
+  suppressMessages(run_tutorial("hello-learnr2", package = "learnr2", output_dir = out_parent, open = FALSE))
+  expect_length(calls$inputs, 1)
+
+  expect_message(
+    run_tutorial("hello-learnr2", package = "learnr2", output_dir = out_parent, open = FALSE),
+    "as rendered"
   )
-  served_dir <- NULL
-  served_browse <- NULL
-  local_mocked_bindings(
-    runStaticServer = function(dir, browse = TRUE, ...) {
-      served_dir <<- dir
-      served_browse <<- browse
-      invisible()
-    },
-    .package = "httpuv"
+  expect_length(calls$inputs, 1)
+})
+
+test_that("run_tutorial(refresh = TRUE) re-renders from a clean directory", {
+  out_parent <- withr::local_tempdir()
+  calls <- local_stub_quarto()
+  work_dir <- fs::path(out_parent, "learnr2", "hello-learnr2")
+
+  suppressMessages(run_tutorial("hello-learnr2", package = "learnr2", output_dir = out_parent, open = FALSE))
+  # Something an older version of the tutorial might have left behind.
+  fs::file_create(fs::path(work_dir, "stale-from-last-version.png"))
+
+  suppressMessages(run_tutorial("hello-learnr2", package = "learnr2",
+                                output_dir = out_parent, open = FALSE, refresh = TRUE))
+  expect_length(calls$inputs, 2)
+  expect_false(fs::file_exists(fs::path(work_dir, "stale-from-last-version.png")))
+  expect_true(fs::file_exists(fs::path(work_dir, "index.html")))
+})
+
+test_that("a render by another learnr2 version, or of other tutorial files, is not current", {
+  out_parent <- withr::local_tempdir()
+  calls <- local_stub_quarto()
+  stamp_path <- fs::path(out_parent, "learnr2", "hello-learnr2", "learnr2-tutorial.json")
+  run <- function() suppressMessages(
+    run_tutorial("hello-learnr2", package = "learnr2", output_dir = out_parent, open = FALSE)
   )
+
+  run()
+  stamp <- jsonlite::fromJSON(stamp_path)
+
+  stamp$learnr2_version <- "0.0.0"
+  jsonlite::write_json(stamp, stamp_path, auto_unbox = TRUE)
+  run()
+  expect_length(calls$inputs, 2)
+
+  stamp <- jsonlite::fromJSON(stamp_path)
+  stamp$fingerprint <- "not-these-files"
+  jsonlite::write_json(stamp, stamp_path, auto_unbox = TRUE)
+  run()
+  expect_length(calls$inputs, 3)
+
+  # An unreadable stamp also means render again.
+  writeLines("{ not json", stamp_path)
+  run()
+  expect_length(calls$inputs, 4)
+})
+
+test_that("tutorial_fingerprint() changes when any file in the tutorial directory changes", {
+  d <- withr::local_tempdir()
+  writeLines("---\ntitle: A\n---", fs::path(d, "a.qmd"))
+  fs::dir_create(fs::path(d, "images"))
+  writeLines("png", fs::path(d, "images", "x.png"))
+  f1 <- learnr2:::tutorial_fingerprint(d)
+  expect_identical(learnr2:::tutorial_fingerprint(d), f1)
+
+  writeLines("png2", fs::path(d, "images", "x.png"))
+  f2 <- learnr2:::tutorial_fingerprint(d)
+  expect_false(identical(f1, f2))
+
+  writeLines("more", fs::path(d, "_extra.qmd"))
+  expect_false(identical(learnr2:::tutorial_fingerprint(d), f2))
+})
+
+test_that("render_is_current() needs a stamp from this learnr2 for these files", {
+  v <- as.character(packageVersion("learnr2"))
+  expect_false(learnr2:::render_is_current(NULL, "abc"))
+  expect_true(learnr2:::render_is_current(list(learnr2_version = v, fingerprint = "abc"), "abc"))
+  expect_false(learnr2:::render_is_current(list(learnr2_version = v, fingerprint = "abd"), "abc"))
+  expect_false(learnr2:::render_is_current(list(learnr2_version = "0.0.0", fingerprint = "abc"), "abc"))
+})
+
+# ---- prerender_tutorials() --------------------------------------------
+
+test_that("prerender_tutorials(package = 'learnr2') renders every Quarto tutorial once", {
+  out_parent <- withr::local_tempdir()
+  calls <- local_stub_quarto()
+  quarto_tutorials <- available_tutorials(package = "learnr2", type = "quarto")
+
+  res <- withVisible(suppressMessages(
+    prerender_tutorials(package = "learnr2", output_dir = out_parent)
+  ))
+  expect_false(res$visible)
+  out <- res$value
+  expect_s3_class(out, "data.frame")
+  expect_named(out, c("package", "name", "html", "rendered"))
+  expect_setequal(out$name, quarto_tutorials$name)
+  expect_true(all(out$rendered))
+  expect_true(all(fs::file_exists(out$html)))
+  expect_length(calls$inputs, nrow(quarto_tutorials))
+
+  expect_message(
+    again <- prerender_tutorials(package = "learnr2", output_dir = out_parent),
+    "0 tutorial\\(s\\) rendered"
+  )
+  expect_false(any(again$rendered))
+  expect_length(calls$inputs, nrow(quarto_tutorials))
+})
+
+test_that("prerender_tutorials() returns a typed zero-row frame when there is nothing to render", {
+  local_stub_quarto()
+  res <- suppressMessages(prerender_tutorials(package = "utils", output_dir = withr::local_tempdir()))
+  expect_identical(nrow(res), 0L)
+  expect_named(res, c("package", "name", "html", "rendered"))
+})
+
+# ---- serving ------------------------------------------------------------
+
+# Everything serve_tutorial() does for real that a test must not: probe the
+# port, start httpuv, open a browser, block. Returns an env recording calls.
+local_stub_serving <- function(probe = list(state = "free", server = NULL), env = parent.frame()) {
+  seen <- new.env()
+  local_mocked_bindings(
+    probe_server = function(port) probe,
+    open_in_browser = function(url) { seen$url <- url; invisible() },
+    block_serving = function() { seen$marker_while_serving <- seen$marker_path_exists(); invisible() },
+    .env = env
+  )
+  local_mocked_bindings(
+    runStaticServer = function(dir, host = "127.0.0.1", port = NULL, ..., background = FALSE, browse = TRUE) {
+      seen$dir <- dir; seen$port <- port; seen$background <- background; seen$browse <- browse
+      structure(list(), class = "stub-server")
+    },
+    stopServer = function(server) { seen$stopped <- TRUE; invisible() },
+    .package = "httpuv",
+    .env = env
+  )
+  seen
+}
+
+test_that("run_tutorial(open = TRUE) serves the cache root on the fixed port and opens the tutorial's own address", {
+  out_parent <- withr::local_tempdir()
+  local_stub_quarto()
+  seen <- local_stub_serving()
+  marker <- fs::path(out_parent, "learnr2-server.json")
+  seen$marker_path_exists <- function() fs::file_exists(marker)
 
   suppressMessages(
-    run_tutorial("hello-learnr2", package = "learnr2",
-                 output_dir = out_parent, open = TRUE)
+    run_tutorial("hello-learnr2", package = "learnr2", output_dir = out_parent, open = TRUE)
   )
 
-  work_dir <- fs::path(out_parent, "hello-learnr2")
-  expect_equal(
-    as.character(fs::path_abs(served_dir)),
-    as.character(fs::path_abs(work_dir))
+  expect_equal(as.character(fs::path_abs(seen$dir)), as.character(fs::path_abs(out_parent)))
+  expect_identical(seen$port, 7446L)
+  expect_true(seen$background)
+  expect_false(seen$browse)
+  expect_identical(seen$url, "http://127.0.0.1:7446/learnr2/hello-learnr2/")
+  # The marker that lets a later run_tutorial() recognise this server exists
+  # while serving and is cleaned up afterwards.
+  expect_true(seen$marker_while_serving)
+  expect_false(fs::file_exists(marker))
+  expect_true(seen$stopped)
+})
+
+test_that("the learnr2.port option changes the port and the address", {
+  withr::local_options(learnr2.port = 8123)
+  out_parent <- withr::local_tempdir()
+  local_stub_quarto()
+  seen <- local_stub_serving()
+  seen$marker_path_exists <- function() TRUE
+
+  suppressMessages(
+    run_tutorial("hello-learnr2", package = "learnr2", output_dir = out_parent, open = TRUE)
   )
-  expect_true(served_browse)
-  # index.html is copied in so browse = TRUE lands on the tutorial itself,
-  # not httpuv's bare directory listing.
-  expect_true(fs::file_exists(fs::path(work_dir, "index.html")))
+  expect_identical(seen$port, 8123L)
+  expect_identical(seen$url, "http://127.0.0.1:8123/learnr2/hello-learnr2/")
+})
+
+test_that("with a learnr2 server already serving the cache root, run_tutorial() just opens the address", {
+  out_parent <- withr::local_tempdir()
+  local_stub_quarto()
+  seen <- local_stub_serving(probe = list(
+    state = "learnr2",
+    server = list(root = as.character(fs::path_abs(out_parent)), port = 7446)
+  ))
+
+  expect_message(
+    run_tutorial("hello-learnr2", package = "learnr2", output_dir = out_parent, open = TRUE),
+    "already running"
+  )
+  expect_identical(seen$url, "http://127.0.0.1:7446/learnr2/hello-learnr2/")
+  expect_null(seen$dir)  # no second server
+})
+
+test_that("a learnr2 server serving a different root, or a foreign process on the port, is an error", {
+  out_parent <- withr::local_tempdir()
+  local_stub_quarto()
+
+  local_stub_serving(probe = list(state = "learnr2", server = list(root = "/somewhere/else")))
+  expect_error(
+    run_tutorial("hello-learnr2", package = "learnr2", output_dir = out_parent, open = TRUE),
+    "serving /somewhere/else"
+  )
+
+  local_stub_serving(probe = list(state = "other", server = NULL))
+  expect_error(
+    run_tutorial("hello-learnr2", package = "learnr2", output_dir = out_parent, open = TRUE),
+    "something other than a learnr2"
+  )
+})
+
+test_that("classify_probe_failure() tells nothing-listening from something-else-listening", {
+  # The messages base::url() produces, observed with libcurl.
+  expect_identical(
+    learnr2:::classify_probe_failure("URL 'http://127.0.0.1:7446/learnr2-server.json': status was 'Couldn't connect to server'")$state,
+    "free"
+  )
+  expect_identical(learnr2:::classify_probe_failure("Connection refused")$state, "free")
+  expect_identical(
+    learnr2:::classify_probe_failure("cannot open URL 'http://127.0.0.1:7446/learnr2-server.json': HTTP status was '404 Not Found'")$state,
+    "other"
+  )
+  expect_identical(learnr2:::classify_probe_failure("Timeout was reached")$state, "other")
+  expect_identical(learnr2:::classify_probe_failure("lexical error: invalid char in json text")$state, "other")
+})
+
+test_that("probe_server() reports a port nothing listens on as free", {
+  port <- httpuv::randomPort()
+  expect_identical(learnr2:::probe_server(port), list(state = "free", server = NULL))
+})
+
+test_that("tutorial_url() and learnr2_port() agree on the default port", {
+  expect_identical(learnr2:::learnr2_port(), 7446L)
+  expect_identical(learnr2:::tutorial_url("ims.tutorials", "01-hello-data"), "http://127.0.0.1:7446/ims.tutorials/01-hello-data/")
+})
+
+test_that("the server marker is written at the cache root and removable", {
+  root <- withr::local_tempdir()
+  learnr2:::write_server_marker(as.character(root), 7446L)
+  marker <- jsonlite::fromJSON(fs::path(root, "learnr2-server.json"))
+  expect_identical(marker$root, as.character(root))
+  expect_identical(marker$port, 7446L)
+  learnr2:::remove_server_marker(as.character(root))
+  expect_false(fs::file_exists(fs::path(root, "learnr2-server.json")))
+  # Removing an absent marker is not an error.
+  expect_no_error(learnr2:::remove_server_marker(as.character(root)))
 })
 
 # ---- run_tutorial(): classic learnr tutorials ----------------------------

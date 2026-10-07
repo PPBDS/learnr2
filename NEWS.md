@@ -1,5 +1,27 @@
 # learnr2 (development version)
 
+* `run_tutorial()` now caches renders. A Quarto tutorial is rendered into
+  `output_dir/<package>/<name>/` together with a stamp recording the learnr2
+  version and a fingerprint of the installed tutorial files; while both
+  still match, the next launch serves the cached copy at once instead of
+  spending seconds (or, on a small cloud machine, half a minute) in Quarto.
+  `refresh = TRUE` forces a re-render, which always starts from a clean
+  directory so stale files cannot linger. New `prerender_tutorials()` fills
+  the cache for every installed Quarto tutorial ahead of time, for container
+  images and other environment builds.
+* `run_tutorial()` always serves on port 7446 (`options(learnr2.port = )`
+  overrides) and never falls back to a random port, and it serves the whole
+  cache root so every tutorial has its own stable address,
+  `http://127.0.0.1:7446/<package>/<name>/`. Saved answers are keyed by page
+  URL, so this is what makes them findable on the next launch; it also means
+  one tutorial's "Start Over" no longer wipes every tutorial's progress, and
+  boilerplate questions sharing an id no longer bleed between tutorials
+  (both of which happened while every tutorial was served at the same root
+  URL). If a learnr2 server is already running, a new `run_tutorial()` just
+  opens the tutorial there; if the port is held by anything else, it errors
+  instead of silently serving somewhere the browser has no saved answers.
+  **Breaking for readers mid-tutorial:** answers saved under the old root
+  address are not carried over to the new per-tutorial address.
 * `available_tutorials()` and `run_tutorial()` now see a package loaded from
   its source tree with `pkgload::load_all()`, as `devtools::load_all()` and
   `devtools::test()` do, reading its tutorials from the source

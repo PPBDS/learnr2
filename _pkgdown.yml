@@ -18,6 +18,7 @@ reference:
     contents:
       - create_tutorial
       - run_tutorial
+      - prerender_tutorials
       - available_tutorials
       - show_file
   - title: Testing tutorials

@@ -820,7 +820,11 @@ Two layers, both run in CI (`.github/workflows/R-CMD-check.yaml`,
   internals as `learnr2:::helper()`. Heavy/external calls are mocked with
   `testthat::local_mocked_bindings(..., .package = "<pkg>")` -- `quarto`,
   `httpuv` for `run_tutorial()`, `utils`/`rstudioapi` for `open_file()` --
-  so no test boots WebR, launches a browser, or hits the network. **One
+  so no test boots WebR, launches a browser, or hits the network. Serving
+  is additionally mocked at learnr2's own seams in `R/tutorials.R`:
+  `probe_server()` (what answers on the port), `open_in_browser()` and
+  `block_serving()` (httpuv's blocking event loop); see
+  `local_stub_serving()` and `local_stub_quarto()` in `test-tutorials.R`. **One
   exception renders for real:** the last test in
   `test-render-tutorials.R` runs `check_tutorial()` and
   `render_tutorials()` over every bundled tutorial with actual Quarto. It
