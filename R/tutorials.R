@@ -780,7 +780,19 @@ html_escape <- function(x) {
 # What, if anything, answers on `port`: list(state, server) with state one
 # of "free" (nothing listening), "learnr2" (a learnr2 server; `server` is
 # its marker, with the root it serves) or "other" (something else).
+#
+# Two steps on purpose. "Is anything listening?" is answered by a plain TCP
+# connect, which either succeeds or fails on every platform. An earlier
+# version inferred it from the wording of base::url()'s failure message
+# ("Couldn't connect to server", "Connection refused"), which held on
+# macOS and Linux and not on Windows, where a free port was reported as
+# "other" and run_tutorial() refused to start at all (caught by R CMD check
+# on windows-latest). Only once something is listening does the HTTP fetch
+# of the marker decide between "learnr2" and "other".
 probe_server <- function(port) {
+  if (!port_listening(port)) {
+    return(list(state = "free", server = NULL))
+  }
   target <- sprintf("http://127.0.0.1:%d/%s", port, SERVER_FILE)
   old <- options(timeout = 2)
   on.exit(options(old), add = TRUE)
@@ -791,20 +803,27 @@ probe_server <- function(port) {
       txt <- readLines(con, warn = FALSE, encoding = "UTF-8")
       list(state = "learnr2", server = jsonlite::fromJSON(paste(txt, collapse = "\n")))
     },
-    warning = function(w) classify_probe_failure(conditionMessage(w)),
-    error = function(e) classify_probe_failure(conditionMessage(e))
+    warning = function(w) list(state = "other", server = NULL),
+    error = function(e) list(state = "other", server = NULL)
   )
 }
 
-# base::url() reports "Couldn't connect to server" / "Connection refused"
-# when nothing is listening; an HTTP error status, a timeout or a parse
-# failure all mean something is listening that is not a learnr2 server.
-classify_probe_failure <- function(msg) {
-  if (grepl("connect", msg, ignore.case = TRUE) || grepl("refused", msg, ignore.case = TRUE)) {
-    list(state = "free", server = NULL)
-  } else {
-    list(state = "other", server = NULL)
+# TRUE if a TCP connection to 127.0.0.1:port can be opened. A connection to
+# a port nothing listens on is refused immediately on every platform;
+# `timeout` only bounds the odd case of a listener that accepts slowly.
+port_listening <- function(port, timeout = 2) {
+  con <- tryCatch(
+    suppressWarnings(
+      socketConnection(host = "127.0.0.1", port = port, server = FALSE,
+                       blocking = TRUE, open = "r+b", timeout = timeout)
+    ),
+    error = function(e) NULL
+  )
+  if (is.null(con)) {
+    return(FALSE)
   }
+  close(con)
+  TRUE
 }
 
 # Seams around the two things a unit test must never do for real: open a

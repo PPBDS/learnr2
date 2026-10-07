@@ -836,24 +836,38 @@ test_that("a second run_tutorial() against a live server reuses it and refreshes
   expect_identical(http_get(paste0(base, "/learnr2/hello-learnr2/"))$status, 200L)
 })
 
-test_that("classify_probe_failure() tells nothing-listening from something-else-listening", {
-  # The messages base::url() produces, observed with libcurl.
-  expect_identical(
-    learnr2:::classify_probe_failure("URL 'http://127.0.0.1:7446/learnr2-server.json': status was 'Couldn't connect to server'")$state,
-    "free"
-  )
-  expect_identical(learnr2:::classify_probe_failure("Connection refused")$state, "free")
-  expect_identical(
-    learnr2:::classify_probe_failure("cannot open URL 'http://127.0.0.1:7446/learnr2-server.json': HTTP status was '404 Not Found'")$state,
-    "other"
-  )
-  expect_identical(learnr2:::classify_probe_failure("Timeout was reached")$state, "other")
-  expect_identical(learnr2:::classify_probe_failure("lexical error: invalid char in json text")$state, "other")
+test_that("port_listening() is a plain TCP connect: FALSE for a free port, TRUE for a live server", {
+  port <- httpuv::randomPort()
+  expect_false(learnr2:::port_listening(port))
+
+  server <- httpuv::startServer("127.0.0.1", port, list(call = function(req) {
+    list(status = 200L, headers = list("Content-Type" = "text/plain"), body = "hi")
+  }))
+  withr::defer(httpuv::stopServer(server))
+  expect_true(learnr2:::port_listening(port))
 })
 
 test_that("probe_server() reports a port nothing listens on as free", {
   port <- httpuv::randomPort()
   expect_identical(learnr2:::probe_server(port), list(state = "free", server = NULL))
+})
+
+test_that("probe_server() reports a listener that is not a learnr2 server as other", {
+  # Something answering, but with no marker (404), and something answering
+  # with the marker path but not JSON: both are "other", never "learnr2".
+  port <- httpuv::randomPort()
+  server <- httpuv::startServer("127.0.0.1", port, list(call = function(req) {
+    list(status = 404L, headers = list("Content-Type" = "text/plain"), body = "nope")
+  }))
+  withr::defer(httpuv::stopServer(server))
+  expect_identical(learnr2:::probe_server(port), list(state = "other", server = NULL))
+
+  port2 <- httpuv::randomPort()
+  server2 <- httpuv::startServer("127.0.0.1", port2, list(call = function(req) {
+    list(status = 200L, headers = list("Content-Type" = "text/plain"), body = "not json")
+  }))
+  withr::defer(httpuv::stopServer(server2))
+  expect_identical(learnr2:::probe_server(port2), list(state = "other", server = NULL))
 })
 
 test_that("tutorial_url() and learnr2_port() agree on the default port", {
