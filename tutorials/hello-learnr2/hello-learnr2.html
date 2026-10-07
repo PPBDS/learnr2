@@ -79,8 +79,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="hello-learnr2_files/libs/quarto-contrib/live-runtime/live-runtime.css" rel="stylesheet">
 <script type="module" src="hello-learnr2_files/libs/quarto-ojs/quarto-ojs-runtime.js"></script>
 <link href="hello-learnr2_files/libs/quarto-ojs/quarto-ojs.css" rel="stylesheet">
-<link href="hello-learnr2_files/libs/learnr2-quiz-0.1.1.9009/quiz.css" rel="stylesheet">
-<script src="hello-learnr2_files/libs/learnr2-quiz-0.1.1.9009/quiz.js"></script>
+<link href="hello-learnr2_files/libs/learnr2-quiz-0.1.1.9010/quiz.css" rel="stylesheet">
+<script src="hello-learnr2_files/libs/learnr2-quiz-0.1.1.9010/quiz.js"></script>
 
 
 </head>
@@ -110,6 +110,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <ul class="collapse">
   <li><a href="#table-of-contents" id="toc-table-of-contents" class="nav-link" data-scroll-target="#table-of-contents">Table of contents</a></li>
   <li><a href="#skipping-ahead" id="toc-skipping-ahead" class="nav-link" data-scroll-target="#skipping-ahead">Skipping ahead</a></li>
+  <li><a href="#pauses-without-a-heading" id="toc-pauses-without-a-heading" class="nav-link" data-scroll-target="#pauses-without-a-heading">Pauses without a heading</a></li>
+  <li><a href="#section" id="toc-section" class="nav-link" data-scroll-target="#section"></a></li>
   <li><a href="#start-over" id="toc-start-over" class="nav-link" data-scroll-target="#start-over">Start Over</a></li>
   </ul></li>
   <li><a href="#where-to-go-next" id="toc-where-to-go-next" class="nav-link" data-scroll-target="#where-to-go-next">Where to go next</a></li>
@@ -525,6 +527,14 @@ IEFuc3dlcnMifQ==">
 <p>If you want readers to roam freely — reference material, or a tour like this one — call <code>learnr2::tutorial_options()</code> once, in a chunk with <code>#| echo: false</code>, anywhere in the document:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>learnr2<span class="sc">::</span><span class="fu">tutorial_options</span>(<span class="at">allow_skip =</span> <span class="cn">TRUE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Then clicking any TOC entry unlocks every section up to that one and jumps there, like a classic learnr tutorial with <code>allow_skip: yes</code>. This page leaves the default in place so you can see it in action. Without a TOC the setting has no effect, since there is nothing to click.</p>
+</section>
+<section id="pauses-without-a-heading" class="level3">
+<h3 class="anchored" data-anchor-id="pauses-without-a-heading">Pauses without a heading</h3>
+<p>Not every Continue stop needs a title. A line holding only <code>###</code>, with nothing after it, is a <em>pause</em>: the content below it stays hidden until the reader clicks a button that says just <strong>Continue</strong>, and no heading is shown. The tutorial.helpers house style puts two of these inside every exercise, one before the author’s own answer and one before the knowledge drop, so the reader compares before they read on. Here is one now.</p>
+</section>
+<section id="section" class="level3">
+<h3 class="anchored" data-anchor-id="section"></h3>
+<p>You just clicked through a pause. In the <code>.qmd</code> it is three hash marks on a line by themselves; in the sidebar it has no entry.</p>
 </section>
 <section id="start-over" class="level3">
 <h3 class="anchored" data-anchor-id="start-over">Start Over</h3>
