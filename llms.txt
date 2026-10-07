@@ -142,3 +142,9 @@ Manage the bundled quarto-live Quarto extension.
 - [`live_extension_dir()`](https://ppbds.github.io/learnr2/reference/live_extension_dir.md)
   : Path to the bundled 'quarto-live' extension
 
+# Articles
+
+### All vignettes
+
+- [Tutorials in the Age of
+  AI](https://ppbds.github.io/learnr2/articles/ai.md):
