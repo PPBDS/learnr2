@@ -165,13 +165,16 @@ not. Pass `id` explicitly to pin it.
 this survives closing and reopening the browser, and restarting the
 computer – confirmed with automated tests
 (`tests/js/persistence.spec.js`) that fully quit and relaunch a real
-browser against the same profile, for both a `file://` tutorial (how
+browser against the same profile, for both a `file://` tutorial and one
+served over HTTP. Two things it does *not* survive, by browser design
+rather than anything learnr2 controls: private/incognito windows (their
+storage is wiped when the window closes) and the exact page URL changing
+– a tutorial opened from a different server, port or path starts fresh.
+That is why
 [`run_tutorial()`](https://ppbds.github.io/learnr2/reference/run_tutorial.md)
-opens one) and one served over HTTP. Two things it does *not* survive,
-by browser design rather than anything learnr2 controls:
-private/incognito windows (their storage is wiped when the window
-closes) and the exact page URL changing – a tutorial re-rendered to a
-different path, or opened from a different server/port, starts fresh.
+always serves on one fixed port and gives every tutorial its own stable
+path, `/<package>/<name>/`: the address, and so the saved answers, are
+the same on every launch, and no two tutorials share them.
 
 Every page also gets a "Start Over" button, appended automatically to
 the bottom of Quarto's TOC sidebar (nothing to opt into – it's added by

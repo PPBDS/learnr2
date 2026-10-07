@@ -8,6 +8,8 @@ Scaffold and run interactive tutorials.
   : Create a new learnr2 tutorial
 - [`run_tutorial()`](https://ppbds.github.io/learnr2/reference/run_tutorial.md)
   : Run a bundled tutorial
+- [`prerender_tutorials()`](https://ppbds.github.io/learnr2/reference/prerender_tutorials.md)
+  : Render every installed Quarto tutorial into the cache
 - [`available_tutorials()`](https://ppbds.github.io/learnr2/reference/available_tutorials.md)
   : List tutorials bundled with learnr2 (or any installed package)
 - [`show_file()`](https://ppbds.github.io/learnr2/reference/show_file.md)

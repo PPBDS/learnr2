@@ -4,15 +4,12 @@ Runs a tutorial bundled with an installed package, whichever of the two
 formats
 [`available_tutorials()`](https://ppbds.github.io/learnr2/reference/available_tutorials.md)
 reports it is. A `"quarto"` tutorial (learnr2's own format) is rendered
-to `output_dir` and, when `open` is `TRUE`, served to a browser. Because
-installed tutorials live in a read-only package library, the tutorial is
-copied to a writable location and the 'quarto-live' extension is added
-before rendering. An `"rmarkdown"` tutorial – a classic 'learnr'
-tutorial – is handed to
+into a per-user cache – or reused from it, if it was rendered before and
+nothing has changed – and, when `open` is `TRUE`, served to a browser.
+An `"rmarkdown"` tutorial – a classic 'learnr' tutorial – is handed to
 [`learnr::run_tutorial()`](https://pkgs.rstudio.com/learnr/reference/run_tutorial.html),
 so a tool built on learnr2 (such as the "R Tutorials" VS Code extension)
 can run both kinds through this one function and depend only on learnr2.
-See the section below.
 
 ## Usage
 
@@ -21,7 +18,8 @@ run_tutorial(
   name = NULL,
   package = "learnr2",
   output_dir = tools::R_user_dir("learnr2", "cache"),
-  open = interactive()
+  open = interactive(),
+  refresh = FALSE
 )
 ```
 
@@ -45,15 +43,16 @@ run_tutorial(
 
 - output_dir:
 
-  Directory in which to render a `"quarto"` tutorial (ignored for an
-  `"rmarkdown"` one). Defaults to a persistent per-user cache directory
-  (see [`tools::R_user_dir()`](https://rdrr.io/r/tools/userdir.html)),
-  *not* [`tempfile()`](https://rdrr.io/r/base/tempfile.html) – R deletes
-  its own session temp directory as soon as the R process exits, which
-  races with (and often loses to) the browser actually loading the page
-  when `open = TRUE` is used non-interactively (e.g. via `Rscript`),
-  producing a "file not found" page. Pass your own `output_dir` for a
-  one-off location instead.
+  Root of the render cache for `"quarto"` tutorials (ignored for an
+  `"rmarkdown"` one). Each tutorial is rendered into
+  `output_dir/<package>/<name>/`. Defaults to a persistent per-user
+  directory (see
+  [`tools::R_user_dir()`](https://rdrr.io/r/tools/userdir.html)), *not*
+  [`tempfile()`](https://rdrr.io/r/base/tempfile.html): a persistent
+  location is what makes the render cache (below) work at all, and R
+  deletes its session temp directory as soon as the R process exits,
+  which races with the browser actually loading the page when
+  `open = TRUE` is used from `Rscript`.
 
 - open:
 
@@ -62,32 +61,61 @@ run_tutorial(
   [`httpuv::runStaticServer()`](https://rstudio.github.io/httpuv/reference/runStaticServer.html)
   or [`shiny::runApp()`](https://rdrr.io/pkg/shiny/man/runApp.html))
   until you interrupt it (Ctrl+C, or the console's Stop button) – see
-  the section below for why. When `FALSE`, a `"quarto"` tutorial is
-  rendered and its path returned without serving or blocking; an
-  `"rmarkdown"` tutorial has no render-only mode (it is a Shiny app), so
-  `open = FALSE` is an error. Note that under `Rscript` the default is
-  `FALSE`, so pass `open = TRUE` explicitly there.
+  the sections below for why. When `FALSE`, a `"quarto"` tutorial is
+  rendered (or found in the cache) and its path returned without serving
+  or blocking; an `"rmarkdown"` tutorial has no render-only mode (it is
+  a Shiny app), so `open = FALSE` is an error for one. Note that under
+  `Rscript` the default is `FALSE`, so pass `open = TRUE` explicitly
+  there.
+
+- refresh:
+
+  Re-render a `"quarto"` tutorial even if the cached render is current.
+  Defaults to `FALSE`.
 
 ## Value
 
 Path to the rendered HTML file for a `"quarto"` tutorial, or to the
 `.Rmd` source for an `"rmarkdown"` one, invisibly.
 
-## Classic learnr tutorials
+## Render cache
 
-Many existing content packages (those built on 'tutorial.helpers', for
-instance) bundle classic 'learnr' tutorials: `.Rmd` files with
-`runtime: shiny_prerendered` that run as a Shiny app in the local R
-session. learnr2 cannot run those itself – the Shiny machinery lives in
-'learnr' – so for an `"rmarkdown"` tutorial this function calls
-`learnr::run_tutorial(name, package = package)`, which blocks while the
-app runs just as the `"quarto"` path blocks while serving.
+Rendering a Quarto tutorial takes several seconds on a laptop and well
+over ten on a small cloud machine, and nothing about an installed
+tutorial changes between one launch and the next. So the render is
+cached: alongside the HTML in `output_dir/<package>/<name>/`, a stamp
+file records the learnr2 version and a fingerprint of every file in the
+installed tutorial directory. On the next launch, if both still match,
+the cached HTML is served at once. Reinstalling the tutorial's package
+or upgrading learnr2 invalidates the cache; so does `refresh = TRUE`.
+Before any re-render the old copy is deleted, so files a previous
+version of the tutorial had and the current one does not cannot linger.
 
-'learnr' is only a suggested dependency of learnr2, not a required one,
-because a package that bundles classic learnr tutorials already depends
-on 'learnr' itself (directly, or via 'tutorial.helpers'). So whenever an
-`"rmarkdown"` tutorial is installed, 'learnr' is too; this function only
-errors with an install hint if that invariant is somehow broken.
+[`prerender_tutorials()`](https://ppbds.github.io/learnr2/reference/prerender_tutorials.md)
+fills the cache for every installed Quarto tutorial ahead of time – for
+instance while building a container image – so that even a student's
+first launch is instant.
+
+## Serving, the fixed port, and saved answers
+
+A reader's answers and typed exercise code are saved in the browser's
+`localStorage`, keyed by the page URL (see "Progress persistence" in
+[`question()`](https://ppbds.github.io/learnr2/reference/question.md)).
+For them to be found again tomorrow, the URL has to be the same
+tomorrow. So learnr2 always serves on one fixed port, 7446
+(`getOption("learnr2.port")` overrides it), and never falls back to a
+random one; and it serves the whole cache root rather than a single
+tutorial, so every tutorial has its own stable address,
+`http://127.0.0.1:7446/<package>/<name>/`, and no two tutorials share
+saved state or get wiped together by one tutorial's "Start Over".
+
+Because the server serves the whole cache, one server is enough for any
+number of tutorials. If a learnr2 server is already running on the port
+(say, in another terminal), this function renders into the cache if
+needed and simply opens the tutorial's address in the browser, without
+starting a second server or blocking. If the port is held by something
+other than a learnr2 server, it stops with an error rather than silently
+serving somewhere the browser has no saved answers for.
 
 ## Why this blocks and serves over local HTTP instead of opening the file directly
 
@@ -111,12 +139,32 @@ back at a `file://` URL with no server behind it. This function now
 renders with the same one-shot
 [`quarto::quarto_render()`](https://quarto-dev.github.io/quarto-r/reference/quarto_render.html)
 call the package's own pkgdown publishing script uses, and serves the
-result with
-[`httpuv::runStaticServer()`](https://rstudio.github.io/httpuv/reference/runStaticServer.html)
-– an in-process server with no separate daemon to lose track of. Its
-trade-off is that it blocks the caller while serving, matching how the
-original 'learnr' package's `run_tutorial()` (built on a blocking Shiny
-app) behaved – stop the server to get your prompt back.
+result with httpuv's static server – an in-process server with no
+separate daemon to lose track of. Its trade-off is that it blocks the
+caller while serving, matching how the original 'learnr' package's
+`run_tutorial()` (built on a blocking Shiny app) behaved – stop the
+server to get your prompt back.
+
+## Classic learnr tutorials
+
+Many existing content packages (those built on 'tutorial.helpers', for
+instance) bundle classic 'learnr' tutorials: `.Rmd` files with
+`runtime: shiny_prerendered` that run as a Shiny app in the local R
+session. learnr2 cannot run those itself – the Shiny machinery lives in
+'learnr' – so for an `"rmarkdown"` tutorial this function calls
+`learnr::run_tutorial(name, package = package)`, which blocks while the
+app runs just as the `"quarto"` path blocks while serving.
+
+'learnr' is only a suggested dependency of learnr2, not a required one,
+because a package that bundles classic learnr tutorials already depends
+on 'learnr' itself (directly, or via 'tutorial.helpers'). So whenever an
+`"rmarkdown"` tutorial is installed, 'learnr' is too; this function only
+errors with an install hint if that invariant is somehow broken.
+
+## See also
+
+[`prerender_tutorials()`](https://ppbds.github.io/learnr2/reference/prerender_tutorials.md)
+to fill the render cache in advance.
 
 ## Examples
 
@@ -132,6 +180,9 @@ run_tutorial()
 # starts a local web server that blocks the session until interrupted.
 if (FALSE) { # \dontrun{
 run_tutorial("hello-learnr2")
+
+# Force a re-render even though the cached copy is current.
+run_tutorial("hello-learnr2", refresh = TRUE)
 
 # A classic learnr tutorial from a content package is handed to learnr.
 run_tutorial("hello", package = "learnr", open = TRUE)

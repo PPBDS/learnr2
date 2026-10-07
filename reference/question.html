@@ -13,7 +13,7 @@ questions, graded entirely in the reader's browser."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">learnr2</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.1.9003</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.1.9004</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -198,12 +198,15 @@ does not. Pass <code>id</code> explicitly to pin it.</p>
 this survives closing and reopening the browser, and restarting the
 computer – confirmed with automated tests
 (<code>tests/js/persistence.spec.js</code>) that fully quit and relaunch a real
-browser against the same profile, for both a <code>file://</code> tutorial (how
-<code><a href="run_tutorial.html">run_tutorial()</a></code> opens one) and one served over HTTP. Two things it does
-<em>not</em> survive, by browser design rather than anything learnr2 controls:
-private/incognito windows (their storage is wiped when the window
-closes) and the exact page URL changing – a tutorial re-rendered to a
-different path, or opened from a different server/port, starts fresh.</p>
+browser against the same profile, for both a <code>file://</code> tutorial and one
+served over HTTP. Two things it does <em>not</em> survive, by browser design
+rather than anything learnr2 controls: private/incognito windows (their
+storage is wiped when the window closes) and the exact page URL changing
+– a tutorial opened from a different server, port or path starts fresh.
+That is why <code><a href="run_tutorial.html">run_tutorial()</a></code> always serves on one fixed port and gives
+every tutorial its own stable path, <code>/&lt;package&gt;/&lt;name&gt;/</code>: the address,
+and so the saved answers, are the same on every launch, and no two
+tutorials share them.</p>
 <p>Every page also gets a "Start Over" button, appended automatically to
 the bottom of Quarto's TOC sidebar (nothing to opt into – it's added by
 the same JavaScript that renders <code>question()</code>/<code><a href="student_info.html">student_info()</a></code>, as long
