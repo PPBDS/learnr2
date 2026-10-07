@@ -55,6 +55,11 @@ function downloadButton(overrides) {
   );
 }
 
+// learnr2::tutorial_options()'s payload (R/tutorial_options.R).
+function tutorialOptions(overrides) {
+  return Object.assign({ allowSkip: false }, overrides);
+}
+
 function encode(payload) {
   return Buffer.from(JSON.stringify(payload), "utf8").toString("base64");
 }
@@ -81,6 +86,10 @@ function downloadBlock(payload) {
     "  <noscript>This button requires JavaScript.</noscript>\n" +
     "</div>\n"
   );
+}
+
+function optionsBlock(payload) {
+  return '<div class="learnr2-options" data-learnr2-options="' + encode(payload) + '" hidden></div>\n';
 }
 
 // Stands in for a real quarto-live {webr} exercise cell's own static
@@ -309,7 +318,7 @@ const FIXTURES = {
     ),
     downloadBlock(downloadButton({ filenamePrefix: "class-101" }))
   ],
-  // Mirrors getting-started's real shape: two level2 sections with no
+  // Mirrors a typical tutorial's real shape: two level2 sections with no
   // subsections (Introduction, Student Information), a level2 section
   // ("Running R Code") containing two nested level3 subsections (Exercise
   // 1/2) the way Quarto renders "### Exercise 1" under "## Running R Code",
@@ -397,7 +406,23 @@ const FIXTURES = {
   ]
 };
 
+// The same progressive page with learnr2::tutorial_options(allow_skip = TRUE)
+// on it: TOC links unlock and jump instead of being dimmed.
+FIXTURES["progressive-sections-skip"] = FIXTURES["progressive-sections"].concat([
+  optionsBlock(tutorialOptions({ allowSkip: true }))
+]);
+
+// Any fixture is also available as "<name>-no-toc": the same blocks on a
+// page with no sidebar element at all, which is what Quarto emits for a
+// tutorial rendered with `toc: false`.
+const NO_TOC_SUFFIX = "-no-toc";
+
 function renderPage(name) {
+  let noToc = false;
+  if (name.endsWith(NO_TOC_SUFFIX)) {
+    noToc = true;
+    name = name.slice(0, -NO_TOC_SUFFIX.length);
+  }
   const blocks = FIXTURES[name];
   if (!blocks) {
     return null;
@@ -409,14 +434,24 @@ function renderPage(name) {
     '<meta charset="utf-8">\n' +
     "<title>quiz fixture: " + name + "</title>\n" +
     '<link rel="stylesheet" href="/quiz/quiz.css">\n' +
+    // Quarto's bootstrap stylesheet hides the margin sidebar on narrow
+    // screens; reproduce that one rule (verified against a real render)
+    // so the narrow-viewport Start Over tests see what a phone sees.
+    "<style>@media (max-width: 767.98px) { #quarto-margin-sidebar { display: none; } }</style>\n" +
     "</head>\n" +
     "<body>\n" +
     // Minimal stand-in for Quarto's own TOC sidebar (the real markup has a
     // lot more in it -- a <nav id="TOC">, heading, link list -- but all
     // injectStartOverButton() needs is the #quarto-margin-sidebar container
     // itself to append into, matching every real rendered tutorial page.
-    '<div id="quarto-margin-sidebar" class="sidebar margin-sidebar"><nav id="TOC"></nav></div>\n' +
+    (noToc ? "" : '<div id="quarto-margin-sidebar" class="sidebar margin-sidebar"><nav id="TOC"></nav></div>\n') +
+    // Quarto's main column and title block, in the same shape as a real
+    // render: <main id="quarto-document-content"> holding
+    // <header id="title-block-header"> and then the sections.
+    '<main class="content" id="quarto-document-content">\n' +
+    '<header id="title-block-header" class="quarto-title-block default"><h1 class="title">quiz fixture: ' + name + "</h1></header>\n" +
     blocks.join("\n") +
+    "\n</main>\n" +
     '<script src="/quiz/quiz.js"></script>\n' +
     "</body>\n" +
     "</html>\n"

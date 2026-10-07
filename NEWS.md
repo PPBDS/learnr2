@@ -1,5 +1,27 @@
 # learnr2 (development version)
 
+* New `tutorial_options()`, for settings that apply to a whole tutorial
+  page. Its first option, `allow_skip`, controls the table of contents:
+  by default (`FALSE`) a sidebar entry for a section the reader has not
+  reached yet is dimmed and does nothing when clicked, becoming a working
+  link only once that section is unlocked, so the sidebar cannot be used
+  to read the whole tutorial at once. `tutorial_options(allow_skip = TRUE)`
+  restores the previous behaviour, where clicking any entry unlocked every
+  section up to it and jumped there. Call it once, in an `echo: false`
+  chunk; `check_tutorial()` treats such a chunk as a widget chunk.
+  **Behaviour change for existing tutorials:** none of them opted in, so
+  all of them now lock the sidebar.
+* The "Start Over" button no longer depends on the table-of-contents
+  sidebar. A tutorial rendered with `toc: false` used to have no Start
+  Over at all, and every tutorial lost it on a phone-width screen, where
+  Quarto hides the sidebar. The button now sits at the bottom of the
+  sidebar when one is showing and otherwise at the top of the tutorial,
+  directly under the title, moving between the two as the window resizes.
+* The `getting-started` and `intro-vectors` tutorials are no longer
+  bundled; `hello-learnr2` is the one bundled tutorial, and it gained a
+  "Layout options" section describing `toc`, `allow_skip` and Start Over.
+  `getting-started` lives on in 'primer.tutorials'.
+
 * CRAN review: `create_tutorial()` and `add_live_extension()` no longer
   default `dir` to the working directory; `dir` is required, so neither
   function writes anywhere the caller did not name (pass `dir = "."` for the

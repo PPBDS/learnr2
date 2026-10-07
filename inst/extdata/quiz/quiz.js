@@ -1070,12 +1070,43 @@
     });
   }
 
-  // Appended to the bottom of Quarto's own TOC sidebar, if the page has
-  // one (a tutorial rendered with `toc: false` has nowhere to put it, and
-  // is left without a Start Over control).
-  function injectStartOverButton() {
+  // Where the Start Over button lives: the bottom of Quarto's own TOC
+  // sidebar when the page has one that is actually showing, otherwise the
+  // top of the tutorial, directly after the title block -- before the first
+  // section, so the progressive reveal below never hides it. "Actually
+  // showing" matters, not just "exists": a tutorial rendered with
+  // `toc: false` has no #quarto-margin-sidebar at all, but one rendered
+  // with `toc: true` still has the element on a phone-width screen, where
+  // Quarto's own stylesheet sets it to display: none (bootstrap's
+  // `@media (max-width: 767.98px) { #quarto-margin-sidebar { display: none } }`,
+  // confirmed in a real render). A button appended into a hidden sidebar
+  // is as good as missing, which is exactly how the first version of this
+  // behaved on mobile. getClientRects() is empty for anything display: none,
+  // itself or via an ancestor, which is the check wanted here.
+  function sidebarShowing() {
     var sidebar = document.getElementById("quarto-margin-sidebar");
-    if (!sidebar || sidebar.querySelector(".learnr2-start-over")) {
+    return sidebar && sidebar.getClientRects().length > 0 ? sidebar : null;
+  }
+
+  function placeStartOverButton(container) {
+    var sidebar = sidebarShowing();
+    if (sidebar) {
+      container.classList.remove("learnr2-start-over-top");
+      sidebar.appendChild(container);
+      return;
+    }
+    container.classList.add("learnr2-start-over-top");
+    var header = document.getElementById("title-block-header");
+    if (header && header.parentNode) {
+      header.parentNode.insertBefore(container, header.nextSibling);
+      return;
+    }
+    var main = document.getElementById("quarto-document-content") || document.body;
+    main.insertBefore(container, main.firstChild);
+  }
+
+  function injectStartOverButton() {
+    if (document.querySelector(".learnr2-start-over")) {
       return;
     }
     var button = el("button", { type: "button", class: "learnr2-start-over", text: "Start Over" });
@@ -1093,7 +1124,35 @@
         window.location.reload();
       });
     });
-    sidebar.appendChild(el("div", { class: "learnr2-start-over-container" }, [button]));
+    var container = el("div", { class: "learnr2-start-over-container" }, [button]);
+    placeStartOverButton(container);
+    // The sidebar can appear or disappear after load (a window resized
+    // across Quarto's breakpoint, a phone rotated), so follow it. Moving
+    // the same node keeps its click handler; nothing is rebuilt.
+    var resizeTimer = null;
+    window.addEventListener("resize", function () {
+      window.clearTimeout(resizeTimer);
+      resizeTimer = window.setTimeout(function () { placeStartOverButton(container); }, 100);
+    });
+  }
+
+  // ---- Tutorial-wide options --------------------------------------------
+  // learnr2::tutorial_options() renders a hidden <div class="learnr2-options">
+  // carrying base64 JSON, the same way question()/student_info() carry
+  // their payloads. Every option has a default here, so a page with no
+  // such element behaves as documented in tutorial_options()'s help.
+  var OPTION_DEFAULTS = { allowSkip: false };
+
+  function readTutorialOptions() {
+    var options = Object.assign({}, OPTION_DEFAULTS);
+    document.querySelectorAll(".learnr2-options[data-learnr2-options]").forEach(function (node) {
+      try {
+        Object.assign(options, decodeBase64Json(node.getAttribute("data-learnr2-options")));
+      } catch (e) {
+        // A malformed payload leaves the defaults in place.
+      }
+    });
+    return options;
   }
 
   // ---- Progressive section reveal ("Continue" buttons) ------------------
@@ -1162,8 +1221,8 @@
       return !(section.classList.contains("level3") &&
         section.querySelector(".exercise-hint, .exercise-solution"));
     });
-    // Nothing to gate: a one-section tutorial (or one with `toc: false` and
-    // no headings at all) already shows everything there is to show.
+    // Nothing to gate: a one-section tutorial (or one with no headings at
+    // all) already shows everything there is to show.
     if (sections.length < 2) {
       return;
     }
@@ -1173,10 +1232,60 @@
     // shouldn't leave every remaining section permanently hidden.
     var unlocked = Math.min(Math.max(typeof saved === "number" ? saved : 1, 1), sections.length);
 
+    var options = readTutorialOptions();
+    var toc = document.getElementById("quarto-margin-sidebar");
+
+    // The gated section a TOC link points at: the deepest one that is, or
+    // contains, the link's target. Scan from the end, not the start: a
+    // nested section's ancestor (e.g. "Running R Code" containing
+    // "Exercise 2") also satisfies `.contains(target)`, but at a lower,
+    // too-shallow index -- the last (most specific) match is the real one.
+    // -1 for a link that points outside every gated section.
+    function sectionIndexForLink(link) {
+      var href = link.getAttribute("href") || "";
+      if (href.charAt(0) !== "#" || href.length < 2) {
+        return -1;
+      }
+      var target = document.getElementById(decodeURIComponent(href.slice(1)));
+      if (!target) {
+        return -1;
+      }
+      for (var i = sections.length - 1; i >= 0; i--) {
+        if (sections[i] === target || sections[i].contains(target)) {
+          return i;
+        }
+      }
+      return -1;
+    }
+
+    // Without allow_skip, a TOC entry for a section the reader hasn't
+    // reached is dimmed and inert (styled via .learnr2-toc-locked, taken out
+    // of the tab order, flagged for assistive tech), and turns back into an
+    // ordinary link the moment its section unlocks. Re-run on every
+    // visibility change so the sidebar always mirrors the page.
+    function applyTocLocks() {
+      if (!toc || options.allowSkip) {
+        return;
+      }
+      toc.querySelectorAll('a[href^="#"]').forEach(function (link) {
+        var index = sectionIndexForLink(link);
+        var locked = index !== -1 && index >= unlocked;
+        link.classList.toggle("learnr2-toc-locked", locked);
+        if (locked) {
+          link.setAttribute("aria-disabled", "true");
+          link.setAttribute("tabindex", "-1");
+        } else {
+          link.removeAttribute("aria-disabled");
+          link.removeAttribute("tabindex");
+        }
+      });
+    }
+
     function applyVisibility() {
       sections.forEach(function (section, i) {
         section.classList.toggle("d-none", i >= unlocked);
       });
+      applyTocLocks();
     }
 
     function clearContinueButtons() {
@@ -1235,11 +1344,20 @@
     placeContinueButton();
 
     // Quarto's own TOC sidebar links jump straight to a heading's id via a
-    // plain <a href="#id">, bypassing Continue entirely -- honor that as a
-    // deliberate skip-ahead (a translated tutorial's learnr frontmatter
-    // always set allow_skip: yes, see AGENTS.md) rather than leaving the
-    // reader looking at a hash change with nothing visible to show for it.
-    var toc = document.getElementById("quarto-margin-sidebar");
+    // plain <a href="#id">, bypassing Continue entirely. What happens next
+    // is the author's call, via learnr2::tutorial_options(allow_skip = ...):
+    //
+    // * allow_skip = TRUE: honour the click as a deliberate skip-ahead and
+    //   unlock every section through the target (classic learnr's
+    //   `allow_skip: yes`), rather than leaving the reader looking at a hash
+    //   change with nothing visible to show for it.
+    // * allow_skip = FALSE (the default): a link to a still-locked section
+    //   is inert -- its default hash jump is cancelled too, so the URL
+    //   doesn't change and nothing scrolls. applyTocLocks() has already
+    //   dimmed it and removed it from the tab order; the preventDefault here
+    //   is for a click that gets through anyway (keyboard activation of a
+    //   focused link, a stale pointer). Links to unlocked sections behave as
+    //   ordinary navigation.
     if (toc) {
       toc.addEventListener("click", function (event) {
         var link = event.target;
@@ -1249,23 +1367,14 @@
         if (!link || link.tagName !== "A") {
           return;
         }
-        var href = link.getAttribute("href") || "";
-        if (href.charAt(0) !== "#" || href.length < 2) {
+        var index = sectionIndexForLink(link);
+        if (index === -1) {
           return;
         }
-        var target = document.getElementById(href.slice(1));
-        if (!target) {
-          return;
-        }
-        // Scan from the end, not the start: a nested section's ancestor
-        // (e.g. "Running R Code" containing "Exercise 2") also satisfies
-        // `.contains(target)`, but at a lower, too-shallow index -- the
-        // last (deepest/most specific) match is the actual target section.
-        for (var i = sections.length - 1; i >= 0; i--) {
-          if (sections[i] === target || sections[i].contains(target)) {
-            unlockThrough(i, false);
-            break;
-          }
+        if (options.allowSkip) {
+          unlockThrough(index, false);
+        } else if (index >= unlocked) {
+          event.preventDefault();
         }
       });
     }

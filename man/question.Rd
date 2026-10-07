@@ -140,11 +140,13 @@ every tutorial its own stable path, \verb{/<package>/<name>/}: the address,
 and so the saved answers, are the same on every launch, and no two
 tutorials share them.
 
-Every page also gets a "Start Over" button, appended automatically to
-the bottom of Quarto's TOC sidebar (nothing to opt into -- it's added by
-the same JavaScript that renders \code{\link[=question]{question()}}/\code{\link[=student_info]{student_info()}}, as long
-as the tutorial has a sidebar to put it in, i.e. \code{toc: true}). Clicking
-it, after a confirmation prompt, clears every \code{question()}/
+Every page also gets a "Start Over" button (nothing to opt into -- it's
+added by the same JavaScript that renders \code{\link[=question]{question()}}/\code{\link[=student_info]{student_info()}}).
+It sits at the bottom of Quarto's TOC sidebar when the page shows one,
+and otherwise -- a tutorial rendered with \code{toc: false}, or any tutorial
+on a screen too narrow for Quarto to show the sidebar -- at the top of
+the tutorial, directly under the title, before the first section.
+Clicking it, after a confirmation prompt, clears every \code{question()}/
 \code{\link[=student_info]{student_info()}} answer \emph{and} every \code{{webr}} exercise's persisted code
 (\code{persist: true}) for this page on this device, then reloads -- a clean
 slate, without needing to know that both live under different

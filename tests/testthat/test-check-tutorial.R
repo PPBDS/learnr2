@@ -274,3 +274,15 @@ test_that("parse_chunks() reads engine, leading #| options (quotes stripped), bo
   expect_identical(ch[[4]]$body, "unterminated")
   expect_identical(learnr2:::parse_chunks(character(0)), list())
 })
+
+test_that("echo check treats a tutorial_options() chunk as a widget chunk", {
+  with_options <- c(good_lines, "", "```{r}", "#| label: your-answers-3",
+                    "learnr2::tutorial_options(allow_skip = TRUE)", "```")
+  res <- check_tutorial(write_qmd(with_options), error = FALSE)
+  expect_identical(res$check, "echo")
+  expect_match(res$message, "your-answers-3.*widget chunk needs `#\\| echo: false`")
+
+  hidden <- c(good_lines, "", "```{r}", "#| label: your-answers-3", "#| echo: false",
+              "learnr2::tutorial_options(allow_skip = TRUE)", "```")
+  expect_identical(nrow(check_tutorial(write_qmd(hidden), error = FALSE)), 0L)
+})

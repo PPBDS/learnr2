@@ -27,8 +27,9 @@
 #'   its saved answer is stored under, so a missing or duplicated label
 #'   loses or merges readers' progress.
 #' * `echo` -- every `{r}` chunk that renders a learnr2 widget
-#'   ([question()], [quiz()], [student_info()], [download_answers_button()])
-#'   has `#| echo: false`, so the reader sees the widget, not the R code
+#'   ([question()], [quiz()], [student_info()], [download_answers_button()],
+#'   [tutorial_options()]) has `#| echo: false`, so the reader sees the
+#'   widget, not the R code
 #'   that produced it.
 #' * `persist` -- every `{webr}` exercise cell (one with `#| exercise:` that
 #'   is not a `setup`, `check`, `solution`, or `hint` cell) has
@@ -180,7 +181,7 @@ chunks_of <- function(doc, engine) {
   Filter(function(ch) identical(ch$engine, engine), doc$chunks)
 }
 
-widget_pattern <- "learnr2::(question|quiz|student_info|download_answers_button)\\("
+widget_pattern <- "learnr2::(question|quiz|student_info|download_answers_button|tutorial_options)\\("
 
 is_widget_chunk <- function(chunk) {
   any(grepl(widget_pattern, chunk$body))

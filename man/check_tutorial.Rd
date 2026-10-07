@@ -51,8 +51,9 @@ and no two chunks share a label. A question's chunk label is the key
 its saved answer is stored under, so a missing or duplicated label
 loses or merges readers' progress.
 \item \code{echo} -- every \code{{r}} chunk that renders a learnr2 widget
-(\code{\link[=question]{question()}}, \code{\link[=quiz]{quiz()}}, \code{\link[=student_info]{student_info()}}, \code{\link[=download_answers_button]{download_answers_button()}})
-has \verb{#| echo: false}, so the reader sees the widget, not the R code
+(\code{\link[=question]{question()}}, \code{\link[=quiz]{quiz()}}, \code{\link[=student_info]{student_info()}}, \code{\link[=download_answers_button]{download_answers_button()}},
+\code{\link[=tutorial_options]{tutorial_options()}}) has \verb{#| echo: false}, so the reader sees the
+widget, not the R code
 that produced it.
 \item \code{persist} -- every \code{{webr}} exercise cell (one with \verb{#| exercise:} that
 is not a \code{setup}, \code{check}, \code{solution}, or \code{hint} cell) has

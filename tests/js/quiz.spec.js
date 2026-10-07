@@ -816,6 +816,51 @@ test.describe("Start Over", () => {
     await expect(sidebar.locator(":scope > *").last()).toHaveClass(/learnr2-start-over-container/);
   });
 
+  test("with no sidebar (toc: false), sits at the top of the tutorial, directly after the title block", async ({ page }) => {
+    await page.goto("/download-answers-no-toc");
+    await expect(page.locator("#quarto-margin-sidebar")).toHaveCount(0);
+    const container = page.locator(".learnr2-start-over-container");
+    await expect(container).toHaveCount(1);
+    await expect(container).toHaveClass(/learnr2-start-over-top/);
+    await expect(container.locator(".learnr2-start-over")).toHaveText("Start Over");
+    // Immediately after the title block, before any content.
+    const previous = await container.evaluate((node) => node.previousElementSibling && node.previousElementSibling.id);
+    expect(previous).toBe("title-block-header");
+    // And still wired up: clicking it asks for confirmation.
+    await container.locator(".learnr2-start-over").click();
+    await expect(page.locator(".learnr2-confirm-dialog")).toBeVisible();
+  });
+
+  test("on a phone-width screen, where Quarto hides the sidebar, moves to the top; and back to the sidebar when the window widens", async ({ page }) => {
+    // The sidebar element exists here (toc: true) but is display: none at
+    // this width, exactly as in a real render -- a button appended into it
+    // would be invisible.
+    await page.setViewportSize({ width: 600, height: 900 });
+    await page.goto("/download-answers");
+    await expect(page.locator("#quarto-margin-sidebar")).toBeHidden();
+    const container = page.locator(".learnr2-start-over-container");
+    await expect(container).toHaveClass(/learnr2-start-over-top/);
+    await expect(container.locator(".learnr2-start-over")).toBeVisible();
+    const previous = await container.evaluate((node) => node.previousElementSibling && node.previousElementSibling.id);
+    expect(previous).toBe("title-block-header");
+
+    await page.setViewportSize({ width: 1280, height: 900 });
+    const sidebar = page.locator("#quarto-margin-sidebar");
+    await expect(sidebar).toBeVisible();
+    await expect(sidebar.locator(".learnr2-start-over")).toBeVisible();
+    await expect(container).not.toHaveClass(/learnr2-start-over-top/);
+    await expect(page.locator(".learnr2-start-over")).toHaveCount(1);
+  });
+
+  test("the top placement is outside every section, so the progressive reveal never hides it", async ({ page }) => {
+    await page.goto("/progressive-sections-no-toc");
+    await expect(page.locator(".learnr2-start-over")).toBeVisible();
+    // Later sections are still locked; the button is not inside any of them.
+    await expect(page.locator("#running-r-code")).toBeHidden();
+    const insideSection = await page.locator(".learnr2-start-over-container").evaluate((node) => !!node.closest("section"));
+    expect(insideSection).toBe(false);
+  });
+
   test("clears saved answers, student info, and {webr} exercise persistence, but not the device id, then reloads", async ({ page }) => {
     // This test does a real full-page reload mid-way (Start Over calls
     // window.location.reload()); on a loaded CI runner that reload plus
@@ -956,7 +1001,7 @@ test.describe("progressive sections (Continue buttons)", () => {
 
   test("a Continue button inside a section with nested subsections lands before the first subsection, not after the last one", async ({ page }) => {
     // "Running R Code" (level2) contains "Exercise 1"/"Exercise 2" (level3)
-    // nested inside it, mirroring getting-started's real structure. Reveal
+    // nested inside it, mirroring a typical tutorial's structure. Reveal
     // through to "Running R Code" itself and confirm its own intro content
     // shows immediately while both exercises stay locked -- i.e. the button
     // sits right after the level2's own content, not dumped at the very end
@@ -1034,8 +1079,53 @@ test.describe("progressive sections (Continue buttons)", () => {
     await expect(page.locator("#running-r-code")).toBeHidden();
   });
 
-  test("clicking a TOC sidebar link skips ahead and reveals every section up through the target", async ({ page }) => {
+  test("by default, TOC links to sections not yet reached are dimmed and inert, and come alive as sections unlock", async ({ page }) => {
     await page.goto("/progressive-sections");
+
+    const intro = page.locator('#TOC a[href="#introduction"]');
+    const studentInfo = page.locator('#TOC a[href="#student-information"]');
+    const exercise2 = page.locator('#TOC a[href="#exercise-2"]');
+
+    // Only the first section is unlocked, so only its entry is a live link.
+    await expect(intro).not.toHaveClass(/learnr2-toc-locked/);
+    await expect(intro).not.toHaveAttribute("aria-disabled");
+    await expect(studentInfo).toHaveClass(/learnr2-toc-locked/);
+    await expect(exercise2).toHaveClass(/learnr2-toc-locked/);
+    await expect(exercise2).toHaveAttribute("aria-disabled", "true");
+    await expect(exercise2).toHaveAttribute("tabindex", "-1");
+
+    // A click that reaches the link anyway (keyboard activation; pointer
+    // events are off via CSS) reveals nothing and doesn't even move the hash.
+    await exercise2.dispatchEvent("click");
+    await expect(page.locator("#student-information")).toBeHidden();
+    await expect(page.locator("#exercise-2")).toBeHidden();
+    expect(new URL(page.url()).hash).toBe("");
+
+    // Continue unlocks Student Information, and its TOC entry with it.
+    await page.locator("#introduction .learnr2-continue").click();
+    await expect(page.locator("#student-information")).toBeVisible();
+    await expect(studentInfo).not.toHaveClass(/learnr2-toc-locked/);
+    await expect(studentInfo).not.toHaveAttribute("aria-disabled");
+    await expect(exercise2).toHaveClass(/learnr2-toc-locked/);
+  });
+
+  test("by default, a TOC link to an already-unlocked section still navigates normally", async ({ page }) => {
+    await page.goto("/progressive-sections");
+    await page.locator("#introduction .learnr2-continue").click();
+    await expect(page.locator("#student-information")).toBeVisible();
+
+    await page.locator('#TOC a[href="#introduction"]').click();
+    expect(new URL(page.url()).hash).toBe("#introduction");
+    // Navigating back doesn't change what is unlocked.
+    await expect(page.locator("#student-information")).toBeVisible();
+    await expect(page.locator("#running-r-code")).toBeHidden();
+  });
+
+  test("with tutorial_options(allow_skip = TRUE), clicking a TOC sidebar link skips ahead and reveals every section up through the target", async ({ page }) => {
+    await page.goto("/progressive-sections-skip");
+
+    // Nothing is dimmed: every entry is a live link.
+    await expect(page.locator("#TOC a.learnr2-toc-locked")).toHaveCount(0);
 
     // Nothing continued through yet -- jump straight to Exercise 2 via the
     // TOC, same as a reader using the sidebar instead of Continue.

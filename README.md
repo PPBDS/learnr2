@@ -61,6 +61,14 @@ copied alongside it, so it renders out of the box with Quarto or
   [gradethis](https://rstudio.github.io/gradethis/).
 - **Quiz questions** — `question()` / `quiz()`, graded in the browser with
   plain JavaScript, including single/multiple choice, free-text, and
-  reflection questions. Answers persist in the browser's `localStorage`.
+  reflection questions (optionally answered with a pasted screenshot).
+  Answers persist in the browser's `localStorage`.
+- **Student info and submission** — `student_info()` collects a name and
+  email; `download_answers_button()` bundles every saved answer into a
+  JSON file the reader can turn in. No server involved.
+- **Progressive reveal** — sections unlock one at a time behind "Continue"
+  buttons, the table of contents can't be used to read ahead unless
+  `tutorial_options(allow_skip = TRUE)` says so, and every page has a
+  "Start Over" button that clears saved progress.
 
 See the reference index and the bundled `hello-learnr2` tutorial for details.

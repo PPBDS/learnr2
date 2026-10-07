@@ -280,6 +280,18 @@
   background: #0b5ed7;
 }
 
+/* A TOC entry for a section the reader hasn't unlocked yet (the default,
+   allow_skip = FALSE in learnr2::tutorial_options()). The ID selector
+   outranks Quarto's own `nav[role=doc-toc] a` colour rules. pointer-events
+   stops mouse clicks reaching the link at all; quiz.js also cancels any
+   click that does arrive (keyboard activation). */
+#quarto-margin-sidebar a.learnr2-toc-locked {
+  color: #adb5bd;
+  pointer-events: none;
+  cursor: default;
+  text-decoration: none;
+}
+
 .learnr2-start-over-container {
   margin-top: 1.5rem;
   padding-top: 1rem;
@@ -300,6 +312,18 @@
 .learnr2-start-over:hover {
   color: #6c757d;
   text-decoration: underline;
+}
+
+/* The no-sidebar placement (`toc: false`, or a screen too narrow for
+   Quarto to show the sidebar): tucked under the title block, right-aligned
+   and understated, so it reads as a utility rather than the first thing to
+   do. */
+.learnr2-start-over-container.learnr2-start-over-top {
+  margin-top: 0;
+  margin-bottom: 1rem;
+  padding-top: 0;
+  border-top: none;
+  text-align: right;
 }
 
 .learnr2-confirm-dialog {

@@ -17,6 +17,7 @@ reference:
     desc: Scaffold and run interactive tutorials.
     contents:
       - create_tutorial
+      - tutorial_options
       - run_tutorial
       - prerender_tutorials
       - available_tutorials

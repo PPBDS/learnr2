@@ -835,8 +835,19 @@ test_that("a second run_tutorial() against a live server reuses it and refreshes
   withr::local_options(learnr2.port = port)
   base <- sprintf("http://127.0.0.1:%d", port)
 
-  # Stand in for a server left running in another terminal.
-  suppressMessages(run_tutorial("intro-vectors", package = "learnr2", output_dir = out_parent, open = FALSE))
+  # Stand in for a server left running in another terminal, with one
+  # tutorial from some other content package already rendered into the
+  # same cache: the stamp and html a previous run_tutorial() would have
+  # left behind, written by hand so the test needs no second bundled tutorial.
+  other_dir <- fs::path(out_parent, "other.tutorials", "intro")
+  fs::dir_create(other_dir)
+  writeLines("<p>other</p>", fs::path(other_dir, "index.html"))
+  jsonlite::write_json(
+    list(package = "other.tutorials", name = "intro", title = "Intro",
+         learnr2_version = learnr2:::learnr2_version_string(), fingerprint = "x",
+         rendered_at = "2026-10-01 12:00:00 UTC", html = "index.html"),
+    fs::path(other_dir, "learnr2-tutorial.json"), auto_unbox = TRUE, pretty = TRUE
+  )
   learnr2:::write_server_marker(as.character(fs::path_abs(out_parent)), port)
   withr::defer(learnr2:::remove_server_marker(as.character(fs::path_abs(out_parent))))
   server <- httpuv::runStaticServer(as.character(out_parent), port = port, browse = FALSE, background = TRUE)
@@ -854,7 +865,8 @@ test_that("a second run_tutorial() against a live server reuses it and refreshes
   root <- http_get(paste0(base, "/"))
   expect_identical(root$status, 200L)
   expect_match(root$body, 'url=/learnr2/hello-learnr2/"', fixed = TRUE)
-  expect_match(root$body, 'href="/learnr2/intro-vectors/"', fixed = TRUE)
+  expect_match(root$body, 'href="/other.tutorials/intro/"', fixed = TRUE)
+  expect_identical(http_get(paste0(base, "/other.tutorials/intro/"))$status, 200L)
   expect_identical(http_get(paste0(base, "/learnr2/hello-learnr2/"))$status, 200L)
 })
 

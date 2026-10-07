@@ -1,5 +1,5 @@
 ---
-title: "Hello, learnr2"
+title: "Hello learnr2"
 subtitle: "A guided tour of learnr2 features"
 format: live-html
 engine: knitr
@@ -25,8 +25,8 @@ them to see each feature work.
 
 ## 1. Runnable code cells
 
-Every code cell is a live editor. Press **Run** (or `Ctrl`/`Cmd` + `Enter`) to
-execute it. Edit the code and run it again --- it is yours to experiment with.
+Every code cell is a live editor. Press **Run Code** (or `Ctrl`/`Cmd` +
+`Enter`) to execute it. Edit the code and run it again --- it is yours to experiment with.
 
 ```{webr}
 #| label: runnable-code-cells-1
@@ -270,10 +270,12 @@ learnr2::quiz(
 
 For exercises where the reader's work is a plot or other image, add
 `allow_image = TRUE` to a `"reflection"`/`"reflection_editable"` question
-and let them paste a screenshot from their clipboard alongside their
-written response --- there is no file-upload button, just press Ctrl+V (or
-Cmd+V) with the response box focused (or click the box below it and paste
-there instead).
+and let them paste a screenshot from their clipboard *as* their response
+--- there is no file-upload button, just press Ctrl+V (or Cmd+V) with the
+response box focused (or click the box below it and paste there instead).
+Once an image is pasted it is the whole answer: the text box disappears
+and nothing typed is saved alongside it. "Remove image" brings the text
+box back.
 
 Try it: edit the exercise below (or leave it as-is), run it, then take a
 screenshot of the plot it produces --- e.g. `Cmd+Shift+4` on a Mac,
@@ -306,8 +308,8 @@ Whatever your OS's native clipboard format actually is behind the scenes
 isn't guaranteed to already be a PNG), `allow_image` accepts it directly
 --- PNG, JPEG, GIF, WebP, or BMP --- and re-encodes it as PNG itself before
 storing it, so what's actually saved is always PNG no matter which of
-those your platform handed over (see [question()]'s docs for the exact
-size limit).
+those your platform handed over (see the `question()` help page for the
+exact size limit).
 
 ## 8. Student info and submission
 
@@ -343,9 +345,66 @@ answers; this just keeps the submission time honest at a glance:
 learnr2::download_answers_button(filename_prefix = "hello-learnr2")
 ```
 
+## 9. Layout options
+
+Nothing in this section is a widget. It describes the page-level choices an
+author has, all made in the YAML header or with one function call, and what
+each one does for the reader.
+
+### Table of contents
+
+Every tutorial scaffolded by `create_tutorial()` has `toc: true` in its
+YAML header, which gives the page Quarto's table-of-contents sidebar: the
+list of sections on the right of this page. Set `toc: false` to drop it.
+
+The sidebar is a map, not a shortcut. Sections reveal one at a time behind
+**Continue** buttons whether or not there is a TOC; the TOC adds a view of
+the whole tutorial's shape and of how far the reader has come. On a
+phone-width screen Quarto hides the sidebar on its own, so a `toc: true`
+tutorial behaves like a `toc: false` one there, with no author action.
+
+### Skipping ahead
+
+By default the TOC cannot be used to read ahead. Look at the sidebar now:
+the entries below this section are dimmed, a click on one does nothing, and
+each lights up only when its section is unlocked. A reader can see what is
+coming and where they are, but cannot open the whole tutorial at once.
+
+If you want readers to roam freely --- reference material, or a tour like
+this one --- call `learnr2::tutorial_options()` once, in a chunk with
+`#| echo: false`, anywhere in the document:
+
+```r
+learnr2::tutorial_options(allow_skip = TRUE)
+```
+
+Then clicking any TOC entry unlocks every section up to that one and jumps
+there, like a classic learnr tutorial with `allow_skip: yes`. This page
+leaves the default in place so you can see it in action. Without a TOC the
+setting has no effect, since there is nothing to click.
+
+### Start Over
+
+Every answer, pasted image, and exercise edit on a page is saved in the
+reader's browser, so reloading never loses anything. The way to wipe it all
+is the **Start Over** button, which learnr2 adds to every tutorial
+automatically --- nothing to write in the `.qmd`. It asks for
+confirmation, then clears this page's saved state (but not the per-device
+id that `download_answers_button()` records) and reloads.
+
+Where it appears follows the layout. With a visible sidebar it sits at the
+bottom of the table of contents, as it does on this page. Without one ---
+`toc: false`, or a screen too narrow for the sidebar --- it moves to the
+top of the tutorial, directly under the title, where it stays visible no
+matter how far the reader has progressed. Either way the reader always has
+exactly one.
+
 ## Where to go next
 
-- Use `learnr2::create_tutorial("my-tutorial")` to scaffold your own.
-- Edit the `.qmd`, then render with Quarto or `quarto::quarto_render()`.
-
-A learnr-style progressive, section-by-section theme is on the roadmap.
+- Use `learnr2::create_tutorial("my-tutorial", dir = ".")` to scaffold
+  your own.
+- Edit the `.qmd`, then run `learnr2::check_tutorial()` on its directory
+  to catch the common authoring mistakes, and
+  `learnr2::render_tutorials()` (or plain Quarto) to build it.
+- Preview the result with `learnr2::run_tutorial()`, which renders, serves
+  and opens it in your browser.
