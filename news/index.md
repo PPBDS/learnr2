@@ -2,6 +2,24 @@
 
 ## learnr2 (development version)
 
+- CRAN review:
+  [`create_tutorial()`](https://ppbds.github.io/learnr2/reference/create_tutorial.md)
+  and
+  [`add_live_extension()`](https://ppbds.github.io/learnr2/reference/add_live_extension.md)
+  no longer default `dir` to the working directory; `dir` is required,
+  so neither function writes anywhere the caller did not name (pass
+  `dir = "."` for the old behaviour).
+  [`available_tutorials()`](https://ppbds.github.io/learnr2/reference/available_tutorials.md)
+  with no `package` now finds packages by listing the libraries on
+  [`.libPaths()`](https://rdrr.io/r/base/libPaths.html) for a
+  `tutorials/` directory instead of calling
+  [`utils::installed.packages()`](https://rdrr.io/r/utils/installed.packages.html),
+  which reads several files per installed package. The package now
+  declares `Depends: R (>= 4.0.0)`, which
+  [`tools::R_user_dir()`](https://rdrr.io/r/tools/userdir.html) (the
+  render cache
+  [`run_tutorial()`](https://ppbds.github.io/learnr2/reference/run_tutorial.md)
+  writes to) requires.
 - [`run_tutorial()`](https://ppbds.github.io/learnr2/reference/run_tutorial.md)
   now works from GitHub Codespaces (and any other remote container that
   forwards ports). Two things were wrong. The cache root the server

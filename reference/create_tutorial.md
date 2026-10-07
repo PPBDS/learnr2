@@ -14,7 +14,7 @@ given tutorial doesn't need it.
 ## Usage
 
 ``` r
-create_tutorial(name, dir = ".", title = name, open = interactive())
+create_tutorial(name, dir, title = name, open = interactive())
 ```
 
 ## Arguments
@@ -26,8 +26,9 @@ create_tutorial(name, dir = ".", title = name, open = interactive())
 
 - dir:
 
-  Parent directory in which to create the tutorial directory. Defaults
-  to the current working directory.
+  Parent directory in which to create the tutorial directory. Required:
+  there is no default, so nothing is written anywhere you did not name.
+  Pass `"."` for the current working directory.
 
 - title:
 
@@ -49,7 +50,7 @@ The path to the created `.qmd` file, invisibly.
 # Scaffold into a temporary directory, without opening the new file.
 dir <- tempfile()
 qmd <- create_tutorial("my-first-tutorial", dir = dir, open = FALSE)
-#> Created tutorial: /tmp/Rtmppxrncw/file19ab768f9bbc/my-first-tutorial/my-first-tutorial.qmd
+#> Created tutorial: /tmp/RtmpxFoFTW/file1a307a07f3b0/my-first-tutorial/my-first-tutorial.qmd
 list.files(dirname(qmd), all.files = TRUE, no.. = TRUE)
 #> [1] "_extensions"           "my-first-tutorial.qmd"
 unlink(dir, recursive = TRUE)

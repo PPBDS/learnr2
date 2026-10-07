@@ -7,15 +7,16 @@ non-interactive equivalent of `quarto add r-wasm/quarto-live`.
 ## Usage
 
 ``` r
-add_live_extension(dir = ".", overwrite = TRUE)
+add_live_extension(dir, overwrite = TRUE)
 ```
 
 ## Arguments
 
 - dir:
 
-  Directory of the Quarto project or document. Defaults to the current
-  working directory.
+  Directory of the Quarto project or document. Required: there is no
+  default, so nothing is written anywhere you did not name. Pass `"."`
+  for the current working directory.
 
 - overwrite:
 
