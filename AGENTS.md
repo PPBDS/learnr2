@@ -941,27 +941,54 @@ on a stand-in cache (root page served, forward target served), and by
 unit tests; not yet confirmed end-to-end inside an actual codespace, so
 the first real launch there is worth a look.
 
-## Don’t classify network failures by their message text
+## Probing a port: no message-text matching, and tolerate httpuv’s async close
 
 `probe_server()` (`R/tutorials.R`) decides whether port 7446 is free,
-held by a learnr2 server, or held by something else. Its first version
-fetched the server marker with
-[`base::url()`](https://rdrr.io/r/base/connections.html) and, on
-failure, grepped the condition message for “connect”/“refused” to mean
-“nothing listening”. That passed on macOS and Linux and failed R CMD
-check on `windows-latest` (2026-10): Windows words the
-refused-connection failure differently, so a free port was classified
-“other”, and `run_tutorial(open = TRUE)` refused to start with “Port N
-is in use by something other than a learnr2 tutorial server” on a
-machine where nothing was using it at all. The fix is structural, not a
-longer regex: `port_listening()` does a plain
-[`socketConnection()`](https://rdrr.io/r/base/connections.html) connect,
-which succeeds or fails the same way everywhere, and only once something
-is listening does the HTTP fetch decide learnr2-vs-other. The rule:
-never infer a network state from the wording of an R error or warning
-message. Those strings differ by platform, by
-[`url()`](https://rdrr.io/r/base/connections.html) method (libcurl vs
-wininet), and by R version. Test the state directly.
+held by a learnr2 server, or held by something else. R CMD check on
+`windows-latest` (2026-10) failed it twice, for two different reasons
+that looked identical from the test output (a free port reported as
+“other”):
+
+1.  **Message-text matching.** The first version fetched the server
+    marker with [`base::url()`](https://rdrr.io/r/base/connections.html)
+    and, on failure, grepped the condition message for
+    “connect”/“refused” to mean “nothing listening”. That held on macOS
+    and Linux, not on Windows, and `run_tutorial(open = TRUE)` then
+    refused to start with “Port N is in use by something other than a
+    learnr2 tutorial server” on a machine where nothing was using it.
+    Replaced with `port_listening()`, a plain
+    [`socketConnection()`](https://rdrr.io/r/base/connections.html)
+    connect that succeeds or fails the same way everywhere; only once
+    something is listening does the HTTP fetch decide learnr2-vs-other.
+    Rule: never infer a network state from the wording of an R error or
+    warning. Those strings differ by platform, by
+    [`url()`](https://rdrr.io/r/base/connections.html) method (libcurl
+    vs wininet), and by R version.
+
+2.  **httpuv closes listeners asynchronously.** After that fix one test
+    still failed on Windows only.
+    [`httpuv::randomPort()`](https://rstudio.github.io/httpuv/reference/randomPort.html)
+    finds a free port by starting and stopping a server on it, and
+    `stopServer()` only *posts* the close to httpuv’s background thread
+    – for a moment afterwards the socket still accepts a connection that
+    nothing will answer. On Windows that moment is long enough to hit: a
+    connect right after `randomPort()` succeeds, the marker fetch fails,
+    verdict “other”. Two fixes, both kept: `probe_server()` re-checks a
+    “listening but not learnr2” verdict a few times (`attempts`, `wait`)
+    before believing it, since a real
+    [`run_tutorial()`](https://ppbds.github.io/learnr2/reference/run_tutorial.md)
+    right after a previous server stopped would hit the same race; and
+    the tests use a `free_port()` helper (in `test-tutorials.R`) that
+    waits until a connect to the port actually fails, instead of calling
+    [`httpuv::randomPort()`](https://rstudio.github.io/httpuv/reference/randomPort.html)
+    directly. Any new test that needs a port should use `free_port()`.
+
+A lesson about the diagnosis, too: the first fix was made from reasoning
+about what the Windows message *probably* said, and it was a real bug,
+but not the whole one. The second was found from the actual job log
+(`gh api repos/PPBDS/learnr2/actions/jobs/<id>/logs`) plus reading
+[`httpuv::randomPort()`](https://rstudio.github.io/httpuv/reference/randomPort.html)’s
+source. Get the full log before fixing.
 
 ## Test suite layout
 
