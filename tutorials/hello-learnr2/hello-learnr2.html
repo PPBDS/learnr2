@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>Hello, learnr2</title>
+<title>Hello learnr2</title>
 <style>
 /* Default styles provided by pandoc.
 ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
@@ -79,8 +79,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="hello-learnr2_files/libs/quarto-contrib/live-runtime/live-runtime.css" rel="stylesheet">
 <script type="module" src="hello-learnr2_files/libs/quarto-ojs/quarto-ojs-runtime.js"></script>
 <link href="hello-learnr2_files/libs/quarto-ojs/quarto-ojs.css" rel="stylesheet">
-<link href="hello-learnr2_files/libs/learnr2-quiz-0.1.1.9008/quiz.css" rel="stylesheet">
-<script src="hello-learnr2_files/libs/learnr2-quiz-0.1.1.9008/quiz.js"></script>
+<link href="hello-learnr2_files/libs/learnr2-quiz-0.1.1.9009/quiz.css" rel="stylesheet">
+<script src="hello-learnr2_files/libs/learnr2-quiz-0.1.1.9009/quiz.js"></script>
 
 
 </head>
@@ -106,6 +106,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#quiz-questions" id="toc-quiz-questions" class="nav-link" data-scroll-target="#quiz-questions">6. Quiz questions</a></li>
   <li><a href="#copypaste-an-image" id="toc-copypaste-an-image" class="nav-link" data-scroll-target="#copypaste-an-image">7. Copy/paste an image</a></li>
   <li><a href="#student-info-and-submission" id="toc-student-info-and-submission" class="nav-link" data-scroll-target="#student-info-and-submission">8. Student info and submission</a></li>
+  <li><a href="#layout-options" id="toc-layout-options" class="nav-link" data-scroll-target="#layout-options">9. Layout options</a>
+  <ul class="collapse">
+  <li><a href="#table-of-contents" id="toc-table-of-contents" class="nav-link" data-scroll-target="#table-of-contents">Table of contents</a></li>
+  <li><a href="#skipping-ahead" id="toc-skipping-ahead" class="nav-link" data-scroll-target="#skipping-ahead">Skipping ahead</a></li>
+  <li><a href="#start-over" id="toc-start-over" class="nav-link" data-scroll-target="#start-over">Start Over</a></li>
+  </ul></li>
   <li><a href="#where-to-go-next" id="toc-where-to-go-next" class="nav-link" data-scroll-target="#where-to-go-next">Where to go next</a></li>
   </ul>
 </nav>
@@ -114,7 +120,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">Hello, learnr2</h1>
+<h1 class="title">Hello learnr2</h1>
 <p class="subtitle lead">A guided tour of learnr2 features</p>
 </div>
 
@@ -149,7 +155,7 @@ eyJhdHRyIjp7ImVkaXQiOmZhbHNlLCJldmFsIjp0cnVlLCJvdXRwdXQiOmZhbHNlfSwiY29kZSI6Indl
 </section>
 <section id="runnable-code-cells" class="level2">
 <h2 class="anchored" data-anchor-id="runnable-code-cells">1. Runnable code cells</h2>
-<p>Every code cell is a live editor. Press <strong>Run</strong> (or <code>Ctrl</code>/<code>Cmd</code> + <code>Enter</code>) to execute it. Edit the code and run it again — it is yours to experiment with.</p>
+<p>Every code cell is a live editor. Press <strong>Run Code</strong> (or <code>Ctrl</code>/<code>Cmd</code> + <code>Enter</code>) to execute it. Edit the code and run it again — it is yours to experiment with.</p>
 <div class="cell">
 <div>
 <div id="webr-2" class="exercise-cell">
@@ -440,7 +446,7 @@ YWdlIjpmYWxzZSwic2hvd1RleHQiOnRydWUsInZhbGlkYXRlIjoibm9uZSJ9">
 </section>
 <section id="copypaste-an-image" class="level2">
 <h2 class="anchored" data-anchor-id="copypaste-an-image">7. Copy/paste an image</h2>
-<p>For exercises where the reader’s work is a plot or other image, add <code>allow_image = TRUE</code> to a <code>"reflection"</code>/<code>"reflection_editable"</code> question and let them paste a screenshot from their clipboard alongside their written response — there is no file-upload button, just press Ctrl+V (or Cmd+V) with the response box focused (or click the box below it and paste there instead).</p>
+<p>For exercises where the reader’s work is a plot or other image, add <code>allow_image = TRUE</code> to a <code>"reflection"</code>/<code>"reflection_editable"</code> question and let them paste a screenshot from their clipboard <em>as</em> their response — there is no file-upload button, just press Ctrl+V (or Cmd+V) with the response box focused (or click the box below it and paste there instead). Once an image is pasted it is the whole answer: the text box disappears and nothing typed is saved alongside it. “Remove image” brings the text box back.</p>
 <p>Try it: edit the exercise below (or leave it as-is), run it, then take a screenshot of the plot it produces — e.g.&nbsp;<code>Cmd+Shift+4</code> on a Mac, <code>Win+Shift+S</code> on Windows, or your Chromebook’s screenshot tool (<code>Ctrl</code> + <code>Show windows</code>) — and paste it into the question underneath.</p>
 <div class="cell" data-exercise="ex_image_plot" data-persist="true">
 <div>
@@ -476,7 +482,7 @@ dWUsInNob3dUZXh0Ijp0cnVlLCJ2YWxpZGF0ZSI6Im5vbmUifQ==">
 </div>
 </div>
 </div>
-<p>Whatever your OS’s native clipboard format actually is behind the scenes (bitmap, TIFF, etc. — it genuinely varies by platform, so a screenshot isn’t guaranteed to already be a PNG), <code>allow_image</code> accepts it directly — PNG, JPEG, GIF, WebP, or BMP — and re-encodes it as PNG itself before storing it, so what’s actually saved is always PNG no matter which of those your platform handed over (see [question()]’s docs for the exact size limit).</p>
+<p>Whatever your OS’s native clipboard format actually is behind the scenes (bitmap, TIFF, etc. — it genuinely varies by platform, so a screenshot isn’t guaranteed to already be a PNG), <code>allow_image</code> accepts it directly — PNG, JPEG, GIF, WebP, or BMP — and re-encodes it as PNG itself before storing it, so what’s actually saved is always PNG no matter which of those your platform handed over (see the <code>question()</code> help page for the exact size limit).</p>
 </section>
 <section id="student-info-and-submission" class="level2">
 <h2 class="anchored" data-anchor-id="student-info-and-submission">8. Student info and submission</h2>
@@ -505,13 +511,34 @@ IEFuc3dlcnMifQ==">
 </div>
 </div>
 </section>
+<section id="layout-options" class="level2">
+<h2 class="anchored" data-anchor-id="layout-options">9. Layout options</h2>
+<p>Nothing in this section is a widget. It describes the page-level choices an author has, all made in the YAML header or with one function call, and what each one does for the reader.</p>
+<section id="table-of-contents" class="level3">
+<h3 class="anchored" data-anchor-id="table-of-contents">Table of contents</h3>
+<p>Every tutorial scaffolded by <code>create_tutorial()</code> has <code>toc: true</code> in its YAML header, which gives the page Quarto’s table-of-contents sidebar: the list of sections on the right of this page. Set <code>toc: false</code> to drop it.</p>
+<p>The sidebar is a map, not a shortcut. Sections reveal one at a time behind <strong>Continue</strong> buttons whether or not there is a TOC; the TOC adds a view of the whole tutorial’s shape and of how far the reader has come. On a phone-width screen Quarto hides the sidebar on its own, so a <code>toc: true</code> tutorial behaves like a <code>toc: false</code> one there, with no author action.</p>
+</section>
+<section id="skipping-ahead" class="level3">
+<h3 class="anchored" data-anchor-id="skipping-ahead">Skipping ahead</h3>
+<p>By default the TOC cannot be used to read ahead. Look at the sidebar now: the entries below this section are dimmed, a click on one does nothing, and each lights up only when its section is unlocked. A reader can see what is coming and where they are, but cannot open the whole tutorial at once.</p>
+<p>If you want readers to roam freely — reference material, or a tour like this one — call <code>learnr2::tutorial_options()</code> once, in a chunk with <code>#| echo: false</code>, anywhere in the document:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>learnr2<span class="sc">::</span><span class="fu">tutorial_options</span>(<span class="at">allow_skip =</span> <span class="cn">TRUE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Then clicking any TOC entry unlocks every section up to that one and jumps there, like a classic learnr tutorial with <code>allow_skip: yes</code>. This page leaves the default in place so you can see it in action. Without a TOC the setting has no effect, since there is nothing to click.</p>
+</section>
+<section id="start-over" class="level3">
+<h3 class="anchored" data-anchor-id="start-over">Start Over</h3>
+<p>Every answer, pasted image, and exercise edit on a page is saved in the reader’s browser, so reloading never loses anything. The way to wipe it all is the <strong>Start Over</strong> button, which learnr2 adds to every tutorial automatically — nothing to write in the <code>.qmd</code>. It asks for confirmation, then clears this page’s saved state (but not the per-device id that <code>download_answers_button()</code> records) and reloads.</p>
+<p>Where it appears follows the layout. With a visible sidebar it sits at the bottom of the table of contents, as it does on this page. Without one — <code>toc: false</code>, or a screen too narrow for the sidebar — it moves to the top of the tutorial, directly under the title, where it stays visible no matter how far the reader has progressed. Either way the reader always has exactly one.</p>
+</section>
+</section>
 <section id="where-to-go-next" class="level2">
 <h2 class="anchored" data-anchor-id="where-to-go-next">Where to go next</h2>
 <ul>
-<li>Use <code>learnr2::create_tutorial("my-tutorial")</code> to scaffold your own.</li>
-<li>Edit the <code>.qmd</code>, then render with Quarto or <code>quarto::quarto_render()</code>.</li>
+<li>Use <code>learnr2::create_tutorial("my-tutorial", dir = ".")</code> to scaffold your own.</li>
+<li>Edit the <code>.qmd</code>, then run <code>learnr2::check_tutorial()</code> on its directory to catch the common authoring mistakes, and <code>learnr2::render_tutorials()</code> (or plain Quarto) to build it.</li>
+<li>Preview the result with <code>learnr2::run_tutorial()</code>, which renders, serves and opens it in your browser.</li>
 </ul>
-<p>A learnr-style progressive, section-by-section theme is on the roadmap.</p>
 <script type="webr-data">
 eyJvcHRpb25zIjp7ImJhc2VVcmwiOiJodHRwczovL3dlYnIuci13YXNtLm9yZy92MC42LjAvIn0sInBhY2thZ2VzIjp7InBrZ3MiOlsiZXZhbHVhdGUiLCJrbml0ciIsImh0bWx0b29scyIsImdncGxvdDIiXSwicmVwb3MiOltdfSwicmVuZGVyX2RmIjoiZGVmYXVsdCJ9
 </script>
