@@ -516,7 +516,7 @@ local_stub_serving <- function(probe = list(state = "free", server = NULL), env 
   seen <- new.env()
   local_mocked_bindings(
     probe_server = function(port) probe,
-    open_in_browser = function(url) { seen$url <- url; invisible() },
+    open_in_browser = function(url, public_url = url) { seen$url <- url; seen$public_url <- public_url; invisible() },
     block_serving = function() { seen$marker_while_serving <- seen$marker_path_exists(); invisible() },
     .env = env
   )
@@ -690,7 +690,11 @@ test_that("in a GitHub Codespace the tutorial's address is the forwarded one", {
     "https://urban-trout-abc123-7446.app.github.dev/learnr2/hello-learnr2/",
     fixed = TRUE
   )
-  expect_identical(seen$url, "https://urban-trout-abc123-7446.app.github.dev/learnr2/hello-learnr2/")
+  # The browser is opened on the *local* address, so VS Code's BROWSER
+  # helper forwards the port as part of opening it; the forwarded address
+  # is what gets printed, and what a failure message would name.
+  expect_identical(seen$url, "http://127.0.0.1:7446/learnr2/hello-learnr2/")
+  expect_identical(seen$public_url, "https://urban-trout-abc123-7446.app.github.dev/learnr2/hello-learnr2/")
   # The server itself still binds the local port; only the address differs.
   expect_identical(seen$port, 7446L)
 })
@@ -721,6 +725,11 @@ test_that("open_in_browser() prefers a BROWSER helper from the environment, else
 test_that("open_in_browser() reports, rather than fails, when no browser can be opened", {
   local_mocked_bindings(browseURL = function(...) stop("no display"), .package = "utils")
   expect_message(learnr2:::open_in_browser("http://127.0.0.1:7446/x/"), "open http://127.0.0.1:7446/x/ yourself")
+  # ... naming the address a person can actually reach, when that differs.
+  expect_message(
+    learnr2:::open_in_browser("http://127.0.0.1:7446/x/", "https://cs-7446.app.github.dev/x/"),
+    "open https://cs-7446.app.github.dev/x/ yourself"
+  )
 })
 
 # A port nothing listens on. httpuv::randomPort() finds one by starting and
@@ -789,7 +798,7 @@ test_that("run_tutorial(open = TRUE) serves a root that forwards to the tutorial
   # the fetches happen.
   seen <- new.env()
   local_mocked_bindings(
-    open_in_browser = function(url) { seen$url <- url; invisible() },
+    open_in_browser = function(url, public_url = url) { seen$url <- url; seen$public_url <- public_url; invisible() },
     block_serving = function() {
       seen$root <- http_get(paste0(base, "/"))
       seen$tutorial <- http_get(paste0(base, "/learnr2/hello-learnr2/"))
@@ -835,7 +844,7 @@ test_that("a second run_tutorial() against a live server reuses it and refreshes
 
   seen <- new.env()
   local_mocked_bindings(
-    open_in_browser = function(url) { seen$url <- url; invisible() },
+    open_in_browser = function(url, public_url = url) { seen$url <- url; seen$public_url <- public_url; invisible() },
     block_serving = function() stop("must not start a second server")
   )
   expect_message(

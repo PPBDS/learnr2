@@ -352,12 +352,15 @@ tutorial_title <- function(doc) {
 #' public address, `https://<codespace>-7446.app.github.dev/`, and this
 #' function detects a codespace (the `CODESPACE_NAME` and
 #' `GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN` environment variables) and
-#' prints and opens the tutorial's forwarded address instead of the local
-#' one. The forwarded root page forwards to the tutorial too, so the
-#' "Open in Browser" button on the port notification lands in the right
-#' place. Saved answers are keyed by page URL, so they live under the
-#' forwarded address and are found again as long as the codespace keeps
-#' its name.
+#' prints the tutorial's forwarded address. The browser is still opened on
+#' the local address, through the helper VS Code puts in `BROWSER`, which
+#' forwards the port as part of opening it, just as clicking a localhost
+#' link in the terminal does; opening the forwarded address directly can
+#' race the port forwarding and show an empty 404 until reloaded. The
+#' forwarded root page forwards to the tutorial too, so the "Open in
+#' Browser" button on the port notification lands in the right place.
+#' Saved answers are keyed by page URL, so they live under the forwarded
+#' address and are found again as long as the codespace keeps its name.
 #'
 #' @section Why this blocks and serves over local HTTP instead of opening the file directly:
 #' Every `{webr}` exercise compiles down to Observable JS (OJS), which
@@ -656,6 +659,7 @@ codespace_base_url <- function(port) {
 # or, if a learnr2 server is already serving that root, just open it there.
 serve_tutorial <- function(tutorial, root) {
   port <- learnr2_port()
+  local <- tutorial_url(tutorial$package, tutorial$name, port)
   url <- public_tutorial_url(tutorial$package, tutorial$name, port)
   root <- as.character(fs::path_abs(root))
   write_root_index(root, tutorial$package, tutorial$name)
@@ -675,7 +679,7 @@ serve_tutorial <- function(tutorial, root) {
       "A learnr2 server is already running on port ", port, "; opening ",
       url, " there."
     )
-    open_in_browser(url)
+    open_in_browser(local, url)
     return(invisible(url))
   }
   if (identical(running$state, "other")) {
@@ -697,7 +701,7 @@ serve_tutorial <- function(tutorial, root) {
     "Opening ", url, "\n",
     "Press Ctrl+C (or the console's Stop button) to stop the server."
   )
-  open_in_browser(url)
+  open_in_browser(local, url)
   block_serving()
   invisible(url)
 }
@@ -852,16 +856,29 @@ port_listening <- function(port, timeout = 2) {
 
 # Seams around the two things a unit test must never do for real: open a
 # browser, and block in httpuv's event loop until interrupted.
-open_in_browser <- function(url) {
-  # VS Code (local and in Codespaces) sets BROWSER in its terminals to a
-  # helper that opens the address in the browser on the user's own machine;
-  # R's default browser, from R_BROWSER, is often xdg-open, which has nothing
-  # to open inside a container.
+#
+# `url` is always the *local* address (127.0.0.1), even in a codespace where
+# the address a person can type is the forwarded one (`public_url`, printed
+# in the failure message). VS Code sets BROWSER in its terminals to a helper
+# that opens the address in the browser on the user's own machine, and for
+# a localhost address in a remote window that helper forwards the port as
+# part of opening it -- the same thing clicking a localhost link in the
+# terminal does. Handing it the forwarded https address instead skips that
+# step, and the first request then races the automatic port forwarding:
+# observed in a codespace as an empty 404 from the Codespaces proxy that
+# turned into the tutorial on reload a second later. Outside VS Code, R's
+# default browser (from R_BROWSER) is often xdg-open, which has nothing to
+# open inside a container; the failure message then names the address to
+# open by hand.
+open_in_browser <- function(url, public_url = url) {
   browser <- Sys.getenv("BROWSER")
   if (!nzchar(browser)) browser <- getOption("browser")
   tryCatch(
     utils::browseURL(url, browser = browser),
-    error = function(e) message("Could not open a browser (", conditionMessage(e), "); open ", url, " yourself.")
+    error = function(e) {
+      message("Could not open a browser (", conditionMessage(e), "); open ",
+              public_url, " yourself.")
+    }
   )
 }
 

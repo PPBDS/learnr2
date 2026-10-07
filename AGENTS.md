@@ -838,9 +838,21 @@ design rule to keep: anything that serves a directory tree on a port
 must answer `/` with something that reaches the content, because port
 forwarders, notifications, and people typing a port by hand all land
 there first. Verified against a real `httpuv::runStaticServer()` on a
-stand-in cache (root page served, forward target served), and by unit
-tests; not yet confirmed end-to-end inside an actual codespace, so the
-first real launch there is worth a look.
+stand-in cache (root page served, forward target served), by unit tests,
+and then end-to-end in a real codespace (`ims.tutorials`'s
+`05-exploring-numerical-data` rendered at the forwarded address).
+
+That real launch exposed one more thing. The first version handed the
+`BROWSER` helper the computed *forwarded* https address, and the very
+first request reached the Codespaces proxy before the port had been
+auto-forwarded: Chrome showed an empty 404 ("This ... page can't be
+found") that became the tutorial on reload a second later. Clicking the
+`View at: http://127.0.0.1:7446` link in the terminal never had that
+problem, because VS Code forwards the port *as part of* opening a
+localhost link. So `open_in_browser()` now always opens the *local*
+address (VS Code's helper does the same forwarding for it) and the
+forwarded address is only printed, and named in the "open it yourself"
+message if no browser could be opened.
 
 ## Probing a port: no message-text matching, and tolerate httpuv's async close
 
