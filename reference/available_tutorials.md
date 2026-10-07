@@ -87,29 +87,17 @@ is not required.
 # the same name; this guarantees learnr2's version is used even if learnr is
 # also attached and masks it on the search path.
 learnr2::available_tutorials(package = "learnr2")
-#>   package            name                 title format
-#> 1 learnr2 getting-started       Getting Started quarto
-#> 2 learnr2   hello-learnr2        Hello, learnr2 quarto
-#> 3 learnr2   intro-vectors Intro to Vectors in R quarto
+#>   package          name         title format
+#> 1 learnr2 hello-learnr2 Hello learnr2 quarto
 #>                                                                                path
-#> 1    /home/runner/work/_temp/Library/learnr2/tutorials/getting-started/tutorial.qmd
-#> 2 /home/runner/work/_temp/Library/learnr2/tutorials/hello-learnr2/hello-learnr2.qmd
-#> 3 /home/runner/work/_temp/Library/learnr2/tutorials/intro-vectors/intro-vectors.qmd
+#> 1 /home/runner/work/_temp/Library/learnr2/tutorials/hello-learnr2/hello-learnr2.qmd
 #>   package_dependencies
 #> 1                     
-#> 2                     
-#> 3                     
 learnr2::available_tutorials(package = "learnr2", type = "quarto")
-#>   package            name                 title format
-#> 1 learnr2 getting-started       Getting Started quarto
-#> 2 learnr2   hello-learnr2        Hello, learnr2 quarto
-#> 3 learnr2   intro-vectors Intro to Vectors in R quarto
+#>   package          name         title format
+#> 1 learnr2 hello-learnr2 Hello learnr2 quarto
 #>                                                                                path
-#> 1    /home/runner/work/_temp/Library/learnr2/tutorials/getting-started/tutorial.qmd
-#> 2 /home/runner/work/_temp/Library/learnr2/tutorials/hello-learnr2/hello-learnr2.qmd
-#> 3 /home/runner/work/_temp/Library/learnr2/tutorials/intro-vectors/intro-vectors.qmd
+#> 1 /home/runner/work/_temp/Library/learnr2/tutorials/hello-learnr2/hello-learnr2.qmd
 #>   package_dependencies
 #> 1                     
-#> 2                     
-#> 3                     
 ```

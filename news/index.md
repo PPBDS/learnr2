@@ -2,6 +2,34 @@
 
 ## learnr2 (development version)
 
+- New
+  [`tutorial_options()`](https://ppbds.github.io/learnr2/reference/tutorial_options.md),
+  for settings that apply to a whole tutorial page. Its first option,
+  `allow_skip`, controls the table of contents: by default (`FALSE`) a
+  sidebar entry for a section the reader has not reached yet is dimmed
+  and does nothing when clicked, becoming a working link only once that
+  section is unlocked, so the sidebar cannot be used to read the whole
+  tutorial at once. `tutorial_options(allow_skip = TRUE)` restores the
+  previous behaviour, where clicking any entry unlocked every section up
+  to it and jumped there. Call it once, in an `echo: false` chunk;
+  [`check_tutorial()`](https://ppbds.github.io/learnr2/reference/check_tutorial.md)
+  treats such a chunk as a widget chunk. **Behaviour change for existing
+  tutorials:** none of them opted in, so all of them now lock the
+  sidebar.
+
+- The “Start Over” button no longer depends on the table-of-contents
+  sidebar. A tutorial rendered with `toc: false` used to have no Start
+  Over at all, and every tutorial lost it on a phone-width screen, where
+  Quarto hides the sidebar. The button now sits at the bottom of the
+  sidebar when one is showing and otherwise at the top of the tutorial,
+  directly under the title, moving between the two as the window
+  resizes.
+
+- The `getting-started` and `intro-vectors` tutorials are no longer
+  bundled; `hello-learnr2` is the one bundled tutorial, and it gained a
+  “Layout options” section describing `toc`, `allow_skip` and Start
+  Over. `getting-started` lives on in ‘primer.tutorials’.
+
 - CRAN review:
   [`create_tutorial()`](https://ppbds.github.io/learnr2/reference/create_tutorial.md)
   and
@@ -20,6 +48,7 @@
   render cache
   [`run_tutorial()`](https://ppbds.github.io/learnr2/reference/run_tutorial.md)
   writes to) requires.
+
 - [`run_tutorial()`](https://ppbds.github.io/learnr2/reference/run_tutorial.md)
   now works from GitHub Codespaces (and any other remote container that
   forwards ports). Two things were wrong. The cache root the server
@@ -39,6 +68,7 @@
   terminals that opens pages on the user’s own machine) ahead of R’s
   `browser` option. The render stamp now records the tutorial’s title,
   for the root listing.
+
 - [`run_tutorial()`](https://ppbds.github.io/learnr2/reference/run_tutorial.md)
   now caches renders. A Quarto tutorial is rendered into
   `output_dir/<package>/<name>/` together with a stamp recording the
@@ -50,6 +80,7 @@
   [`prerender_tutorials()`](https://ppbds.github.io/learnr2/reference/prerender_tutorials.md)
   fills the cache for every installed Quarto tutorial ahead of time, for
   container images and other environment builds.
+
 - [`run_tutorial()`](https://ppbds.github.io/learnr2/reference/run_tutorial.md)
   always serves on port 7446 (`options(learnr2.port = )` overrides) and
   never falls back to a random port, and it serves the whole cache root
@@ -67,6 +98,7 @@
   saved answers. **Breaking for readers mid-tutorial:** answers saved
   under the old root address are not carried over to the new
   per-tutorial address.
+
 - [`available_tutorials()`](https://ppbds.github.io/learnr2/reference/available_tutorials.md)
   and
   [`run_tutorial()`](https://ppbds.github.io/learnr2/reference/run_tutorial.md)
@@ -78,6 +110,7 @@
   `devtools::test()` found no tutorials (or silently tested a stale
   installed copy). Installed packages behave as before, and ‘pkgload’ is
   not required.
+
 - [`run_tutorial()`](https://ppbds.github.io/learnr2/reference/run_tutorial.md)
   now runs classic ‘learnr’ tutorials too. When the named tutorial’s
   `format` is `"rmarkdown"` (an `.Rmd` with
@@ -89,6 +122,7 @@
   bundles classic tutorials already depends on it, so it is installed
   whenever such a tutorial is. `open = FALSE` is an error for an
   `"rmarkdown"` tutorial, which has no render-only mode.
+
 - [`available_tutorials()`](https://ppbds.github.io/learnr2/reference/available_tutorials.md)
   gains a `package_dependencies` list column, the R packages each
   tutorial needs installed locally: `character(0)` for a `"quarto"`
@@ -96,6 +130,7 @@
   [`learnr::available_tutorials()`](https://pkgs.rstudio.com/learnr/reference/available_tutorials.html)
   reports for an `"rmarkdown"` one, or `NA` when ‘learnr’ is not
   installed to ask.
+
 - New
   [`render_tutorials()`](https://ppbds.github.io/learnr2/reference/render_tutorials.md)
   and
@@ -118,12 +153,14 @@
   [`render_tutorials()`](https://ppbds.github.io/learnr2/reference/render_tutorials.md),
   and learnr2’s test suite renders every bundled tutorial for real
   (skipped on CRAN and where Quarto is not installed).
+
 - [`available_tutorials()`](https://ppbds.github.io/learnr2/reference/available_tutorials.md)
   gains a `path` column, the installed `.qmd`/`.Rmd` file, ready to pass
   to
   [`render_tutorials()`](https://ppbds.github.io/learnr2/reference/render_tutorials.md)
   and
   [`check_tutorial()`](https://ppbds.github.io/learnr2/reference/check_tutorial.md).
+
 - New
   [`show_file()`](https://ppbds.github.io/learnr2/reference/show_file.md),
   ported from ‘tutorial.helpers’ together with its tests: print all or

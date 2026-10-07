@@ -67,8 +67,18 @@ alongside it, so it renders out of the box with Quarto or
   [`question()`](https://ppbds.github.io/learnr2/reference/question.md)
   / [`quiz()`](https://ppbds.github.io/learnr2/reference/quiz.md),
   graded in the browser with plain JavaScript, including single/multiple
-  choice, free-text, and reflection questions. Answers persist in the
-  browser’s `localStorage`.
+  choice, free-text, and reflection questions (optionally answered with
+  a pasted screenshot). Answers persist in the browser’s `localStorage`.
+- **Student info and submission** —
+  [`student_info()`](https://ppbds.github.io/learnr2/reference/student_info.md)
+  collects a name and email;
+  [`download_answers_button()`](https://ppbds.github.io/learnr2/reference/download_answers_button.md)
+  bundles every saved answer into a JSON file the reader can turn in. No
+  server involved.
+- **Progressive reveal** — sections unlock one at a time behind
+  “Continue” buttons, the table of contents can’t be used to read ahead
+  unless `tutorial_options(allow_skip = TRUE)` says so, and every page
+  has a “Start Over” button that clears saved progress.
 
 See the reference index and the bundled `hello-learnr2` tutorial for
 details.
@@ -81,6 +91,8 @@ Scaffold and run interactive tutorials.
 
 - [`create_tutorial()`](https://ppbds.github.io/learnr2/reference/create_tutorial.md)
   : Create a new learnr2 tutorial
+- [`tutorial_options()`](https://ppbds.github.io/learnr2/reference/tutorial_options.md)
+  : Set tutorial-wide options
 - [`run_tutorial()`](https://ppbds.github.io/learnr2/reference/run_tutorial.md)
   : Run a bundled tutorial
 - [`prerender_tutorials()`](https://ppbds.github.io/learnr2/reference/prerender_tutorials.md)

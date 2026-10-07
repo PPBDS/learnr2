@@ -22,7 +22,7 @@
 
     <a class="navbar-brand me-2" href="index.html">learnr2</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.1.9008</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.1.9009</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -89,7 +89,11 @@
 <li>
 <strong>Automatic grading</strong> — powered by <a href="https://rstudio.github.io/gradethis/" class="external-link">gradethis</a>.</li>
 <li>
-<strong>Quiz questions</strong> — <code><a href="reference/question.html">question()</a></code> / <code><a href="reference/quiz.html">quiz()</a></code>, graded in the browser with plain JavaScript, including single/multiple choice, free-text, and reflection questions. Answers persist in the browser’s <code>localStorage</code>.</li>
+<strong>Quiz questions</strong> — <code><a href="reference/question.html">question()</a></code> / <code><a href="reference/quiz.html">quiz()</a></code>, graded in the browser with plain JavaScript, including single/multiple choice, free-text, and reflection questions (optionally answered with a pasted screenshot). Answers persist in the browser’s <code>localStorage</code>.</li>
+<li>
+<strong>Student info and submission</strong> — <code><a href="reference/student_info.html">student_info()</a></code> collects a name and email; <code><a href="reference/download_answers_button.html">download_answers_button()</a></code> bundles every saved answer into a JSON file the reader can turn in. No server involved.</li>
+<li>
+<strong>Progressive reveal</strong> — sections unlock one at a time behind “Continue” buttons, the table of contents can’t be used to read ahead unless <code>tutorial_options(allow_skip = TRUE)</code> says so, and every page has a “Start Over” button that clears saved progress.</li>
 </ul>
 <p>See the reference index and the bundled <code>hello-learnr2</code> tutorial for details.</p>
 </div>

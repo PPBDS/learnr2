@@ -75,7 +75,8 @@ Each check has a name, used in `skip`:
   ([`question()`](https://ppbds.github.io/learnr2/reference/question.md),
   [`quiz()`](https://ppbds.github.io/learnr2/reference/quiz.md),
   [`student_info()`](https://ppbds.github.io/learnr2/reference/student_info.md),
-  [`download_answers_button()`](https://ppbds.github.io/learnr2/reference/download_answers_button.md))
+  [`download_answers_button()`](https://ppbds.github.io/learnr2/reference/download_answers_button.md),
+  [`tutorial_options()`](https://ppbds.github.io/learnr2/reference/tutorial_options.md))
   has `#| echo: false`, so the reader sees the widget, not the R code
   that produced it.
 
@@ -99,7 +100,7 @@ Each check has a name, used in `skip`:
 
 ``` r
 qmd <- create_tutorial("checked", dir = tempfile(), open = FALSE)
-#> Created tutorial: /tmp/RtmpnUrQaw/file19b64f2f63cc/checked/checked.qmd
+#> Created tutorial: /tmp/RtmpSEfquE/file19c9269f09ed/checked/checked.qmd
 check_tutorial(qmd)
 
 # Break the template, then see the problems instead of an error.

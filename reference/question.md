@@ -176,11 +176,13 @@ always serves on one fixed port and gives every tutorial its own stable
 path, `/<package>/<name>/`: the address, and so the saved answers, are
 the same on every launch, and no two tutorials share them.
 
-Every page also gets a "Start Over" button, appended automatically to
-the bottom of Quarto's TOC sidebar (nothing to opt into – it's added by
-the same JavaScript that renders
-`question()`/[`student_info()`](https://ppbds.github.io/learnr2/reference/student_info.md),
-as long as the tutorial has a sidebar to put it in, i.e. `toc: true`).
+Every page also gets a "Start Over" button (nothing to opt into – it's
+added by the same JavaScript that renders
+`question()`/[`student_info()`](https://ppbds.github.io/learnr2/reference/student_info.md)).
+It sits at the bottom of Quarto's TOC sidebar when the page shows one,
+and otherwise – a tutorial rendered with `toc: false`, or any tutorial
+on a screen too narrow for Quarto to show the sidebar – at the top of
+the tutorial, directly under the title, before the first section.
 Clicking it, after a confirmation prompt, clears every `question()`/
 [`student_info()`](https://ppbds.github.io/learnr2/reference/student_info.md)
 answer *and* every `{webr}` exercise's persisted code (`persist: true`)

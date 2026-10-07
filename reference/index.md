@@ -6,6 +6,8 @@ Scaffold and run interactive tutorials.
 
 - [`create_tutorial()`](https://ppbds.github.io/learnr2/reference/create_tutorial.md)
   : Create a new learnr2 tutorial
+- [`tutorial_options()`](https://ppbds.github.io/learnr2/reference/tutorial_options.md)
+  : Set tutorial-wide options
 - [`run_tutorial()`](https://ppbds.github.io/learnr2/reference/run_tutorial.md)
   : Run a bundled tutorial
 - [`prerender_tutorials()`](https://ppbds.github.io/learnr2/reference/prerender_tutorials.md)

@@ -39,8 +39,9 @@ learnable from the template alone:
 
 Practically: **this file is the primary authoring guide; the template is
 a labor-saving shortcut for boilerplate, never a substitute for reading
-this first.** This was tested directly: `inst/tutorials/intro-vectors/`
-was hand-authored from these instructions alone (not via
+this first.** This was tested directly: a small `intro-vectors` tutorial
+(since removed from the bundled set, 2026-10) was hand-authored from
+these instructions alone (not via
 [`create_tutorial()`](https://ppbds.github.io/learnr2/reference/create_tutorial.md),
 not by copying the template), then rendered and checked in a browser to
 confirm the result was correct without the template’s help. If you’re
@@ -60,7 +61,7 @@ frontmatter and remembering a separate
 [`add_live_extension()`](https://ppbds.github.io/learnr2/reference/add_live_extension.md)
 call. Conclusion: keep it. An agent following this file can either call
 it for a guaranteed-correct starting point, or write the `.qmd` by hand
-the way `intro-vectors/` was written – both are proven to work here. A
+the way that test tutorial was written – both are proven to work here. A
 human author is equally free to do either.
 
 ### `student_info()` is a different kind of question
@@ -88,8 +89,6 @@ boilerplate section below, every time.
   scaffolds.
 - `inst/tutorials/hello-learnr2/hello-learnr2.qmd` – a complete worked
   example exercising every learnr2 feature.
-- `inst/tutorials/intro-vectors/intro-vectors.qmd` – a small tutorial
-  hand-authored from this file alone, as the test described above.
 - `R/question.R`, `R/submission.R` – source of truth for
   [`learnr2::question()`](https://ppbds.github.io/learnr2/reference/question.md),
   [`learnr2::quiz()`](https://ppbds.github.io/learnr2/reference/quiz.md),
@@ -137,9 +136,8 @@ unnecessary.)
 scaffolds – already includes both blocks (with `{{name}}` filled in
 automatically for the download button’s `filename_prefix`), so a
 brand-new tutorial gets this for free. Reach for the snippets above when
-hand-authoring instead (as in `intro-vectors/`), or when adding this
-boilerplate to a `.qmd` translated from a learnr/tutorial.helpers source
-per the next section.
+hand-authoring instead, or when adding this boilerplate to a `.qmd`
+translated from a learnr/tutorial.helpers source per the next section.
 
 Don’t forget `#| echo: false` on all three chunks (see that section,
 below, for why it matters).
@@ -193,8 +191,7 @@ document order, counting *every* chunk in the section that gets a label
 (mixing `{r}` and [webr](https://github.com/cardiomoon/webr) chunks in
 one sequence if a section has both, rather than numbering each chunk
 type separately). `## Quiz questions` -\> `quiz-questions-1`,
-`quiz-questions-2`, …. Every bundled tutorial (`hello-learnr2`,
-`getting-started`, `intro-vectors`) and the
+`quiz-questions-2`, …. The bundled `hello-learnr2` tutorial and the
 [`create_tutorial()`](https://ppbds.github.io/learnr2/reference/create_tutorial.md)
 template follow this now – match their style for a new one rather than
 inventing another convention.
@@ -235,13 +232,17 @@ similar for other `*.tutorials` packages). Translate one into
 a bundled tutorial, or a separate `*.tutorials2`-style content package
 that depends on `learnr2`. Keep any `images/` (or other asset)
 subdirectory next to the `.qmd`, exactly as the source had it. The file
-may be named `<name>.qmd` (matches `hello-learnr2`, `intro-vectors`) or
-`tutorial.qmd` (matches `getting-started`) –
+may be named `<name>.qmd` (what
+[`create_tutorial()`](https://ppbds.github.io/learnr2/reference/create_tutorial.md)
+writes, and what `hello-learnr2` uses) or `tutorial.qmd` –
 [`available_tutorials()`](https://ppbds.github.io/learnr2/reference/available_tutorials.md)
 /
 [`run_tutorial()`](https://ppbds.github.io/learnr2/reference/run_tutorial.md)
 just take the first `*.qmd` in the directory, so either works; prefer
-`<name>.qmd` for a new translation.
+`<name>.qmd` for a new translation. (The *template* file is
+`inst/templates/tutorial.qmd`, but
+[`create_tutorial()`](https://ppbds.github.io/learnr2/reference/create_tutorial.md)
+copies it to `<dir>/<name>/<name>.qmd`.)
 
 ### Dropping one `.qmd` into an otherwise-`.Rmd` (classic learnr) package
 
@@ -249,8 +250,9 @@ The `<pkg>` above assumes learnr2 itself or a `*.tutorials2` package
 built on it. A third case works but has blind spots worth knowing:
 adding a single learnr2 `.qmd` tutorial into a package that is otherwise
 all classic-learnr `.Rmd` – done for real in `PPBDS/primer.tutorials`
-(the `getting-started-tutorial` dir, 2026-09), imported from this repo’s
-own `getting-started`.
+(the `getting-started-tutorial` dir, 2026-09), imported from a
+`getting-started` tutorial that used to be bundled here (removed
+2026-10; `primer.tutorials` now owns it).
 
 **What still works.** `learnr2`’s own finders scan *every* subdirectory
 of `inst/tutorials/` and pick `.qmd` before `.Rmd`
@@ -316,6 +318,7 @@ learnr2’s own `tests/testthat/test-render-tutorials.R` does.)
 | `question_numeric("...", answer(90, correct = TRUE))` | `learnr2::question("...", type = "reflection_editable", validate = "integer")`, no [`answer()`](https://ppbds.github.io/learnr2/reference/answer.md) |
 | `question(..., allow_retry, random_answer_order, incorrect, correct)` | same argument names on [`learnr2::question()`](https://ppbds.github.io/learnr2/reference/question.md) |
 | bare `###` progressive-reveal divider (no real heading text) | delete; keep genuinely-titled `##`/`###` sections (learnr2 gates them itself – see “Progressive section reveal”) |
+| `allow_skip: yes` in the YAML | a `{r}` chunk (`echo: false`) calling `learnr2::tutorial_options(allow_skip = TRUE)`; with no such chunk, TOC entries for unreached sections are dimmed and inert |
 | `knitr::include_graphics("images/x.png")` in an `{r}` chunk | plain Markdown `![alt](images/x.png)` (drop the chunk) |
 | prose telling the reader to use “the RStudio Console”, `rstudioapi::*`, [`show_file()`](https://ppbds.github.io/learnr2/reference/show_file.md) (from `tutorial.helpers`, or learnr2’s own port – see “No local R/RStudio dependency”), etc. | rewrite around an on-page [webr](https://github.com/cardiomoon/webr) cell, or drop – see “No local R/RStudio dependency” |
 
@@ -351,12 +354,17 @@ toc: true
 Drop `tutorial: id:`, `output:`/`runtime: shiny_prerendered` and the
 `progressive:` / `allow_skip:` keys entirely – none of it applies
 without a Shiny server, and learnr2 does progressive reveal itself (see
-“Section dividers and progressive reveal”). Keep `subtitle:` if the
-source had one, but update its wording along with `title:` so neither
-still describes RStudio-only content (see “No local R/RStudio
-dependency”). Add a `webr: packages: [...]` block listing every non-base
-package any [webr](https://github.com/cardiomoon/webr) cell uses (see
-its own section below).
+“Section dividers and progressive reveal”). If the source had
+`allow_skip: yes` and you want to keep that behaviour, add a `{r}` chunk
+calling `learnr2::tutorial_options(allow_skip = TRUE)` (with
+`#| echo: false` and a label, like every widget chunk); learnr2’s
+default is the opposite, TOC entries for unreached sections dimmed and
+inert. Keep `subtitle:` if the source had one, but update its wording
+along with `title:` so neither still describes RStudio-only content (see
+“No local R/RStudio dependency”). Add a `webr: packages: [...]` block
+listing every non-base package any
+[webr](https://github.com/cardiomoon/webr) cell uses (see its own
+section below).
 
 Immediately after the frontmatter, include the `quarto-live` runtime
 partial(s):
@@ -430,9 +438,9 @@ defining a helper) has two possible translations:
         ```
 
 2.  **Inlining the setup lines at the top of the exercise cell itself**
-    (what `intro-vectors/` does with `scores <- c(...)`). Simplest when
-    it’s a line or two; it also makes the cell self-contained and
-    visible.
+    (e.g. a `scores <- c(...)` line above the `# Compute the sum`
+    prompt). Simplest when it’s a line or two; it also makes the cell
+    self-contained and visible.
 
 Which to use is a judgement call, but be aware of *why* it matters:
 **[webr](https://github.com/cardiomoon/webr) cells do not share state.**
@@ -624,6 +632,12 @@ behind a “Continue” button (see “Progressive section reveal” below). So:
 - `### Hints` / `### Solutions` subsections that only wrap a
   `.hint`/`.solution` div are *not* gated (quarto-live already has its
   own show/hide toggle for them) – leaving them in place is fine.
+- The TOC sidebar lists every section from the start, but by default an
+  entry for a section the reader hasn’t reached is dimmed and does
+  nothing when clicked, so the sidebar can’t be used to read the whole
+  tutorial at once. `learnr2::tutorial_options(allow_skip = TRUE)`
+  restores learnr’s `allow_skip: yes` behaviour (click an entry, unlock
+  everything through it, jump there).
 
 ### `webr: packages:` must list every package any exercise uses
 
@@ -740,9 +754,10 @@ RStudio itself being installed, or RStudio-specific UI/menus/settings -
 any source content that walks through *restarting a tutorial from
 scratch* as a multi-step manual procedure (quit, reopen, re-answer
 everything by hand): every learnr2 page already has a single “Start
-Over” button at the bottom of the sidebar (see “Progress persistence” in
-`R/question.R`) that clears all of it – link to that instead of
-reproducing the source’s manual steps
+Over” button (bottom of the TOC sidebar, or under the title when there
+is no visible sidebar – see “Progress persistence” in `R/question.R`)
+that clears all of it – link to that instead of reproducing the source’s
+manual steps
 
 If the source tutorial’s *point* was genuinely about configuring a local
 R install (as opposed to how-tutorials-work content that merely happened
@@ -805,13 +820,12 @@ tutorials in this repo commit those generated files.
 ### `run_tutorial()`/`library(learnr2)` reads the *installed* package, not this checkout
 
 A real mistake, caught only after a user reported edited content simply
-not showing up: after editing
-`inst/tutorials/getting-started/tutorial.qmd` (adding a question),
-`inst/extdata/quiz/quiz.css`, and `quiz.js` directly in this git working
-tree, none of the changes appeared when the user ran
-`learnr2::run_tutorial("getting-started")` in their own R session –
-`git status` confirmed the edits were genuinely there, uncommitted, in
-the source tree the whole time.
+not showing up: after editing a bundled tutorial’s `.qmd` (adding a
+question), `inst/extdata/quiz/quiz.css`, and `quiz.js` directly in this
+git working tree, none of the changes appeared when the user ran
+[`learnr2::run_tutorial()`](https://ppbds.github.io/learnr2/reference/run_tutorial.md)
+on it in their own R session – `git status` confirmed the edits were
+genuinely there, uncommitted, in the source tree the whole time.
 
 The cause:
 [`run_tutorial()`](https://ppbds.github.io/learnr2/reference/run_tutorial.md)
@@ -1131,6 +1145,55 @@ what actually ends up in the rendered class list, only the `exercise-`
 prefixed ones) from the gated list entirely, so it simply inherits its
 enclosing section’s visibility instead of demanding a Continue click of
 its own.
+
+### `toc: false` is supported; Start Over moves to the top
+
+A tutorial may drop Quarto’s table of contents with `toc: false` in the
+YAML header. Nothing in learnr2 needs the TOC: the progressive reveal
+walks `section.level2`/`section.level3` elements, not the sidebar, and
+[`check_tutorial()`](https://ppbds.github.io/learnr2/reference/check_tutorial.md)
+doesn’t look at `toc` at all (verified by rendering `hello-learnr2` with
+`toc: false`, 2026-10). The one thing that used to break was Start Over:
+`injectStartOverButton()` in `quiz.js` appended the button into
+`#quarto-margin-sidebar` and silently did nothing when that element was
+missing, so a `toc: false` tutorial had no Start Over at all. The same
+bug hit every tutorial on a phone, where the element exists but Quarto’s
+bootstrap CSS hides it below 768px. Now the button goes into the sidebar
+only when it is actually showing (`getClientRects()`), and otherwise
+directly after `#title-block-header`, before the first section so the
+reveal never hides it; a resize listener moves it between the two. What
+`toc: false` does cost is the sidebar’s map of the tutorial (and, with
+`tutorial_options(allow_skip = TRUE)`, its skip-ahead): without a TOC
+the reader can only move forward one Continue at a time. Covered by the
+`-no-toc` fixture variants in `tests/js/fixtures.js` and the Start Over
+tests in `quiz.spec.js`.
+
+### The TOC can’t be used to read ahead, unless the author allows it
+
+Quarto’s sidebar TOC lists every section with a plain `<a href="#id">`
+link, which would bypass Continue entirely: click the last entry and the
+whole tutorial is on screen. The first version of the reveal treated
+that as a deliberate skip-ahead and unlocked everything through the
+target. After an author asked for a TOC that *can’t* do that (2026-10),
+the default flipped: `initProgressiveSections()` now dims every entry
+whose section index is at or past `unlocked` (`.learnr2-toc-locked`,
+`aria-disabled`, `tabindex=-1`, `pointer-events: none`, plus
+`preventDefault()` on any click that gets through via the keyboard), and
+re-applies that on every unlock so entries light up as the reader
+progresses. Entries for already-unlocked sections navigate normally. The
+old behaviour is opt-in through
+`learnr2::tutorial_options(allow_skip = TRUE)` (`R/tutorial_options.R`),
+a hidden `<div class="learnr2-options">` carrying base64 JSON that
+`readTutorialOptions()` merges over `OPTION_DEFAULTS`;
+[`tutorial_options()`](https://ppbds.github.io/learnr2/reference/tutorial_options.md)
+is a widget chunk for
+[`check_tutorial()`](https://ppbds.github.io/learnr2/reference/check_tutorial.md)’s
+`echo` rule like the others. Fixtures: `progressive-sections` (default)
+vs `progressive-sections-skip` (opt-in) in `tests/js/fixtures.js`. Any
+future tutorial-wide switch should go through
+[`tutorial_options()`](https://ppbds.github.io/learnr2/reference/tutorial_options.md)
+rather than a new YAML key, because `quiz.js` can’t see the YAML and
+this is the one channel that already reaches it.
 
 The general lesson, not just about this one feature: a synthetic JS test
 fixture built from a *description* of what Quarto’s output looks like

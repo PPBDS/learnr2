@@ -13,7 +13,7 @@ questions, graded entirely in the reader's browser."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">learnr2</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.1.9008</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.1.9009</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -207,11 +207,13 @@ That is why <code><a href="run_tutorial.html">run_tutorial()</a></code> always s
 every tutorial its own stable path, <code>/&lt;package&gt;/&lt;name&gt;/</code>: the address,
 and so the saved answers, are the same on every launch, and no two
 tutorials share them.</p>
-<p>Every page also gets a "Start Over" button, appended automatically to
-the bottom of Quarto's TOC sidebar (nothing to opt into – it's added by
-the same JavaScript that renders <code>question()</code>/<code><a href="student_info.html">student_info()</a></code>, as long
-as the tutorial has a sidebar to put it in, i.e. <code>toc: true</code>). Clicking
-it, after a confirmation prompt, clears every <code>question()</code>/
+<p>Every page also gets a "Start Over" button (nothing to opt into – it's
+added by the same JavaScript that renders <code>question()</code>/<code><a href="student_info.html">student_info()</a></code>).
+It sits at the bottom of Quarto's TOC sidebar when the page shows one,
+and otherwise – a tutorial rendered with <code>toc: false</code>, or any tutorial
+on a screen too narrow for Quarto to show the sidebar – at the top of
+the tutorial, directly under the title, before the first section.
+Clicking it, after a confirmation prompt, clears every <code>question()</code>/
 <code><a href="student_info.html">student_info()</a></code> answer <em>and</em> every <code>{webr}</code> exercise's persisted code
 (<code>persist: true</code>) for this page on this device, then reloads – a clean
 slate, without needing to know that both live under different

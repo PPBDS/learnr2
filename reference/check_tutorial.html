@@ -21,7 +21,7 @@ these checks catch what a successful render does not."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">learnr2</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.1.9008</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.1.9009</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -108,8 +108,9 @@ and no two chunks share a label. A question's chunk label is the key
 its saved answer is stored under, so a missing or duplicated label
 loses or merges readers' progress.</p></li>
 <li><p><code>echo</code> – every <code>{r}</code> chunk that renders a learnr2 widget
-(<code><a href="question.html">question()</a></code>, <code><a href="quiz.html">quiz()</a></code>, <code><a href="student_info.html">student_info()</a></code>, <code><a href="download_answers_button.html">download_answers_button()</a></code>)
-has <code>#| echo: false</code>, so the reader sees the widget, not the R code
+(<code><a href="question.html">question()</a></code>, <code><a href="quiz.html">quiz()</a></code>, <code><a href="student_info.html">student_info()</a></code>, <code><a href="download_answers_button.html">download_answers_button()</a></code>,
+<code><a href="tutorial_options.html">tutorial_options()</a></code>) has <code>#| echo: false</code>, so the reader sees the
+widget, not the R code
 that produced it.</p></li>
 <li><p><code>persist</code> – every <code>{webr}</code> exercise cell (one with <code>#| exercise:</code> that
 is not a <code>setup</code>, <code>check</code>, <code>solution</code>, or <code>hint</code> cell) has
@@ -127,7 +128,7 @@ in the YAML header, the only place WebR learns what to install.
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">qmd</span> <span class="op">&lt;-</span> <span class="fu"><a href="create_tutorial.html">create_tutorial</a></span><span class="op">(</span><span class="st">"checked"</span>, dir <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span><span class="op">)</span>, open <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Created tutorial: /tmp/RtmpnUrQaw/file19b64f2f63cc/checked/checked.qmd</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Created tutorial: /tmp/RtmpSEfquE/file19c9269f09ed/checked/checked.qmd</span>
 <span class="r-in"><span><span class="fu">check_tutorial</span><span class="op">(</span><span class="va">qmd</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Break the template, then see the problems instead of an error.</span></span></span>
