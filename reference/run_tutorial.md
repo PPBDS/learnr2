@@ -132,11 +132,15 @@ address refuses to connect. Codespaces forwards the port to a public
 address, `https://<codespace>-7446.app.github.dev/`, and this function
 detects a codespace (the `CODESPACE_NAME` and
 `GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN` environment variables) and
-prints and opens the tutorial's forwarded address instead of the local
-one. The forwarded root page forwards to the tutorial too, so the "Open
-in Browser" button on the port notification lands in the right place.
-Saved answers are keyed by page URL, so they live under the forwarded
-address and are found again as long as the codespace keeps its name.
+prints the tutorial's forwarded address. The browser is still opened on
+the local address, through the helper VS Code puts in `BROWSER`, which
+forwards the port as part of opening it, just as clicking a localhost
+link in the terminal does; opening the forwarded address directly can
+race the port forwarding and show an empty 404 until reloaded. The
+forwarded root page forwards to the tutorial too, so the "Open in
+Browser" button on the port notification lands in the right place. Saved
+answers are keyed by page URL, so they live under the forwarded address
+and are found again as long as the codespace keeps its name.
 
 ## Why this blocks and serves over local HTTP instead of opening the file directly
 
