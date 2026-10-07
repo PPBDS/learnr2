@@ -3,6 +3,25 @@
 ## learnr2 (development version)
 
 - [`run_tutorial()`](https://ppbds.github.io/learnr2/reference/run_tutorial.md)
+  now works from GitHub Codespaces (and any other remote container that
+  forwards ports). Two things were wrong. The cache root the server
+  serves had no page of its own, so httpuv answered `/` with a bare 404
+  – and `/` is exactly what the “Open in Browser” button on VS Code’s
+  and Codespaces’ new-port notification opens, since it only knows the
+  port, not the tutorial’s path. The root is now a small page that
+  forwards to the tutorial launched most recently and lists every other
+  rendered tutorial. And the address printed and opened was always
+  `http://127.0.0.1:7446/...`, which inside a codespace is reachable
+  only from the container; in a codespace (detected from
+  `CODESPACE_NAME` and `GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN`) the
+  forwarded `https://<codespace>-7446.app.github.dev/<package>/<name>/`
+  address is used instead.
+  [`run_tutorial()`](https://ppbds.github.io/learnr2/reference/run_tutorial.md)
+  also honours a `BROWSER` environment variable (VS Code sets one in its
+  terminals that opens pages on the user’s own machine) ahead of R’s
+  `browser` option. The render stamp now records the tutorial’s title,
+  for the root listing.
+- [`run_tutorial()`](https://ppbds.github.io/learnr2/reference/run_tutorial.md)
   now caches renders. A Quarto tutorial is rendered into
   `output_dir/<package>/<name>/` together with a stamp recording the
   learnr2 version and a fingerprint of the installed tutorial files;

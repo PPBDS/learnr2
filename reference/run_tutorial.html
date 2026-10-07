@@ -21,7 +21,7 @@ run both kinds through this one function and depend only on learnr2."></head><bo
 
     <a class="navbar-brand me-2" href="../index.html">learnr2</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.1.9004</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.1.9005</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -156,6 +156,29 @@ needed and simply opens the tutorial's address in the browser, without
 starting a second server or blocking. If the port is held by something
 other than a learnr2 server, it stops with an error rather than silently
 serving somewhere the browser has no saved answers for.</p>
+<p>The cache root itself (<code>http://127.0.0.1:7446/</code>) is a small page that
+forwards to the tutorial launched most recently and lists every other
+rendered tutorial in the cache. That root is what a tool that only knows
+the port opens – notably the "open in browser" notification VS Code and
+GitHub Codespaces show when they detect a new local port – so landing
+on it has to reach the tutorial rather than a 404.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="running-in-github-codespaces-or-another-remote-container-">Running in GitHub Codespaces (or another remote container)<a class="anchor" aria-label="anchor" href="#running-in-github-codespaces-or-another-remote-container-"></a></h2>
+
+
+<p>The server runs inside the container, so <code>http://127.0.0.1:7446/...</code>
+is only reachable from inside it; in the browser on your own machine
+that address refuses to connect. Codespaces forwards the port to a
+public address, <code>https://&lt;codespace&gt;-7446.app.github.dev/</code>, and this
+function detects a codespace (the <code>CODESPACE_NAME</code> and
+<code>GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN</code> environment variables) and
+prints and opens the tutorial's forwarded address instead of the local
+one. The forwarded root page forwards to the tutorial too, so the
+"Open in Browser" button on the port notification lands in the right
+place. Saved answers are keyed by page URL, so they live under the
+forwarded address and are found again as long as the codespace keeps
+its name.</p>
     </div>
     <div class="section level2">
     <h2 id="why-this-blocks-and-serves-over-local-http-instead-of-opening-the-file-directly">Why this blocks and serves over local HTTP instead of opening the file directly<a class="anchor" aria-label="anchor" href="#why-this-blocks-and-serves-over-local-http-instead-of-opening-the-file-directly"></a></h2>
