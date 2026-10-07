@@ -941,6 +941,28 @@ on a stand-in cache (root page served, forward target served), and by
 unit tests; not yet confirmed end-to-end inside an actual codespace, so
 the first real launch there is worth a look.
 
+## Don’t classify network failures by their message text
+
+`probe_server()` (`R/tutorials.R`) decides whether port 7446 is free,
+held by a learnr2 server, or held by something else. Its first version
+fetched the server marker with
+[`base::url()`](https://rdrr.io/r/base/connections.html) and, on
+failure, grepped the condition message for “connect”/“refused” to mean
+“nothing listening”. That passed on macOS and Linux and failed R CMD
+check on `windows-latest` (2026-10): Windows words the
+refused-connection failure differently, so a free port was classified
+“other”, and `run_tutorial(open = TRUE)` refused to start with “Port N
+is in use by something other than a learnr2 tutorial server” on a
+machine where nothing was using it at all. The fix is structural, not a
+longer regex: `port_listening()` does a plain
+[`socketConnection()`](https://rdrr.io/r/base/connections.html) connect,
+which succeeds or fails the same way everywhere, and only once something
+is listening does the HTTP fetch decide learnr2-vs-other. The rule:
+never infer a network state from the wording of an R error or warning
+message. Those strings differ by platform, by
+[`url()`](https://rdrr.io/r/base/connections.html) method (libcurl vs
+wininet), and by R version. Test the state directly.
+
 ## Test suite layout
 
 Two layers, both run in CI (`.github/workflows/R-CMD-check.yaml`,
