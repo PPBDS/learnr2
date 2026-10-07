@@ -1,0 +1,815 @@
+---
+title: "Tutorials in the Age of AI"
+author: David Kane
+vignette: >
+  %\VignetteEngine{quarto::html}
+  %\VignetteIndexEntry{Tutorials in the Age of AI}
+  %\VignetteEncoding{UTF-8}
+---
+
+
+<!-- DK: Please incorporate these notes in this document, and then fix r4ds-* tutorials accordingly.
+
+Most questions ask students to ask AI to do one of two things. Calculate some summary statistics or make a plot. (Often these are combined. Make a plot of summary statistics.) This is how we do data science with AI. We need to practice checking, not coding. Our job is to make sure that the AI has not made a mistake or, more commonly, that we have not misunderstood the data.
+
+And, after they hit Continue, show (calculate on the fly) the summary statistics or show the plot. (Then SAY SOMETHING EDUCATIONAL, something that AI does not know, something that you might say to a student whose shoulder you are looking over.)
+
+No need for nearly as much testing.
+
+-->
+
+<!-- AR: How should we expect students to be using AI for these tutorials? Chat, CLI, Agents? Should this doc just be tool agnostic? -->
+
+
+## Introduction
+
+AI changes everything.
+
+This document describes the best way to write R tutorials using the [**learnr**](https://rstudio.github.io/learnr/) package. Prior to the rise of AI, this was the best way to write [tutorials](https://web.archive.org/web/20251008195459/https://ppbds.github.io/tutorial.helpers/articles/instructions.html) and [books](https://web.archive.org/web/20251008195807/https://ppbds.github.io/tutorial.helpers/articles/books.html). Our purpose is no longer to teach students how to code. 
+
+> *Our purpose is to teach students how to use AI to create.* 
+
+The [**tutorial.helpers**](https://ppbds.github.io/tutorial.helpers/) package will help you to create good tutorials. Make sure that you are using the latest development version. Install it with `pak::pak("PPBDS/tutorial.helpers")`.
+
+## Overview
+
+To create a new tutorial, you first need a new directory, located in the `inst/tutorials` directory of your package. Create that directory and then add a `tutorial.Rmd` file inside it. Tutorials must be named `tutorial.Rmd`.
+
+Every tutorial begins with the `info_section`, some default code which records a student's name, email and (optionally) id. Include it near the top of the tutorial with a child document chunk:
+
+````{verbatim}
+```{r info-section, child = system.file("child_documents/info_section.Rmd", package = "tutorial.helpers")}
+```
+````
+
+Every tutorial ends with the `download-answers` chunk, which provides students with instructions on how to download a copy of their answers:
+
+````{verbatim}
+```{r download-answers, child = system.file("child_documents/download_answers.Rmd", package = "tutorial.helpers")}
+```
+````
+
+There is a `setup` code chunk at the top of a tutorial. You must have `library(learnr)` and, if you use our tools, `library(tutorial.helpers)` in this chunk. If your tutorials are part of an R package, then you should ensure that **tutorial.helpers** is included under Imports in the DESCRIPTION file and that any library loaded in a tutorial is, at least, included under Suggests.
+
+Anything typed at the keyboard belongs in \`backticks\` (not "quotation marks"), except for package names, which are always **bolded**. Function names always include the parentheses: `read_csv()`, not `read_csv`. Example: the `+` sign is used to connect `ggplot()` components when using the **ggplot2** library.
+
+Note that tutorials must be [R Markdown](https://rmarkdown.rstudio.com/) documents, meaning that their suffix is `.Rmd`. You can not (yet) use Quarto documents with tutorials. Fortunately, most of what you need which works in Quarto also works in R Markdown. In particular, per-chunk options use Quarto's `#| key: value` syntax on lines inside the chunk --- not inline within the `{}` --- for `echo`, `message`, `cache`, and every other option. This works in `.Rmd` via modern **knitr**. The only inline options which remain on the header line are `include = FALSE` on the setup chunk and the `child = ...` argument on the info-section and download-answers child chunks.
+
+AI tutorials begin with an *Introduction* which provides a summary of the key packages/functions which the tutorial will cover. The Introduction continues with a series of exercises which set up the repo/project/QMD in which most of the tutorial will be completed.
+
+After the Introduction, there are 1 or 2 sections --- the official **learnr** nomenclature is *Topics* --- which are the meat of the tutorial. 
+
+The last section is the *Summary*. It starts with the same overview with which the Introduction began, but in the past tense. It then has a couple exercises which finish up the tutorial by using `quarto publish gh-pages analysis.qmd` to create a webpage featuring the cool plots which the student has created. The URL for this new webpage is usually the answer to the last exercise in Summary, thereby completing the tutorial.
+
+Anytime you ask a student to execute something in the R Terminal, you confirm that they have done so with CP/CR, the abbreviation for **C**opy/**P**aste the **C**ommand/**R**esponse.
+
+[**tutorial.helpers**](https://ppbds.github.io/tutorial.helpers/) includes two particularly helpful functions: `make_exercise()` and `check_current_tutorial()`. Use `make_exercise()` to add a new exercise to the current tutorial. It will number the exercise, and the code chunk labels, automatically. Use `check_current_tutorial()` to renumber all the exercises and relabel the code chunks. This is especially useful if you add or delete an exercise in the middle of a section.
+
+In olden days, students always needed more practice working in a Quarto document (the QMD) and the R Terminal at the same time. Good data scientists used to go back and forth between these two modes, writing something in the QMD, executing it in the R Terminal, editing the QMD, executing again, and so on. We used to force students to do that repeatedly.
+
+But that was the pre-AI world. With AI, we rarely edit our Quarto documents directly. Instead, we tell the AI what we want and it edits and then renders the Quarto document, usually showing us the result as an HTML file, viewable in the browser. Our purpose is no longer to teach students how to code. The AI codes. Our purpose is to teach students how to ensure that the results produced by the AI are correct.
+
+> *Students no longer code. They check.* 
+
+
+Tutorials are divided into *Topics* that appear on the side panel. To create these topics, we include a double hash (##) before the text for it to show up as a side panel. This is also called the *topic title*.  Use [sentence case](https://apastyle.apa.org/style-grammar-guidelines/capitalization/sentence-case). On the line after the topic title, put three hashes. This ensures that students will see the introductory text before they see the first exercise.
+
+### Questions
+
+There are two types of text questions: 1) those that provide the students with the correct answer, after they have submitted their own answer, and, 2) those that do not provide an answer.  Examples:
+
+````{verbatim}
+### Exercise 6
+
+Explain potential outcomes in about two sentences.
+
+```{r definitions-6}
+question_text(NULL,
+    message = "This is where we place the correct answer. It will appear only after 
+    students have submitted their own answers. Note that we do not need to wrap the 
+    answer text by hand.",          
+    answer(NULL, 
+           correct = TRUE),
+    allow_retry = FALSE,
+    incorrect = NULL,
+    rows = 6)
+``` 
+````
+
+For the `message` argument, you should provide an **excellent** answer. We want to allow students to check for themselves that they got, more or less, the correct answer. Note how we set `allow_retry` to FALSE. This means that, after they see our answer, students can't modify their answer. The `rows` argument decides how many rows the empty text input will have.
+
+Always specify (approximately) how much you want students to write. Reasonable units are: one sentence, two sentences and a paragraph. Pick one of these three unless you have a good reason not to. But be wary of asking for more than a sentence, unless you just want an AI answer. The ideal question is easier for a student to just answer than to ask AI.
+
+The purpose of these questions is to ensure that students understand concepts.
+
+> *You can't check the AI's work if you don't understand the underlying concepts which the code is implementing.* 
+
+For paragraph questions, you should mention specific words or phrases which the students should include in their answers. If your suggested answer includes the word "validity," for example, then tell the students to include (and define) validity as part of their answer. 
+
+You can insert a text question which provides an answer by placing your cursor in the desired location and running `tutorial.helpers::make_exercise(type = "yes-answer")`.
+
+However, for many written questions, we don't provide an answer, so we don't mind if students resubmit. This format is most commonly used for "process" questions in which we have told students to do something and then confirm that they have done it by copying/pasting the result from a command. To create a template for these questions, we run `tutorial.helpers::make_exercise()`, since the default value for `type` is `"no-answer"`. Doing so produces an outline which looks like this:
+
+````{verbatim}
+### Exercise 7
+
+
+```{r exercise-7}
+question_text(NULL,
+	answer(NULL, correct = TRUE),
+	allow_retry = TRUE,
+	try_again_button = "Edit Answer",
+	incorrect = NULL,
+	rows = 5)
+```
+
+###
+
+```{r exercise-7-test}
+
+```
+
+###
+
+````
+
+The question will almost always instruct the student to "CP/CR," often after running `show_file(chunk = "Last")`. Adjust the value of `rows` to match the expected length of the pasted output. If the question asks the student to run some R code, include that code in the `test` chunk. It runs when we test the tutorial, ensuring correctness. Its output — a printed tibble, summary statistics, or plot — is shown to students after they click Continue, giving them something concrete to check their work against. Add `#| echo: true` when you want students to see our code as well as its output — we often show students our code so that they learn something from comparing it with their own. In output-focused tutorials, showing just the result is fine.
+
+### Knowledge drops
+
+The most difficult part of tutorial creation is writing the "knowledge drops," the snippets of wisdom (and the associated links) which are used at the end of each exercise. These generally come in two categories: details about R packages/websites and background information about the substantive data science problem at hand.
+
+Do not expect this to be easy! Good knowledge drops are hard. Make them short. Students will not read more than a sentence or two.
+
+Perhaps the best place for a knowledge drop, especially for written questions, is at the start of the exercise. That is, instead of just asking the question immediately, provide a sentence or two of knowledge even if this information is not really needed to answer the question. Students tend to read those sentences closely since they might be relevant to the question they need to answer.
+
+Rhetorical questions (almost) always work poorly for knowledge drops.
+
+A knowledge drop should not be a road sign. Example: "In the next section we will explore the data further." Don't waste time telling students what you expect to do next, or what you have just completed doing. Teach them something real!
+
+In normal, output-focused tutorials, the most important knowledge drops mention *packages* which we want students to be aware of --- a map of the infrastructure. Since students don't write the code, they rarely need individual function names; when a transformation matters, teach the concept, not the function which does it. Modeling tutorials are the exception: there the modeling functions themselves, like `reg_linear()` and `plot_predictions()`, are the curriculum, so knowledge drops may and should name them.
+
+### Inputs
+
+In addition to `tutorial.Rmd`, a tutorial will often use other inputs. The two most common locations for storing these inputs are `data` and `images` directories at the same level as the `tutorial.Rmd` file. Any file in `data` or `images` will be available at run time. (The directories must have these names. Something like `my_data` will not work.) 
+
+#### Data
+
+If you need for an R object to be accessible in an exercise code chunk, create it in the initial global `setup` code chunk at the top of the tutorial.
+
+Be wary of code which downloads data from the web. This won't work if the student does not have an internet connection when she creates the tutorial. Instead, save the code which downloaded the data and then place that object in an RDS file in the `data` directory. Here is an example from the "Wrangling Census data with Tidyverse tools" tutorial from the [**tidycensus.tutorials**](https://ppbds.github.io/tidycensus.tutorials/) package.
+
+````{verbatim}
+median_age <- get_acs(geography = "county",
+                      variables = "B01002_001",
+                      year = 2020)
+write_rds(median_age, "data/median_age.rds")
+
+median_age <- read_rds("data/median_age.rds")
+````
+
+The first two commands download data and save it to an RDS file in the `data` directory. 
+
+This code assumes that you are located in the same directory as the `tutorial.Rmd` file. You only run those commands once, and then you comment them out because you don't want them re-run each time the tutorial is created. The `read_rds()` call is never commented out because we always need the `median_age` object.
+
+When designing tutorials which use objects like `median_age`, we generally write two questions. The first has the student run the download code themselves. The second informs students that we have, behind the scenes, already assigned the result to an R object, and asks them to print that object. We don't have them do the assignment themselves, since we prefer questions that generate visible output. The test chunk then shows that printed output — not the code — so students can check their result against ours.
+
+We use a similar approach with models which can take awhile to fit. Example:
+
+````{verbatim}
+fit_gauss <- brm(formula = biden ~ 1,
+                data = poll_data,
+                refresh = 0,
+                silent = 2,
+                seed = 9)
+write_rds(fit_gauss, "data/fit_gauss.rds")
+
+fit_gauss <- read_rds("data/fit_gauss.rds")
+````
+
+Again, this code only works if you are in the tutorial directory, not in the higher directory of the R project itself. Also, the first two commands are commented out, unless you are running them by hand to create the object.
+
+What happens if the data is too large? See the "Arrow" tutorial in the [**r4ds.tutorials**](https://ppbds.github.io/r4ds.tutorials/) for an example. First, we generally switch away from code exercises and use written exercises. Students run the required commands and then copy/paste the command/response. Big downloads don't work well in exercise code chunks. Second, we create small versions of this big data in the global `setup` chunk. This allows us to create test code chunks for most of the exercises which follow. These tests will run much more quickly with this smaller data. Also, for any package on CRAN, we need to keep the overall size of the package as small as possible.
+
+There are two main uses for files in `data`. First, they can be used at "compile time" (when the `tutorial.Rmd` is knit to HTML) for making plots or doing anything else. Second, and more importantly, they are available to students in the exercise code blocks during "run time" (when students are doing the tutorial).
+
+However, in the age of AI, we are making less and less use of exercise code chunks. Instead, we have students use AI to edit the Quarto documents directly. Any data or R objects which they need must be created by them, which is probably better anyway.
+
+#### Images
+
+To add images to a tutorial, first make a directory called `images` in the folder that contains `tutorial.Rmd`. Store all images for that tutorial there. You can work with those files in all the usual ways.
+
+Use `include_graphics()` to add the image into the document. Include this code in its own chunk, in the place where you want the image to appear in the tutorial. 
+
+````{verbatim}
+```{r}
+include_graphics("images/example.png")
+```
+````
+
+`include_graphics()` is part of the `knitr` package, so you need `library(knitr)` in the setup code chunk. Note that you do not need to name these code chunks.
+
+Because students will complete the tutorials using screens of very different widths, it is a good idea to put `knitr::opts_chunk$set(out.width = '90%')` in your `setup` code chunk. In this way, images will appear at a sensible size regardless of whether students are using a phone screen or a big monitor.
+
+#### Complex text
+
+You sometimes want to include "complex" text in a tutorial. This is most common when trying to teach students how to use R code chunks and other strings which R markdown wants to process in certain ways. You can sometimes get away by placing such text in environments surrounded by three, or even four, backticks. The plain three or four backtick environments create a plain code block and content inside is displayed as-is. No syntax highlighting or execution is applied, and they show example code or text exactly as typed. Four backtick environments allow three backticks to be written within the block. This works often, but not always. Comment characters like `#` are especially problematic.
+
+Further complexity arises because tutorials are R markdown whereas all our other work is in Quarto. In Quarto documents (like this vignette), you can use an environment started by four backticks along with `{verbatim}` and then ended with four more backticks. This won't work in R markdown.
+
+The `<pre><code>` trick solves this problem. You add this before and after a code chunk to a tutorial.
+
+````{verbatim}
+<pre><code>```{r}
+1 + 1
+```</code></pre>
+````
+
+If you want to display an R code chunk nested inside a four backticks environment, you can replace the four backticks with `<pre><code>` like this
+
+````{verbatim}
+<pre><code>
+> tutorial.helpers::show_file("quarto-1.qmd")
+---
+title: "Quarto 1"
+author: David Kane
+format: html
+execute: 
+  echo: false
+---
+<pre><code>```{r}
+suppressPackageStartupMessages(library(tidyverse))
+library(palmerpenguins)
+```</code></pre>
+>
+</code></pre>
+````
+
+The `<pre><code>` serves the same purpose as the four backticks but it displays R code chunks verbatim. 
+
+## Tutorial Introduction
+
+Students need some background in order to complete these sorts of tutorials, some familiarity with R, GitHub and so on. Students should have completed the "Getting Started" tutorial from the [**tutorial.helpers**](https://CRAN.R-project.org/package=tutorial.helpers) package. They should also complete the first four VS Code tutorials (i.e., through "VS Code and GitHub Introduction") from [**vscode.tutorials**](https://ppbds.github.io/vscode.tutorials/).
+
+Always begin by having students set up a repo and a Quarto document to work in. Again, you must replace `XX` with something sensible and usually different from the other `XX`'s. So, in the below example, the name of the repo and the title of the QMD will be different even though we hold their places with `XX` in both cases.
+
+````{verbatim}
+### Exercise 1
+
+You should be connected to a repo named `r4ds-1`. If you are not, create one and connect to it.
+
+You need two R Terminals: one for running this tutorial and one for your exercises.
+
+Create a new Quarto Document and save it as `analysis.qmd`. Add a YAML header at the top with a title (`"Analyzing the Billboard 100"`) and your name as author. 
+
+Render the document by running `quarto render` in the bash Terminal. Open the rendered `analysis.html` file in a new tab by right clicking it in the Explorer and selecting "Open with Live Server". When you run `quarto render` from now on that tab will be updated with the newly rendered file.
+
+Create a `.gitignore` file with `analysis_files` on the first line and then a blank line. Commit and push.
+
+In the R Terminal, run:
+
+```         
+show_file(".gitignore")
+```
+
+If that fails, it is probably because you have not yet loaded `library(tutorial.helpers)` in the R Terminal.
+
+CP/CR.
+
+```{r introduction-1}
+question_text(NULL,
+	answer(NULL, correct = TRUE),
+	allow_retry = TRUE,
+	try_again_button = "Edit Answer",
+	incorrect = NULL,
+	rows = 3)
+```
+
+### 
+
+<!-- XX: Insert a knowledge drop related to this project. -->
+
+<!-- XX: By default, the next two questions just mention tidyverse. If there is more than one required library, you can just add those libraries to these steps, adjusting the grammar as needed. Or, you might have separate questions for each library, thereby providing more room for knowledge drops. -->
+````
+
+Feel free to copy/paste this question as-is, replacing `XX` with whatever makes sense for your assignment. That is, you need to provide your own repo name, Quarto document title and so on. The repo name should be descriptive and also not likely to have conflicts with other repos in the students GitHub account, i.e., `golf-scores` not `project-1`. 
+
+You do not need to use `analysis.qmd` as the name of the QMD file which the student creates. But using the same name doesn't hurt anything and is convenient since it decreases the number of things which the tutorial author needs to change.
+
+You are, obviously, responsible for adding a knowledge drop which teaches the students something about the larger topic. The most important things to mention are useful packages and functions.
+
+The second question in the Introduction is usually:
+
+````{verbatim}
+### Exercise 2
+
+In your QMD, put `library(tidyverse)` in a new code chunk. Render the file by running `quarto render` in the bash Terminal.
+
+Notice that the file does not look good because the code is visible and there are annoying messages. To take care of this, add `#| message: false` to remove all the messages in this setup chunk. Also, add the following to the YAML header to remove all code echoes from the HTML:
+
+```         
+execute: 
+  echo: false
+```
+
+Render the file again, using `quarto render`. Only the title and author should appear in the HTML.
+
+In the R Terminal, run:
+
+```         
+show_file("analysis.qmd", chunk = "Last")
+```
+
+CP/CR.
+
+```{r introduction-2}
+question_text(NULL,
+	answer(NULL, correct = TRUE),
+	allow_retry = TRUE,
+	try_again_button = "Edit Answer",
+	incorrect = NULL,
+	rows = 6)
+```
+
+### 
+
+<!-- XX: Insert a knowledge drop related to this project. -->
+````
+
+The third question generally loads the **tidyverse** library into the R Terminal:
+
+````{verbatim}
+### Exercise 3
+
+Place your cursor in the QMD file on the `library(tidyverse)` line. Use `Cmd/Ctrl + Enter` to execute that line.
+
+Note how this command causes `library(tidyverse)` to be copied down to the R Terminal and then executed. 
+
+CP/CR.
+
+```{r introduction-3}
+question_text(NULL,
+	answer(NULL, correct = TRUE),
+	allow_retry = TRUE,
+	try_again_button = "Edit Answer",
+	incorrect = NULL,
+	rows = 8)
+```
+
+###
+
+<!-- XX: Insert a knowledge drop related to this project. -->
+````
+
+If the target audience for the tutorial is more experienced, you can be less didactic, leaving out several of these instructions. You could also add more steps, like loading more libraries at once.
+
+I recommend offering these explicit instructions in every tutorial. First, students need lots of practice. Second, each time you tell them to add something to the QMD, you give yourself an opportunity for a knowledge drop. The same applies when you tell students to execute, in the R Terminal, a new addition to the QMD. 
+
+
+````{verbatim}
+### Exercise 4
+
+<!-- XX: Delete this question if you do not make use of a `data` directory in this tutorial. -->
+
+Create a `data` directory at the top level of the `XX` repo. This is a good place to store any data that you are working with.
+
+In the bash Terminal, run `ls`.
+
+CP/CR.
+
+```{r introduction-4}
+question_text(NULL,
+	answer(NULL, correct = TRUE),
+	allow_retry = TRUE,
+	try_again_button = "Edit Answer",
+	incorrect = NULL,
+	rows = 5)
+```
+
+###
+
+You answer should look something like this:
+
+```
+$ ls
+README.md  analysis.html  analysis.qmd  analysis_files  data
+```
+
+###
+
+<!-- XX: If you have downloaded some data, then you might want to create the tibbles that you will use here. (Of course, you also need to create those tibbles in the setup chunk so that any test code will run.) -->
+````
+
+Note that we state the goal --- create a `data` directory --- rather than dictating the command. Students will usually have AI do it, which is fine. In introductory tutorials, though, when students are meeting these tools for the first time, you ought to provide the specific commands --- for example, having them run `getwd()`, `dir.create("data")`, and `list.files()` in the R Terminal --- so they see exactly what is happening.
+
+## Tutorial Topics
+
+You will probably have one or two Topics, in between the Introduction and Summary. Any tutorial which both uses a lot of AI and is supposed to take an hour or so will only have, at most, two Topics. 
+
+````{verbatim}
+## XX: First topic (use sentence case)
+###
+
+<!-- XX: Mention the packages/functions which you plan on covering in this Topic. Not everything mentioned here is specified in the Introduction/Summary, but everything in Introduction/Summary is referenced in one of these topic introductions, the space before Exercise 1 in each topic. -->
+````
+
+If you are downloading some data, the natural place to do so is in the first exercise of a Section.
+
+````{verbatim}
+### Exercise 1
+
+<!-- XX: In this question, "XX" is the full name of the file, like "cheeses.xlsx". -->
+
+We begin by downloading XX directly from GitHub to the `data` directory using `download.file()`. 
+
+In the R Terminal, run:
+
+```         
+download.file(
+  "https://github.com/PPBDS/ai.tutorials/raw/refs/heads/main/inst/tutorials/r4ds-2/data/cheeses.xlsx",
+  destfile = "data/XX"
+)
+```
+
+CP/CR.
+
+```{r cheese-1}
+question_text(NULL,
+	answer(NULL, correct = TRUE),
+	allow_retry = TRUE,
+	try_again_button = "Edit Answer",
+	incorrect = NULL,
+	rows = 8)
+```
+
+###
+
+<!-- XX: Insert a knowledge drop related to this project. -->
+````
+
+The meat of a Topic generally involves asking AI to create a pipe which accomplishes some goal. The end of a Topic always finishes up with a plot. The last four questions set up and then guide the student to creating that plot. If you want the student to mimic a plot, you can place it in the `images` subdirectory and then use `knitr::include_graphics("images/plot.png")` to show it to students.
+
+Students never show *their* code in the rendered document — readers of an analysis want the graphics, not the code. But we, when writing tutorials, often show students *our* code so that they learn something. At a minimum, show the *result* — a plot or summary statistics — produced by our correct code, so students have something concrete to check their AI-generated work against; add `echo = TRUE` when the code itself is worth studying.
+
+Consider this example:
+
+````{verbatim}
+### Exercise 6
+
+Prompt AI to generate R code that ... Add the code to your QMD in a new chunk. Place your cursor on the first line of the code and run `Cmd/Ctrl + Enter`.
+
+In the R Terminal, run:
+
+```         
+show_file("analysis.qmd", chunk = "Last")
+```
+
+CP/CR.
+
+```{r something-1}
+question_text(NULL,
+	answer(NULL, correct = TRUE),
+	allow_retry = TRUE,
+	try_again_button = "Edit Answer",
+	incorrect = NULL,
+	rows = 4)
+```
+
+###
+
+```{r}
+# XX: Insert code that produces the correct result — a plot, summary statistics, or printed tibble. With echo = FALSE (the default), students see only the output; add #| echo: true when you want them to study the code too.
+```
+
+### 
+
+<!-- XX: Insert a knowledge drop related to this project. -->
+````
+
+With `echo = FALSE` (the default), students see only the output of the chunk — a plot, printed tibble, or other result — not the code itself. Add `#| echo: true` when the code is worth studying. If there is no meaningful output to show, omit the test chunk or set `eval = FALSE` explicitly.
+
+## Plotting Questions
+
+Plotting exercises are generally handled with a short sequence of questions. Prior to these, the tutorial will probably have the student practice gathering, organizing, and cleaning the data. 
+
+<!-- AR: This seems like a reasonable place to keep code. So students can be totally sure and copy and paste if lost. -->
+
+The first of these questions ensures that the student's data matches ours. We show our result — the printed code that produces our tibble — in a test chunk, and ask students to copy and paste their own pipe and compare. We check their code with `show_file()`.
+
+
+````{verbatim}
+### Exercise 3
+
+Before creating a plot, we need to ensure that your data matches ours. Run your pipe in the R Terminal and compare your output to the result shown below.
+
+In the R Terminal, run:
+
+```
+show_file("analysis.qmd", chunk = "Last")
+```
+
+CP/CR.
+
+```{r xx-first-section-use-sentence-case-3}
+question_text(NULL,
+	answer(NULL, correct = TRUE),
+	allow_retry = TRUE,
+	try_again_button = "Edit Answer",
+	incorrect = NULL,
+	rows = 6)
+```
+
+###
+
+```{r xx-first-section-use-sentence-case-3-test}
+# XX: Insert code that prints the tibble students should have at this stage.
+```
+
+###
+
+<!-- XX: Insert a knowledge drop related to this project. -->
+````
+
+Note that the numbering of these questions is arbitrary. Just run `check_current_tutorial()` to fix it.
+
+The second question tells the student to, in the QMD, assign the result of the pipe to a new variable, often `x`. We then tell the student to `Cmd/Ctrl + Enter` this code so that the workspace includes a copy of `x`.
+
+````{verbatim}
+### Exercise 4
+
+Within the latest code chunk, assign the result of the pipe to `x`.
+
+Place your cursor on the line where the pipe is assigned to `x`, run `Cmd/Ctrl + Enter`, thus ensuring that the workspace also includes a copy of `x`.
+
+CP/CR.
+
+```{r xx-first-section-use-sentence-case-4}
+question_text(NULL,
+    answer(NULL, correct = TRUE),
+    allow_retry = TRUE,
+    try_again_button = "Edit Answer",
+    incorrect = NULL,
+    rows = 8)
+```
+
+<!-- XX: Show x here. -->
+
+###
+
+<!-- XX: Insert a knowledge drop related to this project. -->
+````
+
+Note that we need `x` to be created in the QMD, not just in the R Terminal, because later chunks will use `x` to create the plot.
+
+Caching gets its own questions --- never fold `#| cache: true` into another step. Since the chunk already holds only the assignment to `x`, no cleanup is needed; the next two questions cache the chunk and then update `.gitignore`.
+
+````{verbatim}
+### Exercise 5
+
+Add the option `#| cache: true` to the chunk which creates `x`. This causes Quarto to cache the results of the chunk. The next time you render your QMD, as long as you have not changed the code, Quarto will just load up the saved object.
+
+Run `quarto render` in the bash Terminal. Rendering creates an `analysis_cache` directory next to the QMD.
+
+In the bash Terminal, run `ls`.
+
+CP/CR.
+
+```{r xx-first-section-use-sentence-case-5}
+question_text(NULL,
+    answer(NULL, correct = TRUE),
+    allow_retry = TRUE,
+    try_again_button = "Edit Answer",
+    incorrect = NULL,
+    rows = 5)
+```
+
+###
+
+<!-- XX: Insert a knowledge drop related to this project. -->
+````
+
+````{verbatim}
+### Exercise 6
+
+Add `analysis_cache` to the `.gitignore`. The contents of the cache directory do not belong on GitHub.
+
+In the R Terminal, run:
+
+```
+show_file(".gitignore")
+```
+
+CP/CR.
+
+```{r xx-first-section-use-sentence-case-6}
+question_text(NULL,
+    answer(NULL, correct = TRUE),
+    allow_retry = TRUE,
+    try_again_button = "Edit Answer",
+    incorrect = NULL,
+    rows = 3)
+```
+
+###
+
+<!-- XX: Insert a knowledge drop related to this project. -->
+````
+
+The next question tells the student to type `x` in the R Terminal, followed by "CP/CR." The purpose is both to have the student look at the tibble and also to set the stage for the actual graphics question. In defining `x`, you should probably require that the students keep only a reasonable number of variables.
+
+````{verbatim}
+### Exercise 7
+
+Within the R Terminal, type `x`, which we previously assigned to a pipe and ran in the R Terminal. Hit `Enter`.
+
+CP/CR.
+
+```{r xx-first-section-use-sentence-case-7}
+question_text(NULL,
+    answer(NULL, correct = TRUE),
+    allow_retry = TRUE,
+    try_again_button = "Edit Answer",
+    incorrect = NULL,
+    rows = 8)
+```
+
+###
+
+Our result:
+
+```{r}
+# x
+```
+
+###
+
+<!-- XX: Insert a knowledge drop related to this project. -->
+````
+
+<!-- AR: How relevant is this below paragraph given how students are using AI? -->
+
+This also reminds students that they will often need to tell AI the variables in `x`, if they are using a chat interface, most easily by just copy/pasting the top of `x`.
+
+Could these questions be combined into one? Probably. But spreading things has two advantages. First, it ensures that even the weaker students do not get lost. Second, it provides us with more opportunities to drop some knowledge. 
+
+Now, we can move on to the plotting question. In the age of AI, students will have AI write code for their plot. They will do that while specifying that their data is `x` from earlier. The student will add their new code to a new code cell, and we check that they have done so with `show_file()`. The purpose of this question is to ensure that the student has generated their own code.
+
+````{verbatim}
+### Exercise 8
+
+Ask AI to generate R code that uses `x` to plot a basic graph or calculate and present summary statistics showing XX ... Mention you want to use the data from `x`. If using a chat interface copy/paste the `x` you ran in the R Terminal with the resulting tibble. You only need the top 3 lines, mainly to include column names.
+
+Consider adding a title, subtitle, and caption. If axis labels would be useful, add them, but if unnecessary, don't bother. Don't assign the code for the plot to any variable. Put the plot code in a new code chunk. Run `quarto render` to ensure that everything works. Make your plot look nice.
+
+In the R Terminal, run:
+
+```         
+show_file("analysis.qmd", chunk = "Last")
+```
+
+CP/CR.
+
+```{r xx-first-section-use-sentence-case-8}
+question_text(NULL,
+	answer(NULL, correct = TRUE),
+	allow_retry = TRUE,
+	try_again_button = "Edit Answer",
+	incorrect = NULL,
+	rows = 12)
+```
+
+###
+
+Our result:
+
+```{r}
+# XX: Insert plotting code. With echo = FALSE (the default), students see only the plot, not this code. Make sure the plot has a subtitle that states the take-away message and uses clean, concise code.
+```
+
+###
+
+<!-- XX: Insert a knowledge drop related to this project. -->
+````
+
+Create a few exercises where students iteratively improve a plot. Perhaps adding features and themes. Since students are using AI to generate plots, they can make more of them. They need lots of practice evaluating and improving AI outputs.
+
+## Tutorial Summary
+
+Once you have completed one or two Topics, it is time for the Summary section.
+
+````{verbatim}
+## Summary
+###
+
+<!-- XX: The exact same two to four sentences about the main packages/functions used in the Introduction, but written here in the past tense. You made a promise and you kept it.  -->
+````
+
+The last three questions are fairly self-explanatory.
+
+````{verbatim}
+### Exercise 1
+
+Run `quarto render` to ensure that everything works.  The resulting HTML page should be attractive, showing clean versions of your plot(s).
+
+At the R Terminal, run:
+
+```
+show_file("analysis.qmd")
+```
+
+CP/CR.
+
+```{r summary-1}
+question_text(NULL,
+	answer(NULL, correct = TRUE),
+	allow_retry = TRUE,
+	try_again_button = "Edit Answer",
+	incorrect = NULL,
+	rows = 30)
+```
+
+### 
+
+<!-- XX: Insert a knowledge drop related to this project. -->
+````
+
+
+````{verbatim}
+### Exercise 2
+
+Publish your rendered QMD to GitHub Pages. In the bash Terminal --- not the R Terminal! --- run:
+
+```
+quarto publish gh-pages analysis.qmd
+```
+
+Copy/paste the resulting URL below.
+
+```{r summary-2}
+question_text(NULL,
+	answer(NULL, correct = TRUE),
+	allow_retry = TRUE,
+	try_again_button = "Edit Answer",
+	incorrect = NULL,
+	rows = 1)
+```
+
+### 
+
+<!-- XX: Insert a knowledge drop related to this project. -->
+
+````
+
+
+````{verbatim}
+### Exercise 3
+
+Commit and push all your files. Copy/paste the URL to your Github repo.
+
+```{r summary-3}
+question_text(NULL,
+	answer(NULL, correct = TRUE),
+	allow_retry = TRUE,
+	try_again_button = "Edit Answer",
+	incorrect = NULL,
+	rows = 3)
+```
+
+### 
+
+<!-- XX: The tutorial is now over. Add any necessary acknowledgements and/or provide a link to further high quality readings, ideally readings which you mentioned in at least one knowledge drop above. -->
+````
+
+In the age of AI, the purpose of a tutorial is to teach students how to create with AI. We do that by forcing them to practice, and by providing intelligent advice along the way.
+
+## Appendix: Checking a tutorial
+
+Once you are done editing a tutorial, you need to make sure it works, either on your own behalf or before you submit a pull request to the package maintainer. There are three ways to check:
+
+1. Type `rmarkdown::render("file_path/tutorial.Rmd")` in the R Terminal. This produces `tutorial.html` in the tutorial directory. Right click the file and select `Open in Browser`. It is smart to use `rmarkdown::render("file_path")` regularly since it will identify syntax errors quickly. 
+
+2. Do a full test, which means running `devtools::check()`, the shortcut key for which is `Cmd/Ctrl + Shift + E`. This is the equivalent of `R CMD check`. It validates package structure, documentation, tests, and compliance with CRAN standards. A good result would be `0 errors ✔ | 0 warnings ✔ | 0 notes ✔`, but don't worry too much about NOTES.
+
+3. Test your tutorial from a student's perspective after completing package checks by following this local testing workflow. You can do this without the hassle of needing to push changes to the main repository and re-download the package. Install your local package using `devtools::install()` and when prompted about updating packages, choose to update everything to ensure all dependencies are current. Once installation is complete, run your tutorial with `learnr::run_tutorial("tutorial_name", "package_name")`, replacing the placeholder names with your actual tutorial and package names. This allows you to test the tutorial in a clean environment similar to what students will experience, checking that all code chunks run without errors, instructions are clear, and there's no dependence on objects from your development environment. 
+
+The most important check is `devtools::check()`, which you *must* do before submitting a pull request.
+
+### If `devtools::check()` fails
+
+1. Read the error message carefully. It will often provide a clue as to where in your code the error occurred.
+
+2. If that error message is not detailed enough, go to the `your.package.rcheck` folder, which should be located in the same directory as `your.package` is on your computer. This is a folder created by the `R CMD check` process, and it will be automatically deleted if the check process succeeds. If the process fails, the `your.package.rcheck` folder stays around so that you can examine it. The key file is `testthat.Rout.fail`, which should be in the `tests` directory. It has more details on what went wrong.
+
+### Difficult bugs
+
+* Note that `devtools::check()` does not seem to catch cases in which you `library()` a package in a tutorial but that package is not in DESCRIPTION. But such a discrepancy will cause an error on Github Actions because, there, you only have access to packages that have been installed as part of that test.
+
+* `devtools::check()`, if you use our recommended test functions from **tutorial.helpers**, will test that all tutorials include the required child chunks --- the `info_section` (the "Information" chunk) and `download_answers` (the "Download answers" chunk) --- as well as the required `library()` calls. So, make sure to include these in every tutorial you create. If either chunk is missing, `devtools::check()` will return something like "Missing child document 'info_section' in file /path/to/your/tutorial/tutorial.Rmd".
+
+* Be careful of the way that Github is sloppy in how it deals with capitalization changes, especially when you change the name of a file. For example, you might first commit a file named `Quarto.png`. Later, you decide to change all file names for images to all lower case. So, you change the name of the file to `quarto.png`. Commit and push. Everything is great, right? No! Even if Github shows you the new file name, it might still have that file as `Quarto.png` internally, with the capital "Q." This will cause errors when your run your checks on Github: 
+
+````
+Error: Cannot find the file(s): "images/quarto.png"
+````
+
+But the file is there! You can see it! The tests work on your local machine. The easiest solution is to delete the file (and commit that change). And then change the name of the file to something else and use it.
