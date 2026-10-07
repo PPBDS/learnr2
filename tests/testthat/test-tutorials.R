@@ -3,7 +3,10 @@
 # run_tutorial(). The heavy render + serve steps of run_tutorial() are mocked
 # -- exercising Quarto/WebR for real belongs in tests/js/deployed-smoke.spec.js.
 # Serving is likewise mocked at learnr2's own seams (probe_server(),
-# open_in_browser(), block_serving()) plus httpuv's runStaticServer().
+# open_in_browser(), block_serving()) plus httpuv's runStaticServer() --
+# except in the "served root, against a real httpuv server" block, which
+# serves a stub-rendered cache on a random loopback port for real and fetches
+# it, because only a real server shows what the bare port answers with.
 
 # ---- available_tutorials() ------------------------------------------------
 
@@ -565,6 +568,240 @@ test_that("a learnr2 server serving a different root, or a foreign process on th
     run_tutorial("hello-learnr2", package = "learnr2", output_dir = out_parent, open = TRUE),
     "something other than a learnr2"
   )
+})
+
+test_that("serving writes a root index.html that forwards to the launched tutorial and lists the rest", {
+  out_parent <- withr::local_tempdir()
+  local_stub_quarto()
+  seen <- local_stub_serving()
+  seen$marker_path_exists <- function() TRUE
+
+  # A second, older render already in the cache from another package.
+  other <- fs::path(out_parent, "other.pkg", "older")
+  fs::dir_create(other)
+  writeLines("<html></html>", fs::path(other, "index.html"))
+  jsonlite::write_json(
+    list(package = "other.pkg", name = "older", title = "An <older> one",
+         learnr2_version = "0.0.0", fingerprint = "x",
+         rendered_at = "2000-01-01 00:00:00 UTC", html = "older.html"),
+    fs::path(other, "learnr2-tutorial.json"), auto_unbox = TRUE
+  )
+
+  suppressMessages(
+    run_tutorial("hello-learnr2", package = "learnr2", output_dir = out_parent, open = TRUE)
+  )
+
+  index <- fs::path(out_parent, "index.html")
+  expect_true(fs::file_exists(index))
+  html <- paste(readLines(index), collapse = "\n")
+  expect_match(html, 'http-equiv="refresh" content="0; url=/learnr2/hello-learnr2/"', fixed = TRUE)
+  expect_match(html, 'href="/learnr2/hello-learnr2/"', fixed = TRUE)
+  expect_match(html, 'href="/other.pkg/older/">An &lt;older&gt; one', fixed = TRUE)
+  # Newest render first.
+  expect_lt(regexpr("hello-learnr2/\">", html, fixed = TRUE), regexpr("other.pkg/older", html, fixed = TRUE))
+})
+
+test_that("the root index is rewritten when a running server is reused", {
+  out_parent <- withr::local_tempdir()
+  local_stub_quarto()
+  local_stub_serving(probe = list(
+    state = "learnr2",
+    server = list(root = as.character(fs::path_abs(out_parent)), port = 7446)
+  ))
+  index <- fs::path(out_parent, "index.html")
+  writeLines("stale", index)
+
+  suppressMessages(
+    run_tutorial("hello-learnr2", package = "learnr2", output_dir = out_parent, open = TRUE)
+  )
+  expect_match(paste(readLines(index), collapse = "\n"), "url=/learnr2/hello-learnr2/", fixed = TRUE)
+})
+
+test_that("rendered_tutorials() reads only <root>/<package>/<name>/ stamps and tolerates bad ones", {
+  root <- withr::local_tempdir()
+  good <- fs::path(root, "pkg", "one")
+  fs::dir_create(good)
+  jsonlite::write_json(list(package = "pkg", name = "one", rendered_at = "2026-01-01 00:00:00 UTC"),
+                       fs::path(good, "learnr2-tutorial.json"), auto_unbox = TRUE)
+  bad <- fs::path(root, "pkg", "broken")
+  fs::dir_create(bad)
+  writeLines("not json", fs::path(bad, "learnr2-tutorial.json"))
+  deep <- fs::path(root, "pkg", "one", "nested")
+  fs::dir_create(deep)
+  jsonlite::write_json(list(package = "pkg", name = "nested"),
+                       fs::path(deep, "learnr2-tutorial.json"), auto_unbox = TRUE)
+
+  found <- learnr2:::rendered_tutorials(as.character(root))
+  expect_length(found, 1)
+  expect_identical(found[[1]]$name, "one")
+  expect_identical(found[[1]]$title, "one")  # no title in the stamp: falls back to the name
+
+  expect_identical(learnr2:::rendered_tutorials(as.character(withr::local_tempdir())), list())
+  expect_identical(learnr2:::html_escape('a<b>&"c"'), "a&lt;b&gt;&amp;&quot;c&quot;")
+})
+
+test_that("in a GitHub Codespace the tutorial's address is the forwarded one", {
+  withr::local_envvar(CODESPACE_NAME = "urban-trout-abc123",
+                      GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN = "app.github.dev")
+  expect_identical(
+    learnr2:::public_tutorial_url("ims.tutorials", "02-study-design"),
+    "https://urban-trout-abc123-7446.app.github.dev/ims.tutorials/02-study-design/"
+  )
+  expect_identical(learnr2:::codespace_base_url(8123), "https://urban-trout-abc123-8123.app.github.dev")
+
+  out_parent <- withr::local_tempdir()
+  local_stub_quarto()
+  seen <- local_stub_serving()
+  seen$marker_path_exists <- function() TRUE
+  expect_message(
+    run_tutorial("hello-learnr2", package = "learnr2", output_dir = out_parent, open = TRUE),
+    "https://urban-trout-abc123-7446.app.github.dev/learnr2/hello-learnr2/",
+    fixed = TRUE
+  )
+  expect_identical(seen$url, "https://urban-trout-abc123-7446.app.github.dev/learnr2/hello-learnr2/")
+  # The server itself still binds the local port; only the address differs.
+  expect_identical(seen$port, 7446L)
+})
+
+test_that("outside a codespace the address is the local one", {
+  withr::local_envvar(CODESPACE_NAME = "", GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN = "")
+  expect_null(learnr2:::codespace_base_url(7446))
+  expect_identical(learnr2:::public_tutorial_url("learnr2", "hello-learnr2"),
+                   "http://127.0.0.1:7446/learnr2/hello-learnr2/")
+})
+
+test_that("open_in_browser() prefers a BROWSER helper from the environment, else R's browser option", {
+  seen <- new.env()
+  local_mocked_bindings(
+    browseURL = function(url, browser = getOption("browser"), ...) { seen$browser <- browser; invisible() },
+    .package = "utils"
+  )
+  withr::local_envvar(BROWSER = "/vscode/helpers/browser.sh")
+  learnr2:::open_in_browser("http://127.0.0.1:7446/")
+  expect_identical(seen$browser, "/vscode/helpers/browser.sh")
+
+  withr::local_envvar(BROWSER = "")
+  withr::local_options(browser = "my-browser")
+  learnr2:::open_in_browser("http://127.0.0.1:7446/")
+  expect_identical(seen$browser, "my-browser")
+})
+
+test_that("open_in_browser() reports, rather than fails, when no browser can be opened", {
+  local_mocked_bindings(browseURL = function(...) stop("no display"), .package = "utils")
+  expect_message(learnr2:::open_in_browser("http://127.0.0.1:7446/x/"), "open http://127.0.0.1:7446/x/ yourself")
+})
+
+# ---- the served root, against a real httpuv server -----------------------
+#
+# The tests above stub httpuv, so they can only show that files were written,
+# not what a browser gets. The regression they would miss is the one that was
+# reported from GitHub Codespaces: the port notification's "Open in Browser"
+# opens the bare root of the port, and that root answered 404 because the
+# cache root had no page of its own. These tests serve a (stub-rendered)
+# cache with httpuv for real, on a random free port, and fetch it.
+
+# GET `url`: list(status = 200L, body) or list(status = <HTTP code>, body = "").
+http_get <- function(url) {
+  old <- options(timeout = 5, warn = 1)
+  on.exit(options(old), add = TRUE)
+  tryCatch(
+    {
+      con <- base::url(url, open = "rb")
+      on.exit(close(con), add = TRUE)
+      list(status = 200L, body = paste(readLines(con, warn = FALSE), collapse = "\n"))
+    },
+    warning = function(w) list(status = http_status_from(conditionMessage(w)), body = ""),
+    error = function(e) list(status = http_status_from(conditionMessage(e)), body = "")
+  )
+}
+http_status_from <- function(msg) {
+  m <- regmatches(msg, regexpr("HTTP status was '([0-9]{3})", msg))
+  if (length(m) == 0) stop("request failed: ", msg)
+  as.integer(sub("HTTP status was '", "", m, fixed = TRUE))
+}
+
+test_that("a cache root with no index page is what used to 404 (documents the mistake)", {
+  root <- withr::local_tempdir()
+  fs::dir_create(fs::path(root, "learnr2", "hello-learnr2"))
+  writeLines("<p>tutorial</p>", fs::path(root, "learnr2", "hello-learnr2", "index.html"))
+  port <- httpuv::randomPort()
+  server <- httpuv::runStaticServer(as.character(root), port = port, browse = FALSE, background = TRUE)
+  withr::defer(httpuv::stopServer(server))
+
+  expect_identical(http_get(sprintf("http://127.0.0.1:%d/", port))$status, 404L)
+  expect_identical(http_get(sprintf("http://127.0.0.1:%d/learnr2/hello-learnr2/", port))$status, 200L)
+})
+
+test_that("run_tutorial(open = TRUE) serves a root that forwards to the tutorial, for real", {
+  out_parent <- withr::local_tempdir()
+  local_stub_quarto()
+  port <- httpuv::randomPort()
+  withr::local_options(learnr2.port = port)
+  base <- sprintf("http://127.0.0.1:%d", port)
+
+  # Real httpuv, real probe; only the browser and the blocking loop are
+  # stubbed. The blocking stub is where the server is live, so it is where
+  # the fetches happen.
+  seen <- new.env()
+  local_mocked_bindings(
+    open_in_browser = function(url) { seen$url <- url; invisible() },
+    block_serving = function() {
+      seen$root <- http_get(paste0(base, "/"))
+      seen$tutorial <- http_get(paste0(base, "/learnr2/hello-learnr2/"))
+      seen$probe <- learnr2:::probe_server(port)
+      invisible()
+    }
+  )
+
+  suppressMessages(
+    run_tutorial("hello-learnr2", package = "learnr2", output_dir = out_parent, open = TRUE)
+  )
+
+  # The bare port -- what a port-forwarding notification opens -- must not 404.
+  expect_identical(seen$root$status, 200L)
+  expect_match(seen$root$body, 'content="0; url=/learnr2/hello-learnr2/"', fixed = TRUE)
+  expect_match(seen$root$body, 'href="/learnr2/hello-learnr2/"', fixed = TRUE)
+  # The forward target is the rendered tutorial.
+  expect_identical(seen$tutorial$status, 200L)
+  expect_match(seen$tutorial$body, "stub")
+  # And the live server is recognisable as a learnr2 server serving this root.
+  expect_identical(seen$probe$state, "learnr2")
+  expect_identical(as.character(fs::path_abs(seen$probe$server$root)), as.character(fs::path_abs(out_parent)))
+  expect_identical(seen$url, sprintf("%s/learnr2/hello-learnr2/", base))
+
+  # Stopped and cleaned up on return.
+  expect_identical(learnr2:::probe_server(port)$state, "free")
+  expect_false(fs::file_exists(fs::path(out_parent, "learnr2-server.json")))
+})
+
+test_that("a second run_tutorial() against a live server reuses it and refreshes the root forward, for real", {
+  out_parent <- withr::local_tempdir()
+  local_stub_quarto()
+  port <- httpuv::randomPort()
+  withr::local_options(learnr2.port = port)
+  base <- sprintf("http://127.0.0.1:%d", port)
+
+  # Stand in for a server left running in another terminal.
+  suppressMessages(run_tutorial("intro-vectors", package = "learnr2", output_dir = out_parent, open = FALSE))
+  learnr2:::write_server_marker(as.character(fs::path_abs(out_parent)), port)
+  withr::defer(learnr2:::remove_server_marker(as.character(fs::path_abs(out_parent))))
+  server <- httpuv::runStaticServer(as.character(out_parent), port = port, browse = FALSE, background = TRUE)
+  withr::defer(httpuv::stopServer(server))
+
+  seen <- new.env()
+  local_mocked_bindings(
+    open_in_browser = function(url) { seen$url <- url; invisible() },
+    block_serving = function() stop("must not start a second server")
+  )
+  expect_message(
+    run_tutorial("hello-learnr2", package = "learnr2", output_dir = out_parent, open = TRUE),
+    "already running"
+  )
+  root <- http_get(paste0(base, "/"))
+  expect_identical(root$status, 200L)
+  expect_match(root$body, 'url=/learnr2/hello-learnr2/"', fixed = TRUE)
+  expect_match(root$body, 'href="/learnr2/intro-vectors/"', fixed = TRUE)
+  expect_identical(http_get(paste0(base, "/learnr2/hello-learnr2/"))$status, 200L)
 })
 
 test_that("classify_probe_failure() tells nothing-listening from something-else-listening", {

@@ -94,6 +94,29 @@ needed and simply opens the tutorial's address in the browser, without
 starting a second server or blocking. If the port is held by something
 other than a learnr2 server, it stops with an error rather than silently
 serving somewhere the browser has no saved answers for.
+
+The cache root itself (\verb{http://127.0.0.1:7446/}) is a small page that
+forwards to the tutorial launched most recently and lists every other
+rendered tutorial in the cache. That root is what a tool that only knows
+the port opens -- notably the "open in browser" notification VS Code and
+GitHub Codespaces show when they detect a new local port -- so landing
+on it has to reach the tutorial rather than a 404.
+}
+
+\section{Running in GitHub Codespaces (or another remote container)}{
+
+The server runs inside the container, so \verb{http://127.0.0.1:7446/...}
+is only reachable from inside it; in the browser on your own machine
+that address refuses to connect. Codespaces forwards the port to a
+public address, \verb{https://<codespace>-7446.app.github.dev/}, and this
+function detects a codespace (the \code{CODESPACE_NAME} and
+\code{GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN} environment variables) and
+prints and opens the tutorial's forwarded address instead of the local
+one. The forwarded root page forwards to the tutorial too, so the
+"Open in Browser" button on the port notification lands in the right
+place. Saved answers are keyed by page URL, so they live under the
+forwarded address and are found again as long as the codespace keeps
+its name.
 }
 
 \section{Why this blocks and serves over local HTTP instead of opening the file directly}{

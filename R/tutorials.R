@@ -319,6 +319,27 @@ tutorial_title <- function(doc) {
 #' other than a learnr2 server, it stops with an error rather than silently
 #' serving somewhere the browser has no saved answers for.
 #'
+#' The cache root itself (`http://127.0.0.1:7446/`) is a small page that
+#' forwards to the tutorial launched most recently and lists every other
+#' rendered tutorial in the cache. That root is what a tool that only knows
+#' the port opens -- notably the "open in browser" notification VS Code and
+#' GitHub Codespaces show when they detect a new local port -- so landing
+#' on it has to reach the tutorial rather than a 404.
+#'
+#' @section Running in GitHub Codespaces (or another remote container):
+#' The server runs inside the container, so `http://127.0.0.1:7446/...`
+#' is only reachable from inside it; in the browser on your own machine
+#' that address refuses to connect. Codespaces forwards the port to a
+#' public address, `https://<codespace>-7446.app.github.dev/`, and this
+#' function detects a codespace (the `CODESPACE_NAME` and
+#' `GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN` environment variables) and
+#' prints and opens the tutorial's forwarded address instead of the local
+#' one. The forwarded root page forwards to the tutorial too, so the
+#' "Open in Browser" button on the port notification lands in the right
+#' place. Saved answers are keyed by page URL, so they live under the
+#' forwarded address and are found again as long as the codespace keeps
+#' its name.
+#'
 #' @section Why this blocks and serves over local HTTP instead of opening the file directly:
 #' Every `{webr}` exercise compiles down to Observable JS (OJS), which
 #' Quarto's runtime loads via ES modules -- and browsers refuse to load ES
@@ -559,6 +580,7 @@ write_stamp <- function(work_dir, tutorial, fingerprint, html) {
   stamp <- list(
     package = tutorial$package,
     name = tutorial$name,
+    title = if (is.null(tutorial$title) || is.na(tutorial$title)) tutorial$name else tutorial$title,
     learnr2_version = learnr2_version_string(),
     fingerprint = fingerprint,
     rendered_at = format(Sys.time(), "%Y-%m-%d %H:%M:%S %Z"),
@@ -590,12 +612,34 @@ tutorial_url <- function(package, name, port = learnr2_port()) {
   sprintf("http://127.0.0.1:%d/%s/%s/", port, package, name)
 }
 
+# The address a reader's browser can actually reach. Inside a GitHub
+# Codespace the server is in the container and 127.0.0.1 in the reader's
+# own browser is their laptop, so hand out the forwarded address Codespaces
+# publishes for the port instead (see ?run_tutorial).
+public_tutorial_url <- function(package, name, port = learnr2_port()) {
+  base <- codespace_base_url(port)
+  if (is.null(base)) {
+    return(tutorial_url(package, name, port))
+  }
+  sprintf("%s/%s/%s/", base, package, name)
+}
+
+codespace_base_url <- function(port) {
+  codespace <- Sys.getenv("CODESPACE_NAME")
+  domain <- Sys.getenv("GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN")
+  if (!nzchar(codespace) || !nzchar(domain)) {
+    return(NULL)
+  }
+  sprintf("https://%s-%d.%s", codespace, as.integer(port), domain)
+}
+
 # Serve the cache root on the fixed port and open `tutorial`'s address --
 # or, if a learnr2 server is already serving that root, just open it there.
 serve_tutorial <- function(tutorial, root) {
   port <- learnr2_port()
-  url <- tutorial_url(tutorial$package, tutorial$name, port)
+  url <- public_tutorial_url(tutorial$package, tutorial$name, port)
   root <- as.character(fs::path_abs(root))
+  write_root_index(root, tutorial$package, tutorial$name)
 
   running <- probe_server(port)
   if (identical(running$state, "learnr2")) {
@@ -658,6 +702,62 @@ remove_server_marker <- function(root) {
   }
 }
 
+# <root>/index.html: what the server shows at its root. Whoever opens the
+# bare port -- a person typing it, or VS Code's / Codespaces' "open in
+# browser" notification for a newly detected port, which only knows the
+# port -- is forwarded to the tutorial launched most recently, with every
+# other rendered tutorial linked underneath in case that was not the one
+# they wanted. Rewritten on every launch so the forward always points at the
+# latest one. Without it httpuv answers the root with a bare 404.
+write_root_index <- function(root, package, name) {
+  target <- sprintf("/%s/%s/", package, name)
+  items <- vapply(rendered_tutorials(root), function(t) {
+    sprintf('<li><a href="/%s/%s/">%s</a> <small>(%s)</small></li>',
+            t$package, t$name, html_escape(t$title), html_escape(t$package))
+  }, character(1))
+  page <- c(
+    "<!DOCTYPE html>",
+    "<html lang=\"en\"><head><meta charset=\"utf-8\">",
+    sprintf("<meta http-equiv=\"refresh\" content=\"0; url=%s\">", target),
+    "<title>learnr2 tutorials</title></head><body>",
+    sprintf("<p>Opening <a href=\"%s\">%s/%s</a>&hellip;</p>", target, package, name),
+    "<p>Rendered tutorials:</p>",
+    "<ul>", items, "</ul>",
+    "</body></html>"
+  )
+  fs::dir_create(root)
+  writeLines(page, fs::path(root, "index.html"))
+  invisible(fs::path(root, "index.html"))
+}
+
+# Every <root>/<package>/<name>/ with a readable stamp: list of
+# list(package, name, title), most recently rendered first.
+rendered_tutorials <- function(root) {
+  root <- as.character(fs::path_norm(root))
+  stamps <- fs::dir_ls(root, recurse = 2, type = "file", glob = paste0("*/", STAMP_FILE))
+  stamps <- stamps[vapply(stamps, function(p) {
+    # Exactly <root>/<package>/<name>/<STAMP_FILE>.
+    identical(as.character(fs::path_dir(fs::path_dir(fs::path_dir(p)))), as.character(root))
+  }, logical(1))]
+  found <- lapply(stamps, function(p) {
+    stamp <- tryCatch(jsonlite::fromJSON(p), error = function(e) NULL)
+    if (is.null(stamp$package) || is.null(stamp$name)) return(NULL)
+    title <- stamp$title %||% stamp$name
+    list(package = stamp$package, name = stamp$name,
+         title = if (is.na(title) || !nzchar(title)) stamp$name else title,
+         rendered_at = stamp$rendered_at %||% "")
+  })
+  found <- Filter(Negate(is.null), unname(found))
+  found[order(vapply(found, function(t) t$rendered_at, character(1)), decreasing = TRUE)]
+}
+
+html_escape <- function(x) {
+  x <- gsub("&", "&amp;", x, fixed = TRUE)
+  x <- gsub("<", "&lt;", x, fixed = TRUE)
+  x <- gsub(">", "&gt;", x, fixed = TRUE)
+  gsub("\"", "&quot;", x, fixed = TRUE)
+}
+
 # What, if anything, answers on `port`: list(state, server) with state one
 # of "free" (nothing listening), "learnr2" (a learnr2 server; `server` is
 # its marker, with the root it serves) or "other" (something else).
@@ -691,8 +791,14 @@ classify_probe_failure <- function(msg) {
 # Seams around the two things a unit test must never do for real: open a
 # browser, and block in httpuv's event loop until interrupted.
 open_in_browser <- function(url) {
+  # VS Code (local and in Codespaces) sets BROWSER in its terminals to a
+  # helper that opens the address in the browser on the user's own machine;
+  # R's default browser, from R_BROWSER, is often xdg-open, which has nothing
+  # to open inside a container.
+  browser <- Sys.getenv("BROWSER")
+  if (!nzchar(browser)) browser <- getOption("browser")
   tryCatch(
-    utils::browseURL(url),
+    utils::browseURL(url, browser = browser),
     error = function(e) message("Could not open a browser (", conditionMessage(e), "); open ", url, " yourself.")
   )
 }

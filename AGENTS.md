@@ -807,6 +807,41 @@ necessarily overwrite it. After editing `inst/extdata/quiz/quiz.{js,css}`,
 version so the `libs/learnr2-quiz-<version>/` path changes). Confirm by
 grepping the served `quiz.js` for something you just added.
 
+## Serving from GitHub Codespaces: the forwarded root must not 404
+
+A real report (2026-10, `ims.tutorials` run from the R Tutorials VS Code
+extension in a codespace): `run_tutorial()` printed `Serving: ...`,
+`View at: http://127.0.0.1:7446`, `Opening http://127.0.0.1:7446/ims.tutorials/02-study-design/`
+and then sat blocking as designed, but the reader saw nothing usable.
+Clicking the codespace's "Open in Browser" port notification showed a bare
+`404 Not Found`; typing either `127.0.0.1` address into the laptop's own
+browser got `ERR_CONNECTION_REFUSED`. A classic learnr/Shiny tutorial on
+the same machine worked fine. The server was healthy the whole time: the
+404 was httpuv answering the cache *root* (which held only
+`<package>/<name>/` subdirectories and the server marker, no `index.html`),
+and the port notification only knows the port, so it opens exactly that
+root. The refused connections were the laptop's own loopback, because the
+server lives in the container. Shiny "worked" only because it serves its
+app at `/`.
+
+The fix lives in `serve_tutorial()` (`R/tutorials.R`): `write_root_index()`
+rewrites `<root>/index.html` on every launch as a meta-refresh to the
+tutorial just launched plus a list of every rendered tutorial in the cache
+(from the per-tutorial stamps, which now also record `title`), and
+`public_tutorial_url()` swaps in the `https://<codespace>-<port>.<domain>/`
+address whenever `CODESPACE_NAME` and
+`GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN` are set. `open_in_browser()`
+also prefers a `BROWSER` environment variable (VS Code's terminals set one
+whose helper opens the page on the user's machine) over R's `browser`
+option, which is `xdg-open` with nothing to open inside a container. The
+design rule to keep: anything that serves a directory tree on a port
+must answer `/` with something that reaches the content, because port
+forwarders, notifications, and people typing a port by hand all land
+there first. Verified against a real `httpuv::runStaticServer()` on a
+stand-in cache (root page served, forward target served), and by unit
+tests; not yet confirmed end-to-end inside an actual codespace, so the
+first real launch there is worth a look.
+
 ## Test suite layout
 
 Two layers, both run in CI (`.github/workflows/R-CMD-check.yaml`,
@@ -824,7 +859,16 @@ Two layers, both run in CI (`.github/workflows/R-CMD-check.yaml`,
   is additionally mocked at learnr2's own seams in `R/tutorials.R`:
   `probe_server()` (what answers on the port), `open_in_browser()` and
   `block_serving()` (httpuv's blocking event loop); see
-  `local_stub_serving()` and `local_stub_quarto()` in `test-tutorials.R`. **One
+  `local_stub_serving()` and `local_stub_quarto()` in `test-tutorials.R`.
+  **One exception serves for real:** the "served root, against a real
+  httpuv server" block in `test-tutorials.R` runs `run_tutorial(open =
+  TRUE)` with real httpuv on a random loopback port (Quarto still stubbed,
+  browser and blocking loop still mocked) and fetches `/` and the tutorial
+  path from inside the `block_serving()` stub, while the server is live.
+  It exists because the stubbed tests can only show that `index.html` was
+  written, not that the bare port stops answering 404 -- the Codespaces
+  regression described under "Serving from GitHub Codespaces". Confirmed
+  to fail when the `write_root_index()` call is removed. **One
   exception renders for real:** the last test in
   `test-render-tutorials.R` runs `check_tutorial()` and
   `render_tutorials()` over every bundled tutorial with actual Quarto. It
