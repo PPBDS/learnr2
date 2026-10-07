@@ -1,6 +1,6 @@
 Package: learnr2
 Title: Interactive Tutorials with 'Quarto' and 'WebR'
-Version: 0.1.1.9005
+Version: 0.1.1.9006
 Authors@R: c(
     person("David", "Kane", , "dave.kane@gmail.com", role = c("aut", "cre", "cph"),
            comment = c(ORCID = "0000-0002-6660-3934")),
@@ -16,6 +16,8 @@ License: MIT + file LICENSE
 Copyright: See file inst/COPYRIGHTS for the bundled third-party components.
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
+Depends:
+    R (>= 4.0.0)
 Imports:
     fs,
     htmltools,

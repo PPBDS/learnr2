@@ -23,8 +23,9 @@ live_extension_dir <- function() {
 #' Quarto documents in `dir` can use `format: live-html`. This is the
 #' non-interactive equivalent of `quarto add r-wasm/quarto-live`.
 #'
-#' @param dir Directory of the Quarto project or document. Defaults to the
-#'   current working directory.
+#' @param dir Directory of the Quarto project or document. Required: there
+#'   is no default, so nothing is written anywhere you did not name. Pass
+#'   `"."` for the current working directory.
 #' @param overwrite Overwrite an existing copy of the extension? Defaults to
 #'   `TRUE`.
 #'
@@ -35,7 +36,8 @@ live_extension_dir <- function() {
 #' add_live_extension(dir)
 #' list.files(dir, recursive = TRUE, all.files = TRUE)[1:3]
 #' unlink(dir, recursive = TRUE)
-add_live_extension <- function(dir = ".", overwrite = TRUE) {
+add_live_extension <- function(dir, overwrite = TRUE) {
+  check_dir_arg(dir, missing(dir))
   dir <- fs::path_abs(dir)
   fs::dir_create(dir)
 
@@ -52,4 +54,16 @@ add_live_extension <- function(dir = ".", overwrite = TRUE) {
   }
   fs::dir_copy(src, dest)
   invisible(dest_ext)
+}
+
+# `dir` is deliberately not defaulted in any function that writes: CRAN
+# policy forbids writing into the working directory (or anywhere under the
+# user's home) unless the user named the place. `missing` is passed in by
+# the caller because missing() only works on the caller's own arguments.
+check_dir_arg <- function(dir, missing) {
+  if (missing || !is.character(dir) || length(dir) != 1 || is.na(dir) || !nzchar(dir)) {
+    stop("`dir` must be a single directory path (it has no default; pass ",
+         "\".\" for the current working directory).", call. = FALSE)
+  }
+  invisible(dir)
 }

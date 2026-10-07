@@ -4,11 +4,12 @@
 \alias{add_live_extension}
 \title{Add the 'quarto-live' extension to a project}
 \usage{
-add_live_extension(dir = ".", overwrite = TRUE)
+add_live_extension(dir, overwrite = TRUE)
 }
 \arguments{
-\item{dir}{Directory of the Quarto project or document. Defaults to the
-current working directory.}
+\item{dir}{Directory of the Quarto project or document. Required: there
+is no default, so nothing is written anywhere you did not name. Pass
+\code{"."} for the current working directory.}
 
 \item{overwrite}{Overwrite an existing copy of the extension? Defaults to
 \code{TRUE}.}

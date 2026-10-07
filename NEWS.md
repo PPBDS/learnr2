@@ -1,5 +1,14 @@
 # learnr2 (development version)
 
+* CRAN review: `create_tutorial()` and `add_live_extension()` no longer
+  default `dir` to the working directory; `dir` is required, so neither
+  function writes anywhere the caller did not name (pass `dir = "."` for the
+  old behaviour). `available_tutorials()` with no `package` now finds
+  packages by listing the libraries on `.libPaths()` for a `tutorials/`
+  directory instead of calling `utils::installed.packages()`, which reads
+  several files per installed package. The package now declares
+  `Depends: R (>= 4.0.0)`, which `tools::R_user_dir()` (the render cache
+  `run_tutorial()` writes to) requires.
 * `run_tutorial()` now works from GitHub Codespaces (and any other remote
   container that forwards ports). Two things were wrong. The cache root the
   server serves had no page of its own, so httpuv answered `/` with a bare

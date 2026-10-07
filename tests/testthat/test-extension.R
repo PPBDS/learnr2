@@ -59,3 +59,17 @@ test_that("add_live_extension(overwrite = FALSE) leaves an existing copy untouch
   expect_false(res$visible)
   expect_equal(fs::path_abs(res$value), fs::path_abs(fs::path(tmp, "_extensions")))
 })
+
+test_that("add_live_extension() has no default dir: it never writes anywhere unnamed", {
+  expect_identical(formals(add_live_extension)$dir, quote(expr = ))  # no default
+  expect_error(add_live_extension(), "`dir` must be a single directory path")
+  expect_error(add_live_extension(NULL), "`dir` must be")
+  expect_error(add_live_extension(c("a", "b")), "`dir` must be")
+})
+
+test_that("check_dir_arg() accepts a single non-empty string and returns it invisibly", {
+  res <- withVisible(learnr2:::check_dir_arg("somewhere", FALSE))
+  expect_identical(res$value, "somewhere")
+  expect_false(res$visible)
+  expect_error(learnr2:::check_dir_arg("somewhere", TRUE), "`dir` must be")
+})

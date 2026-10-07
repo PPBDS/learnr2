@@ -45,10 +45,11 @@ run_tutorial("hello-learnr2")  # render + open in your browser
 Scaffold your own tutorial:
 
 ```r
-create_tutorial("my-tutorial")
+create_tutorial("my-tutorial", dir = ".")
 ```
 
-This creates `my-tutorial/my-tutorial.qmd` with the quarto-live extension
+This creates `my-tutorial/my-tutorial.qmd` (under the directory you name;
+there is no default) with the quarto-live extension
 copied alongside it, so it renders out of the box with Quarto or
 `quarto::quarto_render()`.
 

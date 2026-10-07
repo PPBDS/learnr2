@@ -4,14 +4,15 @@
 \alias{create_tutorial}
 \title{Create a new learnr2 tutorial}
 \usage{
-create_tutorial(name, dir = ".", title = name, open = interactive())
+create_tutorial(name, dir, title = name, open = interactive())
 }
 \arguments{
 \item{name}{Name of the tutorial. Used for the directory and the \code{.qmd}
 file name, so it should be a valid file name (e.g. \code{"my-tutorial"}).}
 
 \item{dir}{Parent directory in which to create the tutorial directory.
-Defaults to the current working directory.}
+Required: there is no default, so nothing is written anywhere you did
+not name. Pass \code{"."} for the current working directory.}
 
 \item{title}{Human-readable title placed in the document's YAML header.
 Defaults to \code{name}.}

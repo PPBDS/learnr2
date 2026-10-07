@@ -69,7 +69,7 @@ available_tutorials <- function(package = NULL, type = "all") {
     }
     packages <- package
   } else {
-    packages <- union(dev_packages(), rownames(utils::installed.packages()))
+    packages <- union(dev_packages(), packages_with_tutorials())
   }
 
   rows <- lapply(packages, tutorials_in_package)
@@ -140,6 +140,25 @@ pkg_file <- function(..., package) {
   }
   path <- file.path(root, "inst", ...)
   if (file.exists(path)) path else ""
+}
+
+# Names of every installed package that ships a tutorials/ directory, found
+# by listing the libraries on .libPaths() directly. utils::installed.packages()
+# would also give the names, but it reads several files per installed
+# package (its own help page warns against using it for this), whereas a
+# tutorials/ directory is one file.exists() per package directory and most
+# packages have none. First library wins for a name installed in several,
+# matching system.file(). The libraries are a parameter only for testing.
+packages_with_tutorials <- function(libs = .libPaths()) {
+  found <- character(0)
+  for (lib in libs) {
+    pkgs <- list.dirs(lib, full.names = FALSE, recursive = FALSE)
+    pkgs <- pkgs[!startsWith(pkgs, ".")]
+    has_tutorials <- file.exists(file.path(lib, pkgs, "tutorials")) &
+      file.exists(file.path(lib, pkgs, "DESCRIPTION"))
+    found <- c(found, pkgs[has_tutorials])
+  }
+  unique(found)
 }
 
 # The source directory of `package` if pkgload::load_all() loaded it, else

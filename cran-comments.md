@@ -2,6 +2,27 @@
 
 This is a resubmission. In this version I have:
 
+* Removed the default `dir = "."` from the two functions that write files,
+  `create_tutorial()` and `add_live_extension()`. `dir` is now a required
+  argument, so neither writes anywhere the user did not name. Examples and
+  tests write only under `tempdir()`; I verified by running the full test
+  suite in a clean checkout and diffing the package directory and the home
+  directory before and after (no new files).
+* Replaced the one call to `utils::installed.packages()` (in
+  `available_tutorials()` with no `package`) with a scan of the libraries on
+  `.libPaths()` for a `tutorials/` directory, one `file.exists()` per
+  package directory.
+* `run_tutorial()` still caches rendered tutorials under
+  `tools::R_user_dir("learnr2", "cache")`, as the CRAN policy permits for
+  R >= 4.0 ("packages may store user-specific data, configuration and cache
+  files in their respective user directories obtained from
+  tools::R_user_dir()"). The package now declares `Depends: R (>= 4.0.0)`
+  accordingly. The cache holds about 3.5 MB per tutorial, is replaced
+  whenever the tutorial or learnr2 changes, and `refresh = TRUE` rebuilds
+  it from empty.
+
+In the previous resubmission I had:
+
 * Fixed the "detritus in the temp directory" NOTE from the previous
   submission (leftover `calibre-*` directories). The console print methods
   for `question()`, `quiz()`, `student_info()`, and

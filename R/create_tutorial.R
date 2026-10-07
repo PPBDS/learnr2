@@ -12,7 +12,8 @@
 #' @param name Name of the tutorial. Used for the directory and the `.qmd`
 #'   file name, so it should be a valid file name (e.g. `"my-tutorial"`).
 #' @param dir Parent directory in which to create the tutorial directory.
-#'   Defaults to the current working directory.
+#'   Required: there is no default, so nothing is written anywhere you did
+#'   not name. Pass `"."` for the current working directory.
 #' @param title Human-readable title placed in the document's YAML header.
 #'   Defaults to `name`.
 #' @param open Whether to open the new `.qmd` file in an interactive session.
@@ -27,12 +28,13 @@
 #' list.files(dirname(qmd), all.files = TRUE, no.. = TRUE)
 #' unlink(dir, recursive = TRUE)
 create_tutorial <- function(name,
-                            dir = ".",
+                            dir,
                             title = name,
                             open = interactive()) {
   if (missing(name) || !is.character(name) || length(name) != 1 || !nzchar(name)) {
     stop("`name` must be a single non-empty string.", call. = FALSE)
   }
+  check_dir_arg(dir, missing(dir))
 
   tutorial_dir <- fs::path(fs::path_abs(dir), name)
   if (fs::dir_exists(tutorial_dir) &&

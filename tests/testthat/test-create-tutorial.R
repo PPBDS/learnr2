@@ -62,6 +62,14 @@ test_that("create_tutorial() validates name", {
   expect_error(create_tutorial(1, dir = parent, open = FALSE), "single non-empty string")
 })
 
+test_that("create_tutorial() has no default dir: it never writes anywhere unnamed", {
+  expect_identical(formals(create_tutorial)$dir, quote(expr = ))  # no default
+  expect_error(create_tutorial("demo", open = FALSE), "`dir` must be a single directory path")
+  expect_error(create_tutorial("demo", dir = c("a", "b"), open = FALSE), "`dir` must be")
+  expect_error(create_tutorial("demo", dir = "", open = FALSE), "`dir` must be")
+  expect_error(create_tutorial("demo", dir = NA_character_, open = FALSE), "`dir` must be")
+})
+
 test_that("create_tutorial() refuses a target directory that already exists and is non-empty", {
   parent <- withr::local_tempdir()
   target <- fs::path(parent, "demo")

@@ -28,6 +28,38 @@ test_that("available_tutorials() with no package scans every installed package",
   expect_true("hello-learnr2" %in% tutorials$name[tutorials$package == "learnr2"])
 })
 
+test_that("packages_with_tutorials() finds tutorials/ dirs by listing libraries, not installed.packages()", {
+  # Two fake libraries: a package with tutorials, one without, a stray
+  # non-package directory that happens to have tutorials/, and a hidden dir.
+  lib1 <- withr::local_tempdir()
+  lib2 <- withr::local_tempdir()
+  mk <- function(lib, pkg, tutorials = TRUE, description = TRUE) {
+    d <- fs::path(lib, pkg)
+    fs::dir_create(d)
+    if (description) writeLines(paste0("Package: ", pkg), fs::path(d, "DESCRIPTION"))
+    if (tutorials) fs::dir_create(fs::path(d, "tutorials"))
+  }
+  mk(lib1, "withTut")
+  mk(lib1, "noTut", tutorials = FALSE)
+  mk(lib1, "notAPackage", description = FALSE)
+  mk(lib1, ".hidden")
+  mk(lib2, "withTut")       # same name in a second library: counted once
+  mk(lib2, "secondLibTut")
+
+  found <- learnr2:::packages_with_tutorials(c(lib1, lib2))
+  expect_setequal(found, c("withTut", "secondLibTut"))
+  expect_identical(learnr2:::packages_with_tutorials(character(0)), character(0))
+  expect_identical(learnr2:::packages_with_tutorials(fs::path(lib1, "does-not-exist")), character(0))
+
+  # The real libraries contain learnr2 itself (installed or load_all()-ed
+  # via a dev package is covered elsewhere); and the scan never calls
+  # installed.packages().
+  local_mocked_bindings(installed.packages = function(...) stop("installed.packages() must not be called"),
+                        .package = "utils")
+  expect_no_error(learnr2:::packages_with_tutorials())
+  expect_no_error(available_tutorials())
+})
+
 test_that("available_tutorials() errors on an unknown or malformed package", {
   expect_error(available_tutorials(package = ""), "single non-empty string")
   expect_error(available_tutorials(package = c("a", "b")), "single non-empty string")
