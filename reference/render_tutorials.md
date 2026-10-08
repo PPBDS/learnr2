@@ -62,6 +62,20 @@ successful render proves the document builds, not that every exercise
 behaves. Each tutorial's render time is reported, since a slow one is
 usually the first sign of something that will also be slow for readers.
 
+## In a content package's tests
+
+A package of tutorials can check every one of them from
+`tests/testthat/test-tutorials.R`:
+
+    tutorials <- available_tutorials(package = "my.tutorials")
+    render_tutorials(tutorials$path)
+    check_tutorial(tutorials$path)
+
+Guard that test with
+[`testthat::skip_on_cran()`](https://testthat.r-lib.org/reference/skip.html)
+and `testthat::skip_if(is.null(quarto::quarto_path()))`, since it needs
+the Quarto command line tool.
+
 ## Examples
 
 ``` r
@@ -74,15 +88,8 @@ if (!is.null(quarto::quarto_path())) {
   file.exists(html)
   unlink(c(dir, dirname(html)), recursive = TRUE)
 }
-#> Created tutorial: /tmp/Rtmpz9R97H/file1a554bb2b23b/render-me/render-me.qmd
-#> Rendering render-me (/tmp/Rtmpz9R97H/file1a554bb2b23b/render-me/render-me.qmd) ...
-#> Rendered render-me in 3.5s: /tmp/Rtmpz9R97H/learnr2-render-1a5525857fa7/render-me/render-me.html
+#> Created tutorial: /tmp/Rtmpe5jUku/file19b581ca98d/render-me/render-me.qmd
+#> Rendering render-me (/tmp/Rtmpe5jUku/file19b581ca98d/render-me/render-me.qmd) ...
+#> Rendered render-me in 3.4s: /tmp/Rtmpe5jUku/learnr2-render-19b55ebc7a71/render-me/render-me.html
 #> Rendered 1 tutorial(s).
-
-# In a content package's tests/testthat/test-tutorials.R:
-if (FALSE) { # \dontrun{
-tutorials <- available_tutorials(package = "my.tutorials")
-render_tutorials(tutorials$path)
-check_tutorial(tutorials$path)
-} # }
 ```

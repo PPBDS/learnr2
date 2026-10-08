@@ -199,13 +199,29 @@ run_tutorial()
 #> Available tutorials in learnr2:
 #>   - hello-learnr2
 
-# Not run: needs the Quarto command line tool, and, when `open = TRUE`,
-# starts a local web server that blocks the session until interrupted.
+# Render without serving (open = FALSE), into a temporary directory
+# rather than the user cache. Needs the Quarto command line tool, so this
+# is skipped where it isn't installed.
+if (!is.null(quarto::quarto_path())) {
+  out <- tempfile()
+  html <- run_tutorial("hello-learnr2", output_dir = out, open = FALSE)
+  file.exists(html)
+
+  # A second call reuses the cached render; refresh = TRUE forces a new one.
+  run_tutorial("hello-learnr2", output_dir = out, open = FALSE, refresh = TRUE)
+  unlink(out, recursive = TRUE)
+}
+#> Rendering hello-learnr2 (/home/runner/work/_temp/Library/learnr2/tutorials/hello-learnr2/hello-learnr2.qmd) ...
+#> Rendered hello-learnr2 in 4.4s: /tmp/Rtmpe5jUku/file19b5740ab341/learnr2/hello-learnr2/hello-learnr2.html
+#> Rendered 1 tutorial(s).
+#> Rendering hello-learnr2 (/home/runner/work/_temp/Library/learnr2/tutorials/hello-learnr2/hello-learnr2.qmd) ...
+#> Rendered hello-learnr2 in 4.4s: /tmp/Rtmpe5jUku/file19b5740ab341/learnr2/hello-learnr2/hello-learnr2.html
+#> Rendered 1 tutorial(s).
+
+# Not run: with open = TRUE, starts a local web server that blocks the
+# session until interrupted.
 if (FALSE) { # \dontrun{
 run_tutorial("hello-learnr2")
-
-# Force a re-render even though the cached copy is current.
-run_tutorial("hello-learnr2", refresh = TRUE)
 
 # A classic learnr tutorial from a content package is handed to learnr.
 run_tutorial("hello", package = "learnr", open = TRUE)
