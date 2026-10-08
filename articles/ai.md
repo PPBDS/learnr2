@@ -1249,7 +1249,7 @@ Science* as the example:
     [`read_sheet()`](https://googlesheets4.tidyverse.org/reference/range_read.html) from
     the [**googlesheets4**](https://googlesheets4.tidyverse.org/) package.
 
-    Read "[Data Organization in Spreadsheets](https://doi.org/10.1080/00031305.2017.1375989)"
+    Read "[Data Organization in Spreadsheets](https://kbroman.org/dataorg/)"
     by Karl Broman and Kara Woo for great advice about organizing your data using spreadsheets.
 
 - The first paragraph is identical to the Introduction, except that
