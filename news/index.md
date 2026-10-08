@@ -1,5 +1,26 @@
 # Changelog
 
+## learnr2 (development version)
+
+- [`student_info()`](https://ppbds.github.io/learnr2/reference/student_info.md)
+  and `"reflection_editable"` questions now have a clear Edit/Submit
+  cycle. Submit locks the fields behind an “Edit” button; Edit reopens
+  them, with the button back to “Submit” and a note that changes aren’t
+  saved until then. Previously the fields stayed open after Submit and
+  “Edit” silently resaved, so readers couldn’t tell whether a change had
+  gone in. The download now reports only submitted answers, and is
+  blocked until every
+  [`student_info()`](https://ppbds.github.io/learnr2/reference/student_info.md)
+  form is submitted. **Behaviour change:** a reader who filled in
+  student info without pressing Submit must now press it before
+  downloading.
+- A Continue button no longer appears directly under a section heading.
+  A subsection that starts right after its parent’s heading, as every
+  tutorial.helpers topic does with `## Title` then `###`, is now
+  revealed with the heading.
+- Links that leave a tutorial page now open in a new tab, so following
+  one never makes the tutorial disappear.
+
 ## learnr2 0.1.2
 
 - [`tutorial_options()`](https://ppbds.github.io/learnr2/reference/tutorial_options.md)

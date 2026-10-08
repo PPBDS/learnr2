@@ -5,11 +5,14 @@ Adds a button that, when clicked, gathers every
 and
 [`student_info()`](https://ppbds.github.io/learnr2/reference/student_info.md)
 answer currently on the page – each already saved to the browser's
-`localStorage` as the reader worked through the tutorial – into a single
-readable JSON file and downloads it. This happens entirely in the
-reader's browser; there is no server to submit to, so this is meant for
-a reader to save and turn in themselves (e.g. attach to an email or
-upload to an LMS).
+`localStorage` when the reader submitted it – into a single readable
+JSON file and downloads it. Only submitted answers count: an answer
+reopened with "Edit" and not resubmitted is reported as its last
+submitted version, and the download is blocked until every
+[`student_info()`](https://ppbds.github.io/learnr2/reference/student_info.md)
+form is submitted. This happens entirely in the reader's browser; there
+is no server to submit to, so this is meant for a reader to save and
+turn in themselves (e.g. attach to an email or upload to an LMS).
 
 ## Usage
 

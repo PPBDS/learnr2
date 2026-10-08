@@ -134,6 +134,17 @@ Verified against real renders.
   excluded from gating. The first version gated them, adding two
   invisible extra clicks that a user reported as the numbering “jumping”
   from 2 to 5.
+- **No Continue directly under a heading** (2026-10). A `section.level3`
+  that is its parent’s heading’s next sibling is excluded from gating,
+  so it is revealed with that heading. tutorial.helpers opens every
+  topic as `## Title` then a bare `###`, and gating that put a Continue
+  under the heading with nothing above it (reported on the Orientation
+  translation). Rule: a button ends readable content; clicking it
+  reveals the next heading *and* its text. Fixture:
+  `progressive-sections-topic-start`. `markPauseSections()` runs over
+  *every* section, not just the gated list: when it ran only on gated
+  sections, the ungated first pause kept its empty `<h3>`, a 64px blank
+  band between a topic’s title and its first paragraph.
 - **Bare `###` dividers are stops** (2026-10). Quarto renders them as
   sections with an empty `<h3>` and ids `section`, `section-1`, ….
   `markPauseSections()` adds `.learnr2-pause`, CSS hides the empty
@@ -162,6 +173,32 @@ Verified against real renders.
   actually showing (`getClientRects()`), otherwise right after
   `#title-block-header`, and a resize listener moves it. Fixtures: the
   `-no-toc` variants.
+- **Edit/Submit cycle** (2026-10), for
+  [`student_info()`](https://ppbds.github.io/learnr2/reference/student_info.md)
+  and `reflection_editable` only. Submit locks the fields and shows
+  “Edit”; Edit only reopens them, shows “Submit” and an editing note
+  (`EDITING_NOTE`). Received means last submitted: `widgetPending()`
+  (used by the Continue gate and the download) treats a reopened widget
+  as unsubmitted, the download reads submitted values, never the live
+  DOM, and is blocked until every
+  [`student_info()`](https://ppbds.github.io/learnr2/reference/student_info.md)
+  is submitted. Info storage: flat keys are the submitted values,
+  `draft` holds typing, `submitted` and `editing` are flags; old
+  flat-keys-plus-`submitted: false` data is read as a draft. The old
+  design left fields open after Submit and relabelled the button “Edit”,
+  which silently resaved, so readers had no signal their change had gone
+  in (user report, 2026-10). Plain `reflection` never gets the cycle:
+  reopening it would let a reader paste in the model answer.
+- **Outbound links open in a new tab** (`openLinksInNewTabs()`): every
+  `a[href]` except `#...`, `download`, `mailto:`/`tel:`/`javascript:`.
+  Students worried when a tutorial “disappeared”. Quarto’s
+  `link-external-newwindow` would miss same-site links.
+- **Rendering a test copy of learnr2 changes needs an install.** Quarto
+  runs a tutorial’s R chunks in its own R process, which loads the
+  *installed* learnr2, not a `load_all()` copy, so a render from a
+  `load_all()` session still embeds the old `quiz.js`. Install the
+  working tree into a scratch library (`R CMD INSTALL -l <dir> .`) and
+  render with `R_LIBS=<dir>`, into a fresh output directory.
 - **Image-paste answers.** Once an image is pasted, the textarea hides
   and typed text is not saved (`value` is `""`). A user reported the
   visible empty textarea above a pasted image as a second box to fill

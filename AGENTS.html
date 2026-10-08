@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="index.html">learnr2</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.2.9002</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.2.9003</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -80,6 +80,8 @@
 <ul><li>
 <strong>Hints/Solutions are not stops.</strong> A <code>section.level3</code> containing quarto-live’s <code>.exercise-hint</code>/<code>.exercise-solution</code> marker (the <code>exercise-</code> prefixed classes, not bare <code>.hint</code>/<code>.solution</code>) is excluded from gating. The first version gated them, adding two invisible extra clicks that a user reported as the numbering “jumping” from 2 to 5.</li>
 <li>
+<strong>No Continue directly under a heading</strong> (2026-10). A <code>section.level3</code> that is its parent’s heading’s next sibling is excluded from gating, so it is revealed with that heading. tutorial.helpers opens every topic as <code>## Title</code> then a bare <code>###</code>, and gating that put a Continue under the heading with nothing above it (reported on the Orientation translation). Rule: a button ends readable content; clicking it reveals the next heading <em>and</em> its text. Fixture: <code>progressive-sections-topic-start</code>. <code>markPauseSections()</code> runs over <em>every</em> section, not just the gated list: when it ran only on gated sections, the ungated first pause kept its empty <code>&lt;h3&gt;</code>, a 64px blank band between a topic’s title and its first paragraph.</li>
+<li>
 <strong>Bare <code>###</code> dividers are stops</strong> (2026-10). Quarto renders them as sections with an empty <code>&lt;h3&gt;</code> and ids <code>section</code>, <code>section-1</code>, …. <code>markPauseSections()</code> adds <code>.learnr2-pause</code>, CSS hides the empty heading, and the button reads plain “Continue”. Quarto already hides their empty TOC entries. Fixture: <code>progressive-sections-pauses</code>.</li>
 <li>
 <strong>TOC locking</strong> (2026-10). Sidebar links would otherwise bypass Continue entirely. By default, entries for sections at or past <code>unlocked</code> get <code>.learnr2-toc-locked</code>, <code>aria-disabled</code>, <code>tabindex=-1</code>, <code>pointer-events: none</code>, and a <code>preventDefault()</code> for keyboard clicks. <code>tutorial_options(allow_skip = TRUE)</code> restores the old unlock-and-jump. Fixtures: <code>progressive-sections</code> and <code>progressive-sections-skip</code>.</li>
@@ -87,6 +89,12 @@
 <strong>Submission gate</strong> (2026-10). <code>pendingWidgets()</code> counts unsubmitted <code><a href="reference/question.html">question()</a></code> and <code><a href="reference/student_info.html">student_info()</a></code> widgets <em>above</em> the current Continue button within its section; <code>refreshContinueGate()</code> re-runs after any submit, try-again or edit click. Fixture: <code>progressive-sections-gated</code>. Structural fixtures that click past unanswered widgets opt out with <code>require_submission: false</code>.</li>
 <li>
 <strong>Start Over placement.</strong> It used to go only into <code>#quarto-margin-sidebar</code>, so <code>toc: false</code> tutorials had none, and neither did any tutorial on a phone, where Quarto’s CSS hides the sidebar below 768px. Now it goes in the sidebar only when it is actually showing (<code>getClientRects()</code>), otherwise right after <code>#title-block-header</code>, and a resize listener moves it. Fixtures: the <code>-no-toc</code> variants.</li>
+<li>
+<strong>Edit/Submit cycle</strong> (2026-10), for <code><a href="reference/student_info.html">student_info()</a></code> and <code>reflection_editable</code> only. Submit locks the fields and shows “Edit”; Edit only reopens them, shows “Submit” and an editing note (<code>EDITING_NOTE</code>). Received means last submitted: <code>widgetPending()</code> (used by the Continue gate and the download) treats a reopened widget as unsubmitted, the download reads submitted values, never the live DOM, and is blocked until every <code><a href="reference/student_info.html">student_info()</a></code> is submitted. Info storage: flat keys are the submitted values, <code>draft</code> holds typing, <code>submitted</code> and <code>editing</code> are flags; old flat-keys-plus-<code>submitted: false</code> data is read as a draft. The old design left fields open after Submit and relabelled the button “Edit”, which silently resaved, so readers had no signal their change had gone in (user report, 2026-10). Plain <code>reflection</code> never gets the cycle: reopening it would let a reader paste in the model answer.</li>
+<li>
+<strong>Outbound links open in a new tab</strong> (<code>openLinksInNewTabs()</code>): every <code>a[href]</code> except <code>#...</code>, <code>download</code>, <code>mailto:</code>/<code>tel:</code>/<code>javascript:</code>. Students worried when a tutorial “disappeared”. Quarto’s <code>link-external-newwindow</code> would miss same-site links.</li>
+<li>
+<strong>Rendering a test copy of learnr2 changes needs an install.</strong> Quarto runs a tutorial’s R chunks in its own R process, which loads the <em>installed</em> learnr2, not a <code>load_all()</code> copy, so a render from a <code>load_all()</code> session still embeds the old <code>quiz.js</code>. Install the working tree into a scratch library (<code>R CMD INSTALL -l &lt;dir&gt; .</code>) and render with <code>R_LIBS=&lt;dir&gt;</code>, into a fresh output directory.</li>
 <li>
 <strong>Image-paste answers.</strong> Once an image is pasted, the textarea hides and typed text is not saved (<code>value</code> is <code>""</code>). A user reported the visible empty textarea above a pasted image as a second box to fill in. Don’t bring it back.</li>
 <li>

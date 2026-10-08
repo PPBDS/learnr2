@@ -22,7 +22,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">learnr2</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.2.9002</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.2.9003</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -228,7 +228,7 @@
 <span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>#| echo: false</span>
 <span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>learnr2::download_answers_button(filename_prefix = "&lt;name&gt;")</span>
 <span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>```</span></code></pre></div>
-<p><strong>learnr2</strong> has no numeric question type. <code>validate = "integer"</code> blocks Submit until the response is a whole number, without grading it against any one value, since any honest count is acceptable. There is no <code><a href="../reference/answer.html">answer()</a></code> because there is no correct number of minutes. This is the one question that stays <code>reflection_editable</code>, because there is no right answer to copy.</p>
+<p><strong>learnr2</strong> has no numeric question type. <code>validate = "integer"</code> blocks Submit until the response is a whole number, without grading it against any one value, since any honest count is acceptable. There is no <code><a href="../reference/answer.html">answer()</a></code> because there is no correct number of minutes. This is the one question that stays <code>reflection_editable</code>, because there is no right answer to copy. After Submit it locks behind an Edit button, and Edit reopens it until the next Submit, the same cycle as <code><a href="../reference/student_info.html">student_info()</a></code>.</p>
 </section><section class="level2"><h2 id="chunk-labels">Chunk labels<a class="anchor" aria-label="anchor" href="#chunk-labels"></a>
 </h2>
 <p>Every chunk needs a unique <code>#| label:</code> on its own line inside the chunk, never the old inline <code>{r some-label}</code> form. That applies to <code>{r}</code> chunks and to every <a href="https://github.com/cardiomoon/webr" class="external-link">webr</a> cell, including plain demonstration cells.</p>
@@ -315,7 +315,19 @@
 <p>Choice and <code>"text"</code> questions, and <code><a href="../reference/quiz.html">quiz()</a></code>, suit mechanics tutorials and feature tours. A normal data-science tutorial teaches concepts through exercises and knowledge drops rather than quizzes, so expect most translated questions to be <code>"reflection"</code>.</p>
 <section class="level3"><h3 id="screenshot-questions">Screenshot questions<a class="anchor" aria-label="anchor" href="#screenshot-questions"></a>
 </h3>
-<p><code>learnr2::question(type = "reflection", allow_image = TRUE)</code> lets the reader paste a screenshot as their answer. It is for steps that nothing else can verify, such as being signed in to an account or having a particular window open.</p>
+<p><code>learnr2::question(type = "reflection", allow_image = TRUE)</code> lets the reader paste a screenshot as their answer. Use it in three cases, and convert the source’s question whenever one applies:</p>
+<ol type="1">
+<li>
+<strong>The student would copy text out of a web page.</strong> <strong>tutorial.helpers</strong> tutorials often say “copy everything from X through Y on this page” and take a pasted mess of text, as the website tutorials in <strong>vscode.tutorials</strong> do for the student’s own rendered pages. Ask instead for a screenshot of the relevant part of the page. The screenshot shows what the student actually saw, layout included, and is easier to check.</li>
+<li>
+<strong>The student produces an image,</strong> usually a plot. Classic tutorials verify a plot exercise with <code><a href="../reference/show_file.html">show_file()</a></code>, which proves the student has <em>code</em>, not that it drew the right picture. Ask for a screenshot of the plot instead, as in the plotting template in <a href="ai.html">Tutorials in the Age of AI</a>. This is very common in <strong>misc.tutorials</strong>. Keep <code><a href="../reference/show_file.html">show_file()</a></code> for exercises whose result is text, such as a printed tibble or summary statistics.</li>
+<li>
+<strong>Nothing else can verify the step,</strong> such as being signed in to an account or having a particular window open.</li>
+<li>
+<strong>The student carries out several small steps in a row.</strong> Turning each one into its own question is sometimes more than the steps deserve. If every step is necessary, give the steps as plain instructions and end with a single screenshot of something that only looks right if all of them were done correctly. For example, after “create the repo, add a <code>.gitignore</code>, commit and push”, ask for a screenshot of the repo’s page on GitHub showing the <code>.gitignore</code> file. Pick the screen so a skipped or botched step shows: if the screenshot would look the same without one of the steps, that step needs its own check. When translating, use this for a run of steps the source left unchecked. Don’t merge questions the source already asks separately, since that pacing was the author’s choice.</li>
+</ol>
+<p>When you convert a question, rewrite the prose around it to match. An instruction that says “copy” or “CP/CR” should now say what to screenshot. Any sentence explaining that pasted text may look messy goes, since it no longer applies. Keep the source’s own answer, if it had one, as the answer shown after Continue: a screenshot of the expected page, or our answer chunk drawing the expected plot.</p>
+<p>The first screenshot question a student meets should say how to take a screenshot and how to paste it: <code>Cmd + Shift + 4</code> on a Mac, <code>Win + Shift + S</code> on Windows, then click in the answer box and press <code>Ctrl + V</code> (<code>Cmd + V</code> on a Mac). Later ones can just ask for the screenshot.</p>
 <p>Ask for one specific screenshot, never a hedged choice. “Paste a screenshot of your GitHub dashboard” works. “Paste a screenshot showing you’re signed in, for example your profile page or the account menu” leaves the reader guessing which one counts. If it isn’t obvious why that screen proves the step, say so.</p>
 <p>If the prompt reads better as ordinary text on the page, write it there and pass <code>show_text = FALSE</code>. Still repeat the wording in <code>text</code>, which is kept in the saved data and read to screen-reader users.</p>
 </section></section><section class="level2"><h2 id="images">Images<a class="anchor" aria-label="anchor" href="#images"></a>
@@ -323,7 +335,7 @@
 <p>Replace <code><a href="https://rdrr.io/pkg/knitr/man/include_graphics.html" class="external-link">knitr::include_graphics()</a></code> chunks with plain Markdown, <code>![](images/thing.png)</code>, optionally with <code>{width=90%}</code>. There is no chunk to label or hide.</p>
 </section><section class="level2"><h2 id="sections-and-the-continue-button">Sections and the Continue button<a class="anchor" aria-label="anchor" href="#sections-and-the-continue-button"></a>
 </h2>
-<p><strong>learnr2</strong> reveals a tutorial one section at a time. Every <code>##</code> and <code>###</code> heading becomes a stop behind a Continue button, and you add nothing to opt in. Some details for translations:</p>
+<p><strong>learnr2</strong> reveals a tutorial one section at a time. Every <code>##</code> and <code>###</code> heading becomes a stop behind a Continue button, and you add nothing to opt in. A Continue button always sits at the end of something to read, never directly under a heading: clicking it reveals the next heading together with the text that follows it, which may or may not include the next exercise. In particular, a <code>##</code> heading followed immediately by a bare <code>###</code>, the way <strong>tutorial.helpers</strong> opens every topic, shows the heading and that first block together. Some details for translations:</p>
 <ul>
 <li>
 <strong>Keep every bare <code>###</code> divider.</strong> A line holding only <code>###</code> becomes a Continue stop with no visible heading and a button that just says “Continue”. <strong>tutorial.helpers</strong> puts two inside every exercise, one before the author’s answer and one before the knowledge drop, and both pauses survive the translation.</li>
@@ -337,6 +349,8 @@
 <strong>Continue waits for answers.</strong> A section’s Continue button is disabled until every question and <code><a href="../reference/student_info.html">student_info()</a></code> form above it has been submitted. <code>learnr2::tutorial_options(require_submission = FALSE)</code> turns that off, which suits reference material.</li>
 <li>
 <strong><code>toc: false</code> is supported.</strong> Without a sidebar, the Start Over button moves to the top of the tutorial, under the title.</li>
+<li>
+<strong>Links that leave the page open in a new tab,</strong> so following one never makes the tutorial disappear. Write ordinary Markdown links. Nothing is needed to opt in.</li>
 </ul>
 <p>Call <code><a href="../reference/tutorial_options.html">tutorial_options()</a></code> at most once, in its own chunk with <code>#| echo: false</code>.</p>
 </section><section class="level2"><h2 id="packages-and-code-that-runs-at-render-time">Packages, and code that runs at render time<a class="anchor" aria-label="anchor" href="#packages-and-code-that-runs-at-render-time"></a>

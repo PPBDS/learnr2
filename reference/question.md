@@ -62,9 +62,13 @@ question(
     with no right answer to demonstrate – nothing is revealed; the
     reader's response is still saved and locked exactly the same.
 
-  - `"reflection_editable"` – like `"reflection"`, but the reader's
-    response stays editable after submitting (whether or not a model
-    answer was revealed), so they can keep revising it.
+  - `"reflection_editable"` – like `"reflection"`, but a submitted
+    response can be reopened. Submit locks it behind an "Edit" button;
+    Edit reopens it, with a note that the change isn't saved until the
+    next Submit. The saved answer is always the last submitted one.
+    Meant for answers with nothing to copy, such as a minutes-spent
+    count: an ordinary `"reflection"` stays locked for good, so a reader
+    can't reopen it and paste in the model answer they were just shown.
 
 - correct:
 
@@ -92,12 +96,9 @@ question(
 
 - edit_button:
 
-  Button label shown instead of `submit_button` once a
-  `"reflection_editable"` question has been submitted at least once –
-  from then on, clicking it revises the reader's already-visible answer
-  rather than submitting for the first time. Ignored for every other
-  `type`, since only `"reflection_editable"` stays open for revision
-  after the model answer is revealed.
+  Button label shown while a submitted `"reflection_editable"` question
+  is locked; clicking it reopens the answer for editing. Ignored for
+  every other `type`.
 
 - id:
 

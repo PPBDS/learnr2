@@ -1076,28 +1076,42 @@ things has two advantages. First, it ensures that even the weaker
 students do not get lost. Second, it provides us with more opportunities
 to drop some knowledge.
 
+Sometimes, though, a run of small steps doesn’t deserve a question each.
+Then give the steps as plain instructions and end with one screenshot
+question, asking for a screen that only looks right if every step was
+done correctly. [Translating learnr
+Tutorials](https://ppbds.github.io/learnr2/articles/translating.md)
+describes this and the other uses of screenshot questions.
+
 Now, we can move on to the plotting question. In the age of AI, students
 will have AI write code for their plot. They will do that while
 specifying that their data is `x` from earlier. The student will add
-their new code to a new code cell, and we check that they have done so
-with
+their new code to a new code chunk and render. Because the result is an
+image, the student submits a *screenshot* of her rendered plot, pasted
+into an `allow_image = TRUE` question, rather than her code via
 [`show_file()`](https://ppbds.github.io/learnr2/reference/show_file.md).
-The purpose of this question is to ensure that the student has generated
-their own code.
+A screenshot proves she drew the right picture, which is what we are
+checking. Code proves only that she has code. Use
+[`show_file()`](https://ppbds.github.io/learnr2/reference/show_file.md)
+for exercises whose result is text, such as a printed tibble or summary
+statistics.
 
 ```` default
 ### Exercise 8
 
-Ask AI to generate R code that uses `x` to plot a basic graph or calculate and present summary statistics showing XX ... Mention you want to use the data from `x`. If using a chat interface copy/paste the `x` you ran in the R Terminal with the resulting tibble. You only need the top 3 lines, mainly to include column names.
+Ask AI to generate R code that uses `x` to plot a basic graph showing XX ... Mention you want to use the data from `x`. If using a chat interface copy/paste the `x` you ran in the R Terminal with the resulting tibble. You only need the top 3 lines, mainly to include column names.
 
 Consider adding a title, subtitle, and caption. If axis labels would be useful, add them, but if unnecessary, don't bother. Don't assign the code for the plot to any variable. Put the plot code in a new code chunk. Run `quarto render` to ensure that everything works. Make your plot look nice.
+
+Take a screenshot of the plot in your rendered page and paste it below.
 
 ```{r}
 #| label: xx-first-topic-8
 #| echo: false
 learnr2::question(
-  'In the R Terminal, run show_file("analysis.qmd", chunk = "Last"). CP/CR.',
-  type = "reflection"
+  "Paste a screenshot of your plot.",
+  type = "reflection",
+  allow_image = TRUE
 )
 ```
 

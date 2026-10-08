@@ -4,21 +4,7 @@ Adds a small, ungraded form for the reader to fill in identifying
 information before starting a tutorial: name and email required, an ID
 optional, by default. Unlike
 [`question()`](https://ppbds.github.io/learnr2/reference/question.md),
-nothing here is graded and there is no model answer to reveal – it is
-auto-saved to the browser's `localStorage` as the reader types and
-restored on their next visit, the same as every other field here. A
-confirmation button, matching the one on every
-[`question()`](https://ppbds.github.io/learnr2/reference/question.md) in
-both style and behavior, gives the reader an explicit way to confirm
-their entry and see the required fields checked right away, instead of
-only finding out when they later try to download: it reads "Submit"
-until they successfully do, at which point it switches to "Edit" (like a
-`"reflection_editable"`
-[`question()`](https://ppbds.github.io/learnr2/reference/question.md))
-since any further click is revising an already-confirmed entry, not
-submitting for the first time. Pair with
-[`download_answers_button()`](https://ppbds.github.io/learnr2/reference/download_answers_button.md)
-so a reader can turn their work in.
+nothing here is graded and there is no model answer to reveal.
 
 ## Usage
 
@@ -49,9 +35,9 @@ student_info(
   in `fields`, so ID is optional by default and supplying custom
   `fields` does not require also supplying `required`. A required field
   left blank, or an `"email"` field missing an `"@"`, is flagged inline
-  (on blur, and again when the button is clicked) and blocks
-  [`download_answers_button()`](https://ppbds.github.io/learnr2/reference/download_answers_button.md)
-  until it's fixed. Passing a key that is not in `fields` is an error.
+  (on blur, and again when the button is clicked) and the form can't be
+  submitted until it's fixed. Passing a key that is not in `fields` is
+  an error.
 
 - id:
 
@@ -61,19 +47,34 @@ student_info(
 
 - submit_button:
 
-  Button label shown before the reader has successfully confirmed their
-  entry.
+  Button label while the form is open for editing.
 
 - edit_button:
 
-  Button label shown instead of `submit_button` from then on – mirrors
-  [`question()`](https://ppbds.github.io/learnr2/reference/question.md)'s
-  `edit_button` for a `"reflection_editable"` question exactly,
-  including persisting across a reload.
+  Button label while the form is locked on a submission. Clicking it
+  reopens the form.
 
 ## Value
 
 A `learnr2_info` object, printed as an interactive HTML form.
+
+## Details
+
+The form has two states. While *editing*, the fields are open and the
+button reads "Submit". A valid Submit saves the entry, locks the fields,
+and switches the button to "Edit". Clicking Edit only reopens the fields
+and switches the button back to "Submit", with a note that the change
+isn't saved until the next Submit. So the button always tells the reader
+whether what they see is what was received. Typing is kept as a draft in
+the browser's `localStorage`, so a reload mid-edit loses nothing, but a
+draft is never the answer:
+[`download_answers_button()`](https://ppbds.github.io/learnr2/reference/download_answers_button.md)
+reports only the last submitted entry, and is blocked until the form is
+submitted. A `"reflection_editable"`
+[`question()`](https://ppbds.github.io/learnr2/reference/question.md)
+works the same way. Pair with
+[`download_answers_button()`](https://ppbds.github.io/learnr2/reference/download_answers_button.md)
+so a reader can turn their work in.
 
 ## Examples
 
