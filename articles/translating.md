@@ -362,7 +362,7 @@ quizzes, so expect most translated questions to be `"reflection"`.
 ### Screenshot questions
 
 `learnr2::question(type = "reflection", allow_image = TRUE)` lets the
-reader paste a screenshot as their answer. Use it in three cases, and
+reader paste a screenshot as their answer. Use it in four cases, and
 convert the source’s question whenever one applies:
 
 1.  **The student would copy text out of a web page.**

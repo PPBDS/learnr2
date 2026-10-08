@@ -106,7 +106,7 @@
 <span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>learnr2::question(</span>
 <span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>  "How many minutes, approximately, did it take you to complete this</span>
 <span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>  tutorial? For example, an hour and a half would be 90 minutes.",</span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>  type = "reflection",</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>  type = "reflection_editable",</span>
 <span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>  validate = "integer"</span>
 <span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>)</span>
 <span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>```</span>
@@ -277,7 +277,7 @@
 <p>The one case <code>{verbatim}</code> doesn’t cover is <em>inline</em> code that you want to show rather than run, in the middle of a sentence – the literal text <code>`r x`</code>. Wrapping it in extra backticks does not work. Quarto still evaluates it, and this very paragraph broke the vignette’s render the first time, written that way. Spell the backticks as the HTML entity instead: <code>&lt;code&gt;&amp;#96;r x&amp;#96;&lt;/code&gt;</code> renders as the literal syntax, because there is no backtick character in the source for Quarto to match.</p>
 </section></section></section><section class="level2"><h2 id="tutorial-introduction">Tutorial Introduction<a class="anchor" aria-label="anchor" href="#tutorial-introduction"></a>
 </h2>
-<p>Students need some background in order to complete these sorts of tutorials, some familiarity with R, GitHub and so on. Students should have completed the “Getting Started” tutorial from the <a href="https://CRAN.R-project.org/package=tutorial.helpers" class="external-link"><strong>tutorial.helpers</strong></a> package. They should also complete the first four VS Code tutorials (i.e., through “VS Code and GitHub Introduction”) from <a href="https://ppbds.github.io/vscode.tutorials/" class="external-link"><strong>vscode.tutorials</strong></a>.</p>
+<p>Students need some background in order to complete these sorts of tutorials, some familiarity with R, GitHub and so on. Students should have completed the “Getting Started” tutorial from the <a href="https://CRAN.R-project.org/package=tutorial.helpers" class="external-link"><strong>tutorial.helpers</strong></a> package. They should also complete the first four VS Code tutorials (i.e., “Orientation,” “Workflow,” “Code,” and “Quarto”) from <a href="https://ppbds.github.io/vscode.tutorials/" class="external-link"><strong>vscode.tutorials</strong></a>.</p>
 <p>Always begin by having students set up a repo and a Quarto document to work in. Again, you must replace <code>XX</code> with something sensible and usually different from the other <code>XX</code>’s. So, in the below example, the name of the repo and the title of the QMD will be different even though we hold their places with <code>XX</code> in both cases.</p>
 <div class="sourceCode" id="cb10"><pre class="sourceCode default"><code class="sourceCode default"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>### Exercise 1</span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a></span>

@@ -103,7 +103,7 @@ can turn in:
 learnr2::question(
   "How many minutes, approximately, did it take you to complete this
   tutorial? For example, an hour and a half would be 90 minutes.",
-  type = "reflection",
+  type = "reflection_editable",
   validate = "integer"
 )
 ```
@@ -662,7 +662,7 @@ tutorials, some familiarity with R, GitHub and so on. Students should
 have completed the “Getting Started” tutorial from the
 [**tutorial.helpers**](https://CRAN.R-project.org/package=tutorial.helpers)
 package. They should also complete the first four VS Code tutorials
-(i.e., through “VS Code and GitHub Introduction”) from
+(i.e., “Orientation,” “Workflow,” “Code,” and “Quarto”) from
 [**vscode.tutorials**](https://ppbds.github.io/vscode.tutorials/).
 
 Always begin by having students set up a repo and a Quarto document to
