@@ -25,21 +25,18 @@ fill in. Defaults to whichever of \code{"name"} and \code{"email"} are actually
 present in \code{fields}, so ID is optional by default and supplying custom
 \code{fields} does not require also supplying \code{required}. A required field
 left blank, or an \code{"email"} field missing an \code{"@"}, is flagged inline
-(on blur, and again when the button is clicked) and blocks
-\code{\link[=download_answers_button]{download_answers_button()}} until it's fixed. Passing a key that is
-not in \code{fields} is an error.}
+(on blur, and again when the button is clicked) and the form can't
+be submitted until it's fixed. Passing a key that is not in \code{fields}
+is an error.}
 
 \item{id}{Stable identifier used to key the saved values in
 \code{localStorage}. Defaults to \code{"student-info"}; change it if a single
 tutorial embeds more than one \code{student_info()} form.}
 
-\item{submit_button}{Button label shown before the reader has
-successfully confirmed their entry.}
+\item{submit_button}{Button label while the form is open for editing.}
 
-\item{edit_button}{Button label shown instead of \code{submit_button} from
-then on -- mirrors \code{\link[=question]{question()}}'s \code{edit_button} for a
-\code{"reflection_editable"} question exactly, including persisting across
-a reload.}
+\item{edit_button}{Button label while the form is locked on a
+submission. Clicking it reopens the form.}
 }
 \value{
 A \code{learnr2_info} object, printed as an interactive HTML form.
@@ -48,17 +45,20 @@ A \code{learnr2_info} object, printed as an interactive HTML form.
 Adds a small, ungraded form for the reader to fill in identifying
 information before starting a tutorial: name and email required, an ID
 optional, by default. Unlike \code{\link[=question]{question()}}, nothing here is graded and
-there is no model answer to reveal -- it is auto-saved to the browser's
-\code{localStorage} as the reader types and restored on their next visit, the
-same as every other field here. A confirmation button, matching the one
-on every \code{\link[=question]{question()}} in both style and behavior, gives the reader an
-explicit way to confirm their entry and see the required fields checked
-right away, instead of only finding out when they later try to download:
-it reads "Submit" until they successfully do, at which point it switches
-to "Edit" (like a \code{"reflection_editable"} \code{\link[=question]{question()}}) since any further
-click is revising an already-confirmed entry, not submitting for the
-first time. Pair with \code{\link[=download_answers_button]{download_answers_button()}} so a reader can turn
-their work in.
+there is no model answer to reveal.
+}
+\details{
+The form has two states. While \emph{editing}, the fields are open and the
+button reads "Submit". A valid Submit saves the entry, locks the fields,
+and switches the button to "Edit". Clicking Edit only reopens the fields
+and switches the button back to "Submit", with a note that the change
+isn't saved until the next Submit. So the button always tells the reader
+whether what they see is what was received. Typing is kept as a draft in
+the browser's \code{localStorage}, so a reload mid-edit loses nothing, but a
+draft is never the answer: \code{\link[=download_answers_button]{download_answers_button()}} reports only the
+last submitted entry, and is blocked until the form is submitted. A
+\code{"reflection_editable"} \code{\link[=question]{question()}} works the same way. Pair with
+\code{\link[=download_answers_button]{download_answers_button()}} so a reader can turn their work in.
 }
 \examples{
 student_info()

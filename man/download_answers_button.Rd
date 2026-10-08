@@ -22,8 +22,11 @@ HTML button.
 \description{
 Adds a button that, when clicked, gathers every \code{\link[=question]{question()}} and
 \code{\link[=student_info]{student_info()}} answer currently on the page -- each already saved to
-the browser's \code{localStorage} as the reader worked through the tutorial
--- into a single readable JSON file and downloads it. This happens
+the browser's \code{localStorage} when the reader submitted it -- into a
+single readable JSON file and downloads it. Only submitted answers
+count: an answer reopened with "Edit" and not resubmitted is reported as
+its last submitted version, and the download is blocked until every
+\code{\link[=student_info]{student_info()}} form is submitted. This happens
 entirely in the reader's browser; there is no server to submit to, so
 this is meant for a reader to save and turn in themselves (e.g. attach
 to an email or upload to an LMS).

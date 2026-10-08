@@ -291,6 +291,14 @@ section.learnr2-pause > h3 {
 
 /* Under a disabled Continue (require_submission, the default): what the
    reader still has to submit before it works. */
+/* Under a reopened student_info() form or reflection_editable question:
+   the change isn't received until Submit. */
+.learnr2-editing-note {
+  margin-top: 0.4rem;
+  font-size: 0.85rem;
+  color: #8a6d3b;
+}
+
 .learnr2-continue-note {
   margin-top: 0.4rem;
   font-size: 0.85rem;

@@ -535,30 +535,51 @@
       reveal.classList.remove("d-none");
     }
 
-    function applyOutcome(disable) {
-      showModelAnswer();
-      if (disable) {
-        textarea.disabled = true;
-        submit.classList.add("d-none");
-        if (imagePaste) {
-          imagePaste.setDisabled(true);
-        }
-      } else {
-        // Once a reflection_editable question has been submitted at least
-        // once, further clicks revise the already-visible answer rather
-        // than submit for the first time -- relabel the button to match.
-        submit.textContent = data.editLabel;
+    // "reflection" locks for good on submit. "reflection_editable" uses the
+    // Edit/Submit cycle described above EDITING_NOTE: submitting locks it
+    // with an "Edit" button, and Edit reopens it until the next Submit. The
+    // saved answer stays the last submitted one throughout; an open edit
+    // only sets `editing`, which the Continue gate and the download read
+    // (widgetPending()).
+    var locked = false;
+    var note = el("div", { class: "learnr2-editing-note d-none", text: EDITING_NOTE });
+
+    function setLocked(isLocked, isEditing) {
+      locked = isLocked;
+      textarea.disabled = isLocked;
+      if (imagePaste) {
+        imagePaste.setDisabled(isLocked);
       }
+      if (editable) {
+        submit.textContent = isLocked ? data.editLabel : data.submitLabel;
+      } else if (isLocked) {
+        submit.classList.add("d-none");
+      }
+      note.classList.toggle("d-none", isLocked || !isEditing);
+    }
+
+    function applyOutcome() {
+      showModelAnswer();
+      setLocked(true, false);
     }
 
     submit.addEventListener("click", function () {
+      if (locked && editable) {
+        feedback.className = "learnr2-feedback d-none";
+        setLocked(false, true);
+        var reopened = loadState(data) || {};
+        reopened.editing = true;
+        saveState(data, reopened);
+        textarea.focus();
+        return;
+      }
       if (!passesValidation(textarea.value, data.validate)) {
         feedback.className = "learnr2-feedback learnr2-feedback-incorrect";
         feedback.textContent = VALIDATION_MESSAGES[data.validate];
         return;
       }
       feedback.className = "learnr2-feedback d-none";
-      applyOutcome(!editable);
+      applyOutcome();
       var image = imagePaste ? imagePaste.getDataUrl() : null;
       saveState(data, {
         // Text typed before pasting is hidden along with the text box, so
@@ -574,6 +595,7 @@
       container.appendChild(imagePaste.element);
     }
     container.appendChild(el("div", { class: "learnr2-controls" }, [submit]));
+    container.appendChild(note);
     container.appendChild(feedback);
     container.appendChild(reveal);
 
@@ -586,7 +608,8 @@
         imagePaste.setImage(saved.image);
       }
       if (saved.submitted) {
-        applyOutcome(!editable);
+        showModelAnswer();
+        setLocked(!(editable && saved.editing), editable && saved.editing);
       }
     }
   }
@@ -620,32 +643,71 @@
   // on blur *and* on click. The actual gate that matters is in
   // buildDownloadButton, which blocks downloading until they're fixed,
   // regardless of whether the button was ever clicked.
+  // The Edit/Submit cycle shared by student_info() and reflection_editable
+  // questions. Two states only: *submitted* (fields locked, button "Edit")
+  // and *editing* (fields open, button "Submit"). "Edit" just reopens the
+  // fields; nothing counts as received until the next Submit, so the
+  // button always tells the reader whether what they see is what was
+  // received. (The previous design left fields open after Submit and
+  // relabelled the button "Edit", which silently resaved -- readers had no
+  // signal their changes had gone in.) Ordinary "reflection" questions do
+  // not get this cycle: they stay locked for good, so a reader can't reopen
+  // one and paste in the model answer they were just shown.
+  var EDITING_NOTE = "Editing. Submit to save your changes.";
+
+  // student_info() storage, per form: the flat field keys hold the last
+  // *submitted* values (what the download reports); `submitted` is true only
+  // while the form is locked on a submission; `editing` marks a form reopened
+  // after a submission; `draft` holds typed-but-unsubmitted values, so a
+  // reload mid-edit loses nothing. Older saved data (flat keys plus
+  // `submitted: false`, from when every keystroke autosaved as the answer)
+  // is read as a draft, not as a submission.
   function buildInfoForm(container, data) {
     var inputs = {};
     var validators = [];
     var saved = loadState(data) || {};
-    // Mirrors question()'s reflection_editable handling exactly: starts as
-    // "Submit", switches to "Edit" the moment the reader successfully
-    // confirms a fully valid entry, and stays that way (including across a
-    // reload) since any further click is revising an already-confirmed
-    // entry, not submitting for the first time.
-    var hasSubmitted = !!saved.submitted;
+    var locked = !!saved.submitted;
+    var editing = !!saved.editing;
+    var lastSubmitted = {};
+    if (saved.submitted || saved.editing) {
+      data.fields.forEach(function (field) {
+        if (typeof saved[field.key] === "string") {
+          lastSubmitted[field.key] = saved[field.key];
+        }
+      });
+    }
+    var draft = saved.draft ||
+      (!saved.submitted && !saved.editing ? saved : null);
 
-    function save() {
+    function currentValues() {
       var values = {};
       Object.keys(inputs).forEach(function (key) {
         values[key] = inputs[key].value;
       });
-      values.submitted = hasSubmitted;
-      saveState(data, values);
+      return values;
     }
-    var debouncedSave = debounce(save, 400);
+
+    function persist() {
+      var state = Object.assign({}, lastSubmitted);
+      if (locked) {
+        state.submitted = true;
+      } else {
+        state.submitted = false;
+        if (editing) {
+          state.editing = true;
+        }
+        state.draft = currentValues();
+      }
+      saveState(data, state);
+    }
+    var debouncedPersist = debounce(persist, 400);
 
     data.fields.forEach(function (field) {
       var inputId = data.id + "-" + field.key;
       var input = el("input", { type: "text", id: inputId, class: "learnr2-info-input" });
-      if (typeof saved[field.key] === "string") {
-        input.value = saved[field.key];
+      var source = locked ? lastSubmitted : (draft || lastSubmitted);
+      if (source && typeof source[field.key] === "string") {
+        input.value = source[field.key];
       }
 
       var error = el("div", { class: "learnr2-info-error d-none" });
@@ -666,14 +728,16 @@
       validators.push(validate);
 
       input.addEventListener("input", function () {
-        debouncedSave();
+        debouncedPersist();
         if (input.value.trim()) {
           error.classList.add("d-none");
         }
       });
       input.addEventListener("blur", function () {
-        save();
-        validate();
+        if (!locked) {
+          persist();
+          validate();
+        }
       });
       inputs[field.key] = input;
 
@@ -683,19 +747,39 @@
     });
 
     var feedback = el("div", { class: "learnr2-feedback d-none" });
-    var submit = el(
-      "button",
-      { type: "button", class: "learnr2-submit", text: hasSubmitted ? data.editLabel : data.submitLabel }
-    );
+    var note = el("div", { class: "learnr2-editing-note d-none", text: EDITING_NOTE });
+    var submit = el("button", { type: "button", class: "learnr2-submit" });
+
+    function render() {
+      Object.keys(inputs).forEach(function (key) {
+        inputs[key].disabled = locked;
+      });
+      submit.textContent = locked ? data.editLabel : data.submitLabel;
+      note.classList.toggle("d-none", locked || !editing);
+    }
 
     submit.addEventListener("click", function () {
+      if (locked) {
+        locked = false;
+        editing = true;
+        feedback.className = "learnr2-feedback d-none";
+        render();
+        persist();
+        var first = inputs[data.fields[0].key];
+        if (first) {
+          first.focus();
+        }
+        return;
+      }
       var allValid = validators.map(function (validate) { return validate(); })
         .every(Boolean);
       if (allValid) {
-        hasSubmitted = true;
-        submit.textContent = data.editLabel;
+        lastSubmitted = currentValues();
+        locked = true;
+        editing = false;
       }
-      save();
+      persist();
+      render();
       feedback.className = "learnr2-feedback " +
         (allValid ? "learnr2-feedback-correct" : "learnr2-feedback-incorrect");
       feedback.textContent = allValid ?
@@ -703,32 +787,44 @@
         "Please fix the highlighted field(s) above.";
     });
 
+    render();
     container.appendChild(el("div", { class: "learnr2-controls" }, [submit]));
+    container.appendChild(note);
     container.appendChild(feedback);
   }
 
-  // Reads the *live* DOM value (not the possibly-stale debounced-save
-  // localStorage copy) for one info field.
-  function infoFieldValue(infoId, fieldKey) {
-    var input = document.getElementById(infoId + "-" + fieldKey);
-    return input ? input.value : "";
+  // A widget counts as received only once submitted, and not while it has
+  // been reopened for editing. Shared by the Continue gate and the
+  // download's checks, so they always agree.
+  function widgetPending(node) {
+    var isInfo = node.classList.contains("learnr2-info");
+    var data = decodeBase64Json(node.getAttribute(isInfo ? "data-learnr2-info" : "data-learnr2-question"));
+    var saved = loadState(data);
+    if (isInfo) {
+      return !(saved && saved.submitted);
+    }
+    return !saved || saved.editing === true;
   }
 
-  // Every info field, across every .learnr2-info on the page, that is
-  // either a required field left empty or an "email" field with no "@".
-  // Used to block downloading incomplete/invalid submissions.
+  // The last *submitted* value of one info field, or "" if the form has
+  // never been submitted. Never the live DOM value: what is typed but not
+  // submitted has not been received.
+  function infoFieldValue(data, fieldKey) {
+    var saved = loadState(data);
+    return saved && typeof saved[fieldKey] === "string" && (saved.submitted || saved.editing) ?
+      saved[fieldKey] : "";
+  }
+
+  // Every student_info() form on the page that is not currently submitted --
+  // never submitted, or reopened with Edit and not resubmitted. Blocks the
+  // download: the submission identifies the student, so it must be one they
+  // actually confirmed.
   function infoFieldProblems() {
     var problems = [];
     document.querySelectorAll(".learnr2-info[data-learnr2-info]").forEach(function (node) {
-      var data = decodeBase64Json(node.getAttribute("data-learnr2-info"));
-      data.fields.forEach(function (field) {
-        var value = infoFieldValue(data.id, field.key).trim();
-        if (field.required && !value) {
-          problems.push(field.label);
-        } else if (field.key === "email" && value && !isValidEmail(value)) {
-          problems.push(field.label + " (needs an \"@\")");
-        }
-      });
+      if (widgetPending(node)) {
+        problems.push("submit your student information above");
+      }
     });
     return problems;
   }
@@ -742,9 +838,8 @@
   function unansweredQuestionLabels() {
     var labels = [];
     document.querySelectorAll(".learnr2-question[data-learnr2-question]").forEach(function (node) {
-      var data = decodeBase64Json(node.getAttribute("data-learnr2-question"));
-      if (!loadState(data)) {
-        labels.push(data.text);
+      if (widgetPending(node)) {
+        labels.push(decodeBase64Json(node.getAttribute("data-learnr2-question")).text);
       }
     });
     return labels;
@@ -870,14 +965,14 @@
   }
 
   async function collectAnswers() {
-    // Live DOM values, not localStorage: a field's debounced auto-save may
-    // not have fired yet if the reader is still focused in it when they
-    // click "Download".
+    // Submitted values only (see infoFieldValue()): the download is blocked
+    // until every student_info() form is submitted, so these are what the
+    // reader confirmed, never half-typed edits.
     var info = {};
     document.querySelectorAll(".learnr2-info[data-learnr2-info]").forEach(function (node) {
       var data = decodeBase64Json(node.getAttribute("data-learnr2-info"));
       data.fields.forEach(function (field) {
-        var value = infoFieldValue(data.id, field.key);
+        var value = infoFieldValue(data, field.key);
         info[field.key] = value ? value : null;
       });
     });
@@ -942,7 +1037,7 @@
     button.addEventListener("click", async function () {
       var problems = infoFieldProblems();
       if (problems.length > 0) {
-        error.textContent = "Please fix: " + problems.join(", ");
+        error.textContent = "Before downloading, please " + problems.join(", and ") + ".";
         error.classList.remove("d-none");
         return;
       }
@@ -1244,15 +1339,38 @@
       // section (e.g. "3. Exercises") also matches `querySelector` here
       // simply because a Hints/Solutions section is nested somewhere
       // inside it, which would wrongly exclude the enclosing section too.
-      return !(section.classList.contains("level3") &&
-        section.querySelector(".exercise-hint, .exercise-solution"));
+      if (section.classList.contains("level3") &&
+          section.querySelector(".exercise-hint, .exercise-solution")) {
+        return false;
+      }
+      // A subsection that comes directly after its parent's heading, with
+      // no content of its own in between, is revealed together with that
+      // heading rather than behind a Continue of its own. tutorial.helpers
+      // starts every topic as "## Title" then a bare "###"; gating that
+      // first "###" put a Continue button directly under the heading with
+      // nothing above it to read (reported on the Orientation translation,
+      // 2026-10). learnr shows a topic's heading and first block together,
+      // and so do we: every Continue now sits at the end of real content.
+      var parent = section.parentElement;
+      var heading = parent && parent.tagName === "SECTION" ? sectionHeading(parent) : null;
+      if (heading && section.previousElementSibling === heading) {
+        return false;
+      }
+      return true;
     });
     // Nothing to gate: a one-section tutorial (or one with no headings at
     // all) already shows everything there is to show.
+    // Mark *every* headingless section, not just the gated ones: a bare
+    // "###" right after its parent's heading isn't gated (it's revealed
+    // with that heading), but its empty <h3> must still be hidden. Marking
+    // only the gated list left that heading rendered as a blank band
+    // between a topic's title and its first paragraph (Orientation, 2026-10).
+    markPauseSections(Array.prototype.slice.call(
+      document.querySelectorAll("section.level2, section.level3")
+    ));
     if (sections.length < 2) {
       return;
     }
-    markPauseSections(sections);
 
     var saved = loadState({ id: PROGRESS_ID });
     // Clamp -- a tutorial edited to have fewer sections since this was saved
@@ -1339,10 +1457,7 @@
         if (!(container.compareDocumentPosition(node) & Node.DOCUMENT_POSITION_PRECEDING)) {
           return false;
         }
-        var isInfo = node.classList.contains("learnr2-info");
-        var data = decodeBase64Json(node.getAttribute(isInfo ? "data-learnr2-info" : "data-learnr2-question"));
-        var saved = loadState(data);
-        return isInfo ? !(saved && saved.submitted) : !saved;
+        return widgetPending(node);
       });
     }
 
@@ -1468,6 +1583,26 @@
     }
   }
 
+  // Every link that leaves the page opens in a new tab, so following one
+  // never makes the tutorial "disappear" -- which worried students, and
+  // whose answers live in this page's localStorage. In-page links (the
+  // table of contents, footnotes: href starting "#"), download links, and
+  // mailto:/javascript: links are left alone. Quarto's own
+  // link-external-newwindow option would only catch other sites; a link to
+  // another page on the same site (the tutorial index on GitHub Pages)
+  // would still replace this one.
+  function openLinksInNewTabs() {
+    document.querySelectorAll("a[href]").forEach(function (link) {
+      var href = link.getAttribute("href") || "";
+      if (href === "" || href.charAt(0) === "#" || link.hasAttribute("download") ||
+          /^(mailto|javascript|tel):/i.test(href)) {
+        return;
+      }
+      link.setAttribute("target", "_blank");
+      link.setAttribute("rel", "noopener noreferrer");
+    });
+  }
+
   function init() {
     document
       .querySelectorAll(".learnr2-question:not([data-learnr2-initialized])")
@@ -1480,6 +1615,7 @@
       .forEach(renderDownloadButton);
     injectStartOverButton();
     initProgressiveSections();
+    openLinksInNewTabs();
   }
 
   if (document.readyState === "loading") {

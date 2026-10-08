@@ -36,7 +36,8 @@ test.describe("deployed hello-learnr2 smoke test", () => {
 
     await page.locator("#learnr2-info-student-info-name").fill(knownName);
     await page.locator("#learnr2-info-student-info-email").fill(knownEmail);
-    await page.locator("body").click();
+    // Only submitted student info counts: the download is blocked until then.
+    await page.locator(".learnr2-info .learnr2-submit").click();
 
     const choiceQuestion = page.locator(".learnr2-question", {
       hasText: "Which function computes the arithmetic mean in base R?"

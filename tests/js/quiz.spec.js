@@ -126,34 +126,59 @@ test.describe("reflection questions", () => {
     await expect(page.locator(".learnr2-model-answer")).toBeVisible();
   });
 
-  test("editable type: stays editable and can be resubmitted with a revision", async ({ page }) => {
+  test("editable type: Submit locks it with an Edit button; Edit reopens it with a Submit button", async ({ page }) => {
     await page.goto("/reflection-editable");
     const submit = page.locator(".learnr2-submit");
+    const textarea = page.locator("textarea");
+    const note = page.locator(".learnr2-editing-note");
     await expect(submit).toHaveText("Submit Answer");
 
-    await page.locator("textarea").fill("First draft.");
+    await textarea.fill("First draft.");
     await submit.click();
-
-    await expect(page.locator("textarea")).toBeEnabled();
-    await expect(submit).toBeVisible();
-    // Once submitted, further clicks are edits, not first submissions --
-    // the button should say so.
+    // Submitted: locked, and the button offers to reopen it.
+    await expect(textarea).toBeDisabled();
     await expect(submit).toHaveText("Edit Answer");
+    await expect(note).toBeHidden();
 
-    await page.locator("textarea").fill("Revised answer.");
+    // Edit only reopens: nothing is saved yet, and the reader is told so.
     await submit.click();
-    await expect(page.locator("textarea")).toHaveValue("Revised answer.");
-    await expect(page.locator("textarea")).toBeEnabled();
+    await expect(textarea).toBeEnabled();
+    await expect(submit).toHaveText("Submit Answer");
+    await expect(note).toBeVisible();
+    await expect(note).toHaveText("Editing. Submit to save your changes.");
+
+    await textarea.fill("Revised answer.");
+    await submit.click();
+    await expect(textarea).toBeDisabled();
     await expect(submit).toHaveText("Edit Answer");
+    await expect(note).toBeHidden();
+
+    await page.reload();
+    await expect(textarea).toHaveValue("Revised answer.");
+    await expect(textarea).toBeDisabled();
   });
 
-  test("editable type: button still says Edit Answer after a reload", async ({ page }) => {
+  test("editable type: a reopened edit survives a reload as an edit, still showing the last submitted answer", async ({ page }) => {
     await page.goto("/reflection-editable");
     await page.locator("textarea").fill("First draft.");
     await page.locator(".learnr2-submit").click();
+    await page.locator(".learnr2-submit").click(); // Edit
+    await page.locator("textarea").fill("Unsent change.");
 
     await page.reload();
-    await expect(page.locator(".learnr2-submit")).toHaveText("Edit Answer");
+    await expect(page.locator(".learnr2-submit")).toHaveText("Submit Answer");
+    await expect(page.locator("textarea")).toBeEnabled();
+    await expect(page.locator(".learnr2-editing-note")).toBeVisible();
+    // The unsent change was never received.
+    await expect(page.locator("textarea")).toHaveValue("First draft.");
+  });
+
+  test("an ordinary reflection question stays locked for good: no Edit button", async ({ page }) => {
+    await page.goto("/reflection-locked");
+    await page.locator("textarea").fill("My answer.");
+    await page.locator(".learnr2-submit").click();
+    await expect(page.locator("textarea")).toBeDisabled();
+    await expect(page.locator(".learnr2-submit")).toBeHidden();
   });
 
   test("with no answer() marked correct: submitting saves the response but reveals no model answer box", async ({
@@ -171,6 +196,7 @@ test.describe("reflection questions", () => {
     await expect(page.locator(".learnr2-model-answer")).toBeHidden();
     await expect(page.locator(".learnr2-model-answer")).toBeEmpty();
     await expect(page.locator(".learnr2-submit")).toHaveText("Edit Answer");
+    await expect(page.locator(".learnr2-text-input")).toBeDisabled();
 
     await page.reload();
     await expect(page.locator(".learnr2-text-input")).toHaveValue("90");
@@ -221,7 +247,9 @@ test.describe("validate = \"integer\"", () => {
     await textarea.fill("45");
     await page.locator(".learnr2-submit").click();
     await expect(page.locator(".learnr2-model-answer")).toBeVisible();
-    await expect(textarea).toBeEnabled(); // reflection_editable stays editable
+    // Submitted: locked behind an Edit button, like every reflection_editable.
+    await expect(textarea).toBeDisabled();
+    await expect(page.locator(".learnr2-submit")).toHaveText("Edit Answer");
   });
 });
 
@@ -369,7 +397,7 @@ test.describe("show_text = FALSE", () => {
 });
 
 test.describe("student info form", () => {
-  test("fields auto-save on blur and are restored on reload", async ({ page }) => {
+  test("unsubmitted typing is kept as a draft across a reload, but not as an answer", async ({ page }) => {
     await page.goto("/student-info");
     await page.locator("#learnr2-info-student-info-name").fill("Ada Lovelace");
     await page.locator("#learnr2-info-student-info-email").fill("ada@example.com");
@@ -406,13 +434,23 @@ test.describe("student info form", () => {
     // Mirrors question()'s reflection_editable behavior exactly: once
     // submitted successfully, further clicks are edits, not first submissions.
     await expect(submit).toHaveText("Edit");
+    // Submitted: the fields lock, so what is shown is what was received.
+    await expect(page.locator("#learnr2-info-student-info-name")).toBeDisabled();
 
-    // Unlike a graded question(), the form stays editable after clicking --
-    // this is data entry, not something to lock.
+    // Edit reopens the fields and turns the button back into Submit.
+    await submit.click();
     await expect(page.locator("#learnr2-info-student-info-name")).toBeEditable();
+    await expect(submit).toHaveText("Submit");
+    await expect(page.locator(".learnr2-info .learnr2-editing-note")).toBeVisible();
+
+    await page.locator("#learnr2-info-student-info-name").fill("Ada King");
+    await submit.click();
+    await expect(submit).toHaveText("Edit");
+    await expect(page.locator("#learnr2-info-student-info-name")).toBeDisabled();
+    await expect(page.locator(".learnr2-info .learnr2-editing-note")).toBeHidden();
   });
 
-  test("button still says Edit after a reload, once already submitted", async ({ page }) => {
+  test("a submitted form is still locked with an Edit button after a reload", async ({ page }) => {
     await page.goto("/student-info");
     await page.locator("#learnr2-info-student-info-name").fill("Ada Lovelace");
     await page.locator("#learnr2-info-student-info-email").fill("ada@example.com");
@@ -420,6 +458,8 @@ test.describe("student info form", () => {
 
     await page.reload();
     await expect(page.locator(".learnr2-info .learnr2-submit")).toHaveText("Edit");
+    await expect(page.locator("#learnr2-info-student-info-name")).toHaveValue("Ada Lovelace");
+    await expect(page.locator("#learnr2-info-student-info-name")).toBeDisabled();
   });
 
   test("required fields (name, email) are marked with * and show an inline error when left blank", async ({ page }) => {
@@ -463,7 +503,7 @@ test.describe("download answers button", () => {
 
     await page.locator("#learnr2-info-student-info-name").fill("Ada Lovelace");
     await page.locator("#learnr2-info-student-info-email").fill("ada@example.com");
-    await page.locator("body").click();
+    await page.locator(".learnr2-info .learnr2-submit").click();
 
     // Answer the single-choice question correctly, leave the reflection one
     // untouched to confirm unanswered questions are reported as such.
@@ -527,7 +567,7 @@ test.describe("download answers button", () => {
 
     await page.locator("#learnr2-info-student-info-name").fill("Ada Lovelace");
     await page.locator("#learnr2-info-student-info-email").fill("ada@example.com");
-    await page.locator("body").click();
+    await page.locator(".learnr2-info .learnr2-submit").click();
 
     // Simulate quarto-live's own editor having saved the reader's code for
     // "ex-attempted" (fixture block id "1") -- real key format confirmed
@@ -567,7 +607,7 @@ test.describe("download answers button", () => {
 
     await page.locator("#learnr2-info-student-info-name").fill("Ada Lovelace");
     await page.locator("#learnr2-info-student-info-email").fill("ada@example.com");
-    await page.locator("body").click();
+    await page.locator(".learnr2-info .learnr2-submit").click();
 
     const imageQuestion = page.locator(".learnr2-question", {
       has: page.locator(".learnr2-image-paste")
@@ -598,7 +638,7 @@ test.describe("download answers button", () => {
 
     await page.locator("#learnr2-info-student-info-name").fill("Ada Lovelace");
     await page.locator("#learnr2-info-student-info-email").fill("ada@example.com");
-    await page.locator("body").click();
+    await page.locator(".learnr2-info .learnr2-submit").click();
 
     // Save code for both {webr} cells and answer the first question, so
     // every entry has a real value -- order is what's under test.
@@ -646,7 +686,7 @@ test.describe("download answers button", () => {
 
     await page.locator("#learnr2-info-student-info-name").fill("Ada Lovelace");
     await page.locator("#learnr2-info-student-info-email").fill("ada@example.com");
-    await page.locator("body").click();
+    await page.locator(".learnr2-info .learnr2-submit").click();
     const singleChoiceQuestion = page.locator(".learnr2-question", {
       has: page.locator("#single-choice-answer-0")
     });
@@ -679,7 +719,7 @@ test.describe("download answers button", () => {
     await page.goto("/download-answers");
     await page.locator("#learnr2-info-student-info-name").fill("Ada Lovelace");
     await page.locator("#learnr2-info-student-info-email").fill("ada@example.com");
-    await page.locator("body").click();
+    await page.locator(".learnr2-info .learnr2-submit").click();
 
     async function download() {
       const downloadPromise = page.waitForEvent("download");
@@ -713,12 +753,15 @@ test.describe("download answers button", () => {
 
     await page.locator(".learnr2-download-answers-btn").click();
     await expect(page.locator(".learnr2-download-error")).toBeVisible();
-    await expect(page.locator(".learnr2-download-error")).toContainText("Email:");
+    await expect(page.locator(".learnr2-download-error")).toContainText("submit your student information");
     expect(downloadHappened).toBe(false);
 
-    // Filling in the missing field and retrying should now succeed.
+    // Submitting the form is refused while email is missing...
+    await page.locator(".learnr2-info .learnr2-submit").click();
+    await expect(page.locator(".learnr2-info .learnr2-feedback")).toHaveClass(/learnr2-feedback-incorrect/);
+    // ...and accepted once it's filled in, after which the download works.
     await page.locator("#learnr2-info-student-info-email").fill("ada@example.com");
-    await page.locator("body").click();
+    await page.locator(".learnr2-info .learnr2-submit").click();
 
     const downloadPromise = page.waitForEvent("download");
     await page.locator(".learnr2-download-answers-btn").click();
@@ -741,13 +784,17 @@ test.describe("download answers button", () => {
       downloadHappened = true;
     });
 
+    // A bad email can't be submitted, so the form stays unsubmitted and the
+    // download says so.
+    await page.locator(".learnr2-info .learnr2-submit").click();
+    await expect(page.locator(".learnr2-info .learnr2-submit")).toHaveText("Submit");
     await page.locator(".learnr2-download-answers-btn").click();
     await expect(page.locator(".learnr2-download-error")).toBeVisible();
-    await expect(page.locator(".learnr2-download-error")).toContainText("Email:");
+    await expect(page.locator(".learnr2-download-error")).toContainText("submit your student information");
     expect(downloadHappened).toBe(false);
 
     await page.locator("#learnr2-info-student-info-email").fill("ada@example.com");
-    await page.locator("body").click();
+    await page.locator(".learnr2-info .learnr2-submit").click();
 
     const downloadPromise = page.waitForEvent("download");
     await page.locator(".learnr2-download-answers-btn").click();
@@ -762,7 +809,7 @@ test.describe("download answers button", () => {
     await page.goto("/download-answers");
     await page.locator("#learnr2-info-student-info-name").fill("Ada Lovelace");
     await page.locator("#learnr2-info-student-info-email").fill("ada@example.com");
-    await page.locator("body").click();
+    await page.locator(".learnr2-info .learnr2-submit").click();
 
     let downloadHappened = false;
     page.once("download", () => {
@@ -1125,6 +1172,32 @@ test.describe("progressive sections (Continue buttons)", () => {
     await expect(page.locator(".learnr2-continue-note")).toBeHidden();
   });
 
+  test("a bare ### right after a topic heading is shown with the heading, not behind a Continue of its own", async ({ page }) => {
+    await page.goto("/progressive-sections-topic-start");
+    // The heading and its first block appear together.
+    await expect(page.locator("#introduction h2")).toBeVisible();
+    await expect(page.locator("#section")).toBeVisible();
+    await expect(page.locator("#section")).toContainText("First block");
+    // ...with no blank band between them: the ungated pause's empty heading
+    // is hidden too.
+    await expect(page.locator("#section")).toHaveClass(/learnr2-pause/);
+    await expect(page.locator("#section > h3")).toBeHidden();
+    await expect(page.locator("#section-1")).toBeHidden();
+    // The one Continue sits at the end of that first block, not under the heading.
+    const container = page.locator(".learnr2-continue-container");
+    await expect(container).toHaveCount(1);
+    const prev = await container.evaluate((n) => n.previousElementSibling && n.previousElementSibling.id);
+    expect(prev).toBe("section");
+
+    await page.locator(".learnr2-continue").click();
+    await expect(page.locator("#section-1")).toBeVisible();
+    // The next topic's heading and first block also arrive together.
+    await page.locator(".learnr2-continue").click();
+    await expect(page.locator("#bash-terminal h2")).toBeVisible();
+    await expect(page.locator("#section-2")).toBeVisible();
+    await expect(page.locator("#exercise-1")).toBeHidden();
+  });
+
   test("a bare ### divider is its own Continue stop, with a plain 'Continue' label and no visible heading", async ({ page }) => {
     await page.goto("/progressive-sections-pauses");
 
@@ -1240,5 +1313,18 @@ test.describe("progressive sections (Continue buttons)", () => {
     await expect(button).toContainText("4. Setup cells");
     await button.click();
     await expect(page.locator("#setup-cells")).toBeVisible();
+  });
+});
+
+test.describe("links", () => {
+  test("links that leave the page open in a new tab; in-page, mailto and download links don't", async ({ page }) => {
+    await page.goto("/links");
+    for (const id of ["ext", "rel"]) {
+      await expect(page.locator("#" + id)).toHaveAttribute("target", "_blank");
+      await expect(page.locator("#" + id)).toHaveAttribute("rel", "noopener noreferrer");
+    }
+    for (const id of ["hash", "mail", "dl"]) {
+      await expect(page.locator("#" + id)).not.toHaveAttribute("target", "_blank");
+    }
   });
 });

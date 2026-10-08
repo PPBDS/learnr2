@@ -114,7 +114,7 @@ learnr2::download_answers_button(filename_prefix = "<name>")
 ```
 ````
 
-**learnr2** has no numeric question type. `validate = "integer"` blocks Submit until the response is a whole number, without grading it against any one value, since any honest count is acceptable. There is no `answer()` because there is no correct number of minutes. This is the one question that stays `reflection_editable`, because there is no right answer to copy.
+**learnr2** has no numeric question type. `validate = "integer"` blocks Submit until the response is a whole number, without grading it against any one value, since any honest count is acceptable. There is no `answer()` because there is no correct number of minutes. This is the one question that stays `reflection_editable`, because there is no right answer to copy. After Submit it locks behind an Edit button, and Edit reopens it until the next Submit, the same cycle as `student_info()`.
 
 ## Chunk labels
 
@@ -231,7 +231,16 @@ Choice and `"text"` questions, and `quiz()`, suit mechanics tutorials and featur
 
 ### Screenshot questions
 
-`learnr2::question(type = "reflection", allow_image = TRUE)` lets the reader paste a screenshot as their answer. It is for steps that nothing else can verify, such as being signed in to an account or having a particular window open.
+`learnr2::question(type = "reflection", allow_image = TRUE)` lets the reader paste a screenshot as their answer. Use it in three cases, and convert the source's question whenever one applies:
+
+1. **The student would copy text out of a web page.** **tutorial.helpers** tutorials often say "copy everything from X through Y on this page" and take a pasted mess of text, as the website tutorials in **vscode.tutorials** do for the student's own rendered pages. Ask instead for a screenshot of the relevant part of the page. The screenshot shows what the student actually saw, layout included, and is easier to check.
+2. **The student produces an image,** usually a plot. Classic tutorials verify a plot exercise with `show_file()`, which proves the student has *code*, not that it drew the right picture. Ask for a screenshot of the plot instead, as in the plotting template in [Tutorials in the Age of AI](ai.html). This is very common in **misc.tutorials**. Keep `show_file()` for exercises whose result is text, such as a printed tibble or summary statistics.
+3. **Nothing else can verify the step,** such as being signed in to an account or having a particular window open.
+4. **The student carries out several small steps in a row.** Turning each one into its own question is sometimes more than the steps deserve. If every step is necessary, give the steps as plain instructions and end with a single screenshot of something that only looks right if all of them were done correctly. For example, after "create the repo, add a `.gitignore`, commit and push", ask for a screenshot of the repo's page on GitHub showing the `.gitignore` file. Pick the screen so a skipped or botched step shows: if the screenshot would look the same without one of the steps, that step needs its own check. When translating, use this for a run of steps the source left unchecked. Don't merge questions the source already asks separately, since that pacing was the author's choice.
+
+When you convert a question, rewrite the prose around it to match. An instruction that says "copy" or "CP/CR" should now say what to screenshot. Any sentence explaining that pasted text may look messy goes, since it no longer applies. Keep the source's own answer, if it had one, as the answer shown after Continue: a screenshot of the expected page, or our answer chunk drawing the expected plot.
+
+The first screenshot question a student meets should say how to take a screenshot and how to paste it: `Cmd + Shift + 4` on a Mac, `Win + Shift + S` on Windows, then click in the answer box and press `Ctrl + V` (`Cmd + V` on a Mac). Later ones can just ask for the screenshot.
 
 Ask for one specific screenshot, never a hedged choice. "Paste a screenshot of your GitHub dashboard" works. "Paste a screenshot showing you're signed in, for example your profile page or the account menu" leaves the reader guessing which one counts. If it isn't obvious why that screen proves the step, say so.
 
@@ -243,7 +252,7 @@ Replace `knitr::include_graphics()` chunks with plain Markdown, `![](images/thin
 
 ## Sections and the Continue button
 
-**learnr2** reveals a tutorial one section at a time. Every `##` and `###` heading becomes a stop behind a Continue button, and you add nothing to opt in. Some details for translations:
+**learnr2** reveals a tutorial one section at a time. Every `##` and `###` heading becomes a stop behind a Continue button, and you add nothing to opt in. A Continue button always sits at the end of something to read, never directly under a heading: clicking it reveals the next heading together with the text that follows it, which may or may not include the next exercise. In particular, a `##` heading followed immediately by a bare `###`, the way **tutorial.helpers** opens every topic, shows the heading and that first block together. Some details for translations:
 
 - **Keep every bare `###` divider.** A line holding only `###` becomes a Continue stop with no visible heading and a button that just says "Continue". **tutorial.helpers** puts two inside every exercise, one before the author's answer and one before the knowledge drop, and both pauses survive the translation.
 - **Delete a titled heading that exists only as a pacing break,** with no content of its own, and fold its prose into the enclosing section.
@@ -251,6 +260,7 @@ Replace `knitr::include_graphics()` chunks with plain Markdown, `![](images/thin
 - **The table of contents can't be used to read ahead.** Entries for sections the reader hasn't reached are dimmed and do nothing when clicked. `learnr2::tutorial_options(allow_skip = TRUE)` restores **learnr**'s `allow_skip: yes`, where clicking an entry unlocks everything up to it.
 - **Continue waits for answers.** A section's Continue button is disabled until every question and `student_info()` form above it has been submitted. `learnr2::tutorial_options(require_submission = FALSE)` turns that off, which suits reference material.
 - **`toc: false` is supported.** Without a sidebar, the Start Over button moves to the top of the tutorial, under the title.
+- **Links that leave the page open in a new tab,** so following one never makes the tutorial disappear. Write ordinary Markdown links. Nothing is needed to opt in.
 
 Call `tutorial_options()` at most once, in its own chunk with `#| echo: false`.
 

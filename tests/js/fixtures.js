@@ -440,6 +440,29 @@ const PAUSES_BLOCKS = [
     ["summary", "Summary"]
   ])
 ];
+FIXTURES["links"] = [
+  '<p><a id="ext" href="https://example.com/">external</a>' +
+  ' <a id="rel" href="other-page.html">same site</a>' +
+  ' <a id="hash" href="#somewhere">in page</a>' +
+  ' <a id="mail" href="mailto:x@example.com">mail</a>' +
+  ' <a id="dl" href="file.json" download>download</a></p>\n'
+];
+
+// tutorial.helpers' topic opening: "## Introduction" immediately followed by
+// a bare "###" (Quarto: the level3 section is the heading's next sibling),
+// then a second pause, then the next topic.
+FIXTURES["progressive-sections-topic-start"] = [
+  sectionBlock("introduction", 2, "Introduction", "", [
+    sectionBlock("section", 3, "", "<p>First block of the introduction.</p>\n"),
+    sectionBlock("section-1", 3, "", "<p>Second block of the introduction.</p>\n")
+  ]),
+  sectionBlock("bash-terminal", 2, "Bash Terminal", "", [
+    sectionBlock("section-2", 3, "", "<p>Bash intro.</p>\n"),
+    sectionBlock("exercise-1", 3, "Exercise 1", "<p>Run whoami.</p>\n")
+  ]),
+  optionsBlock(tutorialOptions({ requireSubmission: false }))
+];
+
 // The pause test clicks straight past Exercise 1's question, so it opts
 // out of the submission gate...
 FIXTURES["progressive-sections-pauses"] = PAUSES_BLOCKS.concat([
