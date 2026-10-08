@@ -2,6 +2,18 @@
 
 This is a resubmission. In this version I have:
 
+* Fixed the example-timing NOTEs from the incoming checks (`run_tutorial`
+  at 14.6 s and 8.6 s elapsed, `prerender_tutorials` at 5.1 s). Both
+  examples rendered a complete tutorial with Quarto, and `run_tutorial`
+  rendered it twice. They now run only in an interactive session. The
+  `render_tutorials()` example, which renders a minimal tutorial and was
+  not flagged, still runs whenever Quarto is installed.
+* Listed the copyright holders of every bundled third-party component in
+  `inst/COPYRIGHTS` (referenced from the `Copyright` field), adding three
+  that were missing.
+
+In the previous resubmission I had:
+
 * Removed the default `dir = "."` from the two functions that write files,
   `create_tutorial()` and `add_live_extension()`. `dir` is now a required
   argument, so neither writes anywhere the user did not name. Examples and
@@ -21,7 +33,7 @@ This is a resubmission. In this version I have:
   whenever the tutorial or learnr2 changes, and `refresh = TRUE` rebuilds
   it from empty.
 
-In the previous resubmission I had:
+In the resubmission before that I had:
 
 * Fixed the "detritus in the temp directory" NOTE from the previous
   submission (leftover `calibre-*` directories). The console print methods
@@ -43,9 +55,12 @@ In the previous resubmission I had:
 * `\dontrun{}` is used once, in `run_tutorial()`, for
   `run_tutorial("hello-learnr2")` with the default `open = TRUE`: it starts a
   local web server that blocks until interrupted. The rendering examples for
-  `run_tutorial()`, `prerender_tutorials()` and `render_tutorials()` run
-  whenever the Quarto command line tool (see `SystemRequirements`) is
-  installed, writing only under `tempdir()`.
+  `run_tutorial()` and `prerender_tutorials()` are wrapped in
+  `if (interactive() && ...)`: each renders a complete tutorial with the
+  Quarto command line tool (see `SystemRequirements`), which took 5 to 9
+  seconds on the incoming check machines. The `render_tutorials()` example
+  renders a minimal tutorial and runs whenever Quarto is installed. All
+  write only under `tempdir()`.
 * The package bundles the 'quarto-live' Quarto extension (MIT) under
   `inst/extdata/`, including minified JavaScript built by that project from
   its TypeScript sources. Its license file is kept in the bundled directory;

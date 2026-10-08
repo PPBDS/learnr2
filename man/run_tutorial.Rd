@@ -169,15 +169,14 @@ errors with an install hint if that invariant is somehow broken.
 run_tutorial()
 
 # Render without serving (open = FALSE), into a temporary directory
-# rather than the user cache. Needs the Quarto command line tool, so this
-# is skipped where it isn't installed.
-if (!is.null(quarto::quarto_path())) {
+# rather than the user cache. Calling it again would reuse this render;
+# pass refresh = TRUE to force a new one. Runs only interactively, with the
+# Quarto command line tool installed: a full tutorial takes several
+# seconds to render.
+if (interactive() && !is.null(quarto::quarto_path())) {
   out <- tempfile()
   html <- run_tutorial("hello-learnr2", output_dir = out, open = FALSE)
   file.exists(html)
-
-  # A second call reuses the cached render; refresh = TRUE forces a new one.
-  run_tutorial("hello-learnr2", output_dir = out, open = FALSE, refresh = TRUE)
   unlink(out, recursive = TRUE)
 }
 

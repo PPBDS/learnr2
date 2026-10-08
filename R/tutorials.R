@@ -407,15 +407,14 @@ tutorial_title <- function(doc) {
 #' run_tutorial()
 #'
 #' # Render without serving (open = FALSE), into a temporary directory
-#' # rather than the user cache. Needs the Quarto command line tool, so this
-#' # is skipped where it isn't installed.
-#' if (!is.null(quarto::quarto_path())) {
+#' # rather than the user cache. Calling it again would reuse this render;
+#' # pass refresh = TRUE to force a new one. Runs only interactively, with the
+#' # Quarto command line tool installed: a full tutorial takes several
+#' # seconds to render.
+#' if (interactive() && !is.null(quarto::quarto_path())) {
 #'   out <- tempfile()
 #'   html <- run_tutorial("hello-learnr2", output_dir = out, open = FALSE)
 #'   file.exists(html)
-#'
-#'   # A second call reuses the cached render; refresh = TRUE forces a new one.
-#'   run_tutorial("hello-learnr2", output_dir = out, open = FALSE, refresh = TRUE)
 #'   unlink(out, recursive = TRUE)
 #' }
 #'
@@ -499,10 +498,11 @@ run_tutorial <- function(name = NULL,
 #' @export
 #' @examples
 #' # One package, into a temporary directory rather than the user cache.
-#' # Needs the Quarto command line tool, so this is skipped where it isn't
-#' # installed. Called with no arguments, prerender_tutorials() renders every
-#' # installed package's tutorials into the default per-user cache.
-#' if (!is.null(quarto::quarto_path())) {
+#' # Called with no arguments, prerender_tutorials() renders every installed
+#' # package's tutorials into the default per-user cache. Runs only
+#' # interactively, with the Quarto command line tool installed: a full
+#' # tutorial takes several seconds to render.
+#' if (interactive() && !is.null(quarto::quarto_path())) {
 #'   out <- tempfile()
 #'   prerender_tutorials(package = "learnr2", output_dir = out)
 #'   unlink(out, recursive = TRUE)
