@@ -303,13 +303,13 @@ learnr2::question(
 )
 ```
 
-Whatever your OS's native clipboard format actually is behind the scenes
-(bitmap, TIFF, etc. --- it genuinely varies by platform, so a screenshot
-isn't guaranteed to already be a PNG), `allow_image` accepts it directly
---- PNG, JPEG, GIF, WebP, or BMP --- and re-encodes it as PNG itself before
-storing it, so what's actually saved is always PNG no matter which of
-those your platform handed over (see the `question()` help page for the
-exact size limit).
+Whatever format your platform's clipboard actually holds --- it varies,
+so a screenshot isn't guaranteed to be a PNG --- `allow_image` accepts it:
+PNG, JPEG, GIF, WebP, or BMP. Before saving, it scales the image to at
+most 1600 pixels wide and stores it as a compact WebP (JPEG in Safari),
+so a page of screenshots doesn't fill the browser's storage. If a save
+ever fails, the page shows a warning and the answer stays unsubmitted
+(see the `question()` help page for the details).
 
 ## 8. Student info and submission
 

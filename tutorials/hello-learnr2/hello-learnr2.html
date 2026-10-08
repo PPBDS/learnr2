@@ -79,8 +79,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="hello-learnr2_files/libs/quarto-contrib/live-runtime/live-runtime.css" rel="stylesheet">
 <script type="module" src="hello-learnr2_files/libs/quarto-ojs/quarto-ojs-runtime.js"></script>
 <link href="hello-learnr2_files/libs/quarto-ojs/quarto-ojs.css" rel="stylesheet">
-<link href="hello-learnr2_files/libs/learnr2-quiz-0.1.2.9003/quiz.css" rel="stylesheet">
-<script src="hello-learnr2_files/libs/learnr2-quiz-0.1.2.9003/quiz.js"></script>
+<link href="hello-learnr2_files/libs/learnr2-quiz-0.1.3.9001/quiz.css" rel="stylesheet">
+<script src="hello-learnr2_files/libs/learnr2-quiz-0.1.3.9001/quiz.js"></script>
 
 
 </head>
@@ -485,7 +485,7 @@ dWUsInNob3dUZXh0Ijp0cnVlLCJ2YWxpZGF0ZSI6Im5vbmUifQ==">
 </div>
 </div>
 </div>
-<p>Whatever your OS’s native clipboard format actually is behind the scenes (bitmap, TIFF, etc. — it genuinely varies by platform, so a screenshot isn’t guaranteed to already be a PNG), <code>allow_image</code> accepts it directly — PNG, JPEG, GIF, WebP, or BMP — and re-encodes it as PNG itself before storing it, so what’s actually saved is always PNG no matter which of those your platform handed over (see the <code>question()</code> help page for the exact size limit).</p>
+<p>Whatever format your platform’s clipboard actually holds — it varies, so a screenshot isn’t guaranteed to be a PNG — <code>allow_image</code> accepts it: PNG, JPEG, GIF, WebP, or BMP. Before saving, it scales the image to at most 1600 pixels wide and stores it as a compact WebP (JPEG in Safari), so a page of screenshots doesn’t fill the browser’s storage. If a save ever fails, the page shows a warning and the answer stays unsubmitted (see the <code>question()</code> help page for the details).</p>
 </section>
 <section id="student-info-and-submission" class="level2">
 <h2 class="anchored" data-anchor-id="student-info-and-submission">8. Student info and submission</h2>
