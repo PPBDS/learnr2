@@ -1,4 +1,4 @@
-# learnr2 (development version)
+# learnr2 0.1.2
 
 * `tutorial_options()` gains `require_submission`, default `TRUE`: the
   "Continue" button at the end of a section is disabled, with a note under

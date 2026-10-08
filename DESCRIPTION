@@ -1,6 +1,6 @@
 Package: learnr2
 Title: Interactive Tutorials with 'Quarto' and 'WebR'
-Version: 0.1.1.9011
+Version: 0.1.2
 Authors@R: c(
     person("David", "Kane", , "dave.kane@gmail.com", role = c("aut", "cre", "cph"),
            comment = c(ORCID = "0000-0002-6660-3934")),
