@@ -64,7 +64,7 @@ Every tutorial ends with two chunks: a question asking how many minutes the tuto
 learnr2::question(
   "How many minutes, approximately, did it take you to complete this
   tutorial? For example, an hour and a half would be 90 minutes.",
-  type = "reflection",
+  type = "reflection_editable",
   validate = "integer"
 )
 ```
@@ -314,7 +314,7 @@ The one case `{verbatim}` doesn't cover is *inline* code that you want to show r
 
 ## Tutorial Introduction
 
-Students need some background in order to complete these sorts of tutorials, some familiarity with R, GitHub and so on. Students should have completed the "Getting Started" tutorial from the [**tutorial.helpers**](https://CRAN.R-project.org/package=tutorial.helpers) package. They should also complete the first four VS Code tutorials (i.e., through "VS Code and GitHub Introduction") from [**vscode.tutorials**](https://ppbds.github.io/vscode.tutorials/).
+Students need some background in order to complete these sorts of tutorials, some familiarity with R, GitHub and so on. Students should have completed the "Getting Started" tutorial from the [**tutorial.helpers**](https://CRAN.R-project.org/package=tutorial.helpers) package. They should also complete the first four VS Code tutorials (i.e., "Orientation," "Workflow," "Code," and "Quarto") from [**vscode.tutorials**](https://ppbds.github.io/vscode.tutorials/).
 
 Always begin by having students set up a repo and a Quarto document to work in. Again, you must replace `XX` with something sensible and usually different from the other `XX`'s. So, in the below example, the name of the repo and the title of the QMD will be different even though we hold their places with `XX` in both cases.
 
