@@ -105,12 +105,42 @@
     }
   }
 
+  // Returns true if the state was stored. On failure it tells the reader,
+  // once per page, instead of failing silently: a full localStorage used to
+  // mean an answer looked submitted but was never stored, and so was
+  // missing from the download. Storage is per *site*, shared by every
+  // tutorial served from it (all of run_tutorial()'s 127.0.0.1:7446, all
+  // of ppbds.github.io), and about 5 MB in most browsers, so pasted
+  // screenshots are what fill it.
   function saveState(data, state) {
     try {
       window.localStorage.setItem(storageKey(data), JSON.stringify(state));
+      return true;
     } catch (e) {
-      // localStorage unavailable (e.g. private browsing) -- degrade silently.
+      reportStorageFailure(e);
+      return false;
     }
+  }
+
+  function isQuotaError(e) {
+    return !!e && (e.name === "QuotaExceededError" ||
+      e.name === "NS_ERROR_DOM_QUOTA_REACHED" || e.code === 22 || e.code === 1014);
+  }
+
+  var storageWarning = null;
+  function reportStorageFailure(e) {
+    var message = isQuotaError(e) ?
+      "Your last answer was NOT saved: this browser's storage for this site is full. " +
+      "Pasted screenshots take the most room. Remove one with \"Remove image\", or use " +
+      "Start Over on a tutorial you have already downloaded and turned in, then submit again." :
+      "This browser is blocking storage for this page, so your answers will not be kept " +
+      "if you leave or reload it. Download your answers before you close the page.";
+    if (!storageWarning) {
+      storageWarning = el("div", { class: "learnr2-storage-warning", role: "alert" });
+      var main = document.getElementById("quarto-document-content") || document.body;
+      main.insertBefore(storageWarning, main.firstChild);
+    }
+    storageWarning.textContent = message;
   }
 
   function clearState(data) {
@@ -288,24 +318,58 @@
     }
   }
 
-  // Re-encodes any browser-decodable raster image `file` as a PNG data URL,
-  // via an off-DOM <img>/<canvas> round-trip -- so what's stored is always
-  // PNG, regardless of which raster type the clipboard actually handed us.
-  // (Also, incidentally, strips whatever metadata the original carried,
-  // e.g. EXIF orientation/GPS from a photo -- not something readers should
-  // need to think about for a plot screenshot.)
-  function convertToPngDataUrl(file, onSuccess, onError) {
+  // Shrinks a pasted screenshot before it is stored. The image is scaled to
+  // at most IMAGE_MAX_WIDTH x IMAGE_MAX_HEIGHT (aspect kept), drawn on a white
+  // background (so transparent areas don't turn black), and encoded as WebP,
+  // or JPEG where the browser can't encode WebP (Safari's canvas silently
+  // returns PNG for "image/webp"; we detect that from the data URL). If the
+  // result is still over IMAGE_TARGET_CHARS, quality and then size step down
+  // until it fits. Screenshots used to be stored as full-size PNG, so a
+  // single one could take 3 MB of the ~5 MB localStorage a whole site
+  // shares. Also strips metadata (EXIF orientation, GPS) as before.
+  var IMAGE_MAX_WIDTH = 1600;
+  var IMAGE_MAX_HEIGHT = 4000;
+  var IMAGE_TARGET_CHARS = 600 * 1024; // of data URL, ~450 KB of image
+  var IMAGE_QUALITIES = [0.85, 0.7, 0.55];
+
+  function encodeCanvas(canvas, quality) {
+    var webp = canvas.toDataURL("image/webp", quality);
+    if (webp.indexOf("data:image/webp") === 0) {
+      return webp;
+    }
+    return canvas.toDataURL("image/jpeg", quality);
+  }
+
+  function compressImage(file, onSuccess, onError) {
     var reader = new FileReader();
     reader.onload = function () {
       var img = new Image();
       img.onload = function () {
-        var canvas = document.createElement("canvas");
-        canvas.width = img.naturalWidth;
-        canvas.height = img.naturalHeight;
-        var ctx = canvas.getContext("2d");
-        ctx.drawImage(img, 0, 0);
         try {
-          onSuccess(canvas.toDataURL("image/png"));
+          var scale = Math.min(1, IMAGE_MAX_WIDTH / img.naturalWidth, IMAGE_MAX_HEIGHT / img.naturalHeight);
+          var result = null;
+          for (var attempt = 0; attempt < 6 && !result; attempt++) {
+            var canvas = document.createElement("canvas");
+            canvas.width = Math.max(1, Math.round(img.naturalWidth * scale));
+            canvas.height = Math.max(1, Math.round(img.naturalHeight * scale));
+            var ctx = canvas.getContext("2d");
+            ctx.fillStyle = "#ffffff";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            for (var q = 0; q < IMAGE_QUALITIES.length; q++) {
+              var url = encodeCanvas(canvas, IMAGE_QUALITIES[q]);
+              if (url.length <= IMAGE_TARGET_CHARS) {
+                result = url;
+                break;
+              }
+            }
+            scale = scale * 0.75;
+          }
+          if (result) {
+            onSuccess(result);
+          } else {
+            onError();
+          }
         } catch (e) {
           onError();
         }
@@ -334,7 +398,9 @@
   // `onChange(hasImage)` fires whenever an image is set or removed, so the
   // caller can hide its response textarea while an image is the answer.
   function buildImagePasteArea(onChange) {
-    var MAX_BYTES = 2 * 1024 * 1024;
+    // A sanity cap on what is decoded; the stored image is shrunk by
+    // compressImage() regardless, so readers no longer need to crop.
+    var MAX_BYTES = 20 * 1024 * 1024;
     var wrapper = el("div", { class: "learnr2-image-paste", tabindex: "0" });
     var placeholder = el("div", {
       class: "learnr2-image-paste-placeholder",
@@ -397,9 +463,9 @@
     // simulated). Rather than gamble on "screenshots are always PNG" and
     // reject anything else, accept every raster type every mainstream
     // browser can reliably decode via <img>/canvas, and normalize to PNG
-    // ourselves in convertToPngDataUrl() below -- so what's actually
-    // stored and submitted is always PNG regardless of what the reader's
-    // platform put on the clipboard. Deliberately excludes image/svg+xml
+    // ourselves in compressImage() above -- so what's actually stored and
+    // submitted is always a size-capped WebP or JPEG regardless of what the
+    // reader's platform put on the clipboard. Deliberately excludes image/svg+xml
     // (vector markup, not a raster screenshot, and a different security
     // surface to feed into <img>) and image/tiff (real OS clipboards can
     // expose this, notably on macOS, but mainstream browsers other than
@@ -439,14 +505,14 @@
         return;
       }
       if (file.size > MAX_BYTES) {
-        setError("That image is too large (max 2MB). Try a smaller screenshot or crop it first.");
+        setError("That image is too large (max 20MB). Try a smaller screenshot.");
         return;
       }
 
-      convertToPngDataUrl(
+      compressImage(
         file,
-        function (pngDataUrl) {
-          setImage(pngDataUrl);
+        function (dataUrl) {
+          setImage(dataUrl);
         },
         function () {
           setError("Could not read the pasted image. Please try again.");
@@ -579,15 +645,22 @@
         return;
       }
       feedback.className = "learnr2-feedback d-none";
-      applyOutcome();
       var image = imagePaste ? imagePaste.getDataUrl() : null;
-      saveState(data, {
+      var stored = saveState(data, {
         // Text typed before pasting is hidden along with the text box, so
         // don't submit it alongside the image.
         value: image ? "" : textarea.value,
         image: image,
         submitted: true
       });
+      if (!stored) {
+        // Not received, so don't present it as submitted: leave it open to
+        // retry once there is room (see reportStorageFailure()).
+        feedback.className = "learnr2-feedback learnr2-feedback-incorrect";
+        feedback.textContent = "Your answer could not be saved. See the warning at the top of the page.";
+        return;
+      }
+      applyOutcome();
     });
 
     container.appendChild(answers);
@@ -689,6 +762,8 @@
 
     function persist() {
       var state = Object.assign({}, lastSubmitted);
+      // Returns saveState()'s result, so Submit can refuse to lock a form
+      // that wasn't stored.
       if (locked) {
         state.submitted = true;
       } else {
@@ -698,7 +773,7 @@
         }
         state.draft = currentValues();
       }
-      saveState(data, state);
+      return saveState(data, state);
     }
     var debouncedPersist = debounce(persist, 400);
 
@@ -773,12 +848,21 @@
       }
       var allValid = validators.map(function (validate) { return validate(); })
         .every(Boolean);
+      var previous = lastSubmitted;
       if (allValid) {
         lastSubmitted = currentValues();
         locked = true;
         editing = false;
       }
-      persist();
+      if (!persist() && allValid) {
+        lastSubmitted = previous;
+        locked = false;
+        editing = true;
+        render();
+        feedback.className = "learnr2-feedback learnr2-feedback-incorrect";
+        feedback.textContent = "Your information could not be saved. See the warning at the top of the page.";
+        return;
+      }
       render();
       feedback.className = "learnr2-feedback " +
         (allValid ? "learnr2-feedback-correct" : "learnr2-feedback-incorrect");

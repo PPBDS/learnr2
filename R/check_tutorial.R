@@ -124,6 +124,18 @@ parse_chunks <- function(lines) {
   i <- 1L
   n <- length(lines)
   while (i <= n) {
+    # A block fenced by four or more backticks, such as ````{verbatim}, is
+    # literal text: a ```{r} line inside it shows chunk syntax and is not a
+    # chunk. Skip to its matching closing fence.
+    outer <- regmatches(lines[i], regexpr("^````+", lines[i]))
+    if (length(outer) == 1) {
+      i <- i + 1L
+      while (i <= n && trimws(lines[i]) != outer) {
+        i <- i + 1L
+      }
+      i <- i + 1L
+      next
+    }
     m <- regmatches(lines[i], regexec("^```\\{([A-Za-z0-9_.]+)([^}]*)\\}", lines[i]))[[1]]
     if (length(m) == 0) {
       i <- i + 1L

@@ -81,14 +81,16 @@ printing a \code{question()} at the console. Pass \code{id} explicitly to pin it
 regardless of where the call sits.}
 
 \item{allow_image}{For \code{"reflection"}/\code{"reflection_editable"} questions,
-let the reader paste an image (e.g. a screenshot) from their clipboard,
-alongside their typed response -- not a file upload, just Ctrl+V/Cmd+V
-into the question. Defaults to \code{FALSE}. Ignored for other question
-types. Accepts PNG, JPEG, GIF, WebP, or BMP (whatever the reader's
-platform actually put on the clipboard -- this varies, and isn't
-guaranteed to be PNG just because they took a screenshot) and
-re-encodes it as PNG before storing it, so what ends up saved is
-always PNG regardless of the source format. Capped at 2MB.}
+let the reader paste an image (e.g. a screenshot) from their clipboard
+as their answer -- not a file upload, just Ctrl+V/Cmd+V into the
+question. Defaults to \code{FALSE}. Ignored for other question types.
+Accepts PNG, JPEG, GIF, WebP, or BMP, up to 20MB, since the clipboard
+format varies by platform. Before it is stored, the image is scaled to
+at most 1600 pixels wide and re-encoded as WebP (JPEG in browsers that
+can't write WebP, such as Safari), dropping quality or size further if
+needed to stay under about 450KB. That keeps screenshots from filling
+the browser's storage, which is about 5MB for a whole site. If a save
+fails anyway, the page says so and the answer stays unsubmitted.}
 
 \item{show_text}{Show \code{text} as the question's prompt inside the widget?
 Defaults to \code{TRUE}. Set it to \code{FALSE} when the prompt is written as

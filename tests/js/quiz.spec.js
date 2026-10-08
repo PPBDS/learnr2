@@ -270,7 +270,7 @@ test.describe("image paste (allow_image)", () => {
 
     await expect(page.locator(".learnr2-image-paste-preview")).toBeVisible();
     const src = await page.locator(".learnr2-image-paste-preview").getAttribute("src");
-    expect(src).toMatch(/^data:image\/png;base64,/);
+    expect(src).toMatch(/^data:image\/(webp|jpeg);base64,/);
   });
 
   test("plain text pasted into the textarea is unaffected", async ({ page }) => {
@@ -310,7 +310,7 @@ test.describe("image paste (allow_image)", () => {
     await expect(page.locator(".learnr2-image-paste-preview")).toBeVisible();
     // What's actually stored is always PNG, regardless of the source format.
     const src = await page.locator(".learnr2-image-paste-preview").getAttribute("src");
-    expect(src).toMatch(/^data:image\/png;base64,/);
+    expect(src).toMatch(/^data:image\/(webp|jpeg);base64,/);
   });
 
   test("a non-image file (e.g. a PDF) is rejected with an error", async ({ page }) => {
@@ -324,11 +324,12 @@ test.describe("image paste (allow_image)", () => {
 
   test("an oversized image is rejected with an error", async ({ page }) => {
     await page.goto("/reflection-image");
-    // 2MB + 100 bytes, just over quiz.js's MAX_BYTES cap.
+    // 20MB + 100 bytes, just over quiz.js's MAX_BYTES sanity cap. (Anything
+    // under it is accepted and shrunk; see the compression tests below.)
     await dispatchSyntheticPaste(
       page,
       ".learnr2-image-paste",
-      2 * 1024 * 1024 + 100,
+      20 * 1024 * 1024 + 100,
       "image/png",
       "huge.png"
     );
@@ -367,7 +368,7 @@ test.describe("image paste (allow_image)", () => {
     await expect(page.locator("textarea")).toHaveValue("");
     await expect(page.locator(".learnr2-image-paste-preview")).toBeVisible();
     const src = await page.locator(".learnr2-image-paste-preview").getAttribute("src");
-    expect(src).toMatch(/^data:image\/png;base64,/);
+    expect(src).toMatch(/^data:image\/(webp|jpeg);base64,/);
     await expect(page.locator(".learnr2-image-paste")).toHaveClass(/learnr2-image-paste-disabled/);
   });
 });
@@ -601,7 +602,7 @@ test.describe("download answers button", () => {
     ]);
   });
 
-  test("records a pasted image as the question's answer (the PNG data URL string)", async ({ page, context }) => {
+  test("records a pasted image as the question's answer (the image data URL string)", async ({ page, context }) => {
     await context.grantPermissions(["clipboard-read", "clipboard-write"]);
     await page.goto("/download-answers-image");
 
@@ -630,7 +631,7 @@ test.describe("download answers button", () => {
     const contents = JSON.parse(Buffer.concat(chunks).toString("utf8"));
 
     const imageAnswer = contents.answers.find((a) => a.id === "reflection-image");
-    expect(imageAnswer.answer).toMatch(/^data:image\/png;base64,/);
+    expect(imageAnswer.answer).toMatch(/^data:image\/(webp|jpeg);base64,/);
   });
 
   test("answers come back in true page order, question() widgets and {webr} exercises interleaved", async ({ page }) => {
@@ -1313,6 +1314,80 @@ test.describe("progressive sections (Continue buttons)", () => {
     await expect(button).toContainText("4. Setup cells");
     await button.click();
     await expect(page.locator("#setup-cells")).toBeVisible();
+  });
+});
+
+test.describe("pasted screenshots are shrunk, and a full storage is reported", () => {
+  // Builds a real PNG of the given size in the page and pastes it into the
+  // question's textarea through a synthetic paste event (no clipboard
+  // permission needed, so this runs in local headless Chromium too).
+  async function pasteGeneratedPng(page, width, height) {
+    await page.evaluate(async ({ width, height }) => {
+      const canvas = document.createElement("canvas");
+      canvas.width = width; canvas.height = height;
+      const ctx = canvas.getContext("2d");
+      // Noise, so the image doesn't compress to nothing.
+      const img = ctx.createImageData(width, height);
+      for (let i = 0; i < img.data.length; i++) img.data[i] = (i * 2654435761) % 256;
+      ctx.putImageData(img, 0, 0);
+      const blob = await new Promise((r) => canvas.toBlob(r, "image/png"));
+      const file = new File([blob], "shot.png", { type: "image/png" });
+      const dt = new DataTransfer();
+      dt.items.add(file);
+      document.querySelector("textarea").dispatchEvent(
+        new ClipboardEvent("paste", { clipboardData: dt, bubbles: true, cancelable: true })
+      );
+    }, { width, height });
+  }
+
+  test("a large screenshot is scaled to at most 1600px wide and stored small, as WebP or JPEG", async ({ page }) => {
+    await page.goto("/reflection-image");
+    await pasteGeneratedPng(page, 3200, 1800);
+    const preview = page.locator(".learnr2-image-paste-preview");
+    await expect(preview).toBeVisible();
+    const info = await preview.evaluate(async (img) => {
+      await img.decode();
+      return { w: img.naturalWidth, h: img.naturalHeight, src: img.src };
+    });
+    expect(info.w).toBeLessThanOrEqual(1600);
+    expect(Math.abs(info.w / info.h - 3200 / 1800)).toBeLessThan(0.01);
+    expect(info.src).toMatch(/^data:image\/(webp|jpeg);base64,/);
+    expect(info.src.length).toBeLessThanOrEqual(600 * 1024);
+  });
+
+  test("when storage is full, the answer is not presented as submitted and a warning says so", async ({ page }) => {
+    await page.goto("/reflection-image");
+    await pasteGeneratedPng(page, 400, 300);
+    await expect(page.locator(".learnr2-image-paste-preview")).toBeVisible();
+    // Make every further save fail the way a full localStorage does.
+    await page.evaluate(() => {
+      Storage.prototype.setItem = function () {
+        throw new DOMException("full", "QuotaExceededError");
+      };
+    });
+    await page.locator(".learnr2-submit").click();
+    const warning = page.locator(".learnr2-storage-warning");
+    await expect(warning).toBeVisible();
+    await expect(warning).toContainText("NOT saved");
+    await expect(warning).toContainText("storage for this site is full");
+    // Not locked: the reader can retry once there is room.
+    await expect(page.locator(".learnr2-submit")).toBeVisible();
+    await expect(page.locator(".learnr2-question .learnr2-feedback")).toContainText("could not be saved");
+  });
+
+  test("student info that can't be stored stays open with Submit, rather than locking", async ({ page }) => {
+    await page.goto("/student-info");
+    await page.locator("#learnr2-info-student-info-name").fill("Ada Lovelace");
+    await page.locator("#learnr2-info-student-info-email").fill("ada@example.com");
+    await page.evaluate(() => {
+      Storage.prototype.setItem = function () {
+        throw new DOMException("full", "QuotaExceededError");
+      };
+    });
+    await page.locator(".learnr2-info .learnr2-submit").click();
+    await expect(page.locator(".learnr2-storage-warning")).toBeVisible();
+    await expect(page.locator(".learnr2-info .learnr2-submit")).toHaveText("Submit");
+    await expect(page.locator("#learnr2-info-student-info-name")).toBeEditable();
   });
 });
 

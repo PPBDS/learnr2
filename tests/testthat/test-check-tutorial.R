@@ -279,6 +279,29 @@ test_that("parse_chunks() reads engine, leading #| options (quotes stripped), bo
   expect_identical(learnr2:::parse_chunks(character(0)), list())
 })
 
+test_that("parse_chunks() skips chunk syntax shown inside four-backtick blocks", {
+  lines <- c(
+    "````{verbatim}",
+    "```{r}",
+    "1 + 1",
+    "```",
+    "````",
+    "`````",
+    "````",
+    "```{r}",
+    "````",
+    "`````",
+    "```{r}",
+    "#| label: real-1",
+    "2 + 2",
+    "```"
+  )
+  ch <- learnr2:::parse_chunks(lines)
+  expect_length(ch, 1)
+  expect_identical(ch[[1]]$label, "real-1")
+  expect_identical(ch[[1]]$line, 11L)
+})
+
 test_that("echo check treats a tutorial_options() chunk as a widget chunk", {
   with_options <- c(good_lines, "", "```{r}", "#| label: your-answers-3",
                     "learnr2::tutorial_options(allow_skip = TRUE)", "```")

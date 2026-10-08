@@ -164,6 +164,19 @@ subsections) behind a Continue button. Verified against real renders.
   `load_all()` session still embeds the old `quiz.js`. Install the
   working tree into a scratch library (`R CMD INSTALL -l <dir> .`) and
   render with `R_LIBS=<dir>`, into a fresh output directory.
+- **Pasted screenshots are shrunk** (2026-10), in `compressImage()`: at
+  most 1600x4000 px, white background, WebP (JPEG where the canvas can't
+  encode WebP, detected from the data URL), stepping quality then size
+  down to fit ~450 KB. They used to be stored as full-size PNG, up to 3 MB
+  each against a ~5 MB localStorage shared by the whole *site* (all of
+  `127.0.0.1:7446`, all of `ppbds.github.io`). Input cap is 20 MB.
+- **Failed saves are loud.** `saveState()` returns `false` and
+  `reportStorageFailure()` shows a sticky page warning (full vs blocked
+  storage); a reflection or `student_info()` whose submit couldn't be
+  stored stays open rather than locking. Previously failures were
+  swallowed, so a full storage meant an answer looked submitted but was
+  missing from the download. Tests stub `Storage.prototype.setItem` to
+  throw `QuotaExceededError`.
 - **Image-paste answers.** Once an image is pasted, the textarea hides and
   typed text is not saved (`value` is `""`). A user reported the visible
   empty textarea above a pasted image as a second box to fill in. Don't

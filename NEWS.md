@@ -1,5 +1,15 @@
 # learnr2 (development version)
 
+* Pasted screenshots are now scaled to at most 1600 pixels wide and stored
+  as WebP (JPEG in Safari) of at most about 450KB, instead of full-size
+  PNG. A few large screenshots could previously fill the browser's
+  storage, which every tutorial on a site shares. The paste limit rises
+  from 2MB to 20MB, since the stored image is shrunk anyway.
+* When the browser refuses to save an answer (storage full or blocked),
+  the page now shows a warning and the answer stays unsubmitted.
+  Previously the failure was silent, and the answer was missing from the
+  download.
+
 # learnr2 0.1.3
 
 * `student_info()` and `"reflection_editable"` questions now have a clear
