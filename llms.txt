@@ -80,8 +80,11 @@ alongside it, so it renders out of the box with Quarto or
   unless `tutorial_options(allow_skip = TRUE)` says so, and every page
   has a “Start Over” button that clears saved progress.
 
-See the reference index and the bundled `hello-learnr2` tutorial for
-details.
+See the bundled `hello-learnr2` tutorial and the reference index for
+details. Two vignettes cover writing tutorials: “Tutorials in the Age of
+AI” on how a tutorial should teach, and “Translating learnr Tutorials”
+on how one is put together, including converting an existing learnr
+tutorial.
 
 # Package index
 
@@ -148,3 +151,5 @@ Manage the bundled quarto-live Quarto extension.
 
 - [Tutorials in the Age of
   AI](https://ppbds.github.io/learnr2/articles/ai.md):
+- [Translating learnr
+  Tutorials](https://ppbds.github.io/learnr2/articles/translating.md):

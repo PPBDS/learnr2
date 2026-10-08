@@ -22,7 +22,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">learnr2</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.2.9001</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.2.9002</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -36,6 +36,7 @@
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><a class="dropdown-item" href="../articles/ai.html">Tutorials in the Age of AI</a></li>
+    <li><a class="dropdown-item" href="../articles/translating.html">Translating learnr Tutorials</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../tutorials/index.html">Tutorials</a></li>
@@ -81,7 +82,7 @@
 <blockquote>
 <p><em>Our purpose is to teach students how to use AI to create.</em></p>
 </blockquote>
-<p>A <strong>learnr2</strong> tutorial is a Quarto document that renders to a single HTML page. Code cells on the page run in the reader’s browser via WebR. Quiz and text questions are graded there too, with plain JavaScript. Make sure that you are using the latest development version of <strong>learnr2</strong>. Install it with <code>pak::pak("PPBDS/learnr2")</code>.</p>
+<p>A <strong>learnr2</strong> tutorial is a Quarto document that renders to a single HTML page. Code cells on the page run in the reader’s browser via WebR. Quiz and text questions are graded there too, with plain JavaScript. This vignette is about how a tutorial should teach. Its companion, <a href="translating.html">Translating learnr Tutorials</a>, is the mechanics reference: how the file is put together, and how to convert an existing <strong>learnr</strong> tutorial. Make sure that you are using the latest development version of <strong>learnr2</strong>. Install it with <code>pak::pak("PPBDS/learnr2")</code>.</p>
 <section class="level3"><h3 id="philosophy">Philosophy<a class="anchor" aria-label="anchor" href="#philosophy"></a>
 </h3>
 <p>Imagine the <em>shallowest</em> possible learning curve. Almost every student should be able to answer almost every exercise. There are no hard questions. In fact, there really aren’t any <em>questions</em> at all. Instead, there are <em>instructions</em>: Do one thing, then the next, and then the next.</p>

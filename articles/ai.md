@@ -25,8 +25,13 @@ no longer to teach students how to code.
 A **learnr2** tutorial is a Quarto document that renders to a single
 HTML page. Code cells on the page run in the reader’s browser via WebR.
 Quiz and text questions are graded there too, with plain JavaScript.
-Make sure that you are using the latest development version of
-**learnr2**. Install it with `pak::pak("PPBDS/learnr2")`.
+This vignette is about how a tutorial should teach. Its companion,
+[Translating learnr
+Tutorials](https://ppbds.github.io/learnr2/articles/translating.md), is
+the mechanics reference: how the file is put together, and how to
+convert an existing **learnr** tutorial. Make sure that you are using
+the latest development version of **learnr2**. Install it with
+`pak::pak("PPBDS/learnr2")`.
 
 ### Philosophy
 
