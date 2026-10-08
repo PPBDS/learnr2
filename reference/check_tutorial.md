@@ -100,7 +100,7 @@ Each check has a name, used in `skip`:
 
 ``` r
 qmd <- create_tutorial("checked", dir = tempfile(), open = FALSE)
-#> Created tutorial: /tmp/RtmpJNwFxM/file19d47cb4b29a/checked/checked.qmd
+#> Created tutorial: /tmp/RtmpPCbxXr/file19db3365f133/checked/checked.qmd
 check_tutorial(qmd)
 
 # Break the template, then see the problems instead of an error.
