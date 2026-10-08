@@ -9,7 +9,7 @@ behaves as described under "Defaults" below.
 ## Usage
 
 ``` r
-tutorial_options(allow_skip = FALSE)
+tutorial_options(allow_skip = FALSE, require_submission = TRUE)
 ```
 
 ## Arguments
@@ -18,6 +18,11 @@ tutorial_options(allow_skip = FALSE)
 
   Logical. May the reader use a table-of-contents link to unlock and
   jump to a section they have not reached yet? Default `FALSE`.
+
+- require_submission:
+
+  Logical. Must every question and student-info form in a section be
+  submitted before its "Continue" button works? Default `TRUE`.
 
 ## Value
 
@@ -47,15 +52,37 @@ such as learnr2's own `hello-learnr2` feature tour.
 Neither setting matters for a tutorial rendered with `toc: false`, which
 has no sidebar and so only ever moves forward one Continue at a time.
 
+## Submitting before continuing
+
+By default (`require_submission = TRUE`) the "Continue" button at the
+end of a section stays disabled, with a short note under it, until every
+[`question()`](https://ppbds.github.io/learnr2/reference/question.md)
+and
+[`student_info()`](https://ppbds.github.io/learnr2/reference/student_info.md)
+form above it in that section has been submitted. A reader can type
+anything, but they must submit *something* before the tutorial moves on.
+Combined with `type = "reflection"` questions, which lock once
+submitted, this is what lets a tutorial show its own answer right after
+the reader's without inviting them to copy it back into the box: by the
+time they see our answer, theirs is already in and cannot be changed.
+Set `require_submission = FALSE` for reference material a reader should
+be free to skim, such as learnr2's own `hello-learnr2` feature tour.
+`{webr}` code cells are not part of this check; they have no notion of
+being "submitted".
+
 ## Defaults
 
 - `allow_skip = FALSE`
+
+- `require_submission = TRUE`
 
 ## Examples
 
 ``` r
 tutorial_options()
-#> <div class="learnr2-options" data-learnr2-options="eyJhbGxvd1NraXAiOmZhbHNlfQ==" hidden></div>
+#> <div class="learnr2-options" data-learnr2-options="eyJhbGxvd1NraXAiOmZhbHNlLCJyZXF1aXJlU3VibWlzc2lvbiI6dHJ1ZX0=" hidden></div>
 tutorial_options(allow_skip = TRUE)
-#> <div class="learnr2-options" data-learnr2-options="eyJhbGxvd1NraXAiOnRydWV9" hidden></div>
+#> <div class="learnr2-options" data-learnr2-options="eyJhbGxvd1NraXAiOnRydWUsInJlcXVpcmVTdWJtaXNzaW9uIjp0cnVlfQ==" hidden></div>
+tutorial_options(require_submission = FALSE)
+#> <div class="learnr2-options" data-learnr2-options="eyJhbGxvd1NraXAiOmZhbHNlLCJyZXF1aXJlU3VibWlzc2lvbiI6ZmFsc2V9" hidden></div>
 ```

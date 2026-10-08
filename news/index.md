@@ -2,6 +2,20 @@
 
 ## learnr2 (development version)
 
+- [`tutorial_options()`](https://ppbds.github.io/learnr2/reference/tutorial_options.md)
+  gains `require_submission`, default `TRUE`: the “Continue” button at
+  the end of a section is disabled, with a note under it, until every
+  [`question()`](https://ppbds.github.io/learnr2/reference/question.md)
+  and
+  [`student_info()`](https://ppbds.github.io/learnr2/reference/student_info.md)
+  form above it in that section has been submitted. With
+  `type = "reflection"` questions, which lock on submit, a tutorial can
+  show its own answer right after the reader’s without inviting them to
+  copy it back. Reference material can opt out with
+  `require_submission = FALSE`, as `hello-learnr2` does. **Behaviour
+  change for existing tutorials:** readers must now submit every
+  question in a section before continuing.
+
 - New
   [`tutorial_options()`](https://ppbds.github.io/learnr2/reference/tutorial_options.md),
   for settings that apply to a whole tutorial page. Its first option,

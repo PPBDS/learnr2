@@ -1,32 +1,66 @@
 # Tutorials in the Age of AI
 
+*There are no questions here. There are only simple instructions.*
+
+*Tutorials are not challenging. They are confidence-building.*
+
+*Create the shallowest possible learning curve.*
+
+*Every word matters. Never waste a student’s time.*
+
+*Drop some knowledge with each exercise.*
+
+*Do not build code line-by-line. That is the AI’s job.*
+
 ## Introduction
 
 AI changes everything.
 
 This document describes the best way to write R tutorials using the
-[**learnr2**](https://ppbds.github.io/learnr2/) package. It is adapted
-from the [essay of the same
-name](https://ppbds.github.io/tutorial.helpers/articles/ai.html) in the
-[**tutorial.helpers**](https://ppbds.github.io/tutorial.helpers/)
-package, which describes the same pedagogy for classic
-[**learnr**](https://rstudio.github.io/learnr/) tutorials; the
-philosophy is identical, only the mechanics differ. Prior to the rise of
-AI, this was the best way to write
-[tutorials](https://web.archive.org/web/20251008195459/https://ppbds.github.io/tutorial.helpers/articles/instructions.html)
-and
-[books](https://web.archive.org/web/20251008195807/https://ppbds.github.io/tutorial.helpers/articles/books.html).
-Our purpose is no longer to teach students how to code.
+[**learnr2**](https://ppbds.github.io/learnr2/) package. Our purpose is
+no longer to teach students how to code.
 
 > *Our purpose is to teach students how to use AI to create.*
 
-A learnr2 tutorial is a Quarto document that renders to a single HTML
-page. Code cells on the page run in the reader’s browser via WebR; quiz
-and text questions are graded there too, with plain JavaScript. There is
-no Shiny app and no server, so a tutorial can be published as a static
-page and opened from a link with nothing installed. Make sure that you
-are using the latest development version of **learnr2**. Install it with
-`pak::pak("PPBDS/learnr2")`.
+A **learnr2** tutorial is a Quarto document that renders to a single
+HTML page. Code cells on the page run in the reader’s browser via WebR;
+quiz and text questions are graded there too, with plain JavaScript.
+Make sure that you are using the latest development version of
+**learnr2**. Install it with `pak::pak("PPBDS/learnr2")`.
+
+### Philosophy
+
+Imagine the *shallowest* possible learning curve. Almost every student
+should be able to answer almost every exercise. There are no hard
+questions. In fact, there really aren’t any *questions* at all. Instead,
+there are *instructions*: Do one thing, then the next, and then the
+next.
+
+Tutorials are not challenging. They are confidence-building. A student
+who finishes one should feel that she has done real work and understood
+all of it, not that she has been tested.
+
+Almost all exercises feature a knowledge drop, a bit of information,
+rarely more than two sentences, provided after the student has answered
+the question. Assume that you are giving the student a private lesson.
+You ask them a question. They give you an answer. What would you say to
+them next? What do you want to teach them, given that context? That is
+the knowledge drop.
+
+We are building a “[pit of
+success](https://blog.codinghorror.com/falling-into-the-pit-of-success/).”
+Generally, students don’t do the assigned reading, at least in a large
+class. However, they will complete required work. They will do the
+assigned tutorials. *Our promise: If you complete the tutorials, you
+will learn the material. There is simply no way not to.* In the age of
+AI, the material is less a set of functions and more a way of working:
+stating what you want, judging what the AI hands back, noticing when it
+is wrong, and refining.
+
+Every word matters. Never waste a student’s time. More exercises are
+better than fewer, so long as each one is small; one long exercise that
+does three things is worse than three short ones that do one thing each,
+because every exercise is another chance to drop some knowledge.
 
 ## Overview
 
@@ -64,7 +98,7 @@ can turn in:
 learnr2::question(
   "How many minutes, approximately, did it take you to complete this
   tutorial? For example, an hour and a half would be 90 minutes.",
-  type = "reflection_editable",
+  type = "reflection",
   validate = "integer"
 )
 ```
@@ -76,8 +110,8 @@ learnr2::download_answers_button(filename_prefix = "<name>")
 ```
 ````
 
-There is no `setup` chunk. learnr2 functions are always called with the
-`learnr2::` prefix rather than attached with
+There is no `setup` chunk. **learnr2** functions are always called with
+the `learnr2::` prefix rather than attached with
 [`library()`](https://rdrr.io/r/base/library.html). Any `{r}` chunk in a
 tutorial runs once, when the tutorial is *rendered* – on your machine or
 in CI, never in the student’s browser – so every package such a chunk
@@ -105,7 +139,7 @@ and a sequential number (`introduction-1`, `introduction-2`, …; see the
 next section for the exercise-style variant). A question’s label is the
 key its saved answer is stored under, so renaming one resets that
 question for every student. Second, `#| echo: false` on every chunk that
-renders a learnr2 widget
+renders a **learnr2** widget
 ([`student_info()`](https://ppbds.github.io/learnr2/reference/student_info.md),
 [`question()`](https://ppbds.github.io/learnr2/reference/question.md),
 [`download_answers_button()`](https://ppbds.github.io/learnr2/reference/download_answers_button.md)),
@@ -170,15 +204,58 @@ On the line after the topic title, put three hashes. This ensures that
 students will see the introductory text before they see the first
 exercise.
 
-learnr2 reveals a tutorial one section at a time, behind **Continue**
-buttons. Every `##` and `###` heading is a stop, and so is a bare `###`
-line with no text after it: the content below it stays hidden until the
-student clicks a button that says just “Continue”, and no heading is
-shown. By default the table of contents cannot be used to read ahead –
-entries for sections the student has not reached are dimmed and inert,
-lighting up as each is unlocked. If a particular tutorial should let
-students roam, add `learnr2::tutorial_options(allow_skip = TRUE)` in an
-`echo: false` chunk.
+**learnr2** reveals a tutorial one section at a time, behind
+**Continue** buttons. Every `##` and `###` heading is a stop, and so is
+a bare `###` line with no text after it: the content below it stays
+hidden until the student clicks a button that says just “Continue”, and
+no heading is shown. By default the table of contents cannot be used to
+read ahead – entries for sections the student has not reached are dimmed
+and inert, lighting up as each is unlocked – and a Continue button does
+not work until every question above it has been submitted (see *Submit
+once, then it’s locked*, below). If a particular tutorial should let
+students roam, add
+`learnr2::tutorial_options(allow_skip = TRUE, require_submission = FALSE)`
+in an `echo: false` chunk.
+
+### Topics
+
+Each topic begins with a sentence or two about what this group of
+exercises is trying to accomplish. Example:
+
+``` default
+## Interacting with sites with `GET()`
+###
+
+In order to get data from an API, we use the **httr** package. 
+The package is designed to imitate standard HTTP in R. 
+Read more about HTTP [here](https://www.jmarshall.com/easy/http/).
+
+### Exercise 1
+```
+
+The link will be formatted correctly once the tutorial is rendered.
+Topic introductions will sometimes have two parts: the introductory text
+as above and a plot which will be replicated in this portion of the
+tutorial. Those two parts are generally separated by a bare `###`.
+
+After the last exercise in a topic, put a bare `###` and then give a two
+sentence summary about what this topic accomplished. A topic is a 10
+minute transfer of knowledge from you to the student. At the beginning,
+you mentioned its purpose. Conclude by tying things back to that
+original purpose. Often, these “purposes” will be fairly trivial: You
+promised to go through an example of a scatter plot and, in fact, you
+did. And that is OK! We are not writing poetry. Not every topic leads to
+salvation.
+
+That closing knowledge drop should take a broader view than the
+exercises did. If the topic has involved creating a scatter plot, then
+the last exercise will be putting the final touches on that scatter
+plot, and the last knowledge drop should be something about scatter
+plots in general, not a minor point about this particular one.
+
+One or two high quality links, specifically relevant to this topic,
+should be included/explained at either the beginning or end of a topic,
+unless the topic is very short.
 
 ### Questions
 
@@ -216,6 +293,34 @@ submitted. This means that, after they see our answer, students can’t
 modify their own. The response box grows with what the student types, so
 there is no `rows` argument to set.
 
+#### Submit once, then it’s locked
+
+Every question in a tutorial – CP/CR, a pasted screenshot, a written
+answer, anything where the student supplies text or an image – should be
+`type = "reflection"`, and that is what every template below uses. Two
+things follow from it, and both are deliberate:
+
+1.  The student cannot advance until she has submitted something. By
+    default (`learnr2::tutorial_options(require_submission = TRUE)`),
+    the Continue button at the end of a section is disabled, with a note
+    under it, until every question above it has been submitted. She can
+    type anything, but she must submit.
+2.  Once she has submitted, she cannot change it.
+
+Why? First, we always want to show students the right answer: our answer
+chunk runs right after their submission, and the whole method depends on
+their comparing the two. Second, if we show the right answer *and* leave
+their box editable, some number of students – small, perhaps, but not
+zero – will copy our answer back into the box in which they should have
+submitted their own. Locking the box removes the temptation; requiring a
+submission removes the option of clicking past the question and filling
+it in later from our answer.
+
+`type = "reflection_editable"` still exists, for the rare question where
+revising is the point, and the minutes question at the end of every
+tutorial uses it, since there is no right answer to copy. Don’t reach
+for it otherwise.
+
 Unlike
 [`learnr::question_text()`](https://pkgs.rstudio.com/learnr/reference/question_text.html),
 where the prompt was prose above the chunk and the question itself got
@@ -245,13 +350,16 @@ which the students should include in their answers. If your suggested
 answer includes the word “validity,” for example, then tell the students
 to include (and define) validity as part of their answer.
 
-However, for many written questions, we don’t provide an answer, so we
-don’t mind if students resubmit. This format is most commonly used for
-“process” questions in which we have told students to do something and
-then confirm that they have done it by copying/pasting the result from a
-command. These use `type = "reflection_editable"` and pass no
-[`answer()`](https://ppbds.github.io/learnr2/reference/answer.md) at
-all. The template for one, in full, looks like this:
+However, for many written questions, we don’t provide a model answer at
+all. This format is most commonly used for “process” questions in which
+we have told students to do something and then confirm that they have
+done it by copying/pasting the result from a command. These are still
+`type = "reflection"` – they lock on submit like every other question –
+but pass no
+[`answer()`](https://ppbds.github.io/learnr2/reference/answer.md), so
+nothing is revealed; what the student compares against is our answer
+chunk after the next Continue. The template for one, in full, looks like
+this:
 
 ```` default
 ### Exercise 7
@@ -263,7 +371,7 @@ all. The template for one, in full, looks like this:
 #| echo: false
 learnr2::question(
   'In the R Terminal, run show_file("analysis.qmd", chunk = "Last"). CP/CR.',
-  type = "reflection_editable"
+  type = "reflection"
 )
 ```
 
@@ -291,6 +399,55 @@ show students our code so that they learn something from comparing it
 with their own. In output-focused tutorials, `#| echo: false` to show
 just the result is fine. The second bare `###` makes the student pause
 on our answer before the knowledge drop that follows.
+
+#### The flow of an exercise
+
+Each exercise should have a *flow* which requires that students hit the
+Continue button at least once.
+
+- Begin with a *Start*: a sentence or two of knowledge and/or the
+  instructions themselves. If the Start runs longer than two sentences,
+  put a bare `###` after it so the question arrives on its own, after a
+  Continue. If it is short enough that students will actually read it,
+  the question chunk can follow directly.
+
+- Do not expect students to read more than two sentences of text at a
+  time. After two sentences, you almost always want a bare `###` so that
+  students get a break. They won’t read more than two sentences without
+  one.
+
+- There is a danger that students will just click Continue until they
+  see a question and, only then, start reading. There is little we can
+  do about that. However, we can take advantage of students’ tendency to
+  read the sentence or two which precedes the question fairly closely.
+  This is a great place for teaching, since students can’t skip it: they
+  don’t know whether it provides context they need to answer.
+
+- The question chunk is always followed by a bare `###`. We want a
+  student to pause after she has submitted her answer, so that she is
+  more likely to consider our answer and compare it with her own before
+  moving on.
+
+- The last part of an exercise is the end, our main opportunity to drop
+  some knowledge. The last part of a topic is one more knowledge drop,
+  after the final exercise, that takes the broader view described under
+  *Topics* above.
+
+#### Code cells
+
+**learnr2** does support in-page code cells –
+[webr](https://github.com/cardiomoon/webr) chunks that run R in the
+student’s browser, with `.hint` and `.solution` blocks tied to them; the
+bundled `hello-learnr2` tutorial shows every variant. AI-era tutorials
+rarely use them, because the student’s work happens in her own QMD, not
+on the tutorial page. If you do use one, the old rules still hold: every
+cell should print something, so the student sees what her code did; a
+hint shows the shape of the answer with `...` where the student must
+fill something in, and if there are several hints the *last* one is the
+one that must carry the key information, since that is the one the
+student ends up looking at; and the learning curve is measured in how
+many new characters each cell asks for relative to the one before –
+fewer is better, so split a long answer across cells.
 
 ### Knowledge drops
 
@@ -326,6 +483,41 @@ exception: there the modeling functions themselves, like `reg_linear()`
 and `plot_predictions()`, are the curriculum, so knowledge drops may and
 should name them.
 
+#### Advice for knowledge drops
+
+- Not sure what knowledge to drop? Look up the help page for the
+  package, or one of the functions, used in the topic. The help page
+  will have two areas of interest: arguments which were not used in the
+  topic but are worth knowing about, and related functions – the “Useful
+  filter functions” section of `?dplyr::filter`, or the “See also”
+  section of `?arrange`. In the age of AI, turn what you find into a
+  sentence about what the *package* can do or what the *concept* is,
+  rather than a sentence about the function’s signature; the student
+  will not type it, but she needs to know it exists in order to ask for
+  it.
+
+- Use high quality links. The second edition of [*R for Data
+  Science*](https://r4ds.hadley.nz/) is amazing; link to it as often as
+  you can. Anything associated with [Posit](https://posit.co/) is high
+  quality, including the [Tidyverse](https://tidyverse.org/) and
+  [Tidymodels](https://www.tidymodels.org/) sites.
+
+- Avoid links to low quality sites like `https://rdrr.io/`,
+  `https://www.rdocumentation.org/`, and `https://www.datamentor.io/`.
+  Any site which uses ads should be avoided.
+
+- When a link to documentation is warranted, link to the package’s own
+  site for **tidyverse** packages
+  (e.g. [`arrange()`](https://dplyr.tidyverse.org/reference/arrange.html))
+  and to the `stat.ethz.ch` server, home base for the core R developers,
+  for base R
+  (e.g. [`cut()`](https://stat.ethz.ch/R-manual/R-devel/library/base/html/cut.html)).
+
+- One concise pattern provides both the command which brings up a help
+  page and a link to it:
+
+      See `?readr::locale` for [details](https://readr.tidyverse.org/articles/locales.html).
+
 ### Inputs
 
 In addition to the `.qmd`, a tutorial will often use other inputs. The
@@ -341,8 +533,8 @@ rather than a requirement – but stick to them.
 
 If you need an R object for our-answer chunks throughout a tutorial,
 create it in a `{r}` chunk near the top of the file with
-`#| include: false`. Every `{r}` chunk in a tutorial shares one knitr
-session at render time, so later chunks can use it.
+`#| include: false`. Every `{r}` chunk in a tutorial shares one
+**knitr** session at render time, so later chunks can use it.
 
 Be wary of code which downloads data from the web. The tutorial is
 rendered wherever it is built – your laptop, CI, a student’s own machine
@@ -441,13 +633,13 @@ to label or hide.
 
 You sometimes want to include “complex” text in a tutorial. This is most
 common when trying to teach students how to use R code chunks and other
-strings which Quarto wants to process in certain ways. Since a learnr2
-tutorial *is* a Quarto document, the tools this vignette itself uses are
-available to you: a block fenced by four backticks and `{verbatim}`
-displays everything inside it exactly as typed, including complete `{r}`
-chunks with their three-backtick fences, with no execution and no
-highlighting. (The `<pre><code>` trick that classic R Markdown tutorials
-needed is unnecessary here.)
+strings which Quarto wants to process in certain ways. Since a
+**learnr2** tutorial *is* a Quarto document, the tools this vignette
+itself uses are available to you: a block fenced by four backticks and
+`{verbatim}` displays everything inside it exactly as typed, including
+complete `{r}` chunks with their three-backtick fences, with no
+execution and no highlighting. (The `<pre><code>` trick that classic R
+Markdown tutorials needed is unnecessary here.)
 
 The one case `{verbatim}` doesn’t cover is *inline* code that you want
 to show rather than run, in the middle of a sentence – the literal text
@@ -493,7 +685,7 @@ If `show_file()` fails, it is probably because you have not yet loaded `library(
 #| echo: false
 learnr2::question(
   'In the R Terminal, run show_file(".gitignore"). CP/CR.',
-  type = "reflection_editable"
+  type = "reflection"
 )
 ```
 
@@ -541,7 +733,7 @@ Render the file again, using `quarto render`. Only the title and author should a
 #| echo: false
 learnr2::question(
   'In the R Terminal, run show_file("analysis.qmd", chunk = "Last"). CP/CR.',
-  type = "reflection_editable"
+  type = "reflection"
 )
 ```
 
@@ -563,7 +755,7 @@ Note how this command causes `library(tidyverse)` to be copied down to the R Ter
 ```{r}
 #| label: introduction-3
 #| echo: false
-learnr2::question("CP/CR.", type = "reflection_editable")
+learnr2::question("CP/CR.", type = "reflection")
 ```
 
 ###
@@ -591,7 +783,7 @@ Create a `data` directory at the top level of the `XX` repo. This is a good plac
 ```{r}
 #| label: introduction-4
 #| echo: false
-learnr2::question("In the bash Terminal, run `ls`. CP/CR.", type = "reflection_editable")
+learnr2::question("In the bash Terminal, run `ls`. CP/CR.", type = "reflection")
 ```
 
 ###
@@ -652,7 +844,7 @@ download.file(
 ```{r}
 #| label: cheese-1
 #| echo: false
-learnr2::question("CP/CR.", type = "reflection_editable")
+learnr2::question("CP/CR.", type = "reflection")
 ```
 
 ###
@@ -660,20 +852,32 @@ learnr2::question("CP/CR.", type = "reflection_editable")
 <!-- XX: Insert a knowledge drop related to this project. -->
 ````
 
-The meat of a Topic generally involves asking AI to create a pipe which
-accomplishes some goal. The end of a Topic always finishes up with a
-plot. The last four questions set up and then guide the student to
-creating that plot. If you want the student to mimic a plot, you can
-place it in the `images` subdirectory and show it with
-`![](images/plot.png){width=90%}`.
+The meat of a Topic is a run of questions which each ask the student to
+have AI do one of two things: calculate some summary statistics, or make
+a plot. Often these are combined — make a plot of summary statistics.
+That is how we do data science with AI, and it is why these are the
+questions worth practicing. The student is not practicing coding. She is
+practicing *checking*: making sure that the AI has not made a mistake
+or, more commonly, that she has not misunderstood the data. The end of a
+Topic always finishes up with a plot. The last four questions set up and
+then guide the student to creating that plot. If you want the student to
+mimic a plot, you can place it in the `images` subdirectory and show it
+with `![](images/plot.png){width=90%}`.
+
+After the student submits and hits Continue, show her the same summary
+statistics or the same plot, calculated on the fly by our answer chunk,
+so she has something concrete to check her AI-generated work against.
+Then say something educational: something the AI does not know,
+something you might say to a student whose shoulder you are looking
+over. That is the knowledge drop, and it is the part only you can write.
 
 Students never show *their* code in the rendered document — readers of
 an analysis want the graphics, not the code. But we, when writing
 tutorials, often show students *our* code so that they learn something.
-At a minimum, show the *result* — a plot or summary statistics —
-produced by our correct code, so students have something concrete to
-check their AI-generated work against; add `#| echo: true` when the code
-itself is worth studying.
+At a minimum, show the *result*; add `#| echo: true` when the code
+itself is worth studying. Because the answer chunk really runs when the
+tutorial renders, it is also the test that our code works. A tutorial
+written this way needs far less separate testing than a classic one did.
 
 Consider this example:
 
@@ -687,7 +891,7 @@ Prompt AI to generate R code that ... Add the code to your QMD in a new chunk. P
 #| echo: false
 learnr2::question(
   'In the R Terminal, run show_file("analysis.qmd", chunk = "Last"). CP/CR.',
-  type = "reflection_editable"
+  type = "reflection"
 )
 ```
 
@@ -732,7 +936,7 @@ Before creating a plot, we need to ensure that your data matches ours. Run your 
 #| echo: false
 learnr2::question(
   'In the R Terminal, run show_file("analysis.qmd", chunk = "Last"). CP/CR.',
-  type = "reflection_editable"
+  type = "reflection"
 )
 ```
 
@@ -770,7 +974,7 @@ Place your cursor on the line where the pipe is assigned to `x`, run `Cmd/Ctrl +
 ```{r}
 #| label: xx-first-topic-4
 #| echo: false
-learnr2::question("CP/CR.", type = "reflection_editable")
+learnr2::question("CP/CR.", type = "reflection")
 ```
 
 <!-- XX: Show x here. -->
@@ -798,7 +1002,7 @@ Run `quarto render` in the bash Terminal. Rendering creates an `analysis_cache` 
 ```{r}
 #| label: xx-first-topic-5
 #| echo: false
-learnr2::question("In the bash Terminal, run `ls`. CP/CR.", type = "reflection_editable")
+learnr2::question("In the bash Terminal, run `ls`. CP/CR.", type = "reflection")
 ```
 
 ###
@@ -816,7 +1020,7 @@ Add `analysis_cache` to the `.gitignore`. The contents of the cache directory do
 #| echo: false
 learnr2::question(
   'In the R Terminal, run show_file(".gitignore"). CP/CR.',
-  type = "reflection_editable"
+  type = "reflection"
 )
 ```
 
@@ -839,7 +1043,7 @@ Within the R Terminal, type `x`, which we previously assigned to a pipe and ran 
 ```{r}
 #| label: xx-first-topic-7
 #| echo: false
-learnr2::question("CP/CR.", type = "reflection_editable")
+learnr2::question("CP/CR.", type = "reflection")
 ```
 
 ###
@@ -887,7 +1091,7 @@ Consider adding a title, subtitle, and caption. If axis labels would be useful, 
 #| echo: false
 learnr2::question(
   'In the R Terminal, run show_file("analysis.qmd", chunk = "Last"). CP/CR.',
-  type = "reflection_editable"
+  type = "reflection"
 )
 ```
 
@@ -935,7 +1139,7 @@ Run `quarto render` to ensure that everything works.  The resulting HTML page sh
 #| echo: false
 learnr2::question(
   'At the R Terminal, run show_file("analysis.qmd"). CP/CR.',
-  type = "reflection_editable"
+  type = "reflection"
 )
 ```
 
@@ -956,7 +1160,7 @@ quarto publish gh-pages analysis.qmd
 ```{r}
 #| label: summary-2
 #| echo: false
-learnr2::question("Copy/paste the resulting URL below.", type = "reflection_editable")
+learnr2::question("Copy/paste the resulting URL below.", type = "reflection")
 ```
 
 ### 
@@ -972,7 +1176,7 @@ Commit and push all your files.
 ```{r}
 #| label: summary-3
 #| echo: false
-learnr2::question("Copy/paste the URL to your GitHub repo.", type = "reflection_editable")
+learnr2::question("Copy/paste the URL to your GitHub repo.", type = "reflection")
 ```
 
 ### 
@@ -987,6 +1191,114 @@ chunks from the Overview come after this, at the very end of the file.
 In the age of AI, the purpose of a tutorial is to teach students how to
 create with AI. We do that by forcing them to practice, and by providing
 intelligent advice along the way.
+
+## Tutorials for a book
+
+A common use case is a collection of tutorials for a book. Consider the
+[**r4ds.tutorials**](https://ppbds.github.io/r4ds.tutorials/) package, a
+companion to [*R for Data Science (2e)*](https://r4ds.hadley.nz/) by
+Hadley Wickham, Mine Çetinkaya-Rundel, and Garrett Grolemund.
+
+Instructors like to assign books with code. Ideally, we want our
+students to read the book, working through the included code. Sadly,
+very few students are so disciplined. In fact, in a large class, a
+majority of the students won’t even read the book. A structured tutorial
+is how the chapter actually reaches them. Students used to type in
+(almost) every command the book demonstrates; now they have AI produce
+each result and check it against ours. Either way, the chapter’s code
+gets exercised and its key points get made.
+
+Some idiosyncratic advice for book-based tutorials, using *R for Data
+Science* as the example:
+
+- Do one or two of the existing tutorials before you start working on
+  your own.
+
+- Make your Introduction look like this:
+
+&nbsp;
+
+    This tutorial covers [Chapter 20: Spreadsheets](https://r4ds.hadley.nz/spreadsheets.html)
+    from [*R for Data Science (2e)*](https://r4ds.hadley.nz/) by Hadley Wickham,
+    Mine Çetinkaya-Rundel, and Garrett Grolemund. You will learn how to get data from Excel
+    spreadsheets using [`read_excel()`](https://readxl.tidyverse.org/reference/read_excel.html)
+    from the [**readxl**](https://readxl.tidyverse.org/) package and Google sheets using
+    [`read_sheet()`](https://googlesheets4.tidyverse.org/reference/range_read.html) from
+    the [**googlesheets4**](https://googlesheets4.tidyverse.org/) package.
+
+- The first sentence provides a link to your exact chapter as well as to
+  the book and its authors. A reader should be able to click straight
+  through to the matching chapter.
+
+- We highlight some of the most important packages and functions used in
+  the tutorial.
+
+- We don’t go overboard. You can’t mention every package or every
+  function used in the tutorial.
+
+- Make your Summary look like this:
+
+&nbsp;
+
+    This tutorial covered [Chapter 20: Spreadsheets](https://r4ds.hadley.nz/spreadsheets.html)
+    from [*R for Data Science (2e)*](https://r4ds.hadley.nz/) by Hadley Wickham,
+    Mine Çetinkaya-Rundel, and Garrett Grolemund. You have learned how to get data from Excel
+    spreadsheets using [`read_excel()`](https://readxl.tidyverse.org/reference/read_excel.html)
+    from the [**readxl**](https://readxl.tidyverse.org/) package and Google sheets using
+    [`read_sheet()`](https://googlesheets4.tidyverse.org/reference/range_read.html) from
+    the [**googlesheets4**](https://googlesheets4.tidyverse.org/) package.
+
+    Read "[Data Organization in Spreadsheets](https://doi.org/10.1080/00031305.2017.1375989)"
+    by Karl Broman and Kara Woo for great advice about organizing your data using spreadsheets.
+
+- The first paragraph is identical to the Introduction, except that
+  “covers” is replaced with “covered” and “will learn” with “have
+  learned.” We began the tutorial with a promise about what students
+  would learn. One hopes that we kept that promise.
+
+- The second paragraph gives one or two pointers about the best material
+  which a student might look into if she is interested in learning more
+  about the broad topic of the tutorial. These pointers were also
+  mentioned as knowledge drops earlier in the tutorial.
+
+- These pointers will often (always?) be items which were mentioned in
+  the book itself. Those authors, presumably, have good taste, otherwise
+  you would not have selected their book in the first place.
+
+- Regularly require students to look up the help page for a function,
+  proving that they have done so by copy/pasting a portion of the help
+  page. These are no-answer questions. Students need to get in the
+  practice of using help, and it is one of the few things an analyst
+  still does by hand.
+
+- In most books, the authors will include more than one new thing in
+  each code example. They will add two or three lines to a pipe or pass
+  in two or three arguments to a function. We never want to go that
+  fast. Spread out such code snippets into two or three separate
+  exercises, each of which asks for the smallest possible change. We are
+  building the shallowest possible learning curve.
+
+- Our answer chunks, taken together, should cover most of the code the
+  chapter demonstrates. One approach is to go through the chapter first,
+  copying each snippet of example code into the answer chunk of an empty
+  exercise, and only then write the prompts whose results those snippets
+  produce. (If the book is freely licensed, copy the knowledge drop that
+  goes with each snippet at the same time.)
+
+- Recall the distinction between books which have a permissive license,
+  meaning that we can copy/paste text at our own discretion, and those
+  which do not. For the latter, you can not copy/paste text. But you can
+  express, in your own words, the key points made in each chapter. In
+  either case, your knowledge drops should cover the most important
+  things for students to know, in your opinion, among those topics
+  covered in the chapter.
+
+- The pre-AI advice was to give each library and each data set its own
+  exercise, for the practice and for the knowledge-drop slot. The AI-era
+  default is one [`library()`](https://rdrr.io/r/base/library.html)
+  chunk in the Introduction. Splitting it is still a legitimate choice
+  for a book tutorial whose chapter introduces several packages worth a
+  sentence each; just make it deliberately.
 
 ## Appendix: Checking a tutorial
 

@@ -107,16 +107,16 @@
 <table class="table"><colgroup><col width="50%"><col width="50%"></colgroup><thead><tr><th>base-guide form</th>
 <th>learnr2</th>
 </tr></thead><tbody><tr><td>
-<strong>no-answer</strong> (<code>question_text(NULL, answer(NULL, correct = TRUE), allow_retry = TRUE, try_again_button = "Edit Answer", rows = N)</code>) – evidence submission, student can revise</td>
+<strong>no-answer</strong> (<code>question_text(NULL, answer(NULL, correct = TRUE), allow_retry = TRUE, try_again_button = "Edit Answer", rows = N)</code>) – evidence submission</td>
 <td>
-<code>learnr2::question("&lt;prompt&gt;", type = "reflection_editable")</code>, no <code><a href="reference/answer.html">answer()</a></code>
-</td>
+<code>learnr2::question("&lt;prompt&gt;", type = "reflection")</code>, no <code><a href="reference/answer.html">answer()</a></code>. <strong>Not</strong> <code>reflection_editable</code>: learnr2 locks every submitted answer by default (see below)</td>
 </tr><tr><td>
 <strong>yes-answer</strong> (<code>question_text(NULL, message = "&lt;model answer&gt;", answer(NULL, correct = TRUE), allow_retry = FALSE)</code>) – compared against a model answer, then locked</td>
 <td><code>learnr2::question("&lt;prompt&gt;", learnr2::answer("&lt;model answer&gt;", correct = TRUE), type = "reflection")</code></td>
 </tr><tr><td>the <code>question_text(NULL, ...)</code> + prose-above-the-chunk pattern</td>
 <td>put the prompt in <code>text</code>; or write the prose on the page and pass <code>show_text = FALSE</code> (see “Screenshot reflection questions”)</td>
 </tr></tbody></table><p><code>validate = "integer"</code> is for the minutes question only. <code>allow_image = TRUE</code> is for the rare step that can only be verified by a screenshot.</p>
+<p><strong>Submit once, then locked – the default for every question.</strong> Decided 2026-10: a student must submit <em>something</em> before the tutorial moves on, and once submitted it cannot be changed. Mechanically: every text/image question is <code>type = "reflection"</code> (locks on submit), and <code>tutorial_options(require_submission = TRUE)</code>, the default, disables a section’s Continue button until every <code><a href="reference/question.html">question()</a></code>/<code><a href="reference/student_info.html">student_info()</a></code> above it is submitted (<code>pendingWidgets()</code>/<code>refreshContinueGate()</code> in <code>quiz.js</code>; fixture <code>progressive-sections-gated</code>). The reasons, from the vignette: we always show our answer right after theirs, and an editable box next to our answer invites copying it back in. <code>reflection_editable</code> is for the minutes question (no right answer to copy) and little else. The <code>learnr</code> <code>allow_retry = TRUE, try_again_button = "Edit Answer"</code> idiom therefore does <strong>not</strong> translate to <code>reflection_editable</code>; it translates to <code>reflection</code>. Reference material (<code>hello-learnr2</code>) opts out with <code>require_submission = FALSE</code>, which also keeps the deployed smoke test, which clicks through every Continue before answering, working.</p>
 </div>
 <div class="section level3">
 <h3 id="where-the-pedagogy-and-learnr2s-mechanics-collide">Where the pedagogy and learnr2’s mechanics collide<a class="anchor" aria-label="anchor" href="#where-the-pedagogy-and-learnr2s-mechanics-collide"></a></h3>
@@ -220,7 +220,7 @@
 <td><code>learnr2::question("...", learnr2::answer("a", correct = TRUE), ...)</code></td>
 </tr><tr><td><code>question_text("...", answer("model answer", correct = TRUE), allow_retry = TRUE)</code></td>
 <td>
-<code>learnr2::question("...", learnr2::answer("model answer", correct = TRUE), type = "reflection")</code> (or <code>"reflection_editable"</code>)</td>
+<code>learnr2::question("...", learnr2::answer("model answer", correct = TRUE), type = "reflection")</code> – not <code>"reflection_editable"</code>, see “Submit once, then locked”</td>
 </tr><tr><td><code>question_numeric("...", answer(90, correct = TRUE))</code></td>
 <td>
 <code>learnr2::question("...", type = "reflection_editable", validate = "integer")</code>, no <code><a href="reference/answer.html">answer()</a></code>
@@ -334,7 +334,7 @@ glimpse(mtcars)
 <ul><li>
 <strong><code><a href="reference/question.html">question()</a></code> with <code>answer(correct = TRUE)</code> choices</strong> -&gt; <code><a href="reference/question.html">learnr2::question()</a></code>; leave <code>type</code> at its default (<code>"auto"</code> picks single vs. multiple by how many answers are correct), or set <code>type = "text"</code> for a typed exact-match answer.</li>
 <li>
-<strong><code>question_text()</code></strong> – <code>tutorial.helpers</code>’s workhorse for “In your own words, explain…” prompts, almost always written with a single <code>answer("a model paragraph", correct = TRUE)</code> and <code>allow_retry = TRUE</code> – maps to <code>type = "reflection"</code> (locks after submit) or <code>type = "reflection_editable"</code> (stays editable). The <code>correct</code> answer’s text becomes the model answer revealed after the reader submits; it is not graded against their wording. Drop <code>question_text()</code>-only options with no equivalent: <code>try_again_button</code>, <code>rows</code>, <code>options = list(...)</code>, <code>trim</code>, <code>placeholder</code>.</li>
+<strong><code>question_text()</code></strong> – <code>tutorial.helpers</code>’s workhorse for “In your own words, explain…” prompts, almost always written with a single <code>answer("a model paragraph", correct = TRUE)</code> and <code>allow_retry = TRUE</code> – maps to <code>type = "reflection"</code> (locks after submit; the default for every text/image question – <code>"reflection_editable"</code> is reserved for the minutes question, see “Submit once, then locked”). The <code>correct</code> answer’s text becomes the model answer revealed after the reader submits; it is not graded against their wording. Drop <code>question_text()</code>-only options with no equivalent: <code>try_again_button</code>, <code>rows</code>, <code>options = list(...)</code>, <code>trim</code>, <code>placeholder</code>.</li>
 <li>
 <strong><code>question_numeric()</code></strong> -&gt; <code>type = "reflection_editable"</code>, <code>validate = "integer"</code>, and <em>no</em> <code><a href="reference/answer.html">answer()</a></code> (see the “minutes spent” discussion under “Authoring a new tutorial”).</li>
 <li>
@@ -364,6 +364,7 @@ glimpse(mtcars)
 <li>
 <code>### Hints</code> / <code>### Solutions</code> subsections that only wrap a <code>.hint</code>/<code>.solution</code> div are <em>not</em> gated (quarto-live already has its own show/hide toggle for them) – leaving them in place is fine.</li>
 <li>The TOC sidebar lists every section from the start, but by default an entry for a section the reader hasn’t reached is dimmed and does nothing when clicked, so the sidebar can’t be used to read the whole tutorial at once. <code>learnr2::tutorial_options(allow_skip = TRUE)</code> restores learnr’s <code>allow_skip: yes</code> behaviour (click an entry, unlock everything through it, jump there).</li>
+<li>A section’s Continue button is disabled until every question and student-info form above it is submitted (<code>tutorial_options(require_submission = TRUE)</code>, the default); <code>require_submission = FALSE</code> turns that off.</li>
 </ul></div>
 <div class="section level3">
 <h3 id="webr-packages-must-list-every-package-any-exercise-uses">
@@ -480,7 +481,7 @@ learnr2::student_info()
 </ol><p>Run it locally against any deployed (or <code><a href="reference/run_tutorial.html">run_tutorial()</a></code>-served) URL with:</p>
 <div class="sourceCode" id="cb16"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb16-1"><a href="#cb16-1" tabindex="-1"></a><span class="bu">cd</span> tests/js</span>
 <span id="cb16-2"><a href="#cb16-2" tabindex="-1"></a><span class="va">SMOKE_URL</span><span class="op">=</span><span class="st">"https://ppbds.github.io/learnr2/tutorials/hello-learnr2/hello-learnr2.html"</span> <span class="ex">npm</span> run test:smoke</span></code></pre></div>
-<p>Not yet verified against a real push to the actual repo (this sandbox can’t trigger or observe a live GitHub Actions run) – worth watching the first real run of the <code>smoke-test</code> job after this lands, both to confirm the wait loop’s timing is long enough and that the live selectors still match.</p>
+<p>Verified against real runs since. One real failure (2026-10-07, run 37704641313): the wait loop originally grepped the live page for the tutorial’s <em>title</em>, “Hello, learnr2”, and the day the title lost its comma the loop reported “never came up” for five minutes while the page was live and correct the whole time. It now greps for <code>data-learnr2-question</code>, a structural marker every rendered learnr2 tutorial with a question carries. Rule: a readiness or smoke check keys on structure, never on prose that someone will reasonably reword. The same run showed the “upload Playwright report” step warning that <code>tests/js/playwright-report/</code> didn’t exist: the smoke config had only the <code>list</code> reporter, so the artifact could never be produced; it now adds the <code>html</code> reporter with <code>open: "never"</code>.</p>
 </div>
 </div>
 </div>
