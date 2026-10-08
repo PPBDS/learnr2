@@ -53,6 +53,9 @@ directory.
 | a bare `###` divider | keep it, since it becomes a Continue stop with no heading |
 | `allow_skip: yes` in the YAML | `learnr2::tutorial_options(allow_skip = TRUE)` |
 | `knitr::include_graphics("images/x.png")` | `![](images/x.png)` |
+| a four-backtick block around a plain transcript | an ordinary three-backtick block |
+| `<pre><code>` with `&#96;` entities, to show a chunk | a four-backtick `{verbatim}` block |
+| escaped backticks, `` \`\`\` ``, in a sentence | inline code with a longer delimiter, as in ```` `` ``` `` ```` |
 | prose sending the reader to RStudio or a local console to configure it | rewrite around the page, or drop it (see below) |
 
 The sections that follow expand on the rows that aren’t obvious.
@@ -540,15 +543,65 @@ is for that kind of local session. It isn’t available inside a
 [`learnr2::show_file()`](https://ppbds.github.io/learnr2/reference/show_file.md)
 doesn’t fix prose that tells a reader to run it on the page.
 
+## Don’t mention the old packages
+
+A translated tutorial never mentions **learnr** or **tutorial.helpers**.
+As far as students know, **learnr2** is the only tutorial package there
+is. Rewrite each mention around **learnr2**, or drop it:
+
+- `tutorial.helpers::show_file()` becomes
+  [`learnr2::show_file()`](https://ppbds.github.io/learnr2/reference/show_file.md),
+  and
+  [`library(tutorial.helpers)`](https://ppbds.github.io/tutorial.helpers/)
+  becomes [`library(learnr2)`](https://github.com/PPBDS/learnr2). Update
+  any transcript that shows the result, such as
+  [`search()`](https://rdrr.io/r/base/search.html) output listing
+  `"package:tutorial.helpers"`.
+- A passage pointing students at a **tutorial.helpers** web page,
+  tutorial or function becomes the **learnr2** equivalent, or goes.
+- Remarks about where a tutorial came from, such as “moved here from
+  **tutorial.helpers**”, are history, not teaching. Delete them, in the
+  tutorial and in the package’s README.
+
+The exception is text quoted verbatim from a file that really does name
+them, such as a Dockerfile a tutorial walks through. Keep a quotation
+true to its source.
+
 ## Showing syntax without running it
 
-To show an R chunk literally, as this vignette does, wrap it in a
-four-backtick block marked `{verbatim}`.
+Classic tutorials work hard to show code, because R Markdown and
+**learnr** made it hard. Expect to find four-backtick fences around
+every terminal transcript, `<pre><code>` blocks spelling each backtick
+as `&#96;` so that a displayed chunk isn’t run, and backticks escaped
+one by one in prose. Quarto makes all of that unnecessary. Strip it out
+as you translate:
 
-Inline code is harder. Writing `` `r x` `` in a sentence runs it, and
-wrapping it in an extra pair of backticks doesn’t help, because Quarto
-still evaluates it. Spell the backticks as HTML entities inside a
-`<code>` tag instead:
+- **Plain blocks get three backticks.** A transcript, file listing or
+  command with no backtick fence inside it needs nothing more than an
+  ordinary three-backtick block. Keep four backticks only where the
+  block’s contents include a three-backtick line, since a fence must be
+  longer than any fence it contains.
+- **A displayed chunk goes in a `{verbatim}` block.** To show an R
+  chunk, or a whole Quarto file with its chunks, as this vignette does,
+  wrap it in a four-backtick block marked `{verbatim}`. Everything
+  inside appears exactly as typed and nothing runs. It replaces every
+  `<pre><code>` block, and the `&#96;` entities inside it become plain
+  backticks again. Don’t use a plain four-backtick block for this:
+  **knitr** still runs a ```` ```{r} ```` line that starts a line inside
+  one.
+- **Backticks in a sentence go in inline code.** To mention
+  ```` ``` ```` in prose, use a longer run of backticks than any inside
+  it as the delimiter, with a space inside each end:
+  ```` `` ```{r} `` ```` renders as ```` ```{r} ````. No escaping is
+  needed.
+
+Check the rendered page afterwards. Each simplified block should look
+just as it did before.
+
+The one case that still needs a workaround is inline R code. Writing
+`` `r x` `` in a sentence runs it, and wrapping it in an extra pair of
+backticks doesn’t help, because Quarto still evaluates it. Spell the
+backticks as HTML entities inside a `<code>` tag instead:
 
     <code>&#96;r x&#96;</code>
 

@@ -22,7 +22,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">learnr2</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.3.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.3.9001</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -173,6 +173,20 @@
 <td><code>![](images/x.png)</code></td>
 </tr>
 <tr class="even">
+<td>a four-backtick block around a plain transcript</td>
+<td>an ordinary three-backtick block</td>
+</tr>
+<tr class="odd">
+<td>
+<code>&lt;pre&gt;&lt;code&gt;</code> with <code>&amp;#96;</code> entities, to show a chunk</td>
+<td>a four-backtick <code>{verbatim}</code> block</td>
+</tr>
+<tr class="even">
+<td>escaped backticks, <code>\`\`\`</code>, in a sentence</td>
+<td>inline code with a longer delimiter, as in <code>`` ``` ``</code>
+</td>
+</tr>
+<tr class="odd">
 <td>prose sending the reader to RStudio or a local console to configure it</td>
 <td>rewrite around the page, or drop it (see below)</td>
 </tr>
@@ -373,10 +387,29 @@
 </ul>
 <p>If the source tutorial’s whole point was configuring a local R installation, it has no <strong>learnr2</strong> translation. Drop it rather than reproduce commands the reader can’t run.</p>
 <p>This is a rule about the <em>page</em>, not about the student. A normal AI-era tutorial has the student work in their own repository and Quarto document, run <code><a href="../reference/show_file.html">show_file()</a></code> in their own R Terminal, and paste the result into a <code>"reflection"</code> question. That is the evidence model in <a href="ai.html">Tutorials in the Age of AI</a>, and the page itself still needs nothing installed. Note that <code><a href="../reference/show_file.html">learnr2::show_file()</a></code> is for that kind of local session. It isn’t available inside a <a href="https://github.com/cardiomoon/webr" class="external-link">webr</a> cell, so changing <code>tutorial.helpers::show_file()</code> to <code><a href="../reference/show_file.html">learnr2::show_file()</a></code> doesn’t fix prose that tells a reader to run it on the page.</p>
+</section><section class="level2"><h2 id="dont-mention-the-old-packages">Don’t mention the old packages<a class="anchor" aria-label="anchor" href="#dont-mention-the-old-packages"></a>
+</h2>
+<p>A translated tutorial never mentions <strong>learnr</strong> or <strong>tutorial.helpers</strong>. As far as students know, <strong>learnr2</strong> is the only tutorial package there is. Rewrite each mention around <strong>learnr2</strong>, or drop it:</p>
+<ul>
+<li>
+<code>tutorial.helpers::show_file()</code> becomes <code><a href="../reference/show_file.html">learnr2::show_file()</a></code>, and <code><a href="https://ppbds.github.io/tutorial.helpers/" class="external-link">library(tutorial.helpers)</a></code> becomes <code><a href="https://github.com/PPBDS/learnr2" class="external-link">library(learnr2)</a></code>. Update any transcript that shows the result, such as <code><a href="https://rdrr.io/r/base/search.html" class="external-link">search()</a></code> output listing <code>"package:tutorial.helpers"</code>.</li>
+<li>A passage pointing students at a <strong>tutorial.helpers</strong> web page, tutorial or function becomes the <strong>learnr2</strong> equivalent, or goes.</li>
+<li>Remarks about where a tutorial came from, such as “moved here from <strong>tutorial.helpers</strong>”, are history, not teaching. Delete them, in the tutorial and in the package’s README.</li>
+</ul>
+<p>The exception is text quoted verbatim from a file that really does name them, such as a Dockerfile a tutorial walks through. Keep a quotation true to its source.</p>
 </section><section class="level2"><h2 id="showing-syntax-without-running-it">Showing syntax without running it<a class="anchor" aria-label="anchor" href="#showing-syntax-without-running-it"></a>
 </h2>
-<p>To show an R chunk literally, as this vignette does, wrap it in a four-backtick block marked <code>{verbatim}</code>.</p>
-<p>Inline code is harder. Writing <code>`r x`</code> in a sentence runs it, and wrapping it in an extra pair of backticks doesn’t help, because Quarto still evaluates it. Spell the backticks as HTML entities inside a <code>&lt;code&gt;</code> tag instead:</p>
+<p>Classic tutorials work hard to show code, because R Markdown and <strong>learnr</strong> made it hard. Expect to find four-backtick fences around every terminal transcript, <code>&lt;pre&gt;&lt;code&gt;</code> blocks spelling each backtick as <code>&amp;#96;</code> so that a displayed chunk isn’t run, and backticks escaped one by one in prose. Quarto makes all of that unnecessary. Strip it out as you translate:</p>
+<ul>
+<li>
+<strong>Plain blocks get three backticks.</strong> A transcript, file listing or command with no backtick fence inside it needs nothing more than an ordinary three-backtick block. Keep four backticks only where the block’s contents include a three-backtick line, since a fence must be longer than any fence it contains.</li>
+<li>
+<strong>A displayed chunk goes in a <code>{verbatim}</code> block.</strong> To show an R chunk, or a whole Quarto file with its chunks, as this vignette does, wrap it in a four-backtick block marked <code>{verbatim}</code>. Everything inside appears exactly as typed and nothing runs. It replaces every <code>&lt;pre&gt;&lt;code&gt;</code> block, and the <code>&amp;#96;</code> entities inside it become plain backticks again. Don’t use a plain four-backtick block for this: <strong>knitr</strong> still runs a <code>```{r}</code> line that starts a line inside one.</li>
+<li>
+<strong>Backticks in a sentence go in inline code.</strong> To mention <code>```</code> in prose, use a longer run of backticks than any inside it as the delimiter, with a space inside each end: <code>`` ```{r} ``</code> renders as <code>```{r}</code>. No escaping is needed.</li>
+</ul>
+<p>Check the rendered page afterwards. Each simplified block should look just as it did before.</p>
+<p>The one case that still needs a workaround is inline R code. Writing <code>`r x`</code> in a sentence runs it, and wrapping it in an extra pair of backticks doesn’t help, because Quarto still evaluates it. Spell the backticks as HTML entities inside a <code>&lt;code&gt;</code> tag instead:</p>
 <pre><code>&lt;code&gt;&amp;#96;r x&amp;#96;&lt;/code&gt;</code></pre>
 <p>That renders as the literal syntax, because there is no backtick in the source for Quarto to match.</p>
 </section><section class="level2"><h2 id="check-it-by-rendering-it">Check it by rendering it<a class="anchor" aria-label="anchor" href="#check-it-by-rendering-it"></a>

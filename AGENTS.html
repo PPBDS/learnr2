@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="index.html">learnr2</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.3.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.3.9001</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -95,6 +95,10 @@
 <strong>Outbound links open in a new tab</strong> (<code>openLinksInNewTabs()</code>): every <code>a[href]</code> except <code>#...</code>, <code>download</code>, <code>mailto:</code>/<code>tel:</code>/<code>javascript:</code>. Students worried when a tutorial “disappeared”. Quarto’s <code>link-external-newwindow</code> would miss same-site links.</li>
 <li>
 <strong>Rendering a test copy of learnr2 changes needs an install.</strong> Quarto runs a tutorial’s R chunks in its own R process, which loads the <em>installed</em> learnr2, not a <code>load_all()</code> copy, so a render from a <code>load_all()</code> session still embeds the old <code>quiz.js</code>. Install the working tree into a scratch library (<code>R CMD INSTALL -l &lt;dir&gt; .</code>) and render with <code>R_LIBS=&lt;dir&gt;</code>, into a fresh output directory.</li>
+<li>
+<strong>Pasted screenshots are shrunk</strong> (2026-10), in <code>compressImage()</code>: at most 1600x4000 px, white background, WebP (JPEG where the canvas can’t encode WebP, detected from the data URL), stepping quality then size down to fit ~450 KB. They used to be stored as full-size PNG, up to 3 MB each against a ~5 MB localStorage shared by the whole <em>site</em> (all of <code>127.0.0.1:7446</code>, all of <code>ppbds.github.io</code>). Input cap is 20 MB.</li>
+<li>
+<strong>Failed saves are loud.</strong> <code>saveState()</code> returns <code>false</code> and <code>reportStorageFailure()</code> shows a sticky page warning (full vs blocked storage); a reflection or <code><a href="reference/student_info.html">student_info()</a></code> whose submit couldn’t be stored stays open rather than locking. Previously failures were swallowed, so a full storage meant an answer looked submitted but was missing from the download. Tests stub <code>Storage.prototype.setItem</code> to throw <code>QuotaExceededError</code>.</li>
 <li>
 <strong>Image-paste answers.</strong> Once an image is pasted, the textarea hides and typed text is not saved (<code>value</code> is <code>""</code>). A user reported the visible empty textarea above a pasted image as a second box to fill in. Don’t bring it back.</li>
 <li>
