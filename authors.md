@@ -13,13 +13,13 @@ Source:
 [`DESCRIPTION`](https://github.com/PPBDS/learnr2/blob/main/DESCRIPTION)
 
 Kane D, Vu M (2026). *learnr2: Interactive Tutorials with 'Quarto' and
-'WebR'*. R package version 0.1.1.9010,
+'WebR'*. R package version 0.1.1.9011,
 <https://github.com/PPBDS/learnr2>.
 
     @Manual{,
       title = {learnr2: Interactive Tutorials with 'Quarto' and 'WebR'},
       author = {David Kane and Minh Vu},
       year = {2026},
-      note = {R package version 0.1.1.9010},
+      note = {R package version 0.1.1.9011},
       url = {https://github.com/PPBDS/learnr2},
     }

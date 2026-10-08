@@ -23,8 +23,8 @@ no longer to teach students how to code.
 > *Our purpose is to teach students how to use AI to create.*
 
 A **learnr2** tutorial is a Quarto document that renders to a single
-HTML page. Code cells on the page run in the reader’s browser via WebR;
-quiz and text questions are graded there too, with plain JavaScript.
+HTML page. Code cells on the page run in the reader’s browser via WebR.
+Quiz and text questions are graded there too, with plain JavaScript.
 Make sure that you are using the latest development version of
 **learnr2**. Install it with `pak::pak("PPBDS/learnr2")`.
 
@@ -41,11 +41,11 @@ who finishes one should feel that she has done real work and understood
 all of it, not that she has been tested.
 
 Almost all exercises feature a knowledge drop, a bit of information,
-rarely more than two sentences, provided after the student has answered
-the question. Assume that you are giving the student a private lesson.
-You ask them a question. They give you an answer. What would you say to
-them next? What do you want to teach them, given that context? That is
-the knowledge drop.
+rarely more than two sentences, provided after the student has followed
+the instructions. Assume that you are giving the student a private
+lesson. You ask them a question. They give you an answer. What would you
+say to them next? What do you want to teach them, given that context?
+That is the knowledge drop.
 
 We are building a “[pit of
 success](https://blog.codinghorror.com/falling-into-the-pit-of-success/).”
@@ -58,8 +58,8 @@ stating what you want, judging what the AI hands back, noticing when it
 is wrong, and refining.
 
 Every word matters. Never waste a student’s time. More exercises are
-better than fewer, so long as each one is small; one long exercise that
-does three things is worse than three short ones that do one thing each,
+better than fewer, so long as each one is small. One long exercise that
+does three things is worse than three short ones that do one thing each
 because every exercise is another chance to drop some knowledge.
 
 ## Overview
@@ -74,7 +74,7 @@ file by hand.
 
 Every tutorial begins with
 [`student_info()`](https://ppbds.github.io/learnr2/reference/student_info.md),
-which records a student’s name, email and (optionally) id. Include it
+which records a student’s name, email and (optionally) ID. Include it
 near the top of the tutorial in its own chunk:
 
 ```` default
@@ -115,12 +115,12 @@ the `learnr2::` prefix rather than attached with
 [`library()`](https://rdrr.io/r/base/library.html). Any `{r}` chunk in a
 tutorial runs once, when the tutorial is *rendered* – on your machine or
 in CI, never in the student’s browser – so every package such a chunk
-uses must be installed there; if your tutorials are part of an R
+uses must be installed there. If your tutorials are part of an R
 package, list each one under Suggests in the DESCRIPTION file, and list
 **learnr2** under Imports. Packages used by
 [webr](https://github.com/cardiomoon/webr) code cells (the ones that run
 in the browser) are declared separately, in a `webr: packages:` block in
-the YAML header; AI-era tutorials rarely have any.
+the YAML header. AI-era tutorials rarely have any.
 
 Anything typed at the keyboard belongs in \`backticks\` (not “quotation
 marks”), except for package names, which are always **bolded**. Function
@@ -135,9 +135,9 @@ lines inside the chunk – never inline within the
 [`{}`](https://rdrr.io/r/base/Paren.html). Two options are required on
 every chunk. First, a unique `#| label:`, following a fixed convention:
 the enclosing `##` section’s heading, lowercased and dashed, then a dash
-and a sequential number (`introduction-1`, `introduction-2`, …; see the
-next section for the exercise-style variant). A question’s label is the
-key its saved answer is stored under, so renaming one resets that
+and a sequential number (`introduction-1`, `introduction-2`, …). The
+next section describes the exercise-style variant. A question’s label is
+the key its saved answer is stored under, so renaming one resets that
 question for every student. Second, `#| echo: false` on every chunk that
 renders a **learnr2** widget
 ([`student_info()`](https://ppbds.github.io/learnr2/reference/student_info.md),
@@ -263,7 +263,7 @@ There are two types of text questions: 1) those that provide the
 students with the correct answer, after they have submitted their own
 answer, and, 2) those that do not provide an answer. Both are
 [`learnr2::question()`](https://ppbds.github.io/learnr2/reference/question.md)
-calls; the `type` argument tells them apart. Examples:
+calls. The `type` argument tells them apart. Examples:
 
 ```` default
 ### Exercise 6
@@ -312,7 +312,7 @@ chunk runs right after their submission, and the whole method depends on
 their comparing the two. Second, if we show the right answer *and* leave
 their box editable, some number of students – small, perhaps, but not
 zero – will copy our answer back into the box in which they should have
-submitted their own. Locking the box removes the temptation; requiring a
+submitted their own. Locking the box removes the temptation. Requiring a
 submission removes the option of clicking past the question and filling
 it in later from our answer.
 
@@ -357,7 +357,7 @@ done it by copying/pasting the result from a command. These are still
 `type = "reflection"` – they lock on submit like every other question –
 but pass no
 [`answer()`](https://ppbds.github.io/learnr2/reference/answer.md), so
-nothing is revealed; what the student compares against is our answer
+nothing is revealed. What the student compares against is our answer
 chunk after the next Continue. The template for one, in full, looks like
 this:
 
@@ -437,17 +437,17 @@ Continue button at least once.
 
 **learnr2** does support in-page code cells –
 [webr](https://github.com/cardiomoon/webr) chunks that run R in the
-student’s browser, with `.hint` and `.solution` blocks tied to them; the
+student’s browser, with `.hint` and `.solution` blocks tied to them. The
 bundled `hello-learnr2` tutorial shows every variant. AI-era tutorials
 rarely use them, because the student’s work happens in her own QMD, not
-on the tutorial page. If you do use one, the old rules still hold: every
-cell should print something, so the student sees what her code did; a
+on the tutorial page. If you do use one, the old rules still hold. Every
+cell should print something, so the student sees what her code did. A
 hint shows the shape of the answer with `...` where the student must
-fill something in, and if there are several hints the *last* one is the
-one that must carry the key information, since that is the one the
-student ends up looking at; and the learning curve is measured in how
-many new characters each cell asks for relative to the one before –
-fewer is better, so split a long answer across cells.
+fill something in, and if there are several hints the *last* one must
+carry the key information, since that is the one the student ends up
+looking at. The learning curve is measured in how many new characters
+each cell asks for relative to the one before – fewer is better, so
+split a long answer across cells.
 
 ### Knowledge drops
 
@@ -477,7 +477,7 @@ doing. Teach them something real!
 In normal, output-focused tutorials, the most important knowledge drops
 mention *packages* which we want students to be aware of — a map of the
 infrastructure. Since students don’t write the code, they rarely need
-individual function names; when a transformation matters, teach the
+individual function names. When a transformation matters, teach the
 concept, not the function which does it. Modeling tutorials are the
 exception: there the modeling functions themselves, like `reg_linear()`
 and `plot_predictions()`, are the curriculum, so knowledge drops may and
@@ -492,12 +492,12 @@ should name them.
   filter functions” section of `?dplyr::filter`, or the “See also”
   section of `?arrange`. In the age of AI, turn what you find into a
   sentence about what the *package* can do or what the *concept* is,
-  rather than a sentence about the function’s signature; the student
+  rather than a sentence about the function’s signature. The student
   will not type it, but she needs to know it exists in order to ask for
   it.
 
 - Use high quality links. The second edition of [*R for Data
-  Science*](https://r4ds.hadley.nz/) is amazing; link to it as often as
+  Science*](https://r4ds.hadley.nz/) is amazing. Link to it as often as
   you can. Anything associated with [Posit](https://posit.co/) is high
   quality, including the [Tidyverse](https://tidyverse.org/) and
   [Tidymodels](https://www.tidymodels.org/) sites.
@@ -643,11 +643,12 @@ Markdown tutorials needed is unnecessary here.)
 
 The one case `{verbatim}` doesn’t cover is *inline* code that you want
 to show rather than run, in the middle of a sentence – the literal text
-`` `r x` ``. Wrapping it in extra backticks does not work; Quarto still
-evaluates it (this very paragraph broke the vignette’s render the first
-time, written that way). Spell the backticks as the HTML entity instead:
-`<code>&#96;r x&#96;</code>` renders as the literal syntax, because
-there is no backtick character in the source for Quarto to match.
+`` `r x` ``. Wrapping it in extra backticks does not work. Quarto still
+evaluates it, and this very paragraph broke the vignette’s render the
+first time, written that way. Spell the backticks as the HTML entity
+instead: `<code>&#96;r x&#96;</code>` renders as the literal syntax,
+because there is no backtick character in the source for Quarto to
+match.
 
 ## Tutorial Introduction
 
@@ -874,7 +875,7 @@ over. That is the knowledge drop, and it is the part only you can write.
 Students never show *their* code in the rendered document — readers of
 an analysis want the graphics, not the code. But we, when writing
 tutorials, often show students *our* code so that they learn something.
-At a minimum, show the *result*; add `#| echo: true` when the code
+At a minimum, show the *result*. Add `#| echo: true` when the code
 itself is worth studying. Because the answer chunk really runs when the
 tutorial renders, it is also the test that our code works. A tutorial
 written this way needs far less separate testing than a classic one did.
@@ -953,7 +954,7 @@ learnr2::question(
 <!-- XX: Insert a knowledge drop related to this project. -->
 ````
 
-Note that the numbering of these questions is arbitrary; just keep the
+Note that the numbering of these questions is arbitrary. Just keep the
 `### Exercise N` headers and the `-N` in the labels in step as you add
 and remove exercises, and run
 [`learnr2::check_tutorial()`](https://ppbds.github.io/learnr2/reference/check_tutorial.md)
@@ -989,7 +990,7 @@ Terminal, because later chunks will use `x` to create the plot.
 
 Caching gets its own questions — never fold `#| cache: true` into
 another step. Since the chunk already holds only the assignment to `x`,
-no cleanup is needed; the next two questions cache the chunk and then
+no cleanup is needed. The next two questions cache the chunk and then
 update `.gitignore`.
 
 ```` default
@@ -1204,7 +1205,7 @@ students to read the book, working through the included code. Sadly,
 very few students are so disciplined. In fact, in a large class, a
 majority of the students won’t even read the book. A structured tutorial
 is how the chapter actually reaches them. Students used to type in
-(almost) every command the book demonstrates; now they have AI produce
+(almost) every command the book demonstrates. Now they have AI produce
 each result and check it against ours. Either way, the chapter’s code
 gets exercised and its key points get made.
 
@@ -1298,7 +1299,7 @@ Science* as the example:
   default is one [`library()`](https://rdrr.io/r/base/library.html)
   chunk in the Introduction. Splitting it is still a legitimate choice
   for a book tutorial whose chapter introduces several packages worth a
-  sentence each; just make it deliberately.
+  sentence each. Just make it deliberately.
 
 ## Appendix: Checking a tutorial
 
@@ -1330,7 +1331,7 @@ in this order:
     documentation, tests, and compliance with CRAN standards. A good
     result would be `0 errors ✔ | 0 warnings ✔ | 0 notes ✔`, but don’t
     worry too much about NOTES. Your package’s tests should call the two
-    functions above over every tutorial; see `learnr2`’s own
+    functions above over every tutorial. See **learnr2**’s own
     `tests/testthat/test-render-tutorials.R` for the pattern.
 
 4.  Test your tutorial from a student’s perspective:
@@ -1339,7 +1340,7 @@ in this order:
     During development, load your package with `devtools::load_all()`
     first and
     [`run_tutorial()`](https://ppbds.github.io/learnr2/reference/run_tutorial.md)
-    will read the tutorial from your source tree; otherwise it reads
+    will read the tutorial from your source tree. Otherwise it reads
     whatever copy of your package is *installed*, which is not
     necessarily the one you just edited.
 
