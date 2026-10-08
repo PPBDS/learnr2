@@ -1,5 +1,9 @@
 # Covers R/create_tutorial.R: create_tutorial(), open_file().
 
+# withr is a Suggests package: skip the whole file if it isn't installed,
+# so a check run without Suggests (CRAN's noSuggests) passes.
+testthat::skip_if_not_installed("withr")
+
 test_that("create_tutorial() scaffolds a qmd wired for format: live-html plus the extension", {
   parent <- withr::local_tempdir()
   qmd <- create_tutorial("demo", dir = parent, open = FALSE)

@@ -17,7 +17,10 @@ compatible with MIT:
   Comlink                                     Apache-2.0
   @jupyter-widgets/html-manager               BSD-3-Clause
   Pyodide (JavaScript loader only)            MPL-2.0
+  webR JavaScript client                      MIT
+  ansi-to-html                                MIT
+  entities                                    BSD-2-Clause
 
 Copyright holders, upstream URLs, and the location of the unminified sources
-for each component are listed in inst/COPYRIGHTS, and the copyright holders
-appear with 'cph' roles in the Authors@R field of DESCRIPTION.
+for each component are listed in inst/COPYRIGHTS, which the Copyright field
+of DESCRIPTION points to.

@@ -1,3 +1,7 @@
+# withr is a Suggests package: skip the whole file if it isn't installed,
+# so a check run without Suggests (CRAN's noSuggests) passes.
+testthat::skip_if_not_installed("withr")
+
 test_that("answer() validates and constructs a learnr2_answer", {
   a <- answer("42", correct = TRUE, message = "Nice.")
   expect_s3_class(a, "learnr2_answer")

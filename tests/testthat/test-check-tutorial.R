@@ -3,6 +3,10 @@
 
 # A tutorial that passes every check, assembled from the same pieces the
 # create_tutorial() template and the bundled tutorials use.
+# withr is a Suggests package: skip the whole file if it isn't installed,
+# so a check run without Suggests (CRAN's noSuggests) passes.
+testthat::skip_if_not_installed("withr")
+
 good_lines <- c(
   "---",
   'title: "Good"',

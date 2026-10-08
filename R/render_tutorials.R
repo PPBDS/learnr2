@@ -32,6 +32,20 @@
 #' @return A character vector of paths to the rendered `.html` files, named
 #'   by tutorial (the directory name), invisibly.
 #' @export
+#' @section In a content package's tests:
+#' A package of tutorials can check every one of them from
+#' `tests/testthat/test-tutorials.R`:
+#'
+#' ```r
+#' tutorials <- available_tutorials(package = "my.tutorials")
+#' render_tutorials(tutorials$path)
+#' check_tutorial(tutorials$path)
+#' ```
+#'
+#' Guard that test with `testthat::skip_on_cran()` and
+#' `testthat::skip_if(is.null(quarto::quarto_path()))`, since it needs the
+#' Quarto command line tool.
+#'
 #' @examples
 #' # Scaffold a tutorial, then render it the way a test would. Needs the
 #' # Quarto command line tool, so this is skipped where it isn't installed.
@@ -41,13 +55,6 @@
 #'   html <- render_tutorials(qmd)
 #'   file.exists(html)
 #'   unlink(c(dir, dirname(html)), recursive = TRUE)
-#' }
-#'
-#' # In a content package's tests/testthat/test-tutorials.R:
-#' \dontrun{
-#' tutorials <- available_tutorials(package = "my.tutorials")
-#' render_tutorials(tutorials$path)
-#' check_tutorial(tutorials$path)
 #' }
 render_tutorials <- function(paths,
                              output_dir = tempfile("learnr2-render-"),

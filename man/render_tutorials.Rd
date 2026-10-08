@@ -44,6 +44,21 @@ successful render proves the document builds, not that every exercise
 behaves. Each tutorial's render time is reported, since a slow one is
 usually the first sign of something that will also be slow for readers.
 }
+\section{In a content package's tests}{
+
+A package of tutorials can check every one of them from
+\code{tests/testthat/test-tutorials.R}:
+
+\if{html}{\out{<div class="sourceCode r">}}\preformatted{tutorials <- available_tutorials(package = "my.tutorials")
+render_tutorials(tutorials$path)
+check_tutorial(tutorials$path)
+}\if{html}{\out{</div>}}
+
+Guard that test with \code{testthat::skip_on_cran()} and
+\code{testthat::skip_if(is.null(quarto::quarto_path()))}, since it needs the
+Quarto command line tool.
+}
+
 \examples{
 # Scaffold a tutorial, then render it the way a test would. Needs the
 # Quarto command line tool, so this is skipped where it isn't installed.
@@ -53,12 +68,5 @@ if (!is.null(quarto::quarto_path())) {
   html <- render_tutorials(qmd)
   file.exists(html)
   unlink(c(dir, dirname(html)), recursive = TRUE)
-}
-
-# In a content package's tests/testthat/test-tutorials.R:
-\dontrun{
-tutorials <- available_tutorials(package = "my.tutorials")
-render_tutorials(tutorials$path)
-check_tutorial(tutorials$path)
 }
 }

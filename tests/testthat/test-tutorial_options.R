@@ -1,6 +1,10 @@
 # Covers R/tutorial_options.R: tutorial_options(), options_div(),
 # options_html(), and the print/knit_print methods.
 
+# withr is a Suggests package: skip the whole file if it isn't installed,
+# so a check run without Suggests (CRAN's noSuggests) passes.
+testthat::skip_if_not_installed("withr")
+
 test_that("tutorial_options() defaults to allow_skip = FALSE and require_submission = TRUE", {
   opts <- tutorial_options()
   expect_s3_class(opts, "learnr2_options")

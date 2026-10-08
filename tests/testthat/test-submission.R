@@ -1,3 +1,7 @@
+# withr is a Suggests package: skip the whole file if it isn't installed,
+# so a check run without Suggests (CRAN's noSuggests) passes.
+testthat::skip_if_not_installed("withr")
+
 test_that("student_info() builds the default name/email/id fields", {
   info <- student_info()
   expect_s3_class(info, "learnr2_info")

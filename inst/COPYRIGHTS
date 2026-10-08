@@ -35,8 +35,25 @@ these libraries:
 
   Comlink
     https://github.com/GoogleChromeLabs/comlink
-    Copyright 2017 Google Inc.
+    Copyright 2019 Google LLC (as preserved in the bundles' @license header)
     License: Apache-2.0
+
+  webR JavaScript client (the main-thread API only)
+    https://github.com/r-wasm/webr
+    Copyright (c) 2023 webR authors
+    License: MIT. webR's LICENCE.md puts its compiled binaries under GPL-3
+    and everything else under MIT "unless stated otherwise in the source
+    code files"; the client sources (src/webR/) carry no such statement.
+
+  ansi-to-html (renders R's coloured console output as HTML)
+    https://github.com/rburns/ansi-to-html
+    Copyright (c) 2012 Rob Burns
+    License: MIT
+
+  entities (HTML escaping, a dependency of ansi-to-html)
+    https://github.com/fb55/entities
+    Copyright (c) Felix Boehm
+    License: BSD-2-Clause
 
   @jupyter-widgets/html-manager (Jupyter widgets HTML manager)
     https://github.com/jupyter-widgets/ipywidgets
@@ -48,5 +65,8 @@ these libraries:
     Copyright (c) Pyodide contributors and Mozilla
     License: MPL-2.0
 
-WebR, the Pyodide runtime, and any R or Python packages a tutorial uses are
-not bundled; the rendered page downloads them in the reader's browser.
+Not bundled, and downloaded by the rendered page in the reader's browser:
+the webR worker and R WebAssembly binaries (GPL-3, from webr.r-wasm.org),
+the Pyodide runtime (from cdn.jsdelivr.net), Plotly (from cdn.plot.ly, only
+when a Python cell produces a Plotly figure), and any R or Python packages a
+tutorial uses. No GPL-licensed code is included in this package.

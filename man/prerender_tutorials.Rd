@@ -54,12 +54,14 @@ are the ones baked in alongside it.
 }
 
 \examples{
-\dontrun{
-# Everything installed, into the default per-user cache.
-prerender_tutorials()
-
-# One package, forcing a rebuild.
-prerender_tutorials(package = "learnr2", refresh = TRUE)
+# One package, into a temporary directory rather than the user cache.
+# Needs the Quarto command line tool, so this is skipped where it isn't
+# installed. Called with no arguments, prerender_tutorials() renders every
+# installed package's tutorials into the default per-user cache.
+if (!is.null(quarto::quarto_path())) {
+  out <- tempfile()
+  prerender_tutorials(package = "learnr2", output_dir = out)
+  unlink(out, recursive = TRUE)
 }
 }
 \seealso{

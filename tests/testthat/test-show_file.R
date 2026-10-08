@@ -3,6 +3,10 @@
 
 # Test file path using testthat::test_path()
 # This automatically finds the file relative to the test directory
+# withr is a Suggests package: skip the whole file if it isn't installed,
+# so a check run without Suggests (CRAN's noSuggests) passes.
+testthat::skip_if_not_installed("withr")
+
 test_file <- test_path("fixtures", "show_file_test.txt")
 test_file_yaml <- test_path("fixtures", "show_file_yaml_test.qmd")
 test_file_python <- test_path("fixtures", "show_file_python_test.qmd")

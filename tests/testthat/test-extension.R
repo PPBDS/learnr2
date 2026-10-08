@@ -1,5 +1,9 @@
 # Covers R/extension.R: live_extension_dir(), add_live_extension().
 
+# withr is a Suggests package: skip the whole file if it isn't installed,
+# so a check run without Suggests (CRAN's noSuggests) passes.
+testthat::skip_if_not_installed("withr")
+
 test_that("live_extension_dir() returns the bundled _extensions path", {
   dir <- live_extension_dir()
   expect_type(dir, "character")

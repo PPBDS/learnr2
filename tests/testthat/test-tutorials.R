@@ -10,6 +10,10 @@
 
 # ---- available_tutorials() ------------------------------------------------
 
+# withr is a Suggests package: skip the whole file if it isn't installed,
+# so a check run without Suggests (CRAN's noSuggests) passes.
+testthat::skip_if_not_installed("withr")
+
 test_that("available_tutorials(package = 'learnr2') lists the bundled tutorials", {
   tutorials <- available_tutorials(package = "learnr2")
   expect_s3_class(tutorials, "data.frame")

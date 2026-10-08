@@ -2,6 +2,10 @@
 # Quarto is mocked everywhere except the one real-render test at the bottom,
 # which is what actually proves the bundled tutorials build.
 
+# withr is a Suggests package: skip the whole file if it isn't installed,
+# so a check run without Suggests (CRAN's noSuggests) passes.
+testthat::skip_if_not_installed("withr")
+
 test_that("resolve_tutorial_paths() accepts .qmd files and tutorial directories, and rejects the rest", {
   d <- withr::local_tempdir()
   qmd <- fs::path(d, "lesson.qmd")

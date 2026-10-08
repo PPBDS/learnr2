@@ -168,13 +168,23 @@ errors with an install hint if that invariant is somehow broken.
 # With no `name`, just lists the tutorials that can be run.
 run_tutorial()
 
-# Not run: needs the Quarto command line tool, and, when `open = TRUE`,
-# starts a local web server that blocks the session until interrupted.
+# Render without serving (open = FALSE), into a temporary directory
+# rather than the user cache. Needs the Quarto command line tool, so this
+# is skipped where it isn't installed.
+if (!is.null(quarto::quarto_path())) {
+  out <- tempfile()
+  html <- run_tutorial("hello-learnr2", output_dir = out, open = FALSE)
+  file.exists(html)
+
+  # A second call reuses the cached render; refresh = TRUE forces a new one.
+  run_tutorial("hello-learnr2", output_dir = out, open = FALSE, refresh = TRUE)
+  unlink(out, recursive = TRUE)
+}
+
+# Not run: with open = TRUE, starts a local web server that blocks the
+# session until interrupted.
 \dontrun{
 run_tutorial("hello-learnr2")
-
-# Force a re-render even though the cached copy is current.
-run_tutorial("hello-learnr2", refresh = TRUE)
 
 # A classic learnr tutorial from a content package is handed to learnr.
 run_tutorial("hello", package = "learnr", open = TRUE)
