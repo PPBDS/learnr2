@@ -71,4 +71,7 @@ copied alongside it, so it renders out of the box with Quarto or
   `tutorial_options(allow_skip = TRUE)` says so, and every page has a
   "Start Over" button that clears saved progress.
 
-See the reference index and the bundled `hello-learnr2` tutorial for details.
+See the bundled `hello-learnr2` tutorial and the reference index for details.
+Two vignettes cover writing tutorials: "Tutorials in the Age of AI" on how a
+tutorial should teach, and "Translating learnr Tutorials" on how one is put
+together, including converting an existing learnr tutorial.

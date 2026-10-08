@@ -27,7 +27,7 @@ This document describes the best way to write R tutorials using the [**learnr2**
 
 > *Our purpose is to teach students how to use AI to create.* 
 
-A **learnr2** tutorial is a Quarto document that renders to a single HTML page. Code cells on the page run in the reader's browser via WebR. Quiz and text questions are graded there too, with plain JavaScript. Make sure that you are using the latest development version of **learnr2**. Install it with `pak::pak("PPBDS/learnr2")`.
+A **learnr2** tutorial is a Quarto document that renders to a single HTML page. Code cells on the page run in the reader's browser via WebR. Quiz and text questions are graded there too, with plain JavaScript. This vignette is about how a tutorial should teach. Its companion, [Translating learnr Tutorials](translating.html), is the mechanics reference: how the file is put together, and how to convert an existing **learnr** tutorial. Make sure that you are using the latest development version of **learnr2**. Install it with `pak::pak("PPBDS/learnr2")`.
 
 ### Philosophy
 
