@@ -21,7 +21,7 @@ run both kinds through this one function and depend only on learnr2."></head><bo
 
     <a class="navbar-brand me-2" href="../index.html">learnr2</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.1.9011</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.2.9001</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -242,23 +242,16 @@ errors with an install hint if that invariant is somehow broken.</p>
 <span class="r-msg co"><span class="r-pr">#&gt;</span>   - hello-learnr2</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Render without serving (open = FALSE), into a temporary directory</span></span></span>
-<span class="r-in"><span><span class="co"># rather than the user cache. Needs the Quarto command line tool, so this</span></span></span>
-<span class="r-in"><span><span class="co"># is skipped where it isn't installed.</span></span></span>
-<span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NULL.html" class="external-link">is.null</a></span><span class="op">(</span><span class="fu">quarto</span><span class="fu">::</span><span class="fu"><a href="https://quarto-dev.github.io/quarto-r/reference/quarto_path.html" class="external-link">quarto_path</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span></span>
+<span class="r-in"><span><span class="co"># rather than the user cache. Calling it again would reuse this render;</span></span></span>
+<span class="r-in"><span><span class="co"># pass refresh = TRUE to force a new one. Runs only interactively, with the</span></span></span>
+<span class="r-in"><span><span class="co"># Quarto command line tool installed: a full tutorial takes several</span></span></span>
+<span class="r-in"><span><span class="co"># seconds to render.</span></span></span>
+<span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/interactive.html" class="external-link">interactive</a></span><span class="op">(</span><span class="op">)</span> <span class="op">&amp;&amp;</span> <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NULL.html" class="external-link">is.null</a></span><span class="op">(</span><span class="fu">quarto</span><span class="fu">::</span><span class="fu"><a href="https://quarto-dev.github.io/quarto-r/reference/quarto_path.html" class="external-link">quarto_path</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span></span>
 <span class="r-in"><span>  <span class="va">out</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-in"><span>  <span class="va">html</span> <span class="op">&lt;-</span> <span class="fu">run_tutorial</span><span class="op">(</span><span class="st">"hello-learnr2"</span>, output_dir <span class="op">=</span> <span class="va">out</span>, open <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
 <span class="r-in"><span>  <span class="fu"><a href="https://rdrr.io/r/base/files.html" class="external-link">file.exists</a></span><span class="op">(</span><span class="va">html</span><span class="op">)</span></span></span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span>  <span class="co"># A second call reuses the cached render; refresh = TRUE forces a new one.</span></span></span>
-<span class="r-in"><span>  <span class="fu">run_tutorial</span><span class="op">(</span><span class="st">"hello-learnr2"</span>, output_dir <span class="op">=</span> <span class="va">out</span>, open <span class="op">=</span> <span class="cn">FALSE</span>, refresh <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
 <span class="r-in"><span>  <span class="fu"><a href="https://rdrr.io/r/base/unlink.html" class="external-link">unlink</a></span><span class="op">(</span><span class="va">out</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">}</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Rendering hello-learnr2 (/home/runner/work/_temp/Library/learnr2/tutorials/hello-learnr2/hello-learnr2.qmd) ...</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Rendered hello-learnr2 in 4.4s: /tmp/Rtmpe5jUku/file19b5740ab341/learnr2/hello-learnr2/hello-learnr2.html</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Rendered 1 tutorial(s).</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Rendering hello-learnr2 (/home/runner/work/_temp/Library/learnr2/tutorials/hello-learnr2/hello-learnr2.qmd) ...</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Rendered hello-learnr2 in 4.4s: /tmp/Rtmpe5jUku/file19b5740ab341/learnr2/hello-learnr2/hello-learnr2.html</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Rendered 1 tutorial(s).</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Not run: with open = TRUE, starts a local web server that blocks the</span></span></span>
 <span class="r-in"><span><span class="co"># session until interrupted.</span></span></span>

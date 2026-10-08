@@ -200,23 +200,16 @@ run_tutorial()
 #>   - hello-learnr2
 
 # Render without serving (open = FALSE), into a temporary directory
-# rather than the user cache. Needs the Quarto command line tool, so this
-# is skipped where it isn't installed.
-if (!is.null(quarto::quarto_path())) {
+# rather than the user cache. Calling it again would reuse this render;
+# pass refresh = TRUE to force a new one. Runs only interactively, with the
+# Quarto command line tool installed: a full tutorial takes several
+# seconds to render.
+if (interactive() && !is.null(quarto::quarto_path())) {
   out <- tempfile()
   html <- run_tutorial("hello-learnr2", output_dir = out, open = FALSE)
   file.exists(html)
-
-  # A second call reuses the cached render; refresh = TRUE forces a new one.
-  run_tutorial("hello-learnr2", output_dir = out, open = FALSE, refresh = TRUE)
   unlink(out, recursive = TRUE)
 }
-#> Rendering hello-learnr2 (/home/runner/work/_temp/Library/learnr2/tutorials/hello-learnr2/hello-learnr2.qmd) ...
-#> Rendered hello-learnr2 in 4.4s: /tmp/Rtmpe5jUku/file19b5740ab341/learnr2/hello-learnr2/hello-learnr2.html
-#> Rendered 1 tutorial(s).
-#> Rendering hello-learnr2 (/home/runner/work/_temp/Library/learnr2/tutorials/hello-learnr2/hello-learnr2.qmd) ...
-#> Rendered hello-learnr2 in 4.4s: /tmp/Rtmpe5jUku/file19b5740ab341/learnr2/hello-learnr2/hello-learnr2.html
-#> Rendered 1 tutorial(s).
 
 # Not run: with open = TRUE, starts a local web server that blocks the
 # session until interrupted.

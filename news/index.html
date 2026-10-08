@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">learnr2</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.1.9011</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.2.9001</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -37,7 +37,7 @@
     </div>
 
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="development version" id="learnr2-development-version">learnr2 (development version)<a class="anchor" aria-label="anchor" href="#learnr2-development-version"></a></h2>
+<h2 class="pkg-version" data-toc-text="0.1.2" id="learnr2-012">learnr2 0.1.2<a class="anchor" aria-label="anchor" href="#learnr2-012"></a></h2>
 <ul><li><p><code><a href="../reference/tutorial_options.html">tutorial_options()</a></code> gains <code>require_submission</code>, default <code>TRUE</code>: the “Continue” button at the end of a section is disabled, with a note under it, until every <code><a href="../reference/question.html">question()</a></code> and <code><a href="../reference/student_info.html">student_info()</a></code> form above it in that section has been submitted. With <code>type = "reflection"</code> questions, which lock on submit, a tutorial can show its own answer right after the reader’s without inviting them to copy it back. Reference material can opt out with <code>require_submission = FALSE</code>, as <code>hello-learnr2</code> does. <strong>Behaviour change for existing tutorials:</strong> readers must now submit every question in a section before continuing.</p></li>
 <li><p>New <code><a href="../reference/tutorial_options.html">tutorial_options()</a></code>, for settings that apply to a whole tutorial page. Its first option, <code>allow_skip</code>, controls the table of contents: by default (<code>FALSE</code>) a sidebar entry for a section the reader has not reached yet is dimmed and does nothing when clicked, becoming a working link only once that section is unlocked, so the sidebar cannot be used to read the whole tutorial at once. <code>tutorial_options(allow_skip = TRUE)</code> restores the previous behaviour, where clicking any entry unlocked every section up to it and jumped there. Call it once, in an <code>echo: false</code> chunk; <code><a href="../reference/check_tutorial.html">check_tutorial()</a></code> treats such a chunk as a widget chunk. <strong>Behaviour change for existing tutorials:</strong> none of them opted in, so all of them now lock the sidebar.</p></li>
 <li><p>The “Start Over” button no longer depends on the table-of-contents sidebar. A tutorial rendered with <code>toc: false</code> used to have no Start Over at all, and every tutorial lost it on a phone-width screen, where Quarto hides the sidebar. The button now sits at the bottom of the sidebar when one is showing and otherwise at the top of the tutorial, directly under the title, moving between the two as the window resizes.</p></li>

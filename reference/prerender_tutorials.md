@@ -72,16 +72,13 @@ current.
 
 ``` r
 # One package, into a temporary directory rather than the user cache.
-# Needs the Quarto command line tool, so this is skipped where it isn't
-# installed. Called with no arguments, prerender_tutorials() renders every
-# installed package's tutorials into the default per-user cache.
-if (!is.null(quarto::quarto_path())) {
+# Called with no arguments, prerender_tutorials() renders every installed
+# package's tutorials into the default per-user cache. Runs only
+# interactively, with the Quarto command line tool installed: a full
+# tutorial takes several seconds to render.
+if (interactive() && !is.null(quarto::quarto_path())) {
   out <- tempfile()
   prerender_tutorials(package = "learnr2", output_dir = out)
   unlink(out, recursive = TRUE)
 }
-#> Rendering hello-learnr2 (/home/runner/work/_temp/Library/learnr2/tutorials/hello-learnr2/hello-learnr2.qmd) ...
-#> Rendered hello-learnr2 in 4.4s: /tmp/Rtmpe5jUku/file19b5a1042bb/learnr2/hello-learnr2/hello-learnr2.html
-#> Rendered 1 tutorial(s).
-#> 1 tutorial(s) rendered, 0 already current, in /tmp/Rtmpe5jUku/file19b5a1042bb
 ```

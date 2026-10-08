@@ -1,6 +1,6 @@
 # Changelog
 
-## learnr2 (development version)
+## learnr2 0.1.2
 
 - [`tutorial_options()`](https://ppbds.github.io/learnr2/reference/tutorial_options.md)
   gains `require_submission`, default `TRUE`: the “Continue” button at

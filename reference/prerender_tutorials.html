@@ -19,7 +19,7 @@ they are Shiny apps and have nothing to cache."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">learnr2</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.1.9011</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.2.9001</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -122,18 +122,15 @@ makes a cached render current.</p></div>
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># One package, into a temporary directory rather than the user cache.</span></span></span>
-<span class="r-in"><span><span class="co"># Needs the Quarto command line tool, so this is skipped where it isn't</span></span></span>
-<span class="r-in"><span><span class="co"># installed. Called with no arguments, prerender_tutorials() renders every</span></span></span>
-<span class="r-in"><span><span class="co"># installed package's tutorials into the default per-user cache.</span></span></span>
-<span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NULL.html" class="external-link">is.null</a></span><span class="op">(</span><span class="fu">quarto</span><span class="fu">::</span><span class="fu"><a href="https://quarto-dev.github.io/quarto-r/reference/quarto_path.html" class="external-link">quarto_path</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span></span>
+<span class="r-in"><span><span class="co"># Called with no arguments, prerender_tutorials() renders every installed</span></span></span>
+<span class="r-in"><span><span class="co"># package's tutorials into the default per-user cache. Runs only</span></span></span>
+<span class="r-in"><span><span class="co"># interactively, with the Quarto command line tool installed: a full</span></span></span>
+<span class="r-in"><span><span class="co"># tutorial takes several seconds to render.</span></span></span>
+<span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/interactive.html" class="external-link">interactive</a></span><span class="op">(</span><span class="op">)</span> <span class="op">&amp;&amp;</span> <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NULL.html" class="external-link">is.null</a></span><span class="op">(</span><span class="fu">quarto</span><span class="fu">::</span><span class="fu"><a href="https://quarto-dev.github.io/quarto-r/reference/quarto_path.html" class="external-link">quarto_path</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span></span>
 <span class="r-in"><span>  <span class="va">out</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-in"><span>  <span class="fu">prerender_tutorials</span><span class="op">(</span>package <span class="op">=</span> <span class="st">"learnr2"</span>, output_dir <span class="op">=</span> <span class="va">out</span><span class="op">)</span></span></span>
 <span class="r-in"><span>  <span class="fu"><a href="https://rdrr.io/r/base/unlink.html" class="external-link">unlink</a></span><span class="op">(</span><span class="va">out</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">}</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Rendering hello-learnr2 (/home/runner/work/_temp/Library/learnr2/tutorials/hello-learnr2/hello-learnr2.qmd) ...</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Rendered hello-learnr2 in 4.4s: /tmp/Rtmpe5jUku/file19b5a1042bb/learnr2/hello-learnr2/hello-learnr2.html</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Rendered 1 tutorial(s).</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> 1 tutorial(s) rendered, 0 already current, in /tmp/Rtmpe5jUku/file19b5a1042bb</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
