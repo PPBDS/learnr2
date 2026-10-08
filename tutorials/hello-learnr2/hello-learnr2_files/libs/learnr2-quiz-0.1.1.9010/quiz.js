@@ -1141,7 +1141,7 @@
   // carrying base64 JSON, the same way question()/student_info() carry
   // their payloads. Every option has a default here, so a page with no
   // such element behaves as documented in tutorial_options()'s help.
-  var OPTION_DEFAULTS = { allowSkip: false };
+  var OPTION_DEFAULTS = { allowSkip: false, requireSubmission: true };
 
   function readTutorialOptions() {
     var options = Object.assign({}, OPTION_DEFAULTS);
@@ -1321,6 +1321,50 @@
       });
     }
 
+    // The widgets a Continue button waits on, with require_submission (the
+    // default): every question() and student_info() inside `section` that
+    // sits *before* `container` in document order -- i.e. above the button.
+    // Anything below it belongs to a later stop and gets its own gate. A
+    // widget counts as submitted when it has saved state (saveState() only
+    // runs from a submit handler; student_info() autosaves as the reader
+    // types, so for it the saved `submitted` flag is what matters).
+    function pendingWidgets(section, container) {
+      if (!options.requireSubmission) {
+        return [];
+      }
+      var nodes = section.querySelectorAll(
+        ".learnr2-question[data-learnr2-question], .learnr2-info[data-learnr2-info]"
+      );
+      return Array.prototype.filter.call(nodes, function (node) {
+        if (!(container.compareDocumentPosition(node) & Node.DOCUMENT_POSITION_PRECEDING)) {
+          return false;
+        }
+        var isInfo = node.classList.contains("learnr2-info");
+        var data = decodeBase64Json(node.getAttribute(isInfo ? "data-learnr2-info" : "data-learnr2-question"));
+        var saved = loadState(data);
+        return isInfo ? !(saved && saved.submitted) : !saved;
+      });
+    }
+
+    // Disable or enable the current Continue button according to what is
+    // still unsubmitted above it. Re-run after every submit click.
+    var gate = null;
+    function refreshContinueGate() {
+      if (!gate || !gate.container.parentNode) {
+        return;
+      }
+      var pending = pendingWidgets(gate.section, gate.container);
+      var locked = pending.length > 0;
+      gate.button.disabled = locked;
+      gate.container.classList.toggle("learnr2-continue-locked", locked);
+      gate.note.textContent = locked
+        ? (pending.length === 1
+            ? "Submit your answer above to continue."
+            : "Submit the " + pending.length + " answers above to continue.")
+        : "";
+      gate.note.classList.toggle("d-none", !locked);
+    }
+
     function placeContinueButton() {
       clearContinueButtons();
       if (unlocked >= sections.length) {
@@ -1335,9 +1379,13 @@
         text: title ? "Continue: " + title : "Continue"
       });
       button.addEventListener("click", function () {
+        if (button.disabled) {
+          return;
+        }
         unlockThrough(unlocked, true);
       });
-      var container = el("div", { class: "learnr2-continue-container" }, [button]);
+      var note = el("div", { class: "learnr2-continue-note d-none" });
+      var container = el("div", { class: "learnr2-continue-container" }, [button, note]);
 
       var anchor = continueButtonAnchor(current, next);
       if (anchor) {
@@ -1345,6 +1393,8 @@
       } else {
         current.appendChild(container);
       }
+      gate = { section: current, container: container, button: button, note: note };
+      refreshContinueGate();
     }
 
     // `index` is the 0-based section to reveal. `scroll` is true only for an
@@ -1369,6 +1419,17 @@
 
     applyVisibility();
     placeContinueButton();
+
+    // Every widget's Submit (and Try Again / Edit) is a .learnr2-submit or
+    // .learnr2-try-again button; its own click handler saves or clears
+    // state synchronously, and this document-level listener runs after it,
+    // so a zero-delay timeout is enough to observe the new state.
+    document.addEventListener("click", function (event) {
+      var target = event.target;
+      if (target && target.closest && target.closest(".learnr2-submit, .learnr2-try-again, .learnr2-info-submit")) {
+        window.setTimeout(refreshContinueGate, 0);
+      }
+    });
 
     // Quarto's own TOC sidebar links jump straight to a heading's id via a
     // plain <a href="#id">, bypassing Continue entirely. What happens next

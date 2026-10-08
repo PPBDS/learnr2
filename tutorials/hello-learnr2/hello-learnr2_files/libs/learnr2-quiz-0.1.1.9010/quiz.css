@@ -284,6 +284,19 @@ section.learnr2-pause > h3 {
   font-size: 0.95rem;
 }
 
+.learnr2-continue:disabled {
+  background: #adb5bd;
+  cursor: not-allowed;
+}
+
+/* Under a disabled Continue (require_submission, the default): what the
+   reader still has to submit before it works. */
+.learnr2-continue-note {
+  margin-top: 0.4rem;
+  font-size: 0.85rem;
+  color: #6c757d;
+}
+
 .learnr2-continue:hover {
   background: #0b5ed7;
 }

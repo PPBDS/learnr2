@@ -109,6 +109,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#layout-options" id="toc-layout-options" class="nav-link" data-scroll-target="#layout-options">9. Layout options</a>
   <ul class="collapse">
   <li><a href="#table-of-contents" id="toc-table-of-contents" class="nav-link" data-scroll-target="#table-of-contents">Table of contents</a></li>
+  <li><a href="#submitting-before-continuing" id="toc-submitting-before-continuing" class="nav-link" data-scroll-target="#submitting-before-continuing">Submitting before continuing</a></li>
   <li><a href="#skipping-ahead" id="toc-skipping-ahead" class="nav-link" data-scroll-target="#skipping-ahead">Skipping ahead</a></li>
   <li><a href="#pauses-without-a-heading" id="toc-pauses-without-a-heading" class="nav-link" data-scroll-target="#pauses-without-a-heading">Pauses without a heading</a></li>
   <li><a href="#section" id="toc-section" class="nav-link" data-scroll-target="#section"></a></li>
@@ -153,7 +154,7 @@ eyJhdHRyIjp7ImVkaXQiOmZhbHNlLCJldmFsIjp0cnVlLCJvdXRwdXQiOmZhbHNlfSwiY29kZSI6Indl
 <section id="what-is-this" class="level2">
 <h2 class="anchored" data-anchor-id="what-is-this">What is this?</h2>
 <p><strong>learnr2</strong> lets you write interactive R tutorials that run entirely in the reader’s web browser using <a href="https://quarto.org">Quarto</a> and <a href="https://docs.r-wasm.org/webr/">WebR</a>. There is no Shiny app and no R server: the code cells below execute right here on this page.</p>
-<p>This tutorial is itself a learnr2 tutorial. Read it, edit the cells, and run them to see each feature work.</p>
+<p>This tutorial is itself a <strong>learnr2</strong> tutorial. Read it, edit the cells, and run them to see each feature work.</p>
 </section>
 <section id="runnable-code-cells" class="level2">
 <h2 class="anchored" data-anchor-id="runnable-code-cells">1. Runnable code cells</h2>
@@ -247,7 +248,7 @@ eyJhdHRyIjp7ImVkaXQiOnRydWUsImV2YWwiOnRydWUsImV4ZXJjaXNlIjoiZXhfbWVhbiIsImxhYmVs
 </section>
 <section id="automatic-grading" class="level2">
 <h2 class="anchored" data-anchor-id="automatic-grading">5. Automatic grading</h2>
-<p>learnr2 reuses ‘quarto-live’’s grading, which is powered by the <a href="https://pkgs.rstudio.com/gradethis/">gradethis</a> package. Add a <code>check</code> cell for an exercise; it runs when the reader presses <strong>Submit</strong> and compares their work against the solution.</p>
+<p><strong>learnr2</strong> reuses ‘quarto-live’’s grading, which is powered by the <a href="https://pkgs.rstudio.com/gradethis/"><strong>gradethis</strong></a> package. Add a <code>check</code> cell for an exercise; it runs when the reader presses <strong>Submit</strong> and compares their work against the solution.</p>
 <p>A graded exercise needs its solution as a <code>solution: true</code> <strong>code cell</strong> (not the <code>.solution</code> fenced div used in section 3) — only the cell form emits the machine-readable copy of the code that <code>gradethis::grade_this_code()</code> compares against. The cell still renders a “Show solution” button for the reader, exactly like the div does.</p>
 <div class="cell" data-exercise="ex_grade" data-persist="true">
 <div>
@@ -521,16 +522,27 @@ IEFuc3dlcnMifQ==">
 <p>Every tutorial scaffolded by <code>create_tutorial()</code> has <code>toc: true</code> in its YAML header, which gives the page Quarto’s table-of-contents sidebar: the list of sections on the right of this page. Set <code>toc: false</code> to drop it.</p>
 <p>The sidebar is a map, not a shortcut. Sections reveal one at a time behind <strong>Continue</strong> buttons whether or not there is a TOC; the TOC adds a view of the whole tutorial’s shape and of how far the reader has come. On a phone-width screen Quarto hides the sidebar on its own, so a <code>toc: true</code> tutorial behaves like a <code>toc: false</code> one there, with no author action.</p>
 </section>
+<section id="submitting-before-continuing" class="level3">
+<h3 class="anchored" data-anchor-id="submitting-before-continuing">Submitting before continuing</h3>
+<p>By default, the <strong>Continue</strong> button at the end of a section stays greyed out, with a note under it, until every question and student-info form above it has been submitted. A reader can type anything, but must submit <em>something</em> before moving on, and a <code>type = "reflection"</code> question locks once submitted. Together those two rules let a tutorial show its own answer immediately after the reader’s, which is what we always want, without inviting anyone to paste our answer back into their box: by the time they see ours, theirs is in and cannot be changed.</p>
+<p>This tour is reference material, so it switches the gate off with the chunk below (shown here; hidden in a real tutorial with <code>echo: false</code>). That is why you have been able to click past every question on this page without answering it. Leave this chunk out of a tutorial of your own and the gate is on.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>learnr2<span class="sc">::</span><span class="fu">tutorial_options</span>(<span class="at">require_submission =</span> <span class="cn">FALSE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div class="learnr2-options" data-learnr2-options="eyJhbGxvd1NraXAiOmZhbHNlLCJyZXF1aXJlU3VibWlzc2lvbiI6ZmFsc2V9" hidden=""></div>
+</div>
+</div>
+</section>
 <section id="skipping-ahead" class="level3">
 <h3 class="anchored" data-anchor-id="skipping-ahead">Skipping ahead</h3>
 <p>By default the TOC cannot be used to read ahead. Look at the sidebar now: the entries below this section are dimmed, a click on one does nothing, and each lights up only when its section is unlocked. A reader can see what is coming and where they are, but cannot open the whole tutorial at once.</p>
-<p>If you want readers to roam freely — reference material, or a tour like this one — call <code>learnr2::tutorial_options()</code> once, in a chunk with <code>#| echo: false</code>, anywhere in the document:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>learnr2<span class="sc">::</span><span class="fu">tutorial_options</span>(<span class="at">allow_skip =</span> <span class="cn">TRUE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Then clicking any TOC entry unlocks every section up to that one and jumps there, like a classic learnr tutorial with <code>allow_skip: yes</code>. This page leaves the default in place so you can see it in action. Without a TOC the setting has no effect, since there is nothing to click.</p>
+<p>If you want readers to roam freely — reference material, or a tour like this one — turn on skipping too, in that same <code>tutorial_options()</code> call:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>learnr2<span class="sc">::</span><span class="fu">tutorial_options</span>(<span class="at">allow_skip =</span> <span class="cn">TRUE</span>, <span class="at">require_submission =</span> <span class="cn">FALSE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Then clicking any TOC entry unlocks every section up to that one and jumps there, like a classic <strong>learnr</strong> tutorial with <code>allow_skip: yes</code>. This page leaves skipping at its default so you can see the dimming in action. Without a TOC the setting has no effect, since there is nothing to click.</p>
 </section>
 <section id="pauses-without-a-heading" class="level3">
 <h3 class="anchored" data-anchor-id="pauses-without-a-heading">Pauses without a heading</h3>
-<p>Not every Continue stop needs a title. A line holding only <code>###</code>, with nothing after it, is a <em>pause</em>: the content below it stays hidden until the reader clicks a button that says just <strong>Continue</strong>, and no heading is shown. The tutorial.helpers house style puts two of these inside every exercise, one before the author’s own answer and one before the knowledge drop, so the reader compares before they read on. Here is one now.</p>
+<p>Not every Continue stop needs a title. A line holding only <code>###</code>, with nothing after it, is a <em>pause</em>: the content below it stays hidden until the reader clicks a button that says just <strong>Continue</strong>, and no heading is shown. The <strong>tutorial.helpers</strong> house style puts two of these inside every exercise, one before the author’s own answer and one before the knowledge drop, so the reader compares before they read on. Here is one now.</p>
 </section>
 <section id="section" class="level3">
 <h3 class="anchored" data-anchor-id="section"></h3>
@@ -538,7 +550,7 @@ IEFuc3dlcnMifQ==">
 </section>
 <section id="start-over" class="level3">
 <h3 class="anchored" data-anchor-id="start-over">Start Over</h3>
-<p>Every answer, pasted image, and exercise edit on a page is saved in the reader’s browser, so reloading never loses anything. The way to wipe it all is the <strong>Start Over</strong> button, which learnr2 adds to every tutorial automatically — nothing to write in the <code>.qmd</code>. It asks for confirmation, then clears this page’s saved state (but not the per-device id that <code>download_answers_button()</code> records) and reloads.</p>
+<p>Every answer, pasted image, and exercise edit on a page is saved in the reader’s browser, so reloading never loses anything. The way to wipe it all is the <strong>Start Over</strong> button, which <strong>learnr2</strong> adds to every tutorial automatically — nothing to write in the <code>.qmd</code>. It asks for confirmation, then clears this page’s saved state (but not the per-device id that <code>download_answers_button()</code> records) and reloads.</p>
 <p>Where it appears follows the layout. With a visible sidebar it sits at the bottom of the table of contents, as it does on this page. Without one — <code>toc: false</code>, or a screen too narrow for the sidebar — it moves to the top of the tutorial, directly under the title, where it stays visible no matter how far the reader has progressed. Either way the reader always has exactly one.</p>
 </section>
 </section>

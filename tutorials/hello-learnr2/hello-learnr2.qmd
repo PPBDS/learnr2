@@ -20,7 +20,7 @@ reader's web browser using [Quarto](https://quarto.org) and
 [WebR](https://docs.r-wasm.org/webr/). There is no Shiny app and no R server:
 the code cells below execute right here on this page.
 
-This tutorial is itself a learnr2 tutorial. Read it, edit the cells, and run
+This tutorial is itself a **learnr2** tutorial. Read it, edit the cells, and run
 them to see each feature work.
 
 ## 1. Runnable code cells
@@ -119,8 +119,8 @@ mean(scores)
 
 ## 5. Automatic grading
 
-learnr2 reuses 'quarto-live''s grading, which is powered by the
-[gradethis](https://pkgs.rstudio.com/gradethis/) package. Add a `check` cell
+**learnr2** reuses 'quarto-live''s grading, which is powered by the
+[**gradethis**](https://pkgs.rstudio.com/gradethis/) package. Add a `check` cell
 for an exercise; it runs when the reader presses **Submit** and compares their
 work against the solution.
 
@@ -363,6 +363,28 @@ the whole tutorial's shape and of how far the reader has come. On a
 phone-width screen Quarto hides the sidebar on its own, so a `toc: true`
 tutorial behaves like a `toc: false` one there, with no author action.
 
+### Submitting before continuing
+
+By default, the **Continue** button at the end of a section stays greyed
+out, with a note under it, until every question and student-info form
+above it has been submitted. A reader can type anything, but must submit
+*something* before moving on, and a `type = "reflection"` question locks
+once submitted. Together those two rules let a tutorial show its own
+answer immediately after the reader's, which is what we always want,
+without inviting anyone to paste our answer back into their box: by the
+time they see ours, theirs is in and cannot be changed.
+
+This tour is reference material, so it switches the gate off with the
+chunk below (shown here; hidden in a real tutorial with `echo: false`).
+That is why you have been able to click past every question on this page
+without answering it. Leave this chunk out of a tutorial of your own and
+the gate is on.
+
+```{r}
+#| label: layout-options-1
+learnr2::tutorial_options(require_submission = FALSE)
+```
+
 ### Skipping ahead
 
 By default the TOC cannot be used to read ahead. Look at the sidebar now:
@@ -371,24 +393,23 @@ each lights up only when its section is unlocked. A reader can see what is
 coming and where they are, but cannot open the whole tutorial at once.
 
 If you want readers to roam freely --- reference material, or a tour like
-this one --- call `learnr2::tutorial_options()` once, in a chunk with
-`#| echo: false`, anywhere in the document:
+this one --- turn on skipping too, in that same `tutorial_options()` call:
 
 ```r
-learnr2::tutorial_options(allow_skip = TRUE)
+learnr2::tutorial_options(allow_skip = TRUE, require_submission = FALSE)
 ```
 
 Then clicking any TOC entry unlocks every section up to that one and jumps
-there, like a classic learnr tutorial with `allow_skip: yes`. This page
-leaves the default in place so you can see it in action. Without a TOC the
-setting has no effect, since there is nothing to click.
+there, like a classic **learnr** tutorial with `allow_skip: yes`. This page
+leaves skipping at its default so you can see the dimming in action.
+Without a TOC the setting has no effect, since there is nothing to click.
 
 ### Pauses without a heading
 
 Not every Continue stop needs a title. A line holding only `###`, with
 nothing after it, is a *pause*: the content below it stays hidden until
 the reader clicks a button that says just **Continue**, and no heading is
-shown. The tutorial.helpers house style puts two of these inside every
+shown. The **tutorial.helpers** house style puts two of these inside every
 exercise, one before the author's own answer and one before the knowledge
 drop, so the reader compares before they read on. Here is one now.
 
@@ -401,7 +422,7 @@ a line by themselves; in the sidebar it has no entry.
 
 Every answer, pasted image, and exercise edit on a page is saved in the
 reader's browser, so reloading never loses anything. The way to wipe it all
-is the **Start Over** button, which learnr2 adds to every tutorial
+is the **Start Over** button, which **learnr2** adds to every tutorial
 automatically --- nothing to write in the `.qmd`. It asks for
 confirmation, then clears this page's saved state (but not the per-device
 id that `download_answers_button()` records) and reloads.
