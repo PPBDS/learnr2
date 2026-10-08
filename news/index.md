@@ -1,6 +1,6 @@
 # Changelog
 
-## learnr2 (development version)
+## learnr2 0.1.3
 
 - [`student_info()`](https://ppbds.github.io/learnr2/reference/student_info.md)
   and `"reflection_editable"` questions now have a clear Edit/Submit
