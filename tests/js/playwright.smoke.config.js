@@ -12,7 +12,11 @@ module.exports = defineConfig({
   fullyParallel: false,
   workers: 1,
   retries: 1,
-  reporter: [["list"]],
+  // The html reporter is what the workflow uploads on failure
+  // (tests/js/playwright-report/); without it that artifact step always
+  // warned "No files were found". `open: "never"` keeps it from trying to
+  // launch a browser on CI.
+  reporter: [["list"], ["html", { open: "never" }]],
   use: {
     trace: "retain-on-failure"
   },

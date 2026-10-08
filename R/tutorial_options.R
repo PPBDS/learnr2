@@ -28,12 +28,30 @@
 #' which has no sidebar and so only ever moves forward one Continue at a
 #' time.
 #'
+#' @section Submitting before continuing:
+#' By default (`require_submission = TRUE`) the "Continue" button at the
+#' end of a section stays disabled, with a short note under it, until every
+#' [question()] and [student_info()] form above it in that section has
+#' been submitted. A reader can type anything, but they must submit
+#' *something* before the tutorial moves on. Combined with `type =
+#' "reflection"` questions, which lock once submitted, this is what lets a
+#' tutorial show its own answer right after the reader's without inviting
+#' them to copy it back into the box: by the time they see our answer,
+#' theirs is already in and cannot be changed. Set `require_submission =
+#' FALSE` for reference material a reader should be free to skim, such as
+#' learnr2's own `hello-learnr2` feature tour. `{webr}` code cells are not
+#' part of this check; they have no notion of being "submitted".
+#'
 #' @section Defaults:
 #' * `allow_skip = FALSE`
+#' * `require_submission = TRUE`
 #'
 #' @param allow_skip Logical. May the reader use a table-of-contents link to
 #'   unlock and jump to a section they have not reached yet? Default
 #'   `FALSE`.
+#' @param require_submission Logical. Must every question and student-info
+#'   form in a section be submitted before its "Continue" button works?
+#'   Default `TRUE`.
 #'
 #' @return A `learnr2_options` object, printed as an invisible HTML
 #'   element that the page's JavaScript reads at load.
@@ -41,12 +59,19 @@
 #' @examples
 #' tutorial_options()
 #' tutorial_options(allow_skip = TRUE)
-tutorial_options <- function(allow_skip = FALSE) {
-  if (!is.logical(allow_skip) || length(allow_skip) != 1 || is.na(allow_skip)) {
-    stop("`allow_skip` must be TRUE or FALSE.", call. = FALSE)
-  }
-  payload <- list(allowSkip = allow_skip)
+#' tutorial_options(require_submission = FALSE)
+tutorial_options <- function(allow_skip = FALSE, require_submission = TRUE) {
+  check_flag(allow_skip, "allow_skip")
+  check_flag(require_submission, "require_submission")
+  payload <- list(allowSkip = allow_skip, requireSubmission = require_submission)
   structure(list(payload = payload), class = "learnr2_options")
+}
+
+check_flag <- function(x, name) {
+  if (!is.logical(x) || length(x) != 1 || is.na(x)) {
+    stop("`", name, "` must be TRUE or FALSE.", call. = FALSE)
+  }
+  invisible(TRUE)
 }
 
 options_div <- function(x) {

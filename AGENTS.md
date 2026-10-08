@@ -175,12 +175,29 @@ onto `question()` like this:
 
 | base-guide form | learnr2 |
 | --- | --- |
-| **no-answer** (`question_text(NULL, answer(NULL, correct = TRUE), allow_retry = TRUE, try_again_button = "Edit Answer", rows = N)`) -- evidence submission, student can revise | `learnr2::question("<prompt>", type = "reflection_editable")`, no `answer()` |
+| **no-answer** (`question_text(NULL, answer(NULL, correct = TRUE), allow_retry = TRUE, try_again_button = "Edit Answer", rows = N)`) -- evidence submission | `learnr2::question("<prompt>", type = "reflection")`, no `answer()`. **Not** `reflection_editable`: learnr2 locks every submitted answer by default (see below) |
 | **yes-answer** (`question_text(NULL, message = "<model answer>", answer(NULL, correct = TRUE), allow_retry = FALSE)`) -- compared against a model answer, then locked | `learnr2::question("<prompt>", learnr2::answer("<model answer>", correct = TRUE), type = "reflection")` |
 | the `question_text(NULL, ...)` + prose-above-the-chunk pattern | put the prompt in `text`; or write the prose on the page and pass `show_text = FALSE` (see "Screenshot reflection questions") |
 
 `validate = "integer"` is for the minutes question only. `allow_image =
 TRUE` is for the rare step that can only be verified by a screenshot.
+
+**Submit once, then locked -- the default for every question.** Decided
+2026-10: a student must submit *something* before the tutorial moves on,
+and once submitted it cannot be changed. Mechanically: every text/image
+question is `type = "reflection"` (locks on submit), and
+`tutorial_options(require_submission = TRUE)`, the default, disables a
+section's Continue button until every `question()`/`student_info()` above
+it is submitted (`pendingWidgets()`/`refreshContinueGate()` in `quiz.js`;
+fixture `progressive-sections-gated`). The reasons, from the vignette: we
+always show our answer right after theirs, and an editable box next to
+our answer invites copying it back in. `reflection_editable` is for the
+minutes question (no right answer to copy) and little else. The `learnr`
+`allow_retry = TRUE, try_again_button = "Edit Answer"` idiom therefore
+does **not** translate to `reflection_editable`; it translates to
+`reflection`. Reference material (`hello-learnr2`) opts out with
+`require_submission = FALSE`, which also keeps the deployed smoke test,
+which clicks through every Continue before answering, working.
 
 ### Where the pedagogy and learnr2's mechanics collide
 
@@ -440,7 +457,7 @@ learnr2's own `tests/testthat/test-render-tutorials.R` does.)
 | ```` ```{r ex1-solution} ```` (exercise that also has a check) | a `{webr}` cell with `solution: true` -- the div form leaves the grader with no solution |
 | ```` ```{r ex1-check} ````, `gradethis::grade_this_code()` | a `{webr}` cell with `check: true` for the same exercise + include `_gradethis.qmd` (and a `solution: true` cell, per the row above) |
 | `question("...", answer("a", correct = TRUE), ...)` | `learnr2::question("...", learnr2::answer("a", correct = TRUE), ...)` |
-| `question_text("...", answer("model answer", correct = TRUE), allow_retry = TRUE)` | `learnr2::question("...", learnr2::answer("model answer", correct = TRUE), type = "reflection")` (or `"reflection_editable"`) |
+| `question_text("...", answer("model answer", correct = TRUE), allow_retry = TRUE)` | `learnr2::question("...", learnr2::answer("model answer", correct = TRUE), type = "reflection")` -- not `"reflection_editable"`, see "Submit once, then locked" |
 | `question_numeric("...", answer(90, correct = TRUE))` | `learnr2::question("...", type = "reflection_editable", validate = "integer")`, no `answer()` |
 | `question(..., allow_retry, random_answer_order, incorrect, correct)` | same argument names on `learnr2::question()` |
 | bare `### ` progressive-reveal divider (no real heading text) | keep as-is; it becomes a headingless Continue stop. Titled `##`/`###` sections are gated too (see "Progressive section reveal") |
@@ -657,8 +674,9 @@ Type mapping:
 - **`question_text()`** -- `tutorial.helpers`'s workhorse for "In your own
   words, explain..." prompts, almost always written with a single
   `answer("a model paragraph", correct = TRUE)` and `allow_retry = TRUE` --
-  maps to `type = "reflection"` (locks after submit) or
-  `type = "reflection_editable"` (stays editable). The `correct` answer's
+  maps to `type = "reflection"` (locks after submit; the default for
+  every text/image question -- `"reflection_editable"` is reserved for the
+  minutes question, see "Submit once, then locked"). The `correct` answer's
   text becomes the model answer revealed after the reader submits; it is not
   graded against their wording. Drop `question_text()`-only options with no
   equivalent: `try_again_button`, `rows`, `options = list(...)`, `trim`,
@@ -747,6 +765,10 @@ behind a "Continue" button (see "Progressive section reveal" below). So:
   once. `learnr2::tutorial_options(allow_skip = TRUE)` restores learnr's
   `allow_skip: yes` behaviour (click an entry, unlock everything through
   it, jump there).
+- A section's Continue button is disabled until every question and
+  student-info form above it is submitted
+  (`tutorial_options(require_submission = TRUE)`, the default);
+  `require_submission = FALSE` turns that off.
 
 ### `webr: packages:` must list every package any exercise uses
 
@@ -1311,7 +1333,14 @@ cd tests/js
 SMOKE_URL="https://ppbds.github.io/learnr2/tutorials/hello-learnr2/hello-learnr2.html" npm run test:smoke
 ```
 
-Not yet verified against a real push to the actual repo (this sandbox can't
-trigger or observe a live GitHub Actions run) -- worth watching the first
-real run of the `smoke-test` job after this lands, both to confirm the wait
-loop's timing is long enough and that the live selectors still match.
+Verified against real runs since. One real failure (2026-10-07, run
+37704641313): the wait loop originally grepped the live page for the
+tutorial's *title*, "Hello, learnr2", and the day the title lost its comma
+the loop reported "never came up" for five minutes while the page was live
+and correct the whole time. It now greps for `data-learnr2-question`, a
+structural marker every rendered learnr2 tutorial with a question carries.
+Rule: a readiness or smoke check keys on structure, never on prose that
+someone will reasonably reword. The same run showed the "upload Playwright
+report" step warning that `tests/js/playwright-report/` didn't exist: the
+smoke config had only the `list` reporter, so the artifact could never be
+produced; it now adds the `html` reporter with `open: "never"`.

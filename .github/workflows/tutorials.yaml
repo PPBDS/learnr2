@@ -66,11 +66,16 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
+      # "Live" means the page is a rendered learnr2 tutorial: it carries at
+      # least one question() widget. Deliberately NOT the tutorial's title --
+      # matching "Hello, learnr2" here failed for five minutes straight the
+      # day the title lost its comma (2026-10-07), while the page itself was
+      # fine. Structure is stable across rewording; prose is not.
       - name: Wait for GitHub Pages to serve the fresh deploy
         run: |
           url="https://ppbds.github.io/learnr2/tutorials/hello-learnr2/hello-learnr2.html?cachebust=${{ github.sha }}"
           for i in $(seq 1 20); do
-            if curl -fsS "$url" | grep -q "Hello, learnr2"; then
+            if curl -fsS "$url" | grep -q 'data-learnr2-question'; then
               echo "Live at $url"
               exit 0
             fi
@@ -100,7 +105,7 @@ jobs:
           SMOKE_URL: "https://ppbds.github.io/learnr2/tutorials/hello-learnr2/hello-learnr2.html?cachebust=${{ github.sha }}"
         run: npm run test:smoke
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: failure()
         with:
           name: smoke-test-playwright-report

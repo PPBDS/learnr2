@@ -1079,6 +1079,52 @@ test.describe("progressive sections (Continue buttons)", () => {
     await expect(page.locator("#running-r-code")).toBeHidden();
   });
 
+  test("by default, Continue is disabled until every question above it in the section has been submitted", async ({ page }) => {
+    await page.goto("/progressive-sections-gated");
+
+    // Topic one's own content has no widgets: its Continue works at once.
+    const first = page.locator("#topic-one > .learnr2-continue-container .learnr2-continue");
+    await expect(first).toBeEnabled();
+    await first.click();
+    await expect(page.locator("#exercise-1")).toBeVisible();
+
+    // Exercise 1 holds an unsubmitted question: its Continue is locked, says why,
+    // and a click does nothing.
+    const container = page.locator("#exercise-1 .learnr2-continue-container");
+    const button = container.locator(".learnr2-continue");
+    await expect(button).toBeDisabled();
+    await expect(container).toHaveClass(/learnr2-continue-locked/);
+    await expect(container.locator(".learnr2-continue-note")).toHaveText("Submit your answer above to continue.");
+    await button.click({ force: true });
+    await expect(page.locator("#section")).toBeHidden();
+
+    // Submitting the question unlocks it.
+    await page.locator("#exercise-1 .learnr2-text-input").fill("> show_file(...)\nmy paste");
+    await page.locator("#exercise-1 .learnr2-submit").click();
+    await expect(button).toBeEnabled();
+    await expect(container).not.toHaveClass(/learnr2-continue-locked/);
+    await expect(container.locator(".learnr2-continue-note")).toBeHidden();
+    await button.click();
+    await expect(page.locator("#section")).toBeVisible();
+  });
+
+  test("the submission gate survives a reload: a submitted question stays submitted, an unsubmitted one stays locked", async ({ page }) => {
+    await page.goto("/progressive-sections-gated");
+    await page.locator("#topic-one > .learnr2-continue-container .learnr2-continue").click();
+    await page.locator("#exercise-1 .learnr2-text-input").fill("pasted");
+    await page.locator("#exercise-1 .learnr2-submit").click();
+    await page.reload();
+    await expect(page.locator("#exercise-1 .learnr2-continue")).toBeEnabled();
+  });
+
+  test("with tutorial_options(require_submission = FALSE), Continue ignores unsubmitted questions", async ({ page }) => {
+    await page.goto("/progressive-sections-pauses");
+    await page.locator(".learnr2-continue").click();
+    const button = page.locator("#exercise-1 .learnr2-continue");
+    await expect(button).toBeEnabled();
+    await expect(page.locator(".learnr2-continue-note")).toBeHidden();
+  });
+
   test("a bare ### divider is its own Continue stop, with a plain 'Continue' label and no visible heading", async ({ page }) => {
     await page.goto("/progressive-sections-pauses");
 

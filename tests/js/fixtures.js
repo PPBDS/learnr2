@@ -57,7 +57,7 @@ function downloadButton(overrides) {
 
 // learnr2::tutorial_options()'s payload (R/tutorial_options.R).
 function tutorialOptions(overrides) {
-  return Object.assign({ allowSkip: false }, overrides);
+  return Object.assign({ allowSkip: false, requireSubmission: true }, overrides);
 }
 
 function encode(payload) {
@@ -373,7 +373,11 @@ const FIXTURES = {
       ["exercise-1", "Exercise 1"],
       ["exercise-2", "Exercise 2"],
       ["summary", "Summary"]
-    ])
+    ]),
+    // These tests are about section structure and click Continue past the
+    // unsubmitted student_info() form, so they opt out of the submission
+    // gate; "progressive-sections-gated" below covers the gate itself.
+    optionsBlock(tutorialOptions({ requireSubmission: false }))
   ],
   // Mirrors hello-learnr2's real "## 3. Exercises" shape exactly: a level2
   // section containing its own intro *and* nested "### Hints"/"### Solutions"
@@ -412,7 +416,7 @@ const FIXTURES = {
 // "section-1"), then "### Exercise 2". Confirmed against a real render
 // (AGENTS.md, "bare ### dividers"); the empty-text TOC entries are what
 // Quarto emits for them too.
-FIXTURES["progressive-sections-pauses"] = [
+const PAUSES_BLOCKS = [
   sectionBlock(
     "topic-one",
     2,
@@ -436,6 +440,14 @@ FIXTURES["progressive-sections-pauses"] = [
     ["summary", "Summary"]
   ])
 ];
+// The pause test clicks straight past Exercise 1's question, so it opts
+// out of the submission gate...
+FIXTURES["progressive-sections-pauses"] = PAUSES_BLOCKS.concat([
+  optionsBlock(tutorialOptions({ requireSubmission: false }))
+]);
+// ...while this one keeps the default: Exercise 1's Continue must wait for
+// the question to be submitted.
+FIXTURES["progressive-sections-gated"] = PAUSES_BLOCKS;
 
 // The same progressive page with learnr2::tutorial_options(allow_skip = TRUE)
 // on it: TOC links unlock and jump instead of being dimmed.

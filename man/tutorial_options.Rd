@@ -4,12 +4,16 @@
 \alias{tutorial_options}
 \title{Set tutorial-wide options}
 \usage{
-tutorial_options(allow_skip = FALSE)
+tutorial_options(allow_skip = FALSE, require_submission = TRUE)
 }
 \arguments{
 \item{allow_skip}{Logical. May the reader use a table-of-contents link to
 unlock and jump to a section they have not reached yet? Default
 \code{FALSE}.}
+
+\item{require_submission}{Logical. Must every question and student-info
+form in a section be submitted before its "Continue" button works?
+Default \code{TRUE}.}
 }
 \value{
 A \code{learnr2_options} object, printed as an invisible HTML
@@ -46,14 +50,30 @@ which has no sidebar and so only ever moves forward one Continue at a
 time.
 }
 
+\section{Submitting before continuing}{
+
+By default (\code{require_submission = TRUE}) the "Continue" button at the
+end of a section stays disabled, with a short note under it, until every
+\code{\link[=question]{question()}} and \code{\link[=student_info]{student_info()}} form above it in that section has
+been submitted. A reader can type anything, but they must submit
+\emph{something} before the tutorial moves on. Combined with \code{type = "reflection"} questions, which lock once submitted, this is what lets a
+tutorial show its own answer right after the reader's without inviting
+them to copy it back into the box: by the time they see our answer,
+theirs is already in and cannot be changed. Set \code{require_submission = FALSE} for reference material a reader should be free to skim, such as
+learnr2's own \code{hello-learnr2} feature tour. \code{{webr}} code cells are not
+part of this check; they have no notion of being "submitted".
+}
+
 \section{Defaults}{
 
 \itemize{
 \item \code{allow_skip = FALSE}
+\item \code{require_submission = TRUE}
 }
 }
 
 \examples{
 tutorial_options()
 tutorial_options(allow_skip = TRUE)
+tutorial_options(require_submission = FALSE)
 }
