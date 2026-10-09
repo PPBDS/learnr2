@@ -56,7 +56,14 @@ input in backticks, function names with `()`, no semicolons.
   [`student_info()`](https://ppbds.github.io/learnr2/reference/student_info.md)
   above it is submitted. Reason: we show our answer right after the
   reader’s, and an editable box beside it invites copying it back.
-  `reflection_editable` is for the minutes question only.
+  `reflection_editable` is for the minutes question only. One exception
+  (2026-10): a submitted `allow_image` reflection has a “Edit Answer”
+  button (`edit_button`) that reopens only the image box (text box
+  hidden and disabled, `editing: true` so it counts as unsubmitted,
+  Submit refuses an empty box). Readers who pasted the wrong screenshot
+  had to Start Over the whole tutorial. A screenshot can’t be lifted
+  from the model answer the way text can, so the reason for locking
+  doesn’t apply.
 - **Tutorial-wide switches go through
   [`tutorial_options()`](https://ppbds.github.io/learnr2/reference/tutorial_options.md)**,
   never a new YAML key: `quiz.js` can’t see the YAML, and the hidden
@@ -216,7 +223,12 @@ Verified against real renders.
 - **Image-paste answers.** Once an image is pasted, the textarea hides
   and typed text is not saved (`value` is `""`). A user reported the
   visible empty textarea above a pasted image as a second box to fill
-  in. Don’t bring it back.
+  in. Don’t bring it back. `question(allow_text = FALSE)` (payload
+  `allowText`) goes further: no text box at all, and Submit is refused
+  without an image. Primer’s Getting Started screenshot questions use
+  it, because a typed answer there proves nothing. `quiz.js` treats only
+  an explicit `allowText: false` as image-only, so older payloads keep
+  the text box.
 - **Storage keys strip the URL hash** (`pageUrl` at the top of
   `quiz.js`). TOC clicks change the hash, and reading `location.href`
   fresh made Start Over and the download miss saved answers.

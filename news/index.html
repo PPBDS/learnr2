@@ -39,7 +39,10 @@
 
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="development version" id="learnr2-development-version">learnr2 (development version)<a class="anchor" aria-label="anchor" href="#learnr2-development-version"></a></h2>
-<ul><li>Pasted screenshots are now scaled to at most 1600 pixels wide and stored as WebP (JPEG in Safari) of at most about 450KB, instead of full-size PNG. A few large screenshots could previously fill the browser’s storage, which every tutorial on a site shares. The paste limit rises from 2MB to 20MB, since the stored image is shrunk anyway.</li>
+<ul><li>
+<code><a href="../reference/question.html">question()</a></code> gains <code>allow_text</code>. With <code>allow_image = TRUE, allow_text = FALSE</code>, a question is screenshot-only: no text box is shown, and Submit is refused until an image is pasted.</li>
+<li>A submitted screenshot question (<code>allow_image = TRUE</code>) now has an “Edit Answer” button (<code>edit_button</code>), so a reader who pasted the wrong screenshot can paste another one. It reopens only the image box, and the question counts as unsubmitted until the new image is submitted. Previously the only way out was Start Over, which clears the whole tutorial.</li>
+<li>Pasted screenshots are now scaled to at most 1600 pixels wide and stored as WebP (JPEG in Safari) of at most about 450KB, instead of full-size PNG. A few large screenshots could previously fill the browser’s storage, which every tutorial on a site shares. The paste limit rises from 2MB to 20MB, since the stored image is shrunk anyway.</li>
 <li>When the browser refuses to save an answer (storage full or blocked), the page now shows a warning and the answer stays unsubmitted. Previously the failure was silent, and the answer was missing from the download.</li>
 </ul></div>
     <div class="section level2">

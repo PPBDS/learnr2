@@ -37,7 +37,7 @@ quiz(
 )
 #> <div class="learnr2-quiz">
 #>   <div class="learnr2-quiz-caption">Arithmetic</div>
-#>   <div class="learnr2-question" data-learnr2-question="eyJpZCI6IndoYXQtaXMtMi0yIiwidGV4dCI6IldoYXQgaXMgMiArIDI/IiwidHlwZSI6InNp&#10;bmdsZSIsImFuc3dlcnMiOlt7InRleHQiOiI0IiwiY29ycmVjdCI6dHJ1ZSwibWVzc2FnZSI6&#10;bnVsbH0seyJ0ZXh0IjoiMjIiLCJjb3JyZWN0IjpmYWxzZSwibWVzc2FnZSI6bnVsbH1dLCJj&#10;b3JyZWN0TWVzc2FnZSI6IkNvcnJlY3QhIiwiaW5jb3JyZWN0TWVzc2FnZSI6IkluY29ycmVj&#10;dC4iLCJhbGxvd1JldHJ5IjpmYWxzZSwicmFuZG9tQW5zd2VyT3JkZXIiOmZhbHNlLCJzdWJt&#10;aXRMYWJlbCI6IlN1Ym1pdCBBbnN3ZXIiLCJ0cnlBZ2FpbkxhYmVsIjoiVHJ5IEFnYWluIiwi&#10;ZWRpdExhYmVsIjoiRWRpdCBBbnN3ZXIiLCJhbGxvd0ltYWdlIjpmYWxzZSwic2hvd1RleHQi&#10;OnRydWUsInZhbGlkYXRlIjoibm9uZSJ9">
+#>   <div class="learnr2-question" data-learnr2-question="eyJpZCI6IndoYXQtaXMtMi0yIiwidGV4dCI6IldoYXQgaXMgMiArIDI/IiwidHlwZSI6InNp&#10;bmdsZSIsImFuc3dlcnMiOlt7InRleHQiOiI0IiwiY29ycmVjdCI6dHJ1ZSwibWVzc2FnZSI6&#10;bnVsbH0seyJ0ZXh0IjoiMjIiLCJjb3JyZWN0IjpmYWxzZSwibWVzc2FnZSI6bnVsbH1dLCJj&#10;b3JyZWN0TWVzc2FnZSI6IkNvcnJlY3QhIiwiaW5jb3JyZWN0TWVzc2FnZSI6IkluY29ycmVj&#10;dC4iLCJhbGxvd1JldHJ5IjpmYWxzZSwicmFuZG9tQW5zd2VyT3JkZXIiOmZhbHNlLCJzdWJt&#10;aXRMYWJlbCI6IlN1Ym1pdCBBbnN3ZXIiLCJ0cnlBZ2FpbkxhYmVsIjoiVHJ5IEFnYWluIiwi&#10;ZWRpdExhYmVsIjoiRWRpdCBBbnN3ZXIiLCJhbGxvd0ltYWdlIjpmYWxzZSwiYWxsb3dUZXh0&#10;Ijp0cnVlLCJzaG93VGV4dCI6dHJ1ZSwidmFsaWRhdGUiOiJub25lIn0=">
 #>     <noscript>This quiz question requires JavaScript.</noscript>
 #>   </div>
 #> </div>

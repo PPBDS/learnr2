@@ -21,6 +21,7 @@ question(
   edit_button = "Edit Answer",
   id = NULL,
   allow_image = FALSE,
+  allow_text = TRUE,
   show_text = TRUE,
   validate = c("none", "integer")
 )
@@ -96,9 +97,10 @@ question(
 
 - edit_button:
 
-  Button label shown while a submitted `"reflection_editable"` question
-  is locked; clicking it reopens the answer for editing. Ignored for
-  every other `type`.
+  Button label shown while a submitted `"reflection_editable"` question,
+  or a `"reflection"` question with `allow_image = TRUE`, is locked;
+  clicking it reopens the answer for editing (only the image, for the
+  latter). Ignored otherwise.
 
 - id:
 
@@ -126,7 +128,20 @@ question(
   WebP, such as Safari), dropping quality or size further if needed to
   stay under about 450KB. That keeps screenshots from filling the
   browser's storage, which is about 5MB for a whole site. If a save
-  fails anyway, the page says so and the answer stays unsubmitted.
+  fails anyway, the page says so and the answer stays unsubmitted. A
+  submitted `"reflection"` question with `allow_image = TRUE` gets an
+  `edit_button` ("Edit Answer"), which reopens only the image box so the
+  reader can swap in a different screenshot; the question counts as
+  unsubmitted until the new image is submitted. The text box stays
+  locked.
+
+- allow_text:
+
+  With `allow_image = TRUE`, also offer a text box for a typed answer?
+  Defaults to `TRUE`. Set it to `FALSE` for a screenshot-only question:
+  no text box is shown, the reader pastes into the image box, and Submit
+  is refused until an image is pasted. Ignored when `allow_image` is
+  `FALSE`.
 
 - show_text:
 
@@ -206,7 +221,7 @@ question(
   answer("48"),
   allow_retry = TRUE
 )
-#> <div class="learnr2-question" data-learnr2-question="eyJpZCI6IndoYXQtaXMtNi10aW1lcy03IiwidGV4dCI6IldoYXQgaXMgNiB0aW1lcyA3PyIs&#10;InR5cGUiOiJzaW5nbGUiLCJhbnN3ZXJzIjpbeyJ0ZXh0IjoiNDIiLCJjb3JyZWN0Ijp0cnVl&#10;LCJtZXNzYWdlIjpudWxsfSx7InRleHQiOiIzNiIsImNvcnJlY3QiOmZhbHNlLCJtZXNzYWdl&#10;IjpudWxsfSx7InRleHQiOiI0OCIsImNvcnJlY3QiOmZhbHNlLCJtZXNzYWdlIjpudWxsfV0s&#10;ImNvcnJlY3RNZXNzYWdlIjoiQ29ycmVjdCEiLCJpbmNvcnJlY3RNZXNzYWdlIjoiSW5jb3Jy&#10;ZWN0LiIsImFsbG93UmV0cnkiOnRydWUsInJhbmRvbUFuc3dlck9yZGVyIjpmYWxzZSwic3Vi&#10;bWl0TGFiZWwiOiJTdWJtaXQgQW5zd2VyIiwidHJ5QWdhaW5MYWJlbCI6IlRyeSBBZ2FpbiIs&#10;ImVkaXRMYWJlbCI6IkVkaXQgQW5zd2VyIiwiYWxsb3dJbWFnZSI6ZmFsc2UsInNob3dUZXh0&#10;Ijp0cnVlLCJ2YWxpZGF0ZSI6Im5vbmUifQ==">
+#> <div class="learnr2-question" data-learnr2-question="eyJpZCI6IndoYXQtaXMtNi10aW1lcy03IiwidGV4dCI6IldoYXQgaXMgNiB0aW1lcyA3PyIs&#10;InR5cGUiOiJzaW5nbGUiLCJhbnN3ZXJzIjpbeyJ0ZXh0IjoiNDIiLCJjb3JyZWN0Ijp0cnVl&#10;LCJtZXNzYWdlIjpudWxsfSx7InRleHQiOiIzNiIsImNvcnJlY3QiOmZhbHNlLCJtZXNzYWdl&#10;IjpudWxsfSx7InRleHQiOiI0OCIsImNvcnJlY3QiOmZhbHNlLCJtZXNzYWdlIjpudWxsfV0s&#10;ImNvcnJlY3RNZXNzYWdlIjoiQ29ycmVjdCEiLCJpbmNvcnJlY3RNZXNzYWdlIjoiSW5jb3Jy&#10;ZWN0LiIsImFsbG93UmV0cnkiOnRydWUsInJhbmRvbUFuc3dlck9yZGVyIjpmYWxzZSwic3Vi&#10;bWl0TGFiZWwiOiJTdWJtaXQgQW5zd2VyIiwidHJ5QWdhaW5MYWJlbCI6IlRyeSBBZ2FpbiIs&#10;ImVkaXRMYWJlbCI6IkVkaXQgQW5zd2VyIiwiYWxsb3dJbWFnZSI6ZmFsc2UsImFsbG93VGV4&#10;dCI6dHJ1ZSwic2hvd1RleHQiOnRydWUsInZhbGlkYXRlIjoibm9uZSJ9">
 #>   <noscript>This quiz question requires JavaScript.</noscript>
 #> </div>
 
@@ -217,7 +232,7 @@ question(
   type = "reflection_editable",
   validate = "integer"
 )
-#> <div class="learnr2-question" data-learnr2-question="eyJpZCI6Imhvdy1tYW55LW1pbnV0ZXMtYXBwcm94aW1hdGVseS1kaWQtdGhpcy10YWtlIiwi&#10;dGV4dCI6IkhvdyBtYW55IG1pbnV0ZXMsIGFwcHJveGltYXRlbHksIGRpZCB0aGlzIHRha2U/&#10;IiwidHlwZSI6InJlZmxlY3Rpb25fZWRpdGFibGUiLCJhbnN3ZXJzIjpbXSwiY29ycmVjdE1l&#10;c3NhZ2UiOiJDb3JyZWN0ISIsImluY29ycmVjdE1lc3NhZ2UiOiJJbmNvcnJlY3QuIiwiYWxs&#10;b3dSZXRyeSI6ZmFsc2UsInJhbmRvbUFuc3dlck9yZGVyIjpmYWxzZSwic3VibWl0TGFiZWwi&#10;OiJTdWJtaXQgQW5zd2VyIiwidHJ5QWdhaW5MYWJlbCI6IlRyeSBBZ2FpbiIsImVkaXRMYWJl&#10;bCI6IkVkaXQgQW5zd2VyIiwiYWxsb3dJbWFnZSI6ZmFsc2UsInNob3dUZXh0Ijp0cnVlLCJ2&#10;YWxpZGF0ZSI6ImludGVnZXIifQ==">
+#> <div class="learnr2-question" data-learnr2-question="eyJpZCI6Imhvdy1tYW55LW1pbnV0ZXMtYXBwcm94aW1hdGVseS1kaWQtdGhpcy10YWtlIiwi&#10;dGV4dCI6IkhvdyBtYW55IG1pbnV0ZXMsIGFwcHJveGltYXRlbHksIGRpZCB0aGlzIHRha2U/&#10;IiwidHlwZSI6InJlZmxlY3Rpb25fZWRpdGFibGUiLCJhbnN3ZXJzIjpbXSwiY29ycmVjdE1l&#10;c3NhZ2UiOiJDb3JyZWN0ISIsImluY29ycmVjdE1lc3NhZ2UiOiJJbmNvcnJlY3QuIiwiYWxs&#10;b3dSZXRyeSI6ZmFsc2UsInJhbmRvbUFuc3dlck9yZGVyIjpmYWxzZSwic3VibWl0TGFiZWwi&#10;OiJTdWJtaXQgQW5zd2VyIiwidHJ5QWdhaW5MYWJlbCI6IlRyeSBBZ2FpbiIsImVkaXRMYWJl&#10;bCI6IkVkaXQgQW5zd2VyIiwiYWxsb3dJbWFnZSI6ZmFsc2UsImFsbG93VGV4dCI6dHJ1ZSwi&#10;c2hvd1RleHQiOnRydWUsInZhbGlkYXRlIjoiaW50ZWdlciJ9">
 #>   <noscript>This quiz question requires JavaScript.</noscript>
 #> </div>
 ```
