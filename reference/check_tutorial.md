@@ -49,6 +49,10 @@ Each check has a name, used in `skip`:
 
 - `engine` – the YAML header has `engine: knitr`.
 
+- `ordering` – if the YAML header sets `learnr2: ordering:`, it is a
+  single number (see "Ordering" in
+  [`available_tutorials()`](https://ppbds.github.io/learnr2/reference/available_tutorials.md)).
+
 - `include` – the document includes the 'quarto-live' runtime partial,
   `{{< include _extensions/r-wasm/live/_knitr.qmd >}}`. Without it no
   `{webr}` cell works.
@@ -100,7 +104,7 @@ Each check has a name, used in `skip`:
 
 ``` r
 qmd <- create_tutorial("checked", dir = tempfile(), open = FALSE)
-#> Created tutorial: /tmp/Rtmpn1wrPt/file19fa62a7f1ef/checked/checked.qmd
+#> Created tutorial: /tmp/RtmpMmCeGJ/file19be2f252b7e/checked/checked.qmd
 check_tutorial(qmd)
 
 # Break the template, then see the problems instead of an error.

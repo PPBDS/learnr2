@@ -99,6 +99,8 @@ problem found. If <code>FALSE</code>, just return them.</p></dd>
 
 <p>Each check has a name, used in <code>skip</code>:</p><ul><li><p><code>format</code> – the YAML header has <code>format: live-html</code>.</p></li>
 <li><p><code>engine</code> – the YAML header has <code>engine: knitr</code>.</p></li>
+<li><p><code>ordering</code> – if the YAML header sets <code>learnr2: ordering:</code>, it is a
+single number (see "Ordering" in <code><a href="available_tutorials.html">available_tutorials()</a></code>).</p></li>
 <li><p><code>include</code> – the document includes the 'quarto-live' runtime partial,
 <code>{{&lt; include _extensions/r-wasm/live/_knitr.qmd &gt;}}</code>. Without it no
 <code>{webr}</code> cell works.</p></li>
@@ -133,7 +135,7 @@ in the YAML header, the only place WebR learns what to install.
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">qmd</span> <span class="op">&lt;-</span> <span class="fu"><a href="create_tutorial.html">create_tutorial</a></span><span class="op">(</span><span class="st">"checked"</span>, dir <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span><span class="op">)</span>, open <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Created tutorial: /tmp/Rtmpn1wrPt/file19fa62a7f1ef/checked/checked.qmd</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Created tutorial: /tmp/RtmpMmCeGJ/file19be2f252b7e/checked/checked.qmd</span>
 <span class="r-in"><span><span class="fu">check_tutorial</span><span class="op">(</span><span class="va">qmd</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Break the template, then see the problems instead of an error.</span></span></span>

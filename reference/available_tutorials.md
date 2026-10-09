@@ -31,10 +31,11 @@ available_tutorials(package = NULL, type = "all")
 A data frame with one row per tutorial and columns `package`, `name`,
 `title` (`NA` if the tutorial's `.qmd`/`.Rmd` has no YAML `title`),
 `format` (`"quarto"` or `"rmarkdown"`), `path` (the installed
-`.qmd`/`.Rmd` file; `NA` if the directory has neither), and
-`package_dependencies` (a list column: for each tutorial, the character
-vector of R packages that must be installed locally before it can run).
-`name` can be passed to
+`.qmd`/`.Rmd` file; `NA` if the directory has neither), `ordering` (the
+number set by `learnr2: ordering:` in the YAML header; `NA` if absent –
+see "Ordering" below), and `package_dependencies` (a list column: for
+each tutorial, the character vector of R packages that must be installed
+locally before it can run). `name` can be passed to
 [`run_tutorial()`](https://ppbds.github.io/learnr2/reference/run_tutorial.md);
 `path` to
 [`render_tutorials()`](https://ppbds.github.io/learnr2/reference/render_tutorials.md)
@@ -49,6 +50,25 @@ A package loaded from its source tree with
 its tutorials are read from the source `inst/tutorials/`, so a content
 package's own tests see its working tree, not a stale installed copy.
 See the section below.
+
+## Ordering
+
+By default a package's tutorials are listed in the order of their
+directory names, so authors usually number them (`01-intro`, `02-data`,
+...). A tutorial can instead set its position in its YAML header,
+without renaming its directory (a directory name is the tutorial's id,
+so renaming one breaks links and render caches):
+
+    learnr2:
+      ordering: 3
+
+`available_tutorials()` reports it in the `ordering` column. Tools that
+list tutorials, such as the "R Tutorials" VS Code extension, sort a
+package's tutorials by `ordering` (lowest first), with tutorials that
+don't set it after those that do, in directory-name order. A value that
+is not a single number is ignored (reported as `NA`);
+[`check_tutorial()`](https://ppbds.github.io/learnr2/reference/check_tutorial.md)
+flags it.
 
 ## Classic learnr tutorials
 
@@ -91,13 +111,13 @@ learnr2::available_tutorials(package = "learnr2")
 #> 1 learnr2 hello-learnr2 Hello learnr2 quarto
 #>                                                                                path
 #> 1 /home/runner/work/_temp/Library/learnr2/tutorials/hello-learnr2/hello-learnr2.qmd
-#>   package_dependencies
-#> 1                     
+#>   ordering package_dependencies
+#> 1       NA                     
 learnr2::available_tutorials(package = "learnr2", type = "quarto")
 #>   package          name         title format
 #> 1 learnr2 hello-learnr2 Hello learnr2 quarto
 #>                                                                                path
 #> 1 /home/runner/work/_temp/Library/learnr2/tutorials/hello-learnr2/hello-learnr2.qmd
-#>   package_dependencies
-#> 1                     
+#>   ordering package_dependencies
+#> 1       NA                     
 ```
