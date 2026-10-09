@@ -21,8 +21,7 @@ to \code{"learnr2"}; set this to run a tutorial from another installed
 package (e.g. a 'primer.tutorials'-style content package), or from one
 loaded with \code{pkgload::load_all()} (see \code{\link[=available_tutorials]{available_tutorials()}}).}
 
-\item{output_dir}{Root of the render cache for \code{"quarto"} tutorials
-(ignored for an \code{"rmarkdown"} one). Each tutorial is rendered into
+\item{output_dir}{Root of the render cache. Each tutorial is rendered into
 \verb{output_dir/<package>/<name>/}. Defaults to a persistent per-user
 directory (see \code{\link[tools:userdir]{tools::R_user_dir()}}), \emph{not} \code{\link[=tempfile]{tempfile()}}: a persistent
 location is what makes the render cache (below) work at all, and R
@@ -34,28 +33,24 @@ which races with the browser actually loading the page when
 Defaults to \code{TRUE} when interactive. When \code{TRUE}, this call blocks (like
 \code{\link[httpuv:runStaticServer]{httpuv::runStaticServer()}} or \code{shiny::runApp()}) until you interrupt it
 (Ctrl+C, or the console's Stop button) -- see the sections below for
-why. When \code{FALSE}, a \code{"quarto"} tutorial is rendered (or found in the
-cache) and its path returned without serving or blocking; an
-\code{"rmarkdown"} tutorial has no render-only mode (it is a Shiny app), so
-\code{open = FALSE} is an error for one. Note that under \code{Rscript} the
-default is \code{FALSE}, so pass \code{open = TRUE} explicitly there.}
+why. When \code{FALSE}, the tutorial is rendered (or found in the cache)
+and its path returned without serving or blocking. Note that under
+\code{Rscript} the default is \code{FALSE}, so pass \code{open = TRUE} explicitly
+there.}
 
-\item{refresh}{Re-render a \code{"quarto"} tutorial even if the cached render
-is current. Defaults to \code{FALSE}.}
+\item{refresh}{Re-render the tutorial even if the cached render is
+current. Defaults to \code{FALSE}.}
 }
 \value{
-Path to the rendered HTML file for a \code{"quarto"} tutorial, or to
-the \code{.Rmd} source for an \code{"rmarkdown"} one, invisibly.
+Path to the rendered HTML file, invisibly.
 }
 \description{
-Runs a tutorial bundled with an installed package, whichever of the two
-formats \code{\link[=available_tutorials]{available_tutorials()}} reports it is. A \code{"quarto"} tutorial
-(learnr2's own format) is rendered into a per-user cache -- or reused
-from it, if it was rendered before and nothing has changed -- and, when
-\code{open} is \code{TRUE}, served to a browser. An \code{"rmarkdown"} tutorial -- a
-classic 'learnr' tutorial -- is handed to \code{learnr::run_tutorial()}, so a
-tool built on learnr2 (such as the "R Tutorials" VS Code extension) can
-run both kinds through this one function and depend only on learnr2.
+Runs a learnr2 tutorial bundled with an installed package: renders it
+into a per-user cache -- or reuses that render, if nothing has changed --
+and, when \code{open} is \code{TRUE}, serves it to a browser. learnr2 runs only its
+own Quarto (\code{.qmd}) tutorials and does not depend on 'learnr'. Asked for
+a classic 'learnr' tutorial (an \code{.Rmd}), it stops and says to run that
+one with \code{learnr::run_tutorial()}.
 }
 \section{Render cache}{
 
@@ -147,23 +142,6 @@ how the original 'learnr' package's \code{run_tutorial()} (built on a
 blocking Shiny app) behaved -- stop the server to get your prompt back.
 }
 
-\section{Classic learnr tutorials}{
-
-Many existing content packages (those built on 'tutorial.helpers', for
-instance) bundle classic 'learnr' tutorials: \code{.Rmd} files with
-\code{runtime: shiny_prerendered} that run as a Shiny app in the local R
-session. learnr2 cannot run those itself -- the Shiny machinery lives in
-'learnr' -- so for an \code{"rmarkdown"} tutorial this function calls
-\code{learnr::run_tutorial(name, package = package)}, which blocks while the
-app runs just as the \code{"quarto"} path blocks while serving.
-
-'learnr' is only a suggested dependency of learnr2, not a required one,
-because a package that bundles classic learnr tutorials already depends
-on 'learnr' itself (directly, or via 'tutorial.helpers'). So whenever an
-\code{"rmarkdown"} tutorial is installed, 'learnr' is too; this function only
-errors with an install hint if that invariant is somehow broken.
-}
-
 \examples{
 # With no `name`, just lists the tutorials that can be run.
 run_tutorial()
@@ -184,9 +162,6 @@ if (interactive() && !is.null(quarto::quarto_path())) {
 # session until interrupted.
 \dontrun{
 run_tutorial("hello-learnr2")
-
-# A classic learnr tutorial from a content package is handed to learnr.
-run_tutorial("hello", package = "learnr", open = TRUE)
 }
 }
 \seealso{

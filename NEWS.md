@@ -1,5 +1,27 @@
 # learnr2 (development version)
 
+* `create_tutorial(open = TRUE)` now opens the new file with each
+  editor's own mechanism: `file.edit()` in RStudio and Positron, and VS
+  Code's `code` command in a VS Code terminal or Codespace. Anywhere else
+  it prints the path, instead of handing the `.qmd` to whatever app the
+  operating system associates with it. rstudioapi is no longer used, and
+  pkgdown moves from Suggests to `Config/Needs/website`, since only the
+  website build uses it. learnr2's Suggests are now just pkgload,
+  testthat and withr, all for the tests.
+
+* learnr2 no longer depends on learnr, even as a suggested package, and no
+  longer runs classic learnr tutorials. `available_tutorials()` lists only
+  `.qmd` tutorials, skipping directories that hold only a classic `.Rmd`.
+  `run_tutorial()` on a classic tutorial stops with a message to run it
+  with `learnr::run_tutorial()`; it used to hand such tutorials to learnr
+  itself. For compatibility, `available_tutorials()` keeps its `type`
+  argument (`"all"` and `"quarto"` give the same list; `"rmarkdown"` is now
+  an error) and its `format` and `package_dependencies` columns, which are
+  now always `"quarto"` and `character(0)`.
+  **Breaking for tools** that ran classic tutorials through learnr2, such
+  as the R Tutorials VS Code extension: they must now call learnr for
+  those directly.
+
 * Pasted screenshots are now scaled to at most 1600 pixels wide and stored
   as WebP (JPEG in Safari) of at most about 450KB, instead of full-size
   PNG. A few large screenshots could previously fill the browser's

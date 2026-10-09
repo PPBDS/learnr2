@@ -16,7 +16,9 @@
 #'   not name. Pass `"."` for the current working directory.
 #' @param title Human-readable title placed in the document's YAML header.
 #'   Defaults to `name`.
-#' @param open Whether to open the new `.qmd` file in an interactive session.
+#' @param open Whether to open the new `.qmd` file in your editor: RStudio,
+#'   Positron or VS Code. Elsewhere its path is printed instead. Defaults to
+#'   `TRUE` in an interactive session.
 #'   Defaults to `TRUE` when interactive.
 #'
 #' @return The path to the created `.qmd` file, invisibly.
@@ -63,16 +65,32 @@ create_tutorial <- function(name,
   invisible(qmd)
 }
 
-# Best-effort open of a file in the user's editor / RStudio.
+# Best-effort open of a file in the user's editor, with no IDE package
+# needed. RStudio and Positron both send utils::file.edit() to their editor
+# (each sets an environment variable we can detect). VS Code, including a
+# Codespace, puts a `code` command on the PATH of its terminals that opens a
+# file in the editor. Anywhere else -- a plain terminal, where file.edit()
+# would start vi -- just say where the file is. (This used to try
+# rstudioapi::navigateToFile() first, which is what the RSTUDIO branch
+# already does, and fall back to utils::browseURL(), which handed the .qmd
+# to whatever app the operating system associates with it.)
 open_file <- function(path) {
-  if (requireNamespace("rstudioapi", quietly = TRUE) &&
-      rstudioapi::isAvailable() &&
-      rstudioapi::hasFun("navigateToFile")) {
-    rstudioapi::navigateToFile(path)
-  } else if (nzchar(Sys.getenv("RSTUDIO"))) {
+  if (nzchar(Sys.getenv("RSTUDIO")) || nzchar(Sys.getenv("POSITRON"))) {
     utils::file.edit(path)
+  } else if (identical(Sys.getenv("TERM_PROGRAM"), "vscode") && has_code_command()) {
+    open_in_vscode(path)
   } else {
-    utils::browseURL(path)
+    message("Open it in your editor: ", path)
   }
   invisible(path)
+}
+
+# Seams so tests can check the VS Code branch without running `code`
+# (base functions such as Sys.which() can't be mocked).
+has_code_command <- function() {
+  nzchar(Sys.which("code"))
+}
+
+open_in_vscode <- function(path) {
+  system2("code", shQuote(path), wait = FALSE)
 }

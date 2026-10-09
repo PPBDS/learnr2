@@ -17,7 +17,9 @@ not name. Pass \code{"."} for the current working directory.}
 \item{title}{Human-readable title placed in the document's YAML header.
 Defaults to \code{name}.}
 
-\item{open}{Whether to open the new \code{.qmd} file in an interactive session.
+\item{open}{Whether to open the new \code{.qmd} file in your editor: RStudio,
+Positron or VS Code. Elsewhere its path is printed instead. Defaults to
+\code{TRUE} in an interactive session.
 Defaults to \code{TRUE} when interactive.}
 }
 \value{

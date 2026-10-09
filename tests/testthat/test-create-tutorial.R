@@ -104,56 +104,10 @@ test_that("create_tutorial(open = TRUE) opens the new file via open_file()", {
   expect_equal(opened, qmd)
 })
 
-test_that("open_file() falls back to utils::browseURL() outside RStudio", {
-  skip_if_not_installed("rstudioapi")
+test_that("open_file() uses utils::file.edit() in RStudio and in Positron", {
   f <- withr::local_tempfile(fileext = ".qmd")
   file.create(f)
-  withr::local_envvar(RSTUDIO = "")
-
-  seen <- NULL
-  local_mocked_bindings(isAvailable = function(...) FALSE, .package = "rstudioapi")
-  local_mocked_bindings(
-    browseURL = function(url, ...) {
-      seen <<- url
-      invisible()
-    },
-    .package = "utils"
-  )
-
-  res <- withVisible(learnr2:::open_file(f))
-  expect_false(res$visible)
-  expect_equal(res$value, f)
-  expect_equal(seen, f)
-})
-
-test_that("open_file() uses rstudioapi::navigateToFile() when RStudio is available", {
-  skip_if_not_installed("rstudioapi")
-  f <- withr::local_tempfile(fileext = ".qmd")
-  file.create(f)
-
-  navigated <- NULL
-  local_mocked_bindings(isAvailable = function(...) TRUE, .package = "rstudioapi")
-  local_mocked_bindings(hasFun = function(...) TRUE, .package = "rstudioapi")
-  local_mocked_bindings(
-    navigateToFile = function(file, ...) {
-      navigated <<- file
-      invisible()
-    },
-    .package = "rstudioapi"
-  )
-
-  learnr2:::open_file(f)
-  expect_equal(navigated, f)
-})
-
-test_that("open_file() uses utils::file.edit() when RSTUDIO env var is set but the API isn't", {
-  skip_if_not_installed("rstudioapi")
-  f <- withr::local_tempfile(fileext = ".qmd")
-  file.create(f)
-  withr::local_envvar(RSTUDIO = "1")
-
   edited <- NULL
-  local_mocked_bindings(isAvailable = function(...) FALSE, .package = "rstudioapi")
   local_mocked_bindings(
     file.edit = function(...) {
       edited <<- c(...)
@@ -161,7 +115,46 @@ test_that("open_file() uses utils::file.edit() when RSTUDIO env var is set but t
     },
     .package = "utils"
   )
+  local_mocked_bindings(open_in_vscode = function(path) stop("must not open VS Code"))
 
-  learnr2:::open_file(f)
+  withr::with_envvar(c(RSTUDIO = "1", POSITRON = "", TERM_PROGRAM = "vscode"), {
+    res <- withVisible(learnr2:::open_file(f))
+  })
   expect_equal(edited, f)
+  expect_false(res$visible)
+  expect_equal(res$value, f)
+
+  edited <- NULL
+  withr::with_envvar(c(RSTUDIO = "", POSITRON = "1"), learnr2:::open_file(f))
+  expect_equal(edited, f)
+})
+
+test_that("open_file() opens the file with VS Code's `code` command in a VS Code terminal", {
+  f <- withr::local_tempfile(fileext = ".qmd")
+  file.create(f)
+  opened <- NULL
+  local_mocked_bindings(open_in_vscode = function(path) opened <<- path)
+  local_mocked_bindings(has_code_command = function() TRUE)
+  withr::with_envvar(c(RSTUDIO = "", POSITRON = "", TERM_PROGRAM = "vscode"), learnr2:::open_file(f))
+  expect_equal(opened, f)
+})
+
+test_that("has_code_command() reports whether `code` is on the PATH", {
+  expect_type(learnr2:::has_code_command(), "logical")
+  withr::with_envvar(c(PATH = ""), expect_false(learnr2:::has_code_command()))
+})
+
+test_that("open_file() only prints the path anywhere else, rather than guess at an app", {
+  f <- withr::local_tempfile(fileext = ".qmd")
+  file.create(f)
+  local_mocked_bindings(
+    file.edit = function(...) stop("must not start an editor"),
+    browseURL = function(...) stop("must not hand the file to the OS"),
+    .package = "utils"
+  )
+  local_mocked_bindings(open_in_vscode = function(path) stop("must not open VS Code"))
+  withr::with_envvar(c(RSTUDIO = "", POSITRON = "", TERM_PROGRAM = ""), {
+    expect_message(res <- learnr2:::open_file(f), "Open it in your editor: ")
+  })
+  expect_equal(res, f)
 })

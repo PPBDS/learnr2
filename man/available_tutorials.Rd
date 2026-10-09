@@ -11,25 +11,33 @@ available_tutorials(package = NULL, type = "all")
 which scans every installed package, plus any package currently loaded
 with \code{pkgload::load_all()}.}
 
-\item{type}{Which authoring format to include: \code{"quarto"} (tutorials
-whose top-level document is a \code{.qmd}), \code{"rmarkdown"} (a \code{.Rmd}), or
-\code{"all"} (the default) for both.}
+\item{type}{Kept so existing callers keep working: \code{"all"} (the
+default) and \code{"quarto"} both list every learnr2 tutorial. learnr2 no
+longer handles classic learnr tutorials, so \code{"rmarkdown"} is an error;
+use \code{learnr::available_tutorials()} for those.}
 }
 \value{
 A data frame with one row per tutorial and columns \code{package},
-\code{name}, \code{title} (\code{NA} if the tutorial's \code{.qmd}/\code{.Rmd} has no YAML
-\code{title}), \code{format} (\code{"quarto"} or \code{"rmarkdown"}), \code{path} (the
-installed \code{.qmd}/\code{.Rmd} file; \code{NA} if the directory has neither),
+\code{name}, \code{title} (\code{NA} if the tutorial's \code{.qmd} has no YAML \code{title}),
+\code{format} (always \code{"quarto"}), \code{path} (the installed \code{.qmd} file),
 \code{ordering} (the number set by \verb{learnr2: ordering:} in the YAML header;
-\code{NA} if absent -- see "Ordering" below), and
-\code{package_dependencies} (a list column: for each tutorial, the character
-vector of R packages that must be installed locally before it can run).
+\code{NA} if absent -- see "Ordering" below), and \code{package_dependencies} (a
+list column of the R packages each tutorial needs installed locally:
+always \code{character(0)}, since a learnr2 tutorial runs its code in the
+reader's browser). \code{format} and \code{package_dependencies} carry no
+information any more; they are kept so that tools written when learnr2
+also listed classic tutorials, such as the "R Tutorials" VS Code
+extension, keep working.
 \code{name} can be passed to \code{\link[=run_tutorial]{run_tutorial()}}; \code{path} to
 \code{\link[=render_tutorials]{render_tutorials()}} and \code{\link[=check_tutorial]{check_tutorial()}}.
 }
 \description{
 Scans one package -- or, by default, every package installed -- for a
-bundled \verb{inst/tutorials/} directory, the same convention 'learnr' uses.
+bundled \verb{inst/tutorials/} directory, the same convention 'learnr' uses,
+and lists the learnr2 tutorials in it: each subdirectory that contains a
+\code{.qmd} document. Classic 'learnr' tutorials (\code{.Rmd}) in the same
+directory are not listed; learnr2 neither lists nor runs them (see
+\code{\link[=run_tutorial]{run_tutorial()}}).
 This lets tools like the "R Tutorials" VS Code extension discover
 tutorials from separately-installed content packages (in the style of
 'primer.tutorials') without knowing their names in advance.
@@ -59,19 +67,6 @@ package's tutorials by \code{ordering} (lowest first), with tutorials that
 don't set it after those that do, in directory-name order. A value that
 is not a single number is ignored (reported as \code{NA}); \code{\link[=check_tutorial]{check_tutorial()}}
 flags it.
-}
-
-\section{Classic learnr tutorials}{
-
-A \code{"quarto"} tutorial's exercises run in the reader's browser via WebR, so
-it needs no R packages installed locally beyond learnr2 itself and its
-\code{package_dependencies} is \code{character(0)}. An \code{"rmarkdown"} tutorial is a
-classic 'learnr' tutorial (an \code{.Rmd} with \code{runtime: shiny_prerendered}),
-which runs as a Shiny app in the local R session. Its
-\code{package_dependencies} are whatever 'learnr' finds by scanning the
-tutorial's directory (\code{learnr::available_tutorials()}), which always
-includes 'learnr' itself. If 'learnr' is not installed there is nothing
-to ask, and such a tutorial could not run anyway, so the entry is \code{NA}.
 }
 
 \section{Packages loaded with pkgload}{

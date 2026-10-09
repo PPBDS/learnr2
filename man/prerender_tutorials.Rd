@@ -15,8 +15,7 @@ prerender_tutorials(
 Defaults to \code{NULL}, which renders the Quarto tutorials of every
 installed package.}
 
-\item{output_dir}{Root of the render cache for \code{"quarto"} tutorials
-(ignored for an \code{"rmarkdown"} one). Each tutorial is rendered into
+\item{output_dir}{Root of the render cache. Each tutorial is rendered into
 \verb{output_dir/<package>/<name>/}. Defaults to a persistent per-user
 directory (see \code{\link[tools:userdir]{tools::R_user_dir()}}), \emph{not} \code{\link[=tempfile]{tempfile()}}: a persistent
 location is what makes the render cache (below) work at all, and R
@@ -24,8 +23,8 @@ deletes its session temp directory as soon as the R process exits,
 which races with the browser actually loading the page when
 \code{open = TRUE} is used from \code{Rscript}.}
 
-\item{refresh}{Re-render a \code{"quarto"} tutorial even if the cached render
-is current. Defaults to \code{FALSE}.}
+\item{refresh}{Re-render the tutorial even if the cached render is
+current. Defaults to \code{FALSE}.}
 }
 \value{
 A data frame, invisibly, with one row per Quarto tutorial and
@@ -39,8 +38,7 @@ launch of each tutorial is as fast as every later one. Intended for
 environment builds -- a container image, a Codespaces prebuild, a lab
 machine setup -- where the render cost can be paid once for everyone,
 before any student is waiting. Tutorials whose cached render is already
-current are skipped. Classic \code{"rmarkdown"} tutorials are not rendered:
-they are Shiny apps and have nothing to cache.
+current are skipped.
 }
 \section{Where the cache must live}{
 

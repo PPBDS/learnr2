@@ -1,7 +1,11 @@
 #' List tutorials bundled with learnr2 (or any installed package)
 #'
 #' Scans one package -- or, by default, every package installed -- for a
-#' bundled `inst/tutorials/` directory, the same convention 'learnr' uses.
+#' bundled `inst/tutorials/` directory, the same convention 'learnr' uses,
+#' and lists the learnr2 tutorials in it: each subdirectory that contains a
+#' `.qmd` document. Classic 'learnr' tutorials (`.Rmd`) in the same
+#' directory are not listed; learnr2 neither lists nor runs them (see
+#' [run_tutorial()]).
 #' This lets tools like the "R Tutorials" VS Code extension discover
 #' tutorials from separately-installed content packages (in the style of
 #' 'primer.tutorials') without knowing their names in advance.
@@ -15,18 +19,22 @@
 #' @param package Name of a single package to scan. Defaults to `NULL`,
 #'   which scans every installed package, plus any package currently loaded
 #'   with `pkgload::load_all()`.
-#' @param type Which authoring format to include: `"quarto"` (tutorials
-#'   whose top-level document is a `.qmd`), `"rmarkdown"` (a `.Rmd`), or
-#'   `"all"` (the default) for both.
+#' @param type Kept so existing callers keep working: `"all"` (the
+#'   default) and `"quarto"` both list every learnr2 tutorial. learnr2 no
+#'   longer handles classic learnr tutorials, so `"rmarkdown"` is an error;
+#'   use `learnr::available_tutorials()` for those.
 #'
 #' @return A data frame with one row per tutorial and columns `package`,
-#'   `name`, `title` (`NA` if the tutorial's `.qmd`/`.Rmd` has no YAML
-#'   `title`), `format` (`"quarto"` or `"rmarkdown"`), `path` (the
-#'   installed `.qmd`/`.Rmd` file; `NA` if the directory has neither),
+#'   `name`, `title` (`NA` if the tutorial's `.qmd` has no YAML `title`),
+#'   `format` (always `"quarto"`), `path` (the installed `.qmd` file),
 #'   `ordering` (the number set by `learnr2: ordering:` in the YAML header;
-#'   `NA` if absent -- see "Ordering" below), and
-#'   `package_dependencies` (a list column: for each tutorial, the character
-#'   vector of R packages that must be installed locally before it can run).
+#'   `NA` if absent -- see "Ordering" below), and `package_dependencies` (a
+#'   list column of the R packages each tutorial needs installed locally:
+#'   always `character(0)`, since a learnr2 tutorial runs its code in the
+#'   reader's browser). `format` and `package_dependencies` carry no
+#'   information any more; they are kept so that tools written when learnr2
+#'   also listed classic tutorials, such as the "R Tutorials" VS Code
+#'   extension, keep working.
 #'   `name` can be passed to [run_tutorial()]; `path` to
 #'   [render_tutorials()] and [check_tutorial()].
 #'
@@ -49,17 +57,6 @@
 #' is not a single number is ignored (reported as `NA`); [check_tutorial()]
 #' flags it.
 #'
-#' @section Classic learnr tutorials:
-#' A `"quarto"` tutorial's exercises run in the reader's browser via WebR, so
-#' it needs no R packages installed locally beyond learnr2 itself and its
-#' `package_dependencies` is `character(0)`. An `"rmarkdown"` tutorial is a
-#' classic 'learnr' tutorial (an `.Rmd` with `runtime: shiny_prerendered`),
-#' which runs as a Shiny app in the local R session. Its
-#' `package_dependencies` are whatever 'learnr' finds by scanning the
-#' tutorial's directory (`learnr::available_tutorials()`), which always
-#' includes 'learnr' itself. If 'learnr' is not installed there is nothing
-#' to ask, and such a tutorial could not run anyway, so the entry is `NA`.
-#'
 #' @section Packages loaded with pkgload:
 #' `system.file()` resolves against the *installed* copy of a package, so a
 #' content package under development used to be invisible here (or, worse,
@@ -78,8 +75,12 @@
 #' learnr2::available_tutorials(package = "learnr2")
 #' learnr2::available_tutorials(package = "learnr2", type = "quarto")
 available_tutorials <- function(package = NULL, type = "all") {
-  if (!is.character(type) || length(type) != 1 || !type %in% c("all", "rmarkdown", "quarto")) {
-    stop('`type` must be one of "all", "rmarkdown", or "quarto".', call. = FALSE)
+  if (identical(type, "rmarkdown")) {
+    stop('learnr2 does not list classic learnr (.Rmd) tutorials. ',
+         'Use learnr::available_tutorials() for those.', call. = FALSE)
+  }
+  if (!is.character(type) || length(type) != 1 || !type %in% c("all", "quarto")) {
+    stop('`type` must be "all" or "quarto".', call. = FALSE)
   }
   if (!is.null(package)) {
     if (!is.character(package) || length(package) != 1 || !nzchar(package)) {
@@ -109,35 +110,33 @@ available_tutorials <- function(package = NULL, type = "all") {
   }
   out <- do.call(rbind, rows)
   rownames(out) <- NULL
-  if (type != "all") {
-    out <- out[!is.na(out$format) & out$format == type, , drop = FALSE]
-    rownames(out) <- NULL
-  }
   out
 }
 
-# One data frame row per tutorial subdirectory of `pkg`'s inst/tutorials/,
-# or NULL if `pkg` bundles no tutorials at all.
+# One data frame row per learnr2 tutorial in `pkg`'s inst/tutorials/ -- each
+# subdirectory holding a .qmd -- or NULL if there are none. Directories with
+# only a classic learnr .Rmd (or no document) are skipped.
 tutorials_in_package <- function(pkg) {
   root <- pkg_file("tutorials", package = pkg)
   if (!nzchar(root)) {
     return(NULL)
   }
   dirs <- fs::dir_ls(root, type = "directory")
-  if (length(dirs) == 0) {
+  docs <- vapply(dirs, tutorial_doc, character(1), USE.NAMES = FALSE)
+  keep <- !is.na(docs)
+  if (!any(keep)) {
     return(NULL)
   }
-  docs <- lapply(dirs, tutorial_doc)
-  tutorial_names <- fs::path_file(dirs)
-  format <- vapply(docs, tutorial_format, character(1), USE.NAMES = FALSE)
+  dirs <- dirs[keep]
+  docs <- docs[keep]
   data.frame(
     package = pkg,
-    name = tutorial_names,
+    name = fs::path_file(dirs),
     title = vapply(docs, tutorial_title, character(1), USE.NAMES = FALSE),
-    format = format,
-    path = unname(unlist(docs)),
+    format = "quarto",
+    path = docs,
     ordering = vapply(docs, tutorial_ordering, numeric(1), USE.NAMES = FALSE),
-    package_dependencies = I(tutorial_dependencies(pkg, tutorial_names, format)),
+    package_dependencies = I(rep(list(character(0)), length(docs))),
     stringsAsFactors = FALSE
   )
 }
@@ -204,73 +203,19 @@ dev_packages <- function() {
   loaded[!vapply(lapply(loaded, dev_package_path), is.null, logical(1))]
 }
 
-# The R packages each of `pkg`'s tutorials needs installed locally, as a list
-# of character vectors parallel to `names`/`format`. A quarto tutorial runs
-# its exercises in the browser (WebR), so it needs nothing beyond learnr2:
-# character(0). An rmarkdown tutorial is a classic learnr tutorial, and learnr
-# is the authority on what it needs (learnr::available_tutorials() scans the
-# directory with renv) -- NA when learnr is not installed to ask, or cannot
-# read the package. A directory with no document at all is NA too.
-tutorial_dependencies <- function(pkg, names, format) {
-  deps <- rep(list(character(0)), length(names))
-  is_rmd <- !is.na(format) & format == "rmarkdown"
-  deps[is.na(format) | is_rmd] <- list(NA_character_)
-  if (!any(is_rmd) || !learnr_installed()) {
-    return(deps)
-  }
-  learnr_tutorials <- tryCatch(
-    learnr_available_tutorials(pkg),
-    error = function(e) NULL
-  )
-  if (is.null(learnr_tutorials)) {
-    return(deps)
-  }
-  idx <- match(names[is_rmd], learnr_tutorials$name)
-  found <- !is.na(idx)
-  deps[which(is_rmd)[found]] <- lapply(
-    learnr_tutorials$package_dependencies[idx[found]],
-    function(d) if (is.null(d)) character(0) else as.character(d)
-  )
-  deps
-}
-
-# Seams around learnr, which is only Suggested, so tests can mock it without
-# loading it. These are the only places learnr is referenced. They are
-# deliberately not named like learnr's own functions: learnr and learnr2 both
-# export available_tutorials() and run_tutorial(), so a
-# local_mocked_bindings(..., .package = "learnr") of either name would also
-# replace learnr2's own binding in the test environment. (base:: bindings
-# can't be mocked, hence the requireNamespace() wrapper too.)
-learnr_installed <- function() {
-  requireNamespace("learnr", quietly = TRUE)
-}
-
-learnr_available_tutorials <- function(package) {
-  learnr::available_tutorials(package = package)
-}
-
-# Blocks while the Shiny app runs, like learnr::run_tutorial() itself. Not
-# unit-tested: calling it for real launches Shiny and a browser.
-learnr_run_tutorial <- function(name, package) {
-  learnr::run_tutorial(name, package = package)
-}
-
-# The first .qmd/.Rmd directly inside `dir` (.qmd takes precedence if a
-# tutorial somehow has both), or NA if it has neither.
+# The first .qmd directly inside `dir`, or NA if it has none.
 tutorial_doc <- function(dir) {
   doc <- fs::dir_ls(dir, glob = "*.qmd")
-  if (length(doc) == 0) {
-    doc <- fs::dir_ls(dir, glob = "*.Rmd")
-  }
   if (length(doc) == 0) NA_character_ else as.character(doc[1])
 }
 
-# "quarto" or "rmarkdown" based on `doc`'s extension, or NA if `doc` is NA.
-tutorial_format <- function(doc) {
-  if (is.na(doc)) {
-    return(NA_character_)
-  }
-  if (identical(fs::path_ext(doc), "qmd")) "quarto" else "rmarkdown"
+# TRUE if `package` has a tutorial directory `name` holding a classic learnr
+# .Rmd and no .qmd: something run_tutorial() can name helpfully, rather than
+# report as unknown.
+is_classic_tutorial <- function(name, package) {
+  dir <- pkg_file("tutorials", name, package = package)
+  nzchar(dir) && fs::dir_exists(dir) &&
+    is.na(tutorial_doc(dir)) && length(fs::dir_ls(dir, glob = "*.Rmd")) > 0
 }
 
 # The YAML `title:` of `doc`, or NA if `doc` is NA or has no YAML `title`.
@@ -307,14 +252,12 @@ tutorial_ordering <- function(doc) {
 
 #' Run a bundled tutorial
 #'
-#' Runs a tutorial bundled with an installed package, whichever of the two
-#' formats [available_tutorials()] reports it is. A `"quarto"` tutorial
-#' (learnr2's own format) is rendered into a per-user cache -- or reused
-#' from it, if it was rendered before and nothing has changed -- and, when
-#' `open` is `TRUE`, served to a browser. An `"rmarkdown"` tutorial -- a
-#' classic 'learnr' tutorial -- is handed to `learnr::run_tutorial()`, so a
-#' tool built on learnr2 (such as the "R Tutorials" VS Code extension) can
-#' run both kinds through this one function and depend only on learnr2.
+#' Runs a learnr2 tutorial bundled with an installed package: renders it
+#' into a per-user cache -- or reuses that render, if nothing has changed --
+#' and, when `open` is `TRUE`, serves it to a browser. learnr2 runs only its
+#' own Quarto (`.qmd`) tutorials and does not depend on 'learnr'. Asked for
+#' a classic 'learnr' tutorial (an `.Rmd`), it stops and says to run that
+#' one with `learnr::run_tutorial()`.
 #'
 #' @param name Name of the tutorial to run. See [available_tutorials()]. If
 #'   `NULL`, the available tutorials in `package` are listed.
@@ -322,8 +265,7 @@ tutorial_ordering <- function(doc) {
 #'   to `"learnr2"`; set this to run a tutorial from another installed
 #'   package (e.g. a 'primer.tutorials'-style content package), or from one
 #'   loaded with `pkgload::load_all()` (see [available_tutorials()]).
-#' @param output_dir Root of the render cache for `"quarto"` tutorials
-#'   (ignored for an `"rmarkdown"` one). Each tutorial is rendered into
+#' @param output_dir Root of the render cache. Each tutorial is rendered into
 #'   `output_dir/<package>/<name>/`. Defaults to a persistent per-user
 #'   directory (see [tools::R_user_dir()]), *not* [tempfile()]: a persistent
 #'   location is what makes the render cache (below) work at all, and R
@@ -334,16 +276,14 @@ tutorial_ordering <- function(doc) {
 #'   Defaults to `TRUE` when interactive. When `TRUE`, this call blocks (like
 #'   [httpuv::runStaticServer()] or `shiny::runApp()`) until you interrupt it
 #'   (Ctrl+C, or the console's Stop button) -- see the sections below for
-#'   why. When `FALSE`, a `"quarto"` tutorial is rendered (or found in the
-#'   cache) and its path returned without serving or blocking; an
-#'   `"rmarkdown"` tutorial has no render-only mode (it is a Shiny app), so
-#'   `open = FALSE` is an error for one. Note that under `Rscript` the
-#'   default is `FALSE`, so pass `open = TRUE` explicitly there.
-#' @param refresh Re-render a `"quarto"` tutorial even if the cached render
-#'   is current. Defaults to `FALSE`.
+#'   why. When `FALSE`, the tutorial is rendered (or found in the cache)
+#'   and its path returned without serving or blocking. Note that under
+#'   `Rscript` the default is `FALSE`, so pass `open = TRUE` explicitly
+#'   there.
+#' @param refresh Re-render the tutorial even if the cached render is
+#'   current. Defaults to `FALSE`.
 #'
-#' @return Path to the rendered HTML file for a `"quarto"` tutorial, or to
-#'   the `.Rmd` source for an `"rmarkdown"` one, invisibly.
+#' @return Path to the rendered HTML file, invisibly.
 #'
 #' @section Render cache:
 #' Rendering a Quarto tutorial takes several seconds on a laptop and well
@@ -427,21 +367,6 @@ tutorial_ordering <- function(doc) {
 #' how the original 'learnr' package's `run_tutorial()` (built on a
 #' blocking Shiny app) behaved -- stop the server to get your prompt back.
 #'
-#' @section Classic learnr tutorials:
-#' Many existing content packages (those built on 'tutorial.helpers', for
-#' instance) bundle classic 'learnr' tutorials: `.Rmd` files with
-#' `runtime: shiny_prerendered` that run as a Shiny app in the local R
-#' session. learnr2 cannot run those itself -- the Shiny machinery lives in
-#' 'learnr' -- so for an `"rmarkdown"` tutorial this function calls
-#' `learnr::run_tutorial(name, package = package)`, which blocks while the
-#' app runs just as the `"quarto"` path blocks while serving.
-#'
-#' 'learnr' is only a suggested dependency of learnr2, not a required one,
-#' because a package that bundles classic learnr tutorials already depends
-#' on 'learnr' itself (directly, or via 'tutorial.helpers'). So whenever an
-#' `"rmarkdown"` tutorial is installed, 'learnr' is too; this function only
-#' errors with an install hint if that invariant is somehow broken.
-#'
 #' @seealso [prerender_tutorials()] to fill the render cache in advance.
 #' @export
 #' @examples
@@ -464,9 +389,6 @@ tutorial_ordering <- function(doc) {
 #' # session until interrupted.
 #' \dontrun{
 #' run_tutorial("hello-learnr2")
-#'
-#' # A classic learnr tutorial from a content package is handed to learnr.
-#' run_tutorial("hello", package = "learnr", open = TRUE)
 #' }
 run_tutorial <- function(name = NULL,
                          package = "learnr2",
@@ -482,18 +404,16 @@ run_tutorial <- function(name = NULL,
     return(invisible(NULL))
   }
   if (!name %in% tutorials$name) {
+    if (is_classic_tutorial(name, package)) {
+      stop("\"", name, "\" in package ", package, " is a classic learnr ",
+           "tutorial (an .Rmd), which learnr2 does not run. Run it with ",
+           "learnr::run_tutorial(\"", name, "\", package = \"", package, "\").",
+           call. = FALSE)
+    }
     stop("Unknown tutorial: ", name, " in package ", package, ".\nAvailable: ",
          paste(tutorials$name, collapse = ", "), call. = FALSE)
   }
   tutorial <- tutorials[tutorials$name == name, , drop = FALSE]
-
-  if (is.na(tutorial$format)) {
-    stop("Tutorial ", name, " in package ", package,
-         " has no .qmd or .Rmd document to run.", call. = FALSE)
-  }
-  if (identical(tutorial$format, "rmarkdown")) {
-    return(run_learnr_tutorial(name, package, tutorial$path, open))
-  }
 
   root <- fs::path_abs(output_dir)
   rendered <- ensure_rendered(tutorial, root, refresh = refresh)
@@ -513,8 +433,7 @@ run_tutorial <- function(name = NULL,
 #' environment builds -- a container image, a Codespaces prebuild, a lab
 #' machine setup -- where the render cost can be paid once for everyone,
 #' before any student is waiting. Tutorials whose cached render is already
-#' current are skipped. Classic `"rmarkdown"` tutorials are not rendered:
-#' they are Shiny apps and have nothing to cache.
+#' current are skipped.
 #'
 #' @param package Name of a single package whose tutorials to render.
 #'   Defaults to `NULL`, which renders the Quarto tutorials of every
@@ -552,7 +471,7 @@ run_tutorial <- function(name = NULL,
 prerender_tutorials <- function(package = NULL,
                                 output_dir = tools::R_user_dir("learnr2", "cache"),
                                 refresh = FALSE) {
-  tutorials <- available_tutorials(package = package, type = "quarto")
+  tutorials <- available_tutorials(package = package)
   root <- fs::path_abs(output_dir)
   rows <- lapply(seq_len(nrow(tutorials)), function(i) {
     tutorial <- tutorials[i, , drop = FALSE]
@@ -938,37 +857,4 @@ open_in_browser <- function(url, public_url = url) {
 
 block_serving <- function() {
   httpuv::service(0)
-}
-
-# ---------------------------------------------------------------------------
-# Classic learnr tutorials
-# ---------------------------------------------------------------------------
-
-# The "rmarkdown" branch of run_tutorial(): a classic learnr tutorial, which
-# only learnr can run (it is a Shiny app). See the "Classic learnr tutorials"
-# section of ?run_tutorial for why learnr is merely Suggested.
-run_learnr_tutorial <- function(name, package, path, open) {
-  if (!learnr_installed()) {
-    stop(
-      "Tutorial \"", name, "\" in package \"", package, "\" is a classic ",
-      "learnr tutorial (an .Rmd run as a Shiny app), which needs the learnr ",
-      "package. Install it with: install.packages(\"learnr\")",
-      call. = FALSE
-    )
-  }
-  if (!isTRUE(open)) {
-    stop(
-      "Tutorial \"", name, "\" in package \"", package, "\" is a classic ",
-      "learnr tutorial, which runs as a Shiny app and cannot be rendered ",
-      "without being served. Call run_tutorial() with open = TRUE.",
-      call. = FALSE
-    )
-  }
-  message(
-    "\"", name, "\" is a classic learnr tutorial; handing it to ",
-    "learnr::run_tutorial().\n",
-    "Press Ctrl+C (or the console's Stop button) to stop it."
-  )
-  learnr_run_tutorial(name, package)
-  invisible(as.character(path))
 }

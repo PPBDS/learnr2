@@ -55,6 +55,19 @@ input in backticks, function names with `()`, no semicolons.
   `OPTION_DEFAULTS` by `readTutorialOptions()`) is the one channel that
   reaches it. `check_tutorial()` treats a `tutorial_options()` chunk as a
   widget chunk for the `echo` rule.
+- **learnr2 is independent of learnr** (2026-10). It lists and runs only
+  its own `.qmd` tutorials. A tutorial directory holding only a classic
+  `.Rmd` is skipped by `available_tutorials()`; `run_tutorial()` on one
+  stops and names `learnr::run_tutorial()` (`is_classic_tutorial()`).
+  learnr is in no DESCRIPTION field and no code path calls it. It used to
+  be Suggested, with `run_tutorial()` handing classic tutorials to
+  `learnr::run_tutorial()` so the R Tutorials extension could run
+  everything through learnr2. `available_tutorials()` keeps its `type`
+  argument and its `format` and `package_dependencies` columns, now
+  constant (`"quarto"`, `character(0)`), so tools written against the old
+  shape keep working; `type = "rmarkdown"` is an error. Don't reintroduce
+  a learnr call: tools that want both kinds call learnr for classic
+  tutorials themselves.
 - **Question ids default to the chunk label** (`question_id()` /
   `current_chunk_label()` in `R/question.R`). The id is the `localStorage`
   key and the id in the downloaded file, so renaming a chunk resets that
@@ -229,7 +242,7 @@ Two layers, both in CI (`R-CMD-check.yaml`, `js-tests.yaml`).
 - Every exported function and internal helper has a test; call internals
   as `learnr2:::helper()`.
 - Heavy calls are mocked with `local_mocked_bindings()`: `quarto`, `httpuv`,
-  `utils`/`rstudioapi`, plus learnr2's own seams `probe_server()`,
+  `utils`, plus learnr2's own seams `probe_server()`,
   `open_in_browser()` and `block_serving()` (see `local_stub_serving()` and
   `local_stub_quarto()`). No test boots WebR, opens a browser, or hits the
   network.
@@ -247,13 +260,8 @@ Two layers, both in CI (`R-CMD-check.yaml`, `js-tests.yaml`).
   `testthat::skip_if_not_installed("withr")` for CRAN's no-Suggests check.
   Moving it to Imports instead gave a NOTE ("not imported from"), because
   no package code uses it.
-- **Mocking gotcha:** learnr exports `available_tutorials()` and
-  `run_tutorial()` under the same names, so mocking them in learnr also
-  replaced learnr2's. Every learnr call goes through a distinctly named
-  seam (`learnr_installed()`, `learnr_available_tutorials()`,
-  `learnr_run_tutorial()`), and tests mock those.
 - Deliberately untested: `live_extension_dir()`'s missing-package branch
-  (needs a broken install) and `learnr_run_tutorial()` (launches Shiny).
+  (needs a broken install).
 
 **JS, `tests/js/` (Playwright).** `quiz.js` is covered end to end:
 `quiz.spec.js` against a local fixture server (`server.js`, `fixtures.js`)
