@@ -2,21 +2,52 @@
 
 ## learnr2 (development version)
 
+- `create_tutorial(open = TRUE)` now opens the new file with each
+  editor’s own mechanism:
+  [`file.edit()`](https://rdrr.io/r/utils/file.edit.html) in RStudio and
+  Positron, and VS Code’s `code` command in a VS Code terminal or
+  Codespace. Anywhere else it prints the path, instead of handing the
+  `.qmd` to whatever app the operating system associates with it.
+  rstudioapi is no longer used, and pkgdown moves from Suggests to
+  `Config/Needs/website`, since only the website build uses it.
+  learnr2’s Suggests are now just pkgload, testthat and withr, all for
+  the tests.
+
+- learnr2 no longer depends on learnr, even as a suggested package, and
+  no longer runs classic learnr tutorials.
+  [`available_tutorials()`](https://ppbds.github.io/learnr2/reference/available_tutorials.md)
+  lists only `.qmd` tutorials, skipping directories that hold only a
+  classic `.Rmd`.
+  [`run_tutorial()`](https://ppbds.github.io/learnr2/reference/run_tutorial.md)
+  on a classic tutorial stops with a message to run it with
+  [`learnr::run_tutorial()`](https://pkgs.rstudio.com/learnr/reference/run_tutorial.html);
+  it used to hand such tutorials to learnr itself. For compatibility,
+  [`available_tutorials()`](https://ppbds.github.io/learnr2/reference/available_tutorials.md)
+  keeps its `type` argument (`"all"` and `"quarto"` give the same list;
+  `"rmarkdown"` is now an error) and its `format` and
+  `package_dependencies` columns, which are now always `"quarto"` and
+  `character(0)`. **Breaking for tools** that ran classic tutorials
+  through learnr2, such as the R Tutorials VS Code extension: they must
+  now call learnr for those directly.
+
 - [`question()`](https://ppbds.github.io/learnr2/reference/question.md)
   gains `allow_text`. With `allow_image = TRUE, allow_text = FALSE`, a
   question is screenshot-only: no text box is shown, and Submit is
   refused until an image is pasted.
+
 - A submitted screenshot question (`allow_image = TRUE`) now has an
   “Edit Answer” button (`edit_button`), so a reader who pasted the wrong
   screenshot can paste another one. It reopens only the image box, and
   the question counts as unsubmitted until the new image is submitted.
   Previously the only way out was Start Over, which clears the whole
   tutorial.
+
 - Pasted screenshots are now scaled to at most 1600 pixels wide and
   stored as WebP (JPEG in Safari) of at most about 450KB, instead of
   full-size PNG. A few large screenshots could previously fill the
   browser’s storage, which every tutorial on a site shares. The paste
   limit rises from 2MB to 20MB, since the stored image is shrunk anyway.
+
 - When the browser refuses to save an answer (storage full or blocked),
   the page now shows a warning and the answer stays unsubmitted.
   Previously the failure was silent, and the answer was missing from the

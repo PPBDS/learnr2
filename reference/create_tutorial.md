@@ -37,8 +37,9 @@ create_tutorial(name, dir, title = name, open = interactive())
 
 - open:
 
-  Whether to open the new `.qmd` file in an interactive session.
-  Defaults to `TRUE` when interactive.
+  Whether to open the new `.qmd` file in your editor: RStudio, Positron
+  or VS Code. Elsewhere its path is printed instead. Defaults to `TRUE`
+  in an interactive session. Defaults to `TRUE` when interactive.
 
 ## Value
 
@@ -50,7 +51,7 @@ The path to the created `.qmd` file, invisibly.
 # Scaffold into a temporary directory, without opening the new file.
 dir <- tempfile()
 qmd <- create_tutorial("my-first-tutorial", dir = dir, open = FALSE)
-#> Created tutorial: /tmp/RtmpNpSDRU/file19bf59e0c5b1/my-first-tutorial/my-first-tutorial.qmd
+#> Created tutorial: /tmp/RtmpyweJKj/file19e15c9ae4e8/my-first-tutorial/my-first-tutorial.qmd
 list.files(dirname(qmd), all.files = TRUE, no.. = TRUE)
 #> [1] "_extensions"           "my-first-tutorial.qmd"
 unlink(dir, recursive = TRUE)

@@ -1,15 +1,12 @@
 # Run a bundled tutorial
 
-Runs a tutorial bundled with an installed package, whichever of the two
-formats
-[`available_tutorials()`](https://ppbds.github.io/learnr2/reference/available_tutorials.md)
-reports it is. A `"quarto"` tutorial (learnr2's own format) is rendered
-into a per-user cache – or reused from it, if it was rendered before and
-nothing has changed – and, when `open` is `TRUE`, served to a browser.
-An `"rmarkdown"` tutorial – a classic 'learnr' tutorial – is handed to
-[`learnr::run_tutorial()`](https://pkgs.rstudio.com/learnr/reference/run_tutorial.html),
-so a tool built on learnr2 (such as the "R Tutorials" VS Code extension)
-can run both kinds through this one function and depend only on learnr2.
+Runs a learnr2 tutorial bundled with an installed package: renders it
+into a per-user cache – or reuses that render, if nothing has changed –
+and, when `open` is `TRUE`, serves it to a browser. learnr2 runs only
+its own Quarto (`.qmd`) tutorials and does not depend on 'learnr'. Asked
+for a classic 'learnr' tutorial (an `.Rmd`), it stops and says to run
+that one with
+[`learnr::run_tutorial()`](https://pkgs.rstudio.com/learnr/reference/run_tutorial.html).
 
 ## Usage
 
@@ -43,8 +40,7 @@ run_tutorial(
 
 - output_dir:
 
-  Root of the render cache for `"quarto"` tutorials (ignored for an
-  `"rmarkdown"` one). Each tutorial is rendered into
+  Root of the render cache. Each tutorial is rendered into
   `output_dir/<package>/<name>/`. Defaults to a persistent per-user
   directory (see
   [`tools::R_user_dir()`](https://rdrr.io/r/tools/userdir.html)), *not*
@@ -61,22 +57,19 @@ run_tutorial(
   [`httpuv::runStaticServer()`](https://rstudio.github.io/httpuv/reference/runStaticServer.html)
   or [`shiny::runApp()`](https://rdrr.io/pkg/shiny/man/runApp.html))
   until you interrupt it (Ctrl+C, or the console's Stop button) – see
-  the sections below for why. When `FALSE`, a `"quarto"` tutorial is
-  rendered (or found in the cache) and its path returned without serving
-  or blocking; an `"rmarkdown"` tutorial has no render-only mode (it is
-  a Shiny app), so `open = FALSE` is an error for one. Note that under
-  `Rscript` the default is `FALSE`, so pass `open = TRUE` explicitly
-  there.
+  the sections below for why. When `FALSE`, the tutorial is rendered (or
+  found in the cache) and its path returned without serving or blocking.
+  Note that under `Rscript` the default is `FALSE`, so pass
+  `open = TRUE` explicitly there.
 
 - refresh:
 
-  Re-render a `"quarto"` tutorial even if the cached render is current.
-  Defaults to `FALSE`.
+  Re-render the tutorial even if the cached render is current. Defaults
+  to `FALSE`.
 
 ## Value
 
-Path to the rendered HTML file for a `"quarto"` tutorial, or to the
-`.Rmd` source for an `"rmarkdown"` one, invisibly.
+Path to the rendered HTML file, invisibly.
 
 ## Render cache
 
@@ -170,22 +163,6 @@ caller while serving, matching how the original 'learnr' package's
 `run_tutorial()` (built on a blocking Shiny app) behaved – stop the
 server to get your prompt back.
 
-## Classic learnr tutorials
-
-Many existing content packages (those built on 'tutorial.helpers', for
-instance) bundle classic 'learnr' tutorials: `.Rmd` files with
-`runtime: shiny_prerendered` that run as a Shiny app in the local R
-session. learnr2 cannot run those itself – the Shiny machinery lives in
-'learnr' – so for an `"rmarkdown"` tutorial this function calls
-`learnr::run_tutorial(name, package = package)`, which blocks while the
-app runs just as the `"quarto"` path blocks while serving.
-
-'learnr' is only a suggested dependency of learnr2, not a required one,
-because a package that bundles classic learnr tutorials already depends
-on 'learnr' itself (directly, or via 'tutorial.helpers'). So whenever an
-`"rmarkdown"` tutorial is installed, 'learnr' is too; this function only
-errors with an install hint if that invariant is somehow broken.
-
 ## See also
 
 [`prerender_tutorials()`](https://ppbds.github.io/learnr2/reference/prerender_tutorials.md)
@@ -215,8 +192,5 @@ if (interactive() && !is.null(quarto::quarto_path())) {
 # session until interrupted.
 if (FALSE) { # \dontrun{
 run_tutorial("hello-learnr2")
-
-# A classic learnr tutorial from a content package is handed to learnr.
-run_tutorial("hello", package = "learnr", open = TRUE)
 } # }
 ```

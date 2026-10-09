@@ -658,13 +658,15 @@ the Quarto command line tool.
 ## One learnr2 tutorial in a classic learnr package
 
 A single **learnr2** `.qmd` can live in a package whose other tutorials
-are classic **learnr** `.Rmd` files. **learnr2**’s own functions scan
-every tutorial directory and prefer `.qmd`, so
+are classic **learnr** `.Rmd` files. **learnr2** lists and runs only the
+`.qmd` ones, so
 `learnr2::run_tutorial("<name>", package = "<host package>")` finds it,
-renders it and serves it. `R CMD check` on the host package treats the
-file as data and ignores it.
+renders it and serves it, and ignores the classic tutorials around it.
+**learnr2** does not depend on **learnr**: classic tutorials are run
+with **learnr** itself, as before. `R CMD check` on the host package
+treats the `.qmd` as data and ignores it.
 
-Classic tooling, though, only ever looks for `.Rmd`:
+Classic tooling, in turn, only ever looks for `.Rmd`:
 
 - [`learnr::available_tutorials()`](https://pkgs.rstudio.com/learnr/reference/available_tutorials.html)
   doesn’t list a directory holding only a `.qmd`, so

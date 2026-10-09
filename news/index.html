@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">learnr2</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.3.9002</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.3.9003</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -39,11 +39,12 @@
 
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="development version" id="learnr2-development-version">learnr2 (development version)<a class="anchor" aria-label="anchor" href="#learnr2-development-version"></a></h2>
-<ul><li>
-<code><a href="../reference/question.html">question()</a></code> gains <code>allow_text</code>. With <code>allow_image = TRUE, allow_text = FALSE</code>, a question is screenshot-only: no text box is shown, and Submit is refused until an image is pasted.</li>
-<li>A submitted screenshot question (<code>allow_image = TRUE</code>) now has an “Edit Answer” button (<code>edit_button</code>), so a reader who pasted the wrong screenshot can paste another one. It reopens only the image box, and the question counts as unsubmitted until the new image is submitted. Previously the only way out was Start Over, which clears the whole tutorial.</li>
-<li>Pasted screenshots are now scaled to at most 1600 pixels wide and stored as WebP (JPEG in Safari) of at most about 450KB, instead of full-size PNG. A few large screenshots could previously fill the browser’s storage, which every tutorial on a site shares. The paste limit rises from 2MB to 20MB, since the stored image is shrunk anyway.</li>
-<li>When the browser refuses to save an answer (storage full or blocked), the page now shows a warning and the answer stays unsubmitted. Previously the failure was silent, and the answer was missing from the download.</li>
+<ul><li><p><code>create_tutorial(open = TRUE)</code> now opens the new file with each editor’s own mechanism: <code><a href="https://rdrr.io/r/utils/file.edit.html" class="external-link">file.edit()</a></code> in RStudio and Positron, and VS Code’s <code>code</code> command in a VS Code terminal or Codespace. Anywhere else it prints the path, instead of handing the <code>.qmd</code> to whatever app the operating system associates with it. rstudioapi is no longer used, and pkgdown moves from Suggests to <code>Config/Needs/website</code>, since only the website build uses it. learnr2’s Suggests are now just pkgload, testthat and withr, all for the tests.</p></li>
+<li><p>learnr2 no longer depends on learnr, even as a suggested package, and no longer runs classic learnr tutorials. <code><a href="../reference/available_tutorials.html">available_tutorials()</a></code> lists only <code>.qmd</code> tutorials, skipping directories that hold only a classic <code>.Rmd</code>. <code><a href="../reference/run_tutorial.html">run_tutorial()</a></code> on a classic tutorial stops with a message to run it with <code><a href="https://pkgs.rstudio.com/learnr/reference/run_tutorial.html" class="external-link">learnr::run_tutorial()</a></code>; it used to hand such tutorials to learnr itself. For compatibility, <code><a href="../reference/available_tutorials.html">available_tutorials()</a></code> keeps its <code>type</code> argument (<code>"all"</code> and <code>"quarto"</code> give the same list; <code>"rmarkdown"</code> is now an error) and its <code>format</code> and <code>package_dependencies</code> columns, which are now always <code>"quarto"</code> and <code>character(0)</code>. <strong>Breaking for tools</strong> that ran classic tutorials through learnr2, such as the R Tutorials VS Code extension: they must now call learnr for those directly.</p></li>
+<li><p><code><a href="../reference/question.html">question()</a></code> gains <code>allow_text</code>. With <code>allow_image = TRUE, allow_text = FALSE</code>, a question is screenshot-only: no text box is shown, and Submit is refused until an image is pasted.</p></li>
+<li><p>A submitted screenshot question (<code>allow_image = TRUE</code>) now has an “Edit Answer” button (<code>edit_button</code>), so a reader who pasted the wrong screenshot can paste another one. It reopens only the image box, and the question counts as unsubmitted until the new image is submitted. Previously the only way out was Start Over, which clears the whole tutorial.</p></li>
+<li><p>Pasted screenshots are now scaled to at most 1600 pixels wide and stored as WebP (JPEG in Safari) of at most about 450KB, instead of full-size PNG. A few large screenshots could previously fill the browser’s storage, which every tutorial on a site shares. The paste limit rises from 2MB to 20MB, since the stored image is shrunk anyway.</p></li>
+<li><p>When the browser refuses to save an answer (storage full or blocked), the page now shows a warning and the answer stays unsubmitted. Previously the failure was silent, and the answer was missing from the download.</p></li>
 </ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.1.3" id="learnr2-013">learnr2 0.1.3<a class="anchor" aria-label="anchor" href="#learnr2-013"></a></h2>

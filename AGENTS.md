@@ -74,6 +74,25 @@ input in backticks, function names with `()`, no semicolons.
   treats a
   [`tutorial_options()`](https://ppbds.github.io/learnr2/reference/tutorial_options.md)
   chunk as a widget chunk for the `echo` rule.
+- **learnr2 is independent of learnr** (2026-10). It lists and runs only
+  its own `.qmd` tutorials. A tutorial directory holding only a classic
+  `.Rmd` is skipped by
+  [`available_tutorials()`](https://ppbds.github.io/learnr2/reference/available_tutorials.md);
+  [`run_tutorial()`](https://ppbds.github.io/learnr2/reference/run_tutorial.md)
+  on one stops and names
+  [`learnr::run_tutorial()`](https://pkgs.rstudio.com/learnr/reference/run_tutorial.html)
+  (`is_classic_tutorial()`). learnr is in no DESCRIPTION field and no
+  code path calls it. It used to be Suggested, with
+  [`run_tutorial()`](https://ppbds.github.io/learnr2/reference/run_tutorial.md)
+  handing classic tutorials to
+  [`learnr::run_tutorial()`](https://pkgs.rstudio.com/learnr/reference/run_tutorial.html)
+  so the R Tutorials extension could run everything through learnr2.
+  [`available_tutorials()`](https://ppbds.github.io/learnr2/reference/available_tutorials.md)
+  keeps its `type` argument and its `format` and `package_dependencies`
+  columns, now constant (`"quarto"`, `character(0)`), so tools written
+  against the old shape keep working; `type = "rmarkdown"` is an error.
+  Don’t reintroduce a learnr call: tools that want both kinds call
+  learnr for classic tutorials themselves.
 - **Question ids default to the chunk label** (`question_id()` /
   `current_chunk_label()` in `R/question.R`). The id is the
   `localStorage` key and the id in the downloaded file, so renaming a
@@ -194,8 +213,11 @@ Verified against real renders.
   flat-keys-plus-`submitted: false` data is read as a draft. The old
   design left fields open after Submit and relabelled the button “Edit”,
   which silently resaved, so readers had no signal their change had gone
-  in (user report, 2026-10). Plain `reflection` never gets the cycle:
-  reopening it would let a reader paste in the model answer.
+  in (user report, 2026-10). A text `reflection` never gets the cycle:
+  reopening it would let a reader paste in the model answer. The one
+  exception is a screenshot (`allow_image`) reflection, which can reopen
+  its image box; see “Submit once, then locked” under Settled design
+  decisions.
 - **Outbound links open in a new tab** (`openLinksInNewTabs()`): every
   `a[href]` except `#...`, `download`, `mailto:`/`tel:`/`javascript:`.
   Students worried when a tutorial “disappeared”. Quarto’s
@@ -283,10 +305,10 @@ Two layers, both in CI (`R-CMD-check.yaml`, `js-tests.yaml`).
 - Every exported function and internal helper has a test; call internals
   as `learnr2:::helper()`.
 - Heavy calls are mocked with `local_mocked_bindings()`: `quarto`,
-  `httpuv`, `utils`/`rstudioapi`, plus learnr2’s own seams
-  `probe_server()`, `open_in_browser()` and `block_serving()` (see
-  `local_stub_serving()` and `local_stub_quarto()`). No test boots WebR,
-  opens a browser, or hits the network.
+  `httpuv`, `utils`, plus learnr2’s own seams `probe_server()`,
+  `open_in_browser()` and `block_serving()` (see `local_stub_serving()`
+  and `local_stub_quarto()`). No test boots WebR, opens a browser, or
+  hits the network.
 - **One test serves for real**: the “served root, against a real httpuv
   server” block fetches `/` from a live httpuv server, because stubs can
   only show that `index.html` was written. It fails if
@@ -304,18 +326,9 @@ Two layers, both in CI (`R-CMD-check.yaml`, `js-tests.yaml`).
   `testthat::skip_if_not_installed("withr")` for CRAN’s no-Suggests
   check. Moving it to Imports instead gave a NOTE (“not imported from”),
   because no package code uses it.
-- **Mocking gotcha:** learnr exports
-  [`available_tutorials()`](https://ppbds.github.io/learnr2/reference/available_tutorials.md)
-  and
-  [`run_tutorial()`](https://ppbds.github.io/learnr2/reference/run_tutorial.md)
-  under the same names, so mocking them in learnr also replaced
-  learnr2’s. Every learnr call goes through a distinctly named seam
-  (`learnr_installed()`, `learnr_available_tutorials()`,
-  `learnr_run_tutorial()`), and tests mock those.
 - Deliberately untested:
   [`live_extension_dir()`](https://ppbds.github.io/learnr2/reference/live_extension_dir.md)’s
-  missing-package branch (needs a broken install) and
-  `learnr_run_tutorial()` (launches Shiny).
+  missing-package branch (needs a broken install).
 
 **JS, `tests/js/` (Playwright).** `quiz.js` is covered end to end:
 `quiz.spec.js` against a local fixture server (`server.js`,

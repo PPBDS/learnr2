@@ -7,8 +7,6 @@ as fast as every later one. Intended for environment builds – a
 container image, a Codespaces prebuild, a lab machine setup – where the
 render cost can be paid once for everyone, before any student is
 waiting. Tutorials whose cached render is already current are skipped.
-Classic `"rmarkdown"` tutorials are not rendered: they are Shiny apps
-and have nothing to cache.
 
 ## Usage
 
@@ -29,8 +27,7 @@ prerender_tutorials(
 
 - output_dir:
 
-  Root of the render cache for `"quarto"` tutorials (ignored for an
-  `"rmarkdown"` one). Each tutorial is rendered into
+  Root of the render cache. Each tutorial is rendered into
   `output_dir/<package>/<name>/`. Defaults to a persistent per-user
   directory (see
   [`tools::R_user_dir()`](https://rdrr.io/r/tools/userdir.html)), *not*
@@ -42,8 +39,8 @@ prerender_tutorials(
 
 - refresh:
 
-  Re-render a `"quarto"` tutorial even if the cached render is current.
-  Defaults to `FALSE`.
+  Re-render the tutorial even if the cached render is current. Defaults
+  to `FALSE`.
 
 ## Value
 

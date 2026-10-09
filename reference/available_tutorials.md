@@ -1,7 +1,11 @@
 # List tutorials bundled with learnr2 (or any installed package)
 
 Scans one package – or, by default, every package installed – for a
-bundled `inst/tutorials/` directory, the same convention 'learnr' uses.
+bundled `inst/tutorials/` directory, the same convention 'learnr' uses,
+and lists the learnr2 tutorials in it: each subdirectory that contains a
+`.qmd` document. Classic 'learnr' tutorials (`.Rmd`) in the same
+directory are not listed; learnr2 neither lists nor runs them (see
+[`run_tutorial()`](https://ppbds.github.io/learnr2/reference/run_tutorial.md)).
 This lets tools like the "R Tutorials" VS Code extension discover
 tutorials from separately-installed content packages (in the style of
 'primer.tutorials') without knowing their names in advance.
@@ -22,20 +26,25 @@ available_tutorials(package = NULL, type = "all")
 
 - type:
 
-  Which authoring format to include: `"quarto"` (tutorials whose
-  top-level document is a `.qmd`), `"rmarkdown"` (a `.Rmd`), or `"all"`
-  (the default) for both.
+  Kept so existing callers keep working: `"all"` (the default) and
+  `"quarto"` both list every learnr2 tutorial. learnr2 no longer handles
+  classic learnr tutorials, so `"rmarkdown"` is an error; use
+  [`learnr::available_tutorials()`](https://pkgs.rstudio.com/learnr/reference/available_tutorials.html)
+  for those.
 
 ## Value
 
 A data frame with one row per tutorial and columns `package`, `name`,
-`title` (`NA` if the tutorial's `.qmd`/`.Rmd` has no YAML `title`),
-`format` (`"quarto"` or `"rmarkdown"`), `path` (the installed
-`.qmd`/`.Rmd` file; `NA` if the directory has neither), `ordering` (the
+`title` (`NA` if the tutorial's `.qmd` has no YAML `title`), `format`
+(always `"quarto"`), `path` (the installed `.qmd` file), `ordering` (the
 number set by `learnr2: ordering:` in the YAML header; `NA` if absent –
-see "Ordering" below), and `package_dependencies` (a list column: for
-each tutorial, the character vector of R packages that must be installed
-locally before it can run). `name` can be passed to
+see "Ordering" below), and `package_dependencies` (a list column of the
+R packages each tutorial needs installed locally: always `character(0)`,
+since a learnr2 tutorial runs its code in the reader's browser).
+`format` and `package_dependencies` carry no information any more; they
+are kept so that tools written when learnr2 also listed classic
+tutorials, such as the "R Tutorials" VS Code extension, keep working.
+`name` can be passed to
 [`run_tutorial()`](https://ppbds.github.io/learnr2/reference/run_tutorial.md);
 `path` to
 [`render_tutorials()`](https://ppbds.github.io/learnr2/reference/render_tutorials.md)
@@ -69,20 +78,6 @@ don't set it after those that do, in directory-name order. A value that
 is not a single number is ignored (reported as `NA`);
 [`check_tutorial()`](https://ppbds.github.io/learnr2/reference/check_tutorial.md)
 flags it.
-
-## Classic learnr tutorials
-
-A `"quarto"` tutorial's exercises run in the reader's browser via WebR,
-so it needs no R packages installed locally beyond learnr2 itself and
-its `package_dependencies` is `character(0)`. An `"rmarkdown"` tutorial
-is a classic 'learnr' tutorial (an `.Rmd` with
-`runtime: shiny_prerendered`), which runs as a Shiny app in the local R
-session. Its `package_dependencies` are whatever 'learnr' finds by
-scanning the tutorial's directory
-([`learnr::available_tutorials()`](https://pkgs.rstudio.com/learnr/reference/available_tutorials.html)),
-which always includes 'learnr' itself. If 'learnr' is not installed
-there is nothing to ask, and such a tutorial could not run anyway, so
-the entry is `NA`.
 
 ## Packages loaded with pkgload
 

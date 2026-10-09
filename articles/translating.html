@@ -22,7 +22,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">learnr2</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.3.9002</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.3.9003</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -428,8 +428,8 @@
 <p>Guard that test with <code><a href="https://testthat.r-lib.org/reference/skip.html" class="external-link">testthat::skip_on_cran()</a></code> and <code>testthat::skip_if(is.null(quarto::quarto_path()))</code>, since it needs the Quarto command line tool.</p>
 </section><section class="level2"><h2 id="one-learnr2-tutorial-in-a-classic-learnr-package">One learnr2 tutorial in a classic learnr package<a class="anchor" aria-label="anchor" href="#one-learnr2-tutorial-in-a-classic-learnr-package"></a>
 </h2>
-<p>A single <strong>learnr2</strong> <code>.qmd</code> can live in a package whose other tutorials are classic <strong>learnr</strong> <code>.Rmd</code> files. <strong>learnr2</strong>’s own functions scan every tutorial directory and prefer <code>.qmd</code>, so <code>learnr2::run_tutorial("&lt;name&gt;", package = "&lt;host package&gt;")</code> finds it, renders it and serves it. <code>R CMD check</code> on the host package treats the file as data and ignores it.</p>
-<p>Classic tooling, though, only ever looks for <code>.Rmd</code>:</p>
+<p>A single <strong>learnr2</strong> <code>.qmd</code> can live in a package whose other tutorials are classic <strong>learnr</strong> <code>.Rmd</code> files. <strong>learnr2</strong> lists and runs only the <code>.qmd</code> ones, so <code>learnr2::run_tutorial("&lt;name&gt;", package = "&lt;host package&gt;")</code> finds it, renders it and serves it, and ignores the classic tutorials around it. <strong>learnr2</strong> does not depend on <strong>learnr</strong>: classic tutorials are run with <strong>learnr</strong> itself, as before. <code>R CMD check</code> on the host package treats the <code>.qmd</code> as data and ignores it.</p>
+<p>Classic tooling, in turn, only ever looks for <code>.Rmd</code>:</p>
 <ul>
 <li>
 <code><a href="https://pkgs.rstudio.com/learnr/reference/available_tutorials.html" class="external-link">learnr::available_tutorials()</a></code> doesn’t list a directory holding only a <code>.qmd</code>, so <code><a href="https://pkgs.rstudio.com/learnr/reference/run_tutorial.html" class="external-link">learnr::run_tutorial()</a></code> can’t launch it.</li>

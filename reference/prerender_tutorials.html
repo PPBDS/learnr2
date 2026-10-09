@@ -4,14 +4,12 @@ launch of each tutorial is as fast as every later one. Intended for
 environment builds – a container image, a Codespaces prebuild, a lab
 machine setup – where the render cost can be paid once for everyone,
 before any student is waiting. Tutorials whose cached render is already
-current are skipped. Classic &quot;rmarkdown&quot; tutorials are not rendered:
-they are Shiny apps and have nothing to cache."><meta property="og:description" content="Fills run_tutorial()'s render cache ahead of time, so that the first
+current are skipped."><meta property="og:description" content="Fills run_tutorial()'s render cache ahead of time, so that the first
 launch of each tutorial is as fast as every later one. Intended for
 environment builds – a container image, a Codespaces prebuild, a lab
 machine setup – where the render cost can be paid once for everyone,
 before any student is waiting. Tutorials whose cached render is already
-current are skipped. Classic &quot;rmarkdown&quot; tutorials are not rendered:
-they are Shiny apps and have nothing to cache."></head><body>
+current are skipped."></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -19,7 +17,7 @@ they are Shiny apps and have nothing to cache."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">learnr2</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.3.9002</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.3.9003</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -56,8 +54,7 @@ launch of each tutorial is as fast as every later one. Intended for
 environment builds – a container image, a Codespaces prebuild, a lab
 machine setup – where the render cost can be paid once for everyone,
 before any student is waiting. Tutorials whose cached render is already
-current are skipped. Classic <code>"rmarkdown"</code> tutorials are not rendered:
-they are Shiny apps and have nothing to cache.</p>
+current are skipped.</p>
     </div>
 
     <div class="section level2">
@@ -80,8 +77,7 @@ installed package.</p></dd>
 
 
 <dt id="arg-output-dir">output_dir<a class="anchor" aria-label="anchor" href="#arg-output-dir"></a></dt>
-<dd><p>Root of the render cache for <code>"quarto"</code> tutorials
-(ignored for an <code>"rmarkdown"</code> one). Each tutorial is rendered into
+<dd><p>Root of the render cache. Each tutorial is rendered into
 <code>output_dir/&lt;package&gt;/&lt;name&gt;/</code>. Defaults to a persistent per-user
 directory (see <code><a href="https://rdrr.io/r/tools/userdir.html" class="external-link">tools::R_user_dir()</a></code>), <em>not</em> <code><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile()</a></code>: a persistent
 location is what makes the render cache (below) work at all, and R
@@ -91,8 +87,8 @@ which races with the browser actually loading the page when
 
 
 <dt id="arg-refresh">refresh<a class="anchor" aria-label="anchor" href="#arg-refresh"></a></dt>
-<dd><p>Re-render a <code>"quarto"</code> tutorial even if the cached render
-is current. Defaults to <code>FALSE</code>.</p></dd>
+<dd><p>Re-render the tutorial even if the cached render is
+current. Defaults to <code>FALSE</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">
