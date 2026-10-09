@@ -235,6 +235,18 @@ const FIXTURES = {
       })
     )
   ],
+  "reflection-image-only": [
+    questionBlock(
+      question({
+        id: "reflection-image-only",
+        text: "Paste a screenshot of your plot.",
+        type: "reflection",
+        answers: [],
+        allowImage: true,
+        allowText: false
+      })
+    )
+  ],
   "reflection-hidden-text": [
     questionBlock(
       question({

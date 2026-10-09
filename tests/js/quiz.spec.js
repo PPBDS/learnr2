@@ -371,6 +371,103 @@ test.describe("image paste (allow_image)", () => {
     expect(src).toMatch(/^data:image\/(webp|jpeg);base64,/);
     await expect(page.locator(".learnr2-image-paste")).toHaveClass(/learnr2-image-paste-disabled/);
   });
+
+  test("Edit Answer reopens only the image box of a submitted question", async ({ page }) => {
+    // Readers who submitted the wrong screenshot had to Start Over the
+    // whole tutorial to fix it.
+    await page.goto("/reflection-image");
+    const replace = page.locator(".learnr2-image-edit");
+    await expect(replace).toBeHidden();
+
+    await dispatchSyntheticPaste(page, ".learnr2-image-paste", TINY_PNG_BASE64, "image/png", "first.png");
+    await expect(page.locator(".learnr2-image-paste-preview")).toBeVisible();
+    await page.locator(".learnr2-submit").click();
+    await expect(page.locator(".learnr2-submit")).toBeHidden();
+    await expect(replace).toHaveText("Edit Answer");
+
+    await replace.click();
+    await expect(replace).toBeHidden();
+    await expect(page.locator(".learnr2-submit")).toBeVisible();
+    await expect(page.locator(".learnr2-editing-note")).toContainText("paste a new screenshot");
+    await expect(page.locator(".learnr2-image-paste")).not.toHaveClass(/learnr2-image-paste-disabled/);
+    // The text box stays out of reach, even with the image removed.
+    await expect(page.locator("textarea")).toBeHidden();
+    await page.locator(".learnr2-image-paste-remove").click();
+    await expect(page.locator("textarea")).toBeHidden();
+
+    // A reload mid-replace keeps it reopened, and still counts as unsubmitted.
+    await page.reload();
+    await expect(page.locator(".learnr2-submit")).toBeVisible();
+    await expect(page.locator("textarea")).toBeHidden();
+    const editing = await page.evaluate(() => {
+      for (let i = 0; i < localStorage.length; i++) {
+        let value = null;
+        try { value = JSON.parse(localStorage.getItem(localStorage.key(i))); } catch (e) {}
+        if (value && value.submitted) return value.editing === true;
+      }
+      return null;
+    });
+    expect(editing).toBe(true);
+
+    await dispatchSyntheticPaste(page, ".learnr2-image-paste", TINY_GIF_BASE64, "image/gif", "second.gif");
+    await expect(page.locator(".learnr2-image-paste-preview")).toBeVisible();
+    await page.locator(".learnr2-submit").click();
+    await expect(page.locator(".learnr2-submit")).toBeHidden();
+    await expect(replace).toBeVisible();
+    await expect(page.locator(".learnr2-image-paste")).toHaveClass(/learnr2-image-paste-disabled/);
+
+    await page.reload();
+    await expect(replace).toBeVisible();
+    await expect(page.locator(".learnr2-image-paste-preview")).toBeVisible();
+  });
+
+  test("submitting a replacement with no image is refused", async ({ page }) => {
+    await page.goto("/reflection-image");
+    await dispatchSyntheticPaste(page, ".learnr2-image-paste", TINY_PNG_BASE64, "image/png", "first.png");
+    await expect(page.locator(".learnr2-image-paste-preview")).toBeVisible();
+    await page.locator(".learnr2-submit").click();
+
+    await page.locator(".learnr2-image-edit").click();
+    await page.locator(".learnr2-image-paste-remove").click();
+    await page.locator(".learnr2-submit").click();
+    await expect(page.locator(".learnr2-feedback")).toHaveText("Paste an image before submitting.");
+    await expect(page.locator(".learnr2-submit")).toBeVisible();
+    await expect(page.locator("textarea")).toBeHidden();
+  });
+
+  test("allow_text = FALSE: no text box, and Submit needs an image", async ({ page }) => {
+    await page.goto("/reflection-image-only");
+    await expect(page.locator("textarea")).toBeHidden();
+    await expect(page.locator(".learnr2-image-paste-placeholder")).toHaveText(
+      "Click here, then paste a screenshot with Ctrl+V (or Cmd+V)."
+    );
+
+    await page.locator(".learnr2-submit").click();
+    await expect(page.locator(".learnr2-feedback")).toHaveText("Paste an image before submitting.");
+    await expect(page.locator(".learnr2-submit")).toBeVisible();
+
+    await dispatchSyntheticPaste(page, ".learnr2-image-paste", TINY_PNG_BASE64, "image/png", "plot.png");
+    await expect(page.locator(".learnr2-image-paste-preview")).toBeVisible();
+    // Removing the image doesn't bring a text box back.
+    await page.locator(".learnr2-image-paste-remove").click();
+    await expect(page.locator("textarea")).toBeHidden();
+
+    await dispatchSyntheticPaste(page, ".learnr2-image-paste", TINY_PNG_BASE64, "image/png", "plot.png");
+    await page.locator(".learnr2-submit").click();
+    await expect(page.locator(".learnr2-submit")).toBeHidden();
+    await expect(page.locator(".learnr2-image-edit")).toBeVisible();
+
+    await page.reload();
+    await expect(page.locator("textarea")).toBeHidden();
+    await expect(page.locator(".learnr2-image-paste-preview")).toBeVisible();
+  });
+
+  test("a text-only reflection has no Edit Answer button", async ({ page }) => {
+    await page.goto("/reflection-locked");
+    await page.locator("textarea").fill("Some thoughts.");
+    await page.locator(".learnr2-submit").click();
+    await expect(page.locator(".learnr2-image-edit")).toHaveCount(0);
+  });
 });
 
 test.describe("show_text = FALSE", () => {

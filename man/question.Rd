@@ -17,6 +17,7 @@ question(
   edit_button = "Edit Answer",
   id = NULL,
   allow_image = FALSE,
+  allow_text = TRUE,
   show_text = TRUE,
   validate = c("none", "integer")
 )
@@ -67,8 +68,9 @@ Defaults to \code{FALSE}. Only applies to \code{"single"}/\code{"multiple"} ques
 \item{submit_button, try_again_button}{Button labels.}
 
 \item{edit_button}{Button label shown while a submitted
-\code{"reflection_editable"} question is locked; clicking it reopens the
-answer for editing. Ignored for every other \code{type}.}
+\code{"reflection_editable"} question, or a \code{"reflection"} question with
+\code{allow_image = TRUE}, is locked; clicking it reopens the answer for
+editing (only the image, for the latter). Ignored otherwise.}
 
 \item{id}{Stable identifier for this question: it keys the reader's saved
 answer (see "Progress persistence" below) and is the \code{id} the question
@@ -90,7 +92,17 @@ at most 1600 pixels wide and re-encoded as WebP (JPEG in browsers that
 can't write WebP, such as Safari), dropping quality or size further if
 needed to stay under about 450KB. That keeps screenshots from filling
 the browser's storage, which is about 5MB for a whole site. If a save
-fails anyway, the page says so and the answer stays unsubmitted.}
+fails anyway, the page says so and the answer stays unsubmitted. A
+submitted \code{"reflection"} question with \code{allow_image = TRUE} gets an
+\code{edit_button} ("Edit Answer"), which reopens only the image box so the reader
+can swap in a different screenshot; the question counts as unsubmitted
+until the new image is submitted. The text box stays locked.}
+
+\item{allow_text}{With \code{allow_image = TRUE}, also offer a text box for a
+typed answer? Defaults to \code{TRUE}. Set it to \code{FALSE} for a
+screenshot-only question: no text box is shown, the reader pastes into
+the image box, and Submit is refused until an image is pasted. Ignored
+when \code{allow_image} is \code{FALSE}.}
 
 \item{show_text}{Show \code{text} as the question's prompt inside the widget?
 Defaults to \code{TRUE}. Set it to \code{FALSE} when the prompt is written as

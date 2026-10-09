@@ -22,6 +22,14 @@
   as the R Tutorials VS Code extension: they must now call learnr for
   those directly.
 
+* `question()` gains `allow_text`. With `allow_image = TRUE, allow_text =
+  FALSE`, a question is screenshot-only: no text box is shown, and Submit
+  is refused until an image is pasted.
+* A submitted screenshot question (`allow_image = TRUE`) now has an
+  "Edit Answer" button (`edit_button`), so a reader who pasted the wrong
+  screenshot can paste another one. It reopens only the image box, and the question
+  counts as unsubmitted until the new image is submitted. Previously the
+  only way out was Start Over, which clears the whole tutorial.
 * Pasted screenshots are now scaled to at most 1600 pixels wide and stored
   as WebP (JPEG in Safari) of at most about 450KB, instead of full-size
   PNG. A few large screenshots could previously fill the browser's

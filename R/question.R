@@ -77,8 +77,9 @@ print.learnr2_answer <- function(x, ...) {
 #'   Defaults to `FALSE`. Only applies to `"single"`/`"multiple"` questions.
 #' @param submit_button,try_again_button Button labels.
 #' @param edit_button Button label shown while a submitted
-#'   `"reflection_editable"` question is locked; clicking it reopens the
-#'   answer for editing. Ignored for every other `type`.
+#'   `"reflection_editable"` question, or a `"reflection"` question with
+#'   `allow_image = TRUE`, is locked; clicking it reopens the answer for
+#'   editing (only the image, for the latter). Ignored otherwise.
 #' @param id Stable identifier for this question: it keys the reader's saved
 #'   answer (see "Progress persistence" below) and is the `id` the question
 #'   appears under in a [download_answers_button()] submission. Defaults to
@@ -99,7 +100,16 @@ print.learnr2_answer <- function(x, ...) {
 #'   can't write WebP, such as Safari), dropping quality or size further if
 #'   needed to stay under about 450KB. That keeps screenshots from filling
 #'   the browser's storage, which is about 5MB for a whole site. If a save
-#'   fails anyway, the page says so and the answer stays unsubmitted.
+#'   fails anyway, the page says so and the answer stays unsubmitted. A
+#'   submitted `"reflection"` question with `allow_image = TRUE` gets an
+#'   `edit_button` ("Edit Answer"), which reopens only the image box so the reader
+#'   can swap in a different screenshot; the question counts as unsubmitted
+#'   until the new image is submitted. The text box stays locked.
+#' @param allow_text With `allow_image = TRUE`, also offer a text box for a
+#'   typed answer? Defaults to `TRUE`. Set it to `FALSE` for a
+#'   screenshot-only question: no text box is shown, the reader pastes into
+#'   the image box, and Submit is refused until an image is pasted. Ignored
+#'   when `allow_image` is `FALSE`.
 #' @param show_text Show `text` as the question's prompt inside the widget?
 #'   Defaults to `TRUE`. Set it to `FALSE` when the prompt is written as
 #'   ordinary text on the page, just above the question, and should not be
@@ -190,6 +200,7 @@ question <- function(text,
                       edit_button = "Edit Answer",
                       id = NULL,
                       allow_image = FALSE,
+                      allow_text = TRUE,
                       show_text = TRUE,
                       validate = c("none", "integer")) {
   type <- match.arg(type)
@@ -226,6 +237,8 @@ question <- function(text,
     stop("`question()` needs at least one correct `answer()`.", call. = FALSE)
   }
 
+  allow_image <- isTRUE(allow_image) && is_reflection_type
+
   if (type == "auto") {
     type <- if (n_correct > 1) "multiple" else "single"
   }
@@ -246,7 +259,8 @@ question <- function(text,
     submitLabel = submit_button,
     tryAgainLabel = try_again_button,
     editLabel = edit_button,
-    allowImage = isTRUE(allow_image) && is_reflection_type,
+    allowImage = allow_image,
+    allowText = !allow_image || !isFALSE(allow_text),
     showText = isTRUE(show_text),
     validate = if (is_free_text_type) validate else "none"
   )

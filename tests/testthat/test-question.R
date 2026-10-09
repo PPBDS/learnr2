@@ -114,6 +114,23 @@ test_that("allow_image is carried through for reflection types", {
   expect_true(q2$payload$allowImage)
 })
 
+test_that("allow_text = FALSE makes an image question screenshot-only, and is ignored without allow_image", {
+  q <- question("Paste a screenshot.", type = "reflection", allow_image = TRUE)
+  expect_true(q$payload$allowText)
+
+  q2 <- question(
+    "Paste a screenshot.",
+    type = "reflection",
+    allow_image = TRUE,
+    allow_text = FALSE
+  )
+  expect_false(q2$payload$allowText)
+
+  # No image box to paste into, so there must still be a text box.
+  q3 <- question("Thoughts?", type = "reflection", allow_text = FALSE)
+  expect_true(q3$payload$allowText)
+})
+
 test_that("show_text defaults to TRUE and is carried through when FALSE", {
   q <- question(
     "Paste a screenshot of your plot.",

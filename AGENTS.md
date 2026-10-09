@@ -49,6 +49,12 @@ input in backticks, function names with `()`, no semicolons.
   `student_info()` above it is submitted. Reason: we show our answer right
   after the reader's, and an editable box beside it invites copying it
   back. `reflection_editable` is for the minutes question only.
+  One exception (2026-10): a submitted `allow_image` reflection has a
+  "Edit Answer" button (`edit_button`) that reopens only the image box (text box hidden
+  and disabled, `editing: true` so it counts as unsubmitted, Submit
+  refuses an empty box). Readers who pasted the wrong screenshot had to
+  Start Over the whole tutorial. A screenshot can't be lifted from the
+  model answer the way text can, so the reason for locking doesn't apply.
 - **Tutorial-wide switches go through `tutorial_options()`**, never a new
   YAML key: `quiz.js` can't see the YAML, and the hidden
   `<div class="learnr2-options">` with base64 JSON (merged over
@@ -164,9 +170,11 @@ subsections) behind a Continue button. Verified against real renders.
   and `editing` are flags; old flat-keys-plus-`submitted: false` data is
   read as a draft. The old design left fields open after Submit and
   relabelled the button "Edit", which silently resaved, so readers had no
-  signal their change had gone in (user report, 2026-10). Plain
+  signal their change had gone in (user report, 2026-10). A text
   `reflection` never gets the cycle: reopening it would let a reader paste
-  in the model answer.
+  in the model answer. The one exception is a screenshot (`allow_image`)
+  reflection, which can reopen its image box; see "Submit once, then
+  locked" under Settled design decisions.
 - **Outbound links open in a new tab** (`openLinksInNewTabs()`): every
   `a[href]` except `#...`, `download`, `mailto:`/`tel:`/`javascript:`.
   Students worried when a tutorial "disappeared". Quarto's
@@ -193,7 +201,11 @@ subsections) behind a Continue button. Verified against real renders.
 - **Image-paste answers.** Once an image is pasted, the textarea hides and
   typed text is not saved (`value` is `""`). A user reported the visible
   empty textarea above a pasted image as a second box to fill in. Don't
-  bring it back.
+  bring it back. `question(allow_text = FALSE)` (payload `allowText`)
+  goes further: no text box at all, and Submit is refused without an
+  image. Primer's Getting Started screenshot questions use it, because a
+  typed answer there proves nothing. `quiz.js` treats only an explicit
+  `allowText: false` as image-only, so older payloads keep the text box.
 - **Storage keys strip the URL hash** (`pageUrl` at the top of `quiz.js`).
   TOC clicks change the hash, and reading `location.href` fresh made Start
   Over and the download miss saved answers.

@@ -213,7 +213,8 @@
 }
 
 .learnr2-submit,
-.learnr2-try-again {
+.learnr2-try-again,
+.learnr2-image-edit {
   padding: 0.4rem 0.9rem;
   border: 1px solid #0d6efd;
   border-radius: 0.3rem;
@@ -223,7 +224,8 @@
   font-size: 0.95rem;
 }
 
-.learnr2-submit:hover {
+.learnr2-submit:hover,
+.learnr2-image-edit:hover {
   background: #0b5ed7;
 }
 

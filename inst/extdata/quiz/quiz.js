@@ -397,15 +397,20 @@
   //
   // `onChange(hasImage)` fires whenever an image is set or removed, so the
   // caller can hide its response textarea while an image is the answer.
-  function buildImagePasteArea(onChange) {
+  //
+  // `noTextBox`: the question has no text box (allow_text = FALSE), so the
+  // placeholder must not point the reader at one.
+  function buildImagePasteArea(onChange, noTextBox) {
     // A sanity cap on what is decoded; the stored image is shrunk by
     // compressImage() regardless, so readers no longer need to crop.
     var MAX_BYTES = 20 * 1024 * 1024;
     var wrapper = el("div", { class: "learnr2-image-paste", tabindex: "0" });
     var placeholder = el("div", {
       class: "learnr2-image-paste-placeholder",
-      text: "Paste a screenshot with Ctrl+V (or Cmd+V) into the text box " +
-        "above, or click here and paste it directly."
+      text: noTextBox
+        ? "Click here, then paste a screenshot with Ctrl+V (or Cmd+V)."
+        : "Paste a screenshot with Ctrl+V (or Cmd+V) into the text box " +
+          "above, or click here and paste it directly."
     });
     var preview = el("img", { class: "learnr2-image-paste-preview d-none" });
     var error = el("div", { class: "learnr2-image-paste-error d-none" });
@@ -572,13 +577,32 @@
     var feedback = el("div", { class: "learnr2-feedback d-none" });
     var submit = el("button", { type: "button", class: "learnr2-submit", text: data.submitLabel });
     var answers = el("div", { class: "learnr2-answers" }, [textarea]);
+    // A locked image question can still swap its screenshot: its Edit
+    // button (labelled `editLabel`, like reflection_editable's) reopens only
+    // the image box (the text box stays hidden and disabled), and the
+    // question counts as unsubmitted, via `editing`, until a new image is
+    // submitted. Readers pasted the wrong screenshot and had to Start Over
+    // the whole tutorial to fix it. Text stays locked for good, per the
+    // note above EDITING_NOTE; reflection_editable already has Edit.
+    var replaceable = data.allowImage && !editable;
+    var replacing = false;
+    var replace = replaceable
+      ? el("button", { type: "button", class: "learnr2-image-edit d-none" })
+      : null;
+    // question(allow_text = FALSE): a screenshot-only question, with no text
+    // box at all and Submit refused until an image is pasted. Payloads from
+    // before allowText existed lack the key, so only an explicit false counts.
+    var imageOnly = data.allowImage && data.allowText === false;
+    if (imageOnly) {
+      answers.classList.add("d-none");
+    }
     // Once an image is pasted it *is* the answer: hide the text box so the
     // reader sees only the image (plus "Remove image", which brings the
-    // text box back).
+    // text box back, except while replacing or for an image-only question).
     var imagePaste = data.allowImage
       ? buildImagePasteArea(function (hasImage) {
-          answers.classList.toggle("d-none", hasImage);
-        })
+          answers.classList.toggle("d-none", hasImage || replacing || imageOnly);
+        }, imageOnly)
       : null;
     if (imagePaste) {
       textarea.addEventListener("paste", function (event) {
@@ -612,16 +636,36 @@
 
     function setLocked(isLocked, isEditing) {
       locked = isLocked;
-      textarea.disabled = isLocked;
+      replacing = replaceable && !isLocked && !!isEditing;
+      textarea.disabled = isLocked || replacing;
+      if (replacing) {
+        answers.classList.add("d-none");
+      }
       if (imagePaste) {
         imagePaste.setDisabled(isLocked);
       }
       if (editable) {
         submit.textContent = isLocked ? data.editLabel : data.submitLabel;
-      } else if (isLocked) {
-        submit.classList.add("d-none");
+      } else {
+        submit.classList.toggle("d-none", isLocked);
       }
+      if (replace) {
+        replace.textContent = data.editLabel;
+        replace.classList.toggle("d-none", !isLocked);
+      }
+      note.textContent = replacing ? REPLACING_NOTE : EDITING_NOTE;
       note.classList.toggle("d-none", isLocked || !isEditing);
+    }
+
+    if (replace) {
+      replace.addEventListener("click", function () {
+        feedback.className = "learnr2-feedback d-none";
+        setLocked(false, true);
+        var reopened = loadState(data) || {};
+        reopened.editing = true;
+        saveState(data, reopened);
+        imagePaste.element.focus();
+      });
     }
 
     function applyOutcome() {
@@ -636,7 +680,12 @@
         var reopened = loadState(data) || {};
         reopened.editing = true;
         saveState(data, reopened);
-        textarea.focus();
+        (imageOnly ? imagePaste.element : textarea).focus();
+        return;
+      }
+      if ((replacing || imageOnly) && !imagePaste.getDataUrl()) {
+        feedback.className = "learnr2-feedback learnr2-feedback-incorrect";
+        feedback.textContent = "Paste an image before submitting.";
         return;
       }
       if (!passesValidation(textarea.value, data.validate)) {
@@ -667,7 +716,7 @@
     if (imagePaste) {
       container.appendChild(imagePaste.element);
     }
-    container.appendChild(el("div", { class: "learnr2-controls" }, [submit]));
+    container.appendChild(el("div", { class: "learnr2-controls" }, replace ? [submit, replace] : [submit]));
     container.appendChild(note);
     container.appendChild(feedback);
     container.appendChild(reveal);
@@ -682,7 +731,8 @@
       }
       if (saved.submitted) {
         showModelAnswer();
-        setLocked(!(editable && saved.editing), editable && saved.editing);
+        var reopened = !!saved.editing && (editable || replaceable);
+        setLocked(!reopened, reopened);
       }
     }
   }
@@ -727,6 +777,8 @@
   // not get this cycle: they stay locked for good, so a reader can't reopen
   // one and paste in the model answer they were just shown.
   var EDITING_NOTE = "Editing. Submit to save your changes.";
+  var REPLACING_NOTE = "Click the image box and paste a new screenshot " +
+    "(Ctrl+V or Cmd+V), then Submit.";
 
   // student_info() storage, per form: the flat field keys hold the last
   // *submitted* values (what the download reports); `submitted` is true only
