@@ -313,3 +313,12 @@ test_that("echo check treats a tutorial_options() chunk as a widget chunk", {
               "learnr2::tutorial_options(allow_skip = TRUE)", "```")
   expect_identical(nrow(check_tutorial(write_qmd(hidden), error = FALSE)), 0L)
 })
+
+test_that("the ordering check accepts a number and flags anything else", {
+  fn <- learnr2:::tutorial_checks$ordering
+  expect_length(fn(list(yaml = list(title = "T"))), 0)
+  expect_length(fn(list(yaml = list(learnr2 = list(ordering = 3)))), 0)
+  expect_match(fn(list(yaml = list(learnr2 = list(ordering = "first")))), "single number")
+  expect_match(fn(list(yaml = list(learnr2 = list(ordering = c(1, 2))))), "single number")
+  expect_match(fn(list(yaml = list(learnr2 = "x"))), "mapping")
+})

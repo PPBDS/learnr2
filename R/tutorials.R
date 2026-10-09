@@ -22,11 +22,32 @@
 #' @return A data frame with one row per tutorial and columns `package`,
 #'   `name`, `title` (`NA` if the tutorial's `.qmd`/`.Rmd` has no YAML
 #'   `title`), `format` (`"quarto"` or `"rmarkdown"`), `path` (the
-#'   installed `.qmd`/`.Rmd` file; `NA` if the directory has neither), and
+#'   installed `.qmd`/`.Rmd` file; `NA` if the directory has neither),
+#'   `ordering` (the number set by `learnr2: ordering:` in the YAML header;
+#'   `NA` if absent -- see "Ordering" below), and
 #'   `package_dependencies` (a list column: for each tutorial, the character
 #'   vector of R packages that must be installed locally before it can run).
 #'   `name` can be passed to [run_tutorial()]; `path` to
 #'   [render_tutorials()] and [check_tutorial()].
+#'
+#' @section Ordering:
+#' By default a package's tutorials are listed in the order of their
+#' directory names, so authors usually number them (`01-intro`,
+#' `02-data`, ...). A tutorial can instead set its position in its YAML
+#' header, without renaming its directory (a directory name is the
+#' tutorial's id, so renaming one breaks links and render caches):
+#'
+#' ```yaml
+#' learnr2:
+#'   ordering: 3
+#' ```
+#'
+#' `available_tutorials()` reports it in the `ordering` column. Tools that
+#' list tutorials, such as the "R Tutorials" VS Code extension, sort a
+#' package's tutorials by `ordering` (lowest first), with tutorials that
+#' don't set it after those that do, in directory-name order. A value that
+#' is not a single number is ignored (reported as `NA`); [check_tutorial()]
+#' flags it.
 #'
 #' @section Classic learnr tutorials:
 #' A `"quarto"` tutorial's exercises run in the reader's browser via WebR, so
@@ -81,6 +102,7 @@ available_tutorials <- function(package = NULL, type = "all") {
       title = character(0),
       format = character(0),
       path = character(0),
+      ordering = numeric(0),
       package_dependencies = I(list()),
       stringsAsFactors = FALSE
     ))
@@ -114,6 +136,7 @@ tutorials_in_package <- function(pkg) {
     title = vapply(docs, tutorial_title, character(1), USE.NAMES = FALSE),
     format = format,
     path = unname(unlist(docs)),
+    ordering = vapply(docs, tutorial_ordering, numeric(1), USE.NAMES = FALSE),
     package_dependencies = I(tutorial_dependencies(pkg, tutorial_names, format)),
     stringsAsFactors = FALSE
   )
@@ -261,6 +284,25 @@ tutorial_title <- function(doc) {
   )
   title <- front_matter$title
   if (is.null(title)) NA_character_ else as.character(title)
+}
+
+# The YAML `learnr2: ordering:` of `doc` as a number, or NA if `doc` is NA,
+# has no such key, or the value is not a single number (see "Ordering" in
+# ?available_tutorials; check_tutorial() reports a malformed one).
+tutorial_ordering <- function(doc) {
+  if (is.na(doc)) {
+    return(NA_real_)
+  }
+  front_matter <- tryCatch(
+    rmarkdown::yaml_front_matter(doc),
+    error = function(e) NULL
+  )
+  ordering <- front_matter$learnr2$ordering
+  if (is.numeric(ordering) && length(ordering) == 1 && !is.na(ordering)) {
+    as.numeric(ordering)
+  } else {
+    NA_real_
+  }
 }
 
 #' Run a bundled tutorial

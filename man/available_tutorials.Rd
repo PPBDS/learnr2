@@ -19,7 +19,9 @@ whose top-level document is a \code{.qmd}), \code{"rmarkdown"} (a \code{.Rmd}), 
 A data frame with one row per tutorial and columns \code{package},
 \code{name}, \code{title} (\code{NA} if the tutorial's \code{.qmd}/\code{.Rmd} has no YAML
 \code{title}), \code{format} (\code{"quarto"} or \code{"rmarkdown"}), \code{path} (the
-installed \code{.qmd}/\code{.Rmd} file; \code{NA} if the directory has neither), and
+installed \code{.qmd}/\code{.Rmd} file; \code{NA} if the directory has neither),
+\code{ordering} (the number set by \verb{learnr2: ordering:} in the YAML header;
+\code{NA} if absent -- see "Ordering" below), and
 \code{package_dependencies} (a list column: for each tutorial, the character
 vector of R packages that must be installed locally before it can run).
 \code{name} can be passed to \code{\link[=run_tutorial]{run_tutorial()}}; \code{path} to
@@ -39,6 +41,26 @@ tutorials are read from the source \verb{inst/tutorials/}, so a content
 package's own tests see its working tree, not a stale installed copy.
 See the section below.
 }
+\section{Ordering}{
+
+By default a package's tutorials are listed in the order of their
+directory names, so authors usually number them (\code{01-intro},
+\code{02-data}, ...). A tutorial can instead set its position in its YAML
+header, without renaming its directory (a directory name is the
+tutorial's id, so renaming one breaks links and render caches):
+
+\if{html}{\out{<div class="sourceCode yaml">}}\preformatted{learnr2:
+  ordering: 3
+}\if{html}{\out{</div>}}
+
+\code{available_tutorials()} reports it in the \code{ordering} column. Tools that
+list tutorials, such as the "R Tutorials" VS Code extension, sort a
+package's tutorials by \code{ordering} (lowest first), with tutorials that
+don't set it after those that do, in directory-name order. A value that
+is not a single number is ignored (reported as \code{NA}); \code{\link[=check_tutorial]{check_tutorial()}}
+flags it.
+}
+
 \section{Classic learnr tutorials}{
 
 A \code{"quarto"} tutorial's exercises run in the reader's browser via WebR, so

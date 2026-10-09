@@ -97,7 +97,7 @@ test_that("available_tutorials() returns a typed zero-row frame for a package wi
   res <- available_tutorials(package = "utils")
   expect_s3_class(res, "data.frame")
   expect_identical(nrow(res), 0L)
-  expect_named(res, c("package", "name", "title", "format", "path", "package_dependencies"))
+  expect_named(res, c("package", "name", "title", "format", "path", "ordering", "package_dependencies"))
   expect_type(res$package_dependencies, "list")
 })
 
@@ -189,6 +189,28 @@ test_that("tutorial_title() reads the YAML title, or NA when absent/unparseable"
   bad <- withr::local_tempfile(fileext = ".qmd")
   writeLines(c("---", "title: a: b", "---"), bad)
   expect_true(is.na(learnr2:::tutorial_title(bad)))
+})
+
+test_that("tutorial_ordering() reads learnr2: ordering:, or NA when absent/invalid", {
+  expect_true(is.na(learnr2:::tutorial_ordering(NA_character_)))
+  header <- function(...) {
+    f <- tempfile(fileext = ".qmd")
+    writeLines(c("---", ..., "---", "", "# Body"), f)
+    f
+  }
+  expect_true(is.na(learnr2:::tutorial_ordering(header("title: T"))))
+  expect_identical(learnr2:::tutorial_ordering(header("learnr2:", "  ordering: 3")), 3)
+  expect_identical(learnr2:::tutorial_ordering(header("learnr2:", "  ordering: 2.5")), 2.5)
+  # Not a number, not a single value, or a top-level key: ignored.
+  expect_true(is.na(learnr2:::tutorial_ordering(header("learnr2:", "  ordering: first"))))
+  expect_true(is.na(learnr2:::tutorial_ordering(header("learnr2:", "  ordering: [1, 2]"))))
+  expect_true(is.na(learnr2:::tutorial_ordering(header("ordering: 3"))))
+})
+
+test_that("available_tutorials() has an ordering column", {
+  tutorials <- available_tutorials(package = "learnr2")
+  expect_true("ordering" %in% names(tutorials))
+  expect_type(tutorials$ordering, "double")
 })
 
 # ---- packages loaded with pkgload::load_all() ----------------------------

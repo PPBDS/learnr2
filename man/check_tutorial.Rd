@@ -37,6 +37,8 @@ Each check has a name, used in \code{skip}:
 \itemize{
 \item \code{format} -- the YAML header has \code{format: live-html}.
 \item \code{engine} -- the YAML header has \code{engine: knitr}.
+\item \code{ordering} -- if the YAML header sets \verb{learnr2: ordering:}, it is a
+single number (see "Ordering" in \code{\link[=available_tutorials]{available_tutorials()}}).
 \item \code{include} -- the document includes the 'quarto-live' runtime partial,
 \verb{\{\{< include _extensions/r-wasm/live/_knitr.qmd >\}\}}. Without it no
 \code{{webr}} cell works.

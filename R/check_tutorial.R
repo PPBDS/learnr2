@@ -13,6 +13,8 @@
 #' Each check has a name, used in `skip`:
 #' * `format` -- the YAML header has `format: live-html`.
 #' * `engine` -- the YAML header has `engine: knitr`.
+#' * `ordering` -- if the YAML header sets `learnr2: ordering:`, it is a
+#'   single number (see "Ordering" in [available_tutorials()]).
 #' * `include` -- the document includes the 'quarto-live' runtime partial,
 #'   `{{< include _extensions/r-wasm/live/_knitr.qmd >}}`. Without it no
 #'   `{webr}` cell works.
@@ -244,6 +246,17 @@ tutorial_checks <- list(
   engine = function(doc) {
     if (!identical(as.character(doc$yaml$engine), "knitr")) {
       "YAML header must have `engine: knitr`."
+    }
+  },
+
+  ordering = function(doc) {
+    l2 <- doc$yaml$learnr2
+    if (!is.null(l2) && !is.list(l2)) {
+      return("YAML `learnr2:` must be a mapping (e.g. `learnr2:` then an indented `ordering: 3`).")
+    }
+    ordering <- l2$ordering
+    if (!is.null(ordering) && !(is.numeric(ordering) && length(ordering) == 1 && !is.na(ordering))) {
+      "YAML `learnr2: ordering:` must be a single number, e.g. `ordering: 3`."
     }
   },
 
