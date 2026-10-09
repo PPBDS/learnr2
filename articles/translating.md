@@ -50,7 +50,8 @@ directory.
 | `question("...", answer("a", correct = TRUE))` | `learnr2::question("...", learnr2::answer("a", correct = TRUE))` |
 | `question_text(...)`, with or without a model answer | `learnr2::question(..., type = "reflection")` |
 | `question_numeric(...)` (the minutes question) | `learnr2::question(..., type = "reflection_editable", validate = "integer")` |
-| a bare `###` divider | keep it, since it becomes a Continue stop with no heading |
+| a bare `###` directly under a `##` heading | delete it, since the heading already starts the section |
+| any other bare `###` divider | keep it, since it becomes a Continue stop with no heading |
 | `allow_skip: yes` in the YAML | `learnr2::tutorial_options(allow_skip = TRUE)` |
 | `knitr::include_graphics("images/x.png")` | `![](images/x.png)` |
 | a four-backtick block around a plain transcript | an ordinary three-backtick block |
@@ -438,16 +439,19 @@ chunks with plain Markdown, `![](images/thing.png)`, optionally with
 nothing to opt in. A Continue button always sits at the end of something
 to read, never directly under a heading: clicking it reveals the next
 heading together with the text that follows it, which may or may not
-include the next exercise. In particular, a `##` heading followed
-immediately by a bare `###`, the way **tutorial.helpers** opens every
-topic, shows the heading and that first block together. Some details for
-translations:
+include the next exercise. Some details for translations:
 
-- **Keep every bare `###` divider.** A line holding only `###` becomes a
-  Continue stop with no visible heading and a button that just says
-  “Continue”. **tutorial.helpers** puts two inside every exercise, one
-  before the author’s answer and one before the knowledge drop, and both
-  pauses survive the translation.
+- **Delete a bare `###` that directly follows a `##` heading.**
+  **tutorial.helpers** opens every topic with `## Heading` and then
+  `###` on the next line, sometimes with a blank line between them.
+  **learnr2** shows the heading and the first block together either way,
+  so that `###` adds nothing. Delete it and leave one blank line under
+  the heading.
+- **Keep every other bare `###` divider.** A line holding only `###`
+  becomes a Continue stop with no visible heading and a button that just
+  says “Continue”. **tutorial.helpers** puts two inside every exercise,
+  one before the author’s answer and one before the knowledge drop, and
+  both pauses survive the translation.
 - **Delete a titled heading that exists only as a pacing break,** with
   no content of its own, and fold its prose into the enclosing section.
 - **`### Hints` and `### Solutions` subsections** that only wrap a

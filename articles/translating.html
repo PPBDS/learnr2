@@ -160,33 +160,37 @@
 <td><code>learnr2::question(..., type = "reflection_editable", validate = "integer")</code></td>
 </tr>
 <tr class="odd">
-<td>a bare <code>###</code> divider</td>
-<td>keep it, since it becomes a Continue stop with no heading</td>
+<td>a bare <code>###</code> directly under a <code>##</code> heading</td>
+<td>delete it, since the heading already starts the section</td>
 </tr>
 <tr class="even">
+<td>any other bare <code>###</code> divider</td>
+<td>keep it, since it becomes a Continue stop with no heading</td>
+</tr>
+<tr class="odd">
 <td>
 <code>allow_skip: yes</code> in the YAML</td>
 <td><code>learnr2::tutorial_options(allow_skip = TRUE)</code></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><code>knitr::include_graphics("images/x.png")</code></td>
 <td><code>![](images/x.png)</code></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td>a four-backtick block around a plain transcript</td>
 <td>an ordinary three-backtick block</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td>
 <code>&lt;pre&gt;&lt;code&gt;</code> with <code>&amp;#96;</code> entities, to show a chunk</td>
 <td>a four-backtick <code>{verbatim}</code> block</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td>escaped backticks, <code>\`\`\`</code>, in a sentence</td>
 <td>inline code with a longer delimiter, as in <code>`` ``` ``</code>
 </td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td>prose sending the reader to RStudio or a local console to configure it</td>
 <td>rewrite around the page, or drop it (see below)</td>
 </tr>
@@ -349,10 +353,12 @@
 <p>Replace <code><a href="https://rdrr.io/pkg/knitr/man/include_graphics.html" class="external-link">knitr::include_graphics()</a></code> chunks with plain Markdown, <code>![](images/thing.png)</code>, optionally with <code>{width=90%}</code>. There is no chunk to label or hide.</p>
 </section><section class="level2"><h2 id="sections-and-the-continue-button">Sections and the Continue button<a class="anchor" aria-label="anchor" href="#sections-and-the-continue-button"></a>
 </h2>
-<p><strong>learnr2</strong> reveals a tutorial one section at a time. Every <code>##</code> and <code>###</code> heading becomes a stop behind a Continue button, and you add nothing to opt in. A Continue button always sits at the end of something to read, never directly under a heading: clicking it reveals the next heading together with the text that follows it, which may or may not include the next exercise. In particular, a <code>##</code> heading followed immediately by a bare <code>###</code>, the way <strong>tutorial.helpers</strong> opens every topic, shows the heading and that first block together. Some details for translations:</p>
+<p><strong>learnr2</strong> reveals a tutorial one section at a time. Every <code>##</code> and <code>###</code> heading becomes a stop behind a Continue button, and you add nothing to opt in. A Continue button always sits at the end of something to read, never directly under a heading: clicking it reveals the next heading together with the text that follows it, which may or may not include the next exercise. Some details for translations:</p>
 <ul>
 <li>
-<strong>Keep every bare <code>###</code> divider.</strong> A line holding only <code>###</code> becomes a Continue stop with no visible heading and a button that just says “Continue”. <strong>tutorial.helpers</strong> puts two inside every exercise, one before the author’s answer and one before the knowledge drop, and both pauses survive the translation.</li>
+<strong>Delete a bare <code>###</code> that directly follows a <code>##</code> heading.</strong> <strong>tutorial.helpers</strong> opens every topic with <code>## Heading</code> and then <code>###</code> on the next line, sometimes with a blank line between them. <strong>learnr2</strong> shows the heading and the first block together either way, so that <code>###</code> adds nothing. Delete it and leave one blank line under the heading.</li>
+<li>
+<strong>Keep every other bare <code>###</code> divider.</strong> A line holding only <code>###</code> becomes a Continue stop with no visible heading and a button that just says “Continue”. <strong>tutorial.helpers</strong> puts two inside every exercise, one before the author’s answer and one before the knowledge drop, and both pauses survive the translation.</li>
 <li>
 <strong>Delete a titled heading that exists only as a pacing break,</strong> with no content of its own, and fold its prose into the enclosing section.</li>
 <li>

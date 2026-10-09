@@ -229,7 +229,6 @@ exercises is trying to accomplish. Example:
 
 ``` default
 ## Interacting with sites with `GET()`
-###
 
 In order to get data from an API, we use the **httr** package. 
 The package is designed to imitate standard HTTP in R. 
@@ -823,7 +822,6 @@ take an hour or so will only have, at most, two Topics.
 
 ``` default
 ## XX: First topic (use sentence case)
-###
 
 <!-- XX: Mention the packages/functions which you plan on covering in this Topic. Not everything mentioned here is specified in the Introduction/Summary, but everything in Introduction/Summary is referenced in one of these topic introductions, the space before Exercise 1 in each topic. -->
 ```
@@ -1142,7 +1140,6 @@ section.
 
 ``` default
 ## Summary
-###
 
 <!-- XX: The exact same two to four sentences about the main packages/functions used in the Introduction, but written here in the past tense. You made a promise and you kept it.  -->
 ```
