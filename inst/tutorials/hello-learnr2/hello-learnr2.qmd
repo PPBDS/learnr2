@@ -434,6 +434,98 @@ top of the tutorial, directly under the title, where it stays visible no
 matter how far the reader has progressed. Either way the reader always has
 exactly one.
 
+## 10. Code, commands, and output
+
+Tutorials constantly show text a student must type, and text they should
+expect to see back. The two need to look different from each other, and
+both need to look different from prose. This section shows the choices
+**learnr2** makes and the options you have.
+
+### Something to type: name the language
+
+Quarto boxes a fenced block, colours it, and gives it a copy button only
+when the block names its language:
+
+```bash
+ls -a
+```
+
+That is written as:
+
+````{verbatim}
+```bash
+ls -a
+```
+````
+
+Use `bash` for the bash Terminal, `r` for the R Terminal, and `yaml` for a
+YAML header. The copy button matters: a student who copies
+`show_file("analysis.qmd", chunk = "Last")` gets it right the first time.
+
+### Where to run it: add a label
+
+Many instructions boil down to "run this in the *bash* Terminal, not the
+*R* one". A label puts that on the block itself, in a bar above it:
+
+```{.bash filename="bash Terminal"}
+quarto render analysis.qmd
+```
+
+````{verbatim}
+```{.bash filename="bash Terminal"}
+quarto render analysis.qmd
+```
+````
+
+### Something to compare against: mark it as output
+
+Expected output --- a transcript of `ls`, or the answer shown after
+Continue --- should not look like a command, or some students will type it.
+Mark it `{.output}` and it gets a lighter style, with a grey left edge and
+no copy button:
+
+```{.output}
+codespace-starter $ ls -a
+.  ..  .devcontainer  .git
+```
+
+````{verbatim}
+```{.output}
+codespace-starter $ ls -a
+.  ..  .devcontainer  .git
+```
+````
+
+Output that R itself prints gets the same style automatically, both from a
+`{webr}` cell (see section 1) and from an `{r}` chunk in the tutorial:
+
+```{r}
+#| label: code-commands-and-output-1
+#| echo: true
+mean(c(4, 8, 15, 16, 23, 42))
+```
+
+### A block with no language
+
+A bare ```` ``` ```` fence gets only a monospace font from Quarto, which
+on the page reads as oddly-typeset prose. **learnr2** gives it the same
+grey box as a tagged block, so it still reads as code, but it gets no
+colours and no copy button:
+
+```
+ls -a
+```
+
+Tag it anyway. Tutorials translated from **tutorial.helpers** use bare
+fences for everything, commands and transcripts alike, which is why
+**learnr2** boxes them by default.
+
+### Code inside a sentence
+
+Single backticks, as in "run `whoami`", give inline code a monospace font
+and a light tint. Use them for anything typed at the keyboard: commands,
+file names, function names such as `mean()`, and keys such as `Ctrl + C`.
+
 ## Where to go next
 
 - Use `learnr2::create_tutorial("my-tutorial", dir = ".")` to scaffold

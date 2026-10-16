@@ -413,3 +413,41 @@ section.learnr2-pause > h3 {
   color: #842029;
   font-weight: 600;
 }
+
+/* ---- Code blocks: commands vs output ----------------------------------
+   Quarto's theme boxes a fenced block only when it names a language
+   (```r, ```bash): a bare ``` fence got a monospace font and nothing else,
+   so it read as oddly-typeset prose. tutorial.helpers sources use bare
+   fences everywhere, so translated tutorials inherited that. Two styles:
+
+   - Something to *enter* -- any bare fence -- gets the same grey box as a
+     tagged block, so where the code starts and ends is unmistakable.
+   - Something to *compare against* -- a ```{.output} block, or the output
+     of an {r} chunk -- gets a lighter style (white, thin border, grey left
+     rule), so a student doesn't mistake expected output for a command to
+     type. See vignettes/translating.qmd, "Code, commands and output". */
+#quarto-document-content pre:not(.sourceCode):not(.output) {
+  background-color: rgba(233, 236, 239, 0.65);
+  border: 1px solid rgba(233, 236, 239, 0.65);
+  border-radius: 0.375rem;
+  padding: 0.4em 0.6em;
+}
+
+#quarto-document-content pre.output,
+#quarto-document-content .cell-output pre:not(.sourceCode) {
+  background-color: #ffffff;
+  border: 1px solid #dee2e6;
+  border-left: 3px solid #adb5bd;
+  border-radius: 0.25rem;
+  padding: 0.4em 0.6em;
+  color: #495057;
+}
+
+/* Quarto draws a block's `filename` label (```{.bash filename="bash
+   Terminal"}) as a <pre> of its own inside a header bar; leave it to
+   Quarto's styling rather than boxing it a second time. */
+#quarto-document-content .code-with-filename-file pre:not(.sourceCode) {
+  background-color: transparent;
+  border: none;
+  padding: 0;
+}

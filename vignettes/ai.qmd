@@ -363,7 +363,7 @@ In your QMD, put `library(tidyverse)` in a new code chunk. Render the file by ru
 
 Notice that the file does not look good because the code is visible and there are annoying messages. To take care of this, add `#| message: false` to remove all the messages in this setup chunk. Also, add the following to the YAML header to remove all code echoes from the HTML:
 
-```         
+```yaml
 execute: 
   echo: false
 ```
@@ -426,7 +426,7 @@ learnr2::question("In the bash Terminal, run `ls`. CP/CR.", type = "reflection")
 
 You answer should look something like this:
 
-```
+```{.output}
 $ ls
 README.md  analysis.html  analysis.qmd  analysis_files  data
 ```
@@ -459,7 +459,7 @@ We begin by downloading XX directly from GitHub to the `data` directory using `d
 
 In the R Terminal, run:
 
-```         
+```{.r filename="R Terminal"}
 download.file(
   "https://github.com/PPBDS/ai.tutorials/raw/refs/heads/main/inst/tutorials/r4ds-2/data/cheeses.xlsx",
   destfile = "data/XX"
@@ -724,7 +724,7 @@ learnr2::question(
 
 Publish your rendered QMD to GitHub Pages. In the bash Terminal --- not the R Terminal! --- run:
 
-```
+```{.bash filename="bash Terminal"}
 quarto publish gh-pages analysis.qmd
 ```
 

@@ -175,6 +175,15 @@ subsections) behind a Continue button. Verified against real renders.
   in the model answer. The one exception is a screenshot (`allow_image`)
   reflection, which can reopen its image box; see "Submit once, then
   locked" under Settled design decisions.
+- **Code blocks: commands vs output** (2026-10), CSS only, at the end of
+  `quiz.css`. Quarto boxes a fenced block only when it names a language;
+  a bare fence got a monospace font and nothing else, and tutorial.helpers
+  sources use bare fences everywhere. Bare `<pre>`s in
+  `#quarto-document-content` now get the grey command box; `pre.output`
+  (```` ```{.output} ````) and `.cell-output pre` (output of `{r}` chunks
+  and `{webr}` cells) get a lighter output style. Quarto's `filename`
+  label is itself a `<pre>`, excluded explicitly. Authoring convention:
+  `vignettes/translating.qmd`, "Code, commands and output".
 - **Outbound links open in a new tab** (`openLinksInNewTabs()`): every
   `a[href]` except `#...`, `download`, `mailto:`/`tel:`/`javascript:`.
   Students worried when a tutorial "disappeared". Quarto's

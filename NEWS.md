@@ -1,5 +1,16 @@
 # learnr2 (development version)
 
+* Code blocks in a tutorial now distinguish what to type from what to
+  expect. A bare ```` ``` ```` fence, which Quarto shows as plain
+  monospace text with no box, now gets the same grey box as a block that
+  names its language. A ```` ```{.output} ```` block, and the output of an
+  `{r}` chunk or `{webr}` cell, gets a lighter style (white, thin border,
+  grey left edge) so expected output isn't mistaken for a command.
+  `vignette("translating")` gives the convention: name the language for
+  anything to type, optionally with a `filename` label saying which
+  Terminal, and mark expected output `{.output}`. hello-learnr2 has a new
+  section 10 showing each option.
+
 * `create_tutorial(open = TRUE)` now opens the new file with each
   editor's own mechanism: `file.edit()` in RStudio and Positron, and VS
   Code's `code` command in a VS Code terminal or Codespace. Anywhere else
