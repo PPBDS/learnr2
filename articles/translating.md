@@ -54,9 +54,7 @@ directory.
 | any other bare `###` divider | keep it, since it becomes a Continue stop with no heading |
 | `allow_skip: yes` in the YAML | `learnr2::tutorial_options(allow_skip = TRUE)` |
 | `knitr::include_graphics("images/x.png")` | `![](images/x.png)` |
-| a four-backtick block around a plain transcript | an ordinary three-backtick block |
-| `<pre><code>` with `&#96;` entities, to show a chunk | a four-backtick `{verbatim}` block |
-| escaped backticks, `` \`\`\` ``, in a sentence | inline code with a longer delimiter, as in ```` `` ``` `` ```` |
+| a bare ```` ``` ```` or `block |` ````` bash ```` or ```` `````r `for a command,` ````` {.output} ```` for expected output | | a four-backtick block around a plain transcript | an ordinary three-backtick block | | `<pre><code>` with `&#96;` entities, to show a chunk | a four-backtick `{verbatim}` block | | escaped backticks, ``\`\`\` ``, in a sentence | inline code with a longer delimiter, as in ```` `` ````` \`\` \`\`\`\` |  |
 | prose sending the reader to RStudio or a local console to configure it | rewrite around the page, or drop it (see below) |
 
 The sections that follow expand on the rows that aren’t obvious.
@@ -582,9 +580,10 @@ as you translate:
 
 - **Plain blocks get three backticks.** A transcript, file listing or
   command with no backtick fence inside it needs nothing more than an
-  ordinary three-backtick block. Keep four backticks only where the
-  block’s contents include a three-backtick line, since a fence must be
-  longer than any fence it contains.
+  ordinary three-backtick block, tagged as the next section describes.
+  Keep four backticks only where the block’s contents include a
+  three-backtick line, since a fence must be longer than any fence it
+  contains.
 - **A displayed chunk goes in a `{verbatim}` block.** To show an R
   chunk, or a whole Quarto file with its chunks, as this vignette does,
   wrap it in a four-backtick block marked `{verbatim}`. Everything
@@ -611,6 +610,47 @@ backticks as HTML entities inside a `<code>` tag instead:
 
 That renders as the literal syntax, because there is no backtick in the
 source for Quarto to match.
+
+## Code, commands and output
+
+A student needs to tell at a glance whether a block is something to
+*type*, something they will *see*, or neither. Quarto’s theme only helps
+when a block names its language: ```` ```r ```` and ```` ```bash ````
+get a grey box, syntax colours and a copy button, while a bare
+```` ``` ```` fence used to get a monospace font and nothing else, so it
+read as oddly-typeset prose. **tutorial.helpers** sources use bare
+fences for everything, commands and transcripts alike. Tag every block
+as you translate:
+
+- **Something to type or run: name the language.** Use `bash` for the
+  bash Terminal, `r` for the R Terminal, and `yaml` for YAML. That gives
+  the block a box, colours and a copy button.
+
+- **Where to run it: add a label.** When it isn’t obvious which Terminal
+  a command belongs in, label the block. The label appears in a bar
+  above it:
+
+      ```{.bash filename="bash Terminal"}
+      quarto render analysis.qmd
+      ```
+
+- **Something to compare against: mark it `{.output}`.** Expected
+  output, such as a transcript of `ls` or the answer shown after
+  Continue, gets a lighter style: white, with a thin border and a grey
+  left edge, and no copy button. Students then won’t mistake it for a
+  command to type. Output printed by an `{r}` chunk, or by a
+  [webr](https://github.com/cardiomoon/webr) cell, gets the same style
+  automatically.
+
+      ```{.output}
+      codespace-starter $ ls -a
+      .  ..  .devcontainer  .git
+      ```
+
+**learnr2** also gives a bare ```` ``` ```` block the grey box, so an
+untagged block still reads as code, but it gets no colours and no copy
+button. Tag it anyway. Inline code in a sentence, `` `whoami` ``, needs
+nothing: single backticks already give it a code font and a light tint.
 
 ## Check it by rendering it
 

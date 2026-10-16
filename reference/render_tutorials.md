@@ -88,8 +88,8 @@ if (!is.null(quarto::quarto_path())) {
   file.exists(html)
   unlink(c(dir, dirname(html)), recursive = TRUE)
 }
-#> Created tutorial: /tmp/RtmpGP7ebo/file1a10375721d0/render-me/render-me.qmd
-#> Rendering render-me (/tmp/RtmpGP7ebo/file1a10375721d0/render-me/render-me.qmd) ...
-#> Rendered render-me in 3.5s: /tmp/RtmpGP7ebo/learnr2-render-1a103ecdabaf/render-me/render-me.html
+#> Created tutorial: /tmp/RtmpGVGaKE/file1a1243522487/render-me/render-me.qmd
+#> Rendering render-me (/tmp/RtmpGVGaKE/file1a1243522487/render-me/render-me.qmd) ...
+#> Rendered render-me in 3.5s: /tmp/RtmpGVGaKE/learnr2-render-1a1270754d18/render-me/render-me.html
 #> Rendered 1 tutorial(s).
 ```

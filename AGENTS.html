@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="index.html">learnr2</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.3.9003</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.3.9004</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -93,6 +93,8 @@
 <strong>Start Over placement.</strong> It used to go only into <code>#quarto-margin-sidebar</code>, so <code>toc: false</code> tutorials had none, and neither did any tutorial on a phone, where Quarto’s CSS hides the sidebar below 768px. Now it goes in the sidebar only when it is actually showing (<code>getClientRects()</code>), otherwise right after <code>#title-block-header</code>, and a resize listener moves it. Fixtures: the <code>-no-toc</code> variants.</li>
 <li>
 <strong>Edit/Submit cycle</strong> (2026-10), for <code><a href="reference/student_info.html">student_info()</a></code> and <code>reflection_editable</code> only. Submit locks the fields and shows “Edit”; Edit only reopens them, shows “Submit” and an editing note (<code>EDITING_NOTE</code>). Received means last submitted: <code>widgetPending()</code> (used by the Continue gate and the download) treats a reopened widget as unsubmitted, the download reads submitted values, never the live DOM, and is blocked until every <code><a href="reference/student_info.html">student_info()</a></code> is submitted. Info storage: flat keys are the submitted values, <code>draft</code> holds typing, <code>submitted</code> and <code>editing</code> are flags; old flat-keys-plus-<code>submitted: false</code> data is read as a draft. The old design left fields open after Submit and relabelled the button “Edit”, which silently resaved, so readers had no signal their change had gone in (user report, 2026-10). A text <code>reflection</code> never gets the cycle: reopening it would let a reader paste in the model answer. The one exception is a screenshot (<code>allow_image</code>) reflection, which can reopen its image box; see “Submit once, then locked” under Settled design decisions.</li>
+<li>
+<strong>Code blocks: commands vs output</strong> (2026-10), CSS only, at the end of <code>quiz.css</code>. Quarto boxes a fenced block only when it names a language; a bare fence got a monospace font and nothing else, and tutorial.helpers sources use bare fences everywhere. Bare <code>&lt;pre&gt;</code>s in <code>#quarto-document-content</code> now get the grey command box; <code>pre.output</code> (<code>```{.output}</code>) and <code>.cell-output pre</code> (output of <code>{r}</code> chunks and <a href="https://github.com/cardiomoon/webr" class="external-link">webr</a> cells) get a lighter output style. Quarto’s <code>filename</code> label is itself a <code>&lt;pre&gt;</code>, excluded explicitly. Authoring convention: <code>vignettes/translating.qmd</code>, “Code, commands and output”.</li>
 <li>
 <strong>Outbound links open in a new tab</strong> (<code>openLinksInNewTabs()</code>): every <code>a[href]</code> except <code>#...</code>, <code>download</code>, <code>mailto:</code>/<code>tel:</code>/<code>javascript:</code>. Students worried when a tutorial “disappeared”. Quarto’s <code>link-external-newwindow</code> would miss same-site links.</li>
 <li>

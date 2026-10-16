@@ -22,7 +22,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">learnr2</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.3.9003</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.3.9004</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -177,18 +177,8 @@
 <td><code>![](images/x.png)</code></td>
 </tr>
 <tr class="odd">
-<td>a four-backtick block around a plain transcript</td>
-<td>an ordinary three-backtick block</td>
-</tr>
-<tr class="even">
-<td>
-<code>&lt;pre&gt;&lt;code&gt;</code> with <code>&amp;#96;</code> entities, to show a chunk</td>
-<td>a four-backtick <code>{verbatim}</code> block</td>
-</tr>
-<tr class="odd">
-<td>escaped backticks, <code>\`\`\`</code>, in a sentence</td>
-<td>inline code with a longer delimiter, as in <code>`` ``` ``</code>
-</td>
+<td>a bare <code>```</code> or <code></code> <code>block |</code> <code>bash ```` or ````</code>r <code>for a command,</code> <code>{.output} ```` for expected output | | a four-backtick block around a plain transcript | an ordinary three-backtick block | | `&lt;pre&gt;&lt;code&gt;` with `&amp;#96;` entities, to show a chunk | a four-backtick `{verbatim}` block | | escaped backticks, ``\`\`\` ``, in a sentence | inline code with a longer delimiter, as in ```` ``</code> `` ````</td>
+<td></td>
 </tr>
 <tr class="even">
 <td>prose sending the reader to RStudio or a local console to configure it</td>
@@ -408,7 +398,7 @@
 <p>Classic tutorials work hard to show code, because R Markdown and <strong>learnr</strong> made it hard. Expect to find four-backtick fences around every terminal transcript, <code>&lt;pre&gt;&lt;code&gt;</code> blocks spelling each backtick as <code>&amp;#96;</code> so that a displayed chunk isn’t run, and backticks escaped one by one in prose. Quarto makes all of that unnecessary. Strip it out as you translate:</p>
 <ul>
 <li>
-<strong>Plain blocks get three backticks.</strong> A transcript, file listing or command with no backtick fence inside it needs nothing more than an ordinary three-backtick block. Keep four backticks only where the block’s contents include a three-backtick line, since a fence must be longer than any fence it contains.</li>
+<strong>Plain blocks get three backticks.</strong> A transcript, file listing or command with no backtick fence inside it needs nothing more than an ordinary three-backtick block, tagged as the next section describes. Keep four backticks only where the block’s contents include a three-backtick line, since a fence must be longer than any fence it contains.</li>
 <li>
 <strong>A displayed chunk goes in a <code>{verbatim}</code> block.</strong> To show an R chunk, or a whole Quarto file with its chunks, as this vignette does, wrap it in a four-backtick block marked <code>{verbatim}</code>. Everything inside appears exactly as typed and nothing runs. It replaces every <code>&lt;pre&gt;&lt;code&gt;</code> block, and the <code>&amp;#96;</code> entities inside it become plain backticks again. Don’t use a plain four-backtick block for this: <strong>knitr</strong> still runs a <code>```{r}</code> line that starts a line inside one.</li>
 <li>
@@ -418,16 +408,36 @@
 <p>The one case that still needs a workaround is inline R code. Writing <code>`r x`</code> in a sentence runs it, and wrapping it in an extra pair of backticks doesn’t help, because Quarto still evaluates it. Spell the backticks as HTML entities inside a <code>&lt;code&gt;</code> tag instead:</p>
 <pre><code>&lt;code&gt;&amp;#96;r x&amp;#96;&lt;/code&gt;</code></pre>
 <p>That renders as the literal syntax, because there is no backtick in the source for Quarto to match.</p>
+</section><section class="level2"><h2 id="code-commands-and-output">Code, commands and output<a class="anchor" aria-label="anchor" href="#code-commands-and-output"></a>
+</h2>
+<p>A student needs to tell at a glance whether a block is something to <em>type</em>, something they will <em>see</em>, or neither. Quarto’s theme only helps when a block names its language: <code>```r</code> and <code>```bash</code> get a grey box, syntax colours and a copy button, while a bare <code>```</code> fence used to get a monospace font and nothing else, so it read as oddly-typeset prose. <strong>tutorial.helpers</strong> sources use bare fences for everything, commands and transcripts alike. Tag every block as you translate:</p>
+<ul>
+<li><p><strong>Something to type or run: name the language.</strong> Use <code>bash</code> for the bash Terminal, <code>r</code> for the R Terminal, and <code>yaml</code> for YAML. That gives the block a box, colours and a copy button.</p></li>
+<li>
+<p><strong>Where to run it: add a label.</strong> When it isn’t obvious which Terminal a command belongs in, label the block. The label appears in a bar above it:</p>
+<pre><code>```{.bash filename="bash Terminal"}
+quarto render analysis.qmd
+```</code></pre>
+</li>
+<li>
+<p><strong>Something to compare against: mark it <code>{.output}</code>.</strong> Expected output, such as a transcript of <code>ls</code> or the answer shown after Continue, gets a lighter style: white, with a thin border and a grey left edge, and no copy button. Students then won’t mistake it for a command to type. Output printed by an <code>{r}</code> chunk, or by a <a href="https://github.com/cardiomoon/webr" class="external-link">webr</a> cell, gets the same style automatically.</p>
+<pre><code>```{.output}
+codespace-starter $ ls -a
+.  ..  .devcontainer  .git
+```</code></pre>
+</li>
+</ul>
+<p><strong>learnr2</strong> also gives a bare <code>```</code> block the grey box, so an untagged block still reads as code, but it gets no colours and no copy button. Tag it anyway. Inline code in a sentence, <code>`whoami`</code>, needs nothing: single backticks already give it a code font and a light tint.</p>
 </section><section class="level2"><h2 id="check-it-by-rendering-it">Check it by rendering it<a class="anchor" aria-label="anchor" href="#check-it-by-rendering-it"></a>
 </h2>
 <p>Syntax that looks right can still be wrong in ways only the rendered page shows, such as R source printed above a question. After translating, run the static checks and a real render:</p>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">learnr2</span><span class="fu">::</span><span class="fu"><a href="../reference/check_tutorial.html">check_tutorial</a></span><span class="op">(</span><span class="st">"inst/tutorials/&lt;name&gt;"</span><span class="op">)</span>    <span class="co"># labels, echo, persist, boilerplate, packages</span></span>
 <span><span class="fu">learnr2</span><span class="fu">::</span><span class="fu"><a href="../reference/render_tutorials.html">render_tutorials</a></span><span class="op">(</span><span class="st">"inst/tutorials/&lt;name&gt;"</span><span class="op">)</span>  <span class="co"># a real Quarto render</span></span></code></pre></div>
 <p><code><a href="../reference/check_tutorial.html">check_tutorial()</a></code> catches a missing label, <code>echo: false</code> or <code>persist: true</code>, a graded exercise with a <code>.solution</code> div, a <a href="https://github.com/cardiomoon/webr" class="external-link">webr</a> package missing from the <code>webr:</code> list, and missing boilerplate. Then open the rendered HTML in a browser and click through it.</p>
 <p><code><a href="../reference/run_tutorial.html">run_tutorial()</a></code> reads the <em>installed</em> copy of a package, not your working files. While editing a content package, load it with <code>devtools::load_all()</code> first, and <code><a href="../reference/run_tutorial.html">run_tutorial()</a></code> and <code><a href="../reference/available_tutorials.html">available_tutorials()</a></code> will read its tutorials from the source tree. Don’t commit render artifacts such as <code>_extensions/</code>, <code>*.html</code>, <code>*_files/</code> and <code>.quarto/</code> alongside the <code>.qmd</code>, because <code><a href="../reference/run_tutorial.html">run_tutorial()</a></code> adds the extension and renders on demand.</p>
 <p>A content package should test every tutorial from <code>tests/testthat/test-tutorials.R</code>:</p>
-<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">tutorials</span> <span class="op">&lt;-</span> <span class="fu">learnr2</span><span class="fu">::</span><span class="fu"><a href="../reference/available_tutorials.html">available_tutorials</a></span><span class="op">(</span>package <span class="op">=</span> <span class="st">"&lt;your package&gt;"</span>, type <span class="op">=</span> <span class="st">"quarto"</span><span class="op">)</span></span>
 <span><span class="fu">learnr2</span><span class="fu">::</span><span class="fu"><a href="../reference/check_tutorial.html">check_tutorial</a></span><span class="op">(</span><span class="va">tutorials</span><span class="op">$</span><span class="va">path</span><span class="op">)</span></span>
 <span><span class="fu">learnr2</span><span class="fu">::</span><span class="fu"><a href="../reference/render_tutorials.html">render_tutorials</a></span><span class="op">(</span><span class="va">tutorials</span><span class="op">$</span><span class="va">path</span><span class="op">)</span></span></code></pre></div>
