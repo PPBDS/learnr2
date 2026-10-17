@@ -222,8 +222,12 @@ learnr2::question(
 )
 ```
 
-`type = "reflection_editable"` works the same way, except the reader can
-keep revising their own response after the model answer is revealed:
+`type = "reflection_editable"` works the same way, except that a
+submitted response can be reopened. Submit locks it behind an "Edit
+Answer" button, and Edit reopens it, with the button back to Submit and a
+note that the change isn't saved until then. Reserve it for answers with
+nothing to copy, such as the minutes question at the end of a tutorial
+(see section 9):
 
 ```{r}
 #| label: quiz-questions-5
@@ -237,6 +241,25 @@ learnr2::question(
     correct = TRUE
   ),
   type = "reflection_editable"
+)
+```
+
+Often the prompt reads better as ordinary text on the page, especially
+when it runs to several sentences of instructions. Write it there and pass
+`show_text = FALSE`, so the question box shows only the answer field.
+`text` is still required: it is saved with the answer, read to
+screen-reader users, and used to name the question if the reader tries to
+download without answering it. The tutorials in **vscode.tutorials** and
+**misc.tutorials** do this for every question:
+
+Open a terminal and run `date`. Paste the command and its output below.
+
+```{r}
+#| label: quiz-questions-7
+learnr2::question(
+  "Run `date` in a terminal and paste the command and its output.",
+  type = "reflection",
+  show_text = FALSE
 )
 ```
 
@@ -300,6 +323,28 @@ learnr2::question(
   ),
   type = "reflection",
   allow_image = TRUE
+)
+```
+
+A submitted screenshot can be replaced. A `"reflection"` question locks
+for good once submitted, but a screenshot question keeps an **Edit
+Answer** button: it reopens only the image box, the question counts as
+unsubmitted until a new image is submitted, and the Continue button below
+waits accordingly. Without it, a reader who pasted the wrong screenshot
+had to Start Over the whole tutorial. Try it on the question above.
+
+When a typed answer would prove nothing --- "paste a screenshot of your
+GitHub dashboard" --- make the question screenshot-only with
+`allow_text = FALSE`. No text box is shown, and Submit is refused until an
+image is pasted:
+
+```{r}
+#| label: copy-paste-an-image-3
+learnr2::question(
+  "Paste a screenshot of this page's table of contents.",
+  type = "reflection",
+  allow_image = TRUE,
+  allow_text = FALSE
 )
 ```
 

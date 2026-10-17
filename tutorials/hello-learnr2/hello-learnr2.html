@@ -79,8 +79,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="hello-learnr2_files/libs/quarto-contrib/live-runtime/live-runtime.css" rel="stylesheet">
 <script type="module" src="hello-learnr2_files/libs/quarto-ojs/quarto-ojs-runtime.js"></script>
 <link href="hello-learnr2_files/libs/quarto-ojs/quarto-ojs.css" rel="stylesheet">
-<link href="hello-learnr2_files/libs/learnr2-quiz-0.1.3.9004/quiz.css" rel="stylesheet">
-<script src="hello-learnr2_files/libs/learnr2-quiz-0.1.3.9004/quiz.js"></script>
+<link href="hello-learnr2_files/libs/learnr2-quiz-0.1.3.9005/quiz.css" rel="stylesheet">
+<script src="hello-learnr2_files/libs/learnr2-quiz-0.1.3.9005/quiz.js"></script>
 
 
 </head>
@@ -382,7 +382,7 @@ bG93VGV4dCI6dHJ1ZSwic2hvd1RleHQiOnRydWUsInZhbGlkYXRlIjoibm9uZSJ9">
 </div>
 </div>
 </div>
-<p><code>type = "reflection_editable"</code> works the same way, except the reader can keep revising their own response after the model answer is revealed:</p>
+<p><code>type = "reflection_editable"</code> works the same way, except that a submitted response can be reopened. Submit locks it behind an “Edit Answer” button, and Edit reopens it, with the button back to Submit and a note that the change isn’t saved until then. Reserve it for answers with nothing to copy, such as the minutes question at the end of a tutorial (see section 9):</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>learnr2<span class="sc">::</span><span class="fu">question</span>(</span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Explain the difference between `type = </span><span class="sc">\"</span><span class="st">text</span><span class="sc">\"</span><span class="st">` and `type =</span></span>
@@ -412,22 +412,43 @@ ZXh0Ijp0cnVlLCJ2YWxpZGF0ZSI6Im5vbmUifQ==">
 </div>
 </div>
 </div>
+<p>Often the prompt reads better as ordinary text on the page, especially when it runs to several sentences of instructions. Write it there and pass <code>show_text = FALSE</code>, so the question box shows only the answer field. <code>text</code> is still required: it is saved with the answer, read to screen-reader users, and used to name the question if the reader tries to download without answering it. The tutorials in <strong>vscode.tutorials</strong> and <strong>misc.tutorials</strong> do this for every question:</p>
+<p>Open a terminal and run <code>date</code>. Paste the command and its output below.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>learnr2<span class="sc">::</span><span class="fu">question</span>(</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Run `date` in a terminal and paste the command and its output."</span>,</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">type =</span> <span class="st">"reflection"</span>,</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">show_text =</span> <span class="cn">FALSE</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div class="learnr2-question" data-learnr2-question="eyJpZCI6InF1aXotcXVlc3Rpb25zLTciLCJ0ZXh0IjoiUnVuIGBkYXRlYCBpbiBhIHRlcm1p
+bmFsIGFuZCBwYXN0ZSB0aGUgY29tbWFuZCBhbmQgaXRzIG91dHB1dC4iLCJ0eXBlIjoicmVm
+bGVjdGlvbiIsImFuc3dlcnMiOltdLCJjb3JyZWN0TWVzc2FnZSI6IkNvcnJlY3QhIiwiaW5j
+b3JyZWN0TWVzc2FnZSI6IkluY29ycmVjdC4iLCJhbGxvd1JldHJ5IjpmYWxzZSwicmFuZG9t
+QW5zd2VyT3JkZXIiOmZhbHNlLCJzdWJtaXRMYWJlbCI6IlN1Ym1pdCBBbnN3ZXIiLCJ0cnlB
+Z2FpbkxhYmVsIjoiVHJ5IEFnYWluIiwiZWRpdExhYmVsIjoiRWRpdCBBbnN3ZXIiLCJhbGxv
+d0ltYWdlIjpmYWxzZSwiYWxsb3dUZXh0Ijp0cnVlLCJzaG93VGV4dCI6ZmFsc2UsInZhbGlk
+YXRlIjoibm9uZSJ9">
+<noscript>This quiz question requires JavaScript.</noscript>
+</div>
+</div>
+</div>
 <p>Submitted answers are saved automatically (again via <code>localStorage</code>, keyed by page URL and question) and restored on the reader’s next visit. The default key is the question’s <code>{r}</code> chunk label, so rewording a question is safe — but renaming its chunk resets that question’s saved answers. Pass <code>id = "some-stable-slug"</code> to <code>question()</code> to pin the key regardless of the chunk label.</p>
 <p>Group related questions with <code>learnr2::quiz()</code>:</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>learnr2<span class="sc">::</span><span class="fu">quiz</span>(</span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">caption =</span> <span class="st">"Quick check"</span>,</span>
-<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>  learnr2<span class="sc">::</span><span class="fu">question</span>(</span>
-<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>    <span class="st">"2 + 2 equals?"</span>,</span>
-<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>    learnr2<span class="sc">::</span><span class="fu">answer</span>(<span class="st">"4"</span>, <span class="at">correct =</span> <span class="cn">TRUE</span>),</span>
-<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>    learnr2<span class="sc">::</span><span class="fu">answer</span>(<span class="st">"22"</span>)</span>
-<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>  ),</span>
-<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>  learnr2<span class="sc">::</span><span class="fu">question</span>(</span>
-<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Is R free and open source?"</span>,</span>
-<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>    learnr2<span class="sc">::</span><span class="fu">answer</span>(<span class="st">"Yes"</span>, <span class="at">correct =</span> <span class="cn">TRUE</span>),</span>
-<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>    learnr2<span class="sc">::</span><span class="fu">answer</span>(<span class="st">"No"</span>)</span>
-<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>learnr2<span class="sc">::</span><span class="fu">quiz</span>(</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">caption =</span> <span class="st">"Quick check"</span>,</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>  learnr2<span class="sc">::</span><span class="fu">question</span>(</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>    <span class="st">"2 + 2 equals?"</span>,</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>    learnr2<span class="sc">::</span><span class="fu">answer</span>(<span class="st">"4"</span>, <span class="at">correct =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>    learnr2<span class="sc">::</span><span class="fu">answer</span>(<span class="st">"22"</span>)</span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>  ),</span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>  learnr2<span class="sc">::</span><span class="fu">question</span>(</span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Is R free and open source?"</span>,</span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>    learnr2<span class="sc">::</span><span class="fu">answer</span>(<span class="st">"Yes"</span>, <span class="at">correct =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>    learnr2<span class="sc">::</span><span class="fu">answer</span>(<span class="st">"No"</span>)</span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output-display">
 <div class="learnr2-quiz">
 <div class="learnr2-quiz-caption">Quick check</div>
@@ -471,15 +492,15 @@ eyJhdHRyIjp7ImVkaXQiOnRydWUsImV2YWwiOnRydWUsImV4ZXJjaXNlIjoiZXhfaW1hZ2VfcGxvdCIs
 </div>
 </div>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>learnr2<span class="sc">::</span><span class="fu">question</span>(</span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Paste a screenshot of the plot you made in the exercise above."</span>,</span>
-<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>  learnr2<span class="sc">::</span><span class="fu">answer</span>(</span>
-<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>    <span class="st">"A scatterplot of `wt` vs. `mpg`, colored steel blue."</span>,</span>
-<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">correct =</span> <span class="cn">TRUE</span></span>
-<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>  ),</span>
-<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">type =</span> <span class="st">"reflection"</span>,</span>
-<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">allow_image =</span> <span class="cn">TRUE</span></span>
-<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>learnr2<span class="sc">::</span><span class="fu">question</span>(</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Paste a screenshot of the plot you made in the exercise above."</span>,</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>  learnr2<span class="sc">::</span><span class="fu">answer</span>(</span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>    <span class="st">"A scatterplot of `wt` vs. `mpg`, colored steel blue."</span>,</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">correct =</span> <span class="cn">TRUE</span></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>  ),</span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">type =</span> <span class="st">"reflection"</span>,</span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">allow_image =</span> <span class="cn">TRUE</span></span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output-display">
 <div class="learnr2-question" data-learnr2-question="eyJpZCI6ImNvcHktcGFzdGUtYW4taW1hZ2UtMiIsInRleHQiOiJQYXN0ZSBhIHNjcmVlbnNo
 b3Qgb2YgdGhlIHBsb3QgeW91IG1hZGUgaW4gdGhlIGV4ZXJjaXNlIGFib3ZlLiIsInR5cGUi
@@ -495,6 +516,28 @@ dWUsImFsbG93VGV4dCI6dHJ1ZSwic2hvd1RleHQiOnRydWUsInZhbGlkYXRlIjoibm9uZSJ9
 </div>
 </div>
 </div>
+<p>A submitted screenshot can be replaced. A <code>"reflection"</code> question locks for good once submitted, but a screenshot question keeps an <strong>Edit Answer</strong> button: it reopens only the image box, the question counts as unsubmitted until a new image is submitted, and the Continue button below waits accordingly. Without it, a reader who pasted the wrong screenshot had to Start Over the whole tutorial. Try it on the question above.</p>
+<p>When a typed answer would prove nothing — “paste a screenshot of your GitHub dashboard” — make the question screenshot-only with <code>allow_text = FALSE</code>. No text box is shown, and Submit is refused until an image is pasted:</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>learnr2<span class="sc">::</span><span class="fu">question</span>(</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Paste a screenshot of this page's table of contents."</span>,</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">type =</span> <span class="st">"reflection"</span>,</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">allow_image =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">allow_text =</span> <span class="cn">FALSE</span></span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div class="learnr2-question" data-learnr2-question="eyJpZCI6ImNvcHktcGFzdGUtYW4taW1hZ2UtMyIsInRleHQiOiJQYXN0ZSBhIHNjcmVlbnNo
+b3Qgb2YgdGhpcyBwYWdlJ3MgdGFibGUgb2YgY29udGVudHMuIiwidHlwZSI6InJlZmxlY3Rp
+b24iLCJhbnN3ZXJzIjpbXSwiY29ycmVjdE1lc3NhZ2UiOiJDb3JyZWN0ISIsImluY29ycmVj
+dE1lc3NhZ2UiOiJJbmNvcnJlY3QuIiwiYWxsb3dSZXRyeSI6ZmFsc2UsInJhbmRvbUFuc3dl
+ck9yZGVyIjpmYWxzZSwic3VibWl0TGFiZWwiOiJTdWJtaXQgQW5zd2VyIiwidHJ5QWdhaW5M
+YWJlbCI6IlRyeSBBZ2FpbiIsImVkaXRMYWJlbCI6IkVkaXQgQW5zd2VyIiwiYWxsb3dJbWFn
+ZSI6dHJ1ZSwiYWxsb3dUZXh0IjpmYWxzZSwic2hvd1RleHQiOnRydWUsInZhbGlkYXRlIjoi
+bm9uZSJ9">
+<noscript>This quiz question requires JavaScript.</noscript>
+</div>
+</div>
+</div>
 <p>Whatever format your platform’s clipboard actually holds — it varies, so a screenshot isn’t guaranteed to be a PNG — <code>allow_image</code> accepts it: PNG, JPEG, GIF, WebP, or BMP. Before saving, it scales the image to at most 1600 pixels wide and stores it as a compact WebP (JPEG in Safari), so a page of screenshots doesn’t fill the browser’s storage. If a save ever fails, the page shows a warning and the answer stays unsubmitted (see the <code>question()</code> help page for the details).</p>
 </section>
 <section id="student-info-and-submission" class="level2">
@@ -502,7 +545,7 @@ dWUsImFsbG93VGV4dCI6dHJ1ZSwic2hvd1RleHQiOnRydWUsInZhbGlkYXRlIjoibm9uZSJ9
 <p>Two more pieces for wrapping a tutorial into something a student can turn in, no server required. In a real tutorial, <code>student_info()</code> normally goes at the very top and <code>download_answers_button()</code> at the very bottom; they’re shown together here just for the demo.</p>
 <p><code>student_info()</code> collects identifying information (name, email, an optional ID by default). It’s deliberately <em>not</em> a quiz question — there is nothing to grade and no model answer, just a plain form with its own Submit button. It also auto-saves as the reader types, so nothing is lost even if they never click Submit:</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>learnr2<span class="sc">::</span><span class="fu">student_info</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>learnr2<span class="sc">::</span><span class="fu">student_info</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output-display">
 <div class="learnr2-info" data-learnr2-info="eyJpZCI6ImxlYXJucjItaW5mby1zdHVkZW50LWluZm8iLCJmaWVsZHMiOlt7ImtleSI6Im5h
 bWUiLCJsYWJlbCI6Ik5hbWU6IiwicmVxdWlyZWQiOnRydWV9LHsia2V5IjoiZW1haWwiLCJs
@@ -515,7 +558,7 @@ fV0sInN1Ym1pdExhYmVsIjoiU3VibWl0IiwiZWRpdExhYmVsIjoiRWRpdCJ9">
 </div>
 <p><code>download_answers_button()</code> gathers every <code>question()</code> and <code>student_info()</code> answer already saved on the page into one readable JSON file and downloads it — so a reader can save their work and turn it in (attach to an email, upload to an LMS), all without a server to submit to. The download also carries browser info, a per-device id, and a <code>time</code> field: the moment the reader clicked “Download”, lightly obfuscated so the raw timestamp isn’t readable or hand-editable in the file. Recover it with <code>learnr2::submission_time(path)</code>. Nothing else is hashed or signed — with no server involved there is no way to <em>prevent</em> a reader editing their answers; this just keeps the submission time honest at a glance:</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>learnr2<span class="sc">::</span><span class="fu">download_answers_button</span>(<span class="at">filename_prefix =</span> <span class="st">"hello-learnr2"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>learnr2<span class="sc">::</span><span class="fu">download_answers_button</span>(<span class="at">filename_prefix =</span> <span class="st">"hello-learnr2"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output-display">
 <div class="learnr2-download-answers" data-learnr2-download="eyJmaWxlbmFtZVByZWZpeCI6ImhlbGxvLWxlYXJucjIiLCJsYWJlbCI6IkRvd25sb2FkIE15
 IEFuc3dlcnMifQ==">
@@ -537,7 +580,7 @@ IEFuc3dlcnMifQ==">
 <p>By default, the <strong>Continue</strong> button at the end of a section stays greyed out, with a note under it, until every question and student-info form above it has been submitted. A reader can type anything, but must submit <em>something</em> before moving on, and a <code>type = "reflection"</code> question locks once submitted. Together those two rules let a tutorial show its own answer immediately after the reader’s, which is what we always want, without inviting anyone to paste our answer back into their box: by the time they see ours, theirs is in and cannot be changed.</p>
 <p>This tour is reference material, so it switches the gate off with the chunk below (shown here; hidden in a real tutorial with <code>echo: false</code>). That is why you have been able to click past every question on this page without answering it. Leave this chunk out of a tutorial of your own and the gate is on.</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>learnr2<span class="sc">::</span><span class="fu">tutorial_options</span>(<span class="at">require_submission =</span> <span class="cn">FALSE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>learnr2<span class="sc">::</span><span class="fu">tutorial_options</span>(<span class="at">require_submission =</span> <span class="cn">FALSE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output-display">
 <div class="learnr2-options" data-learnr2-options="eyJhbGxvd1NraXAiOmZhbHNlLCJyZXF1aXJlU3VibWlzc2lvbiI6ZmFsc2V9" hidden=""></div>
 </div>
@@ -547,7 +590,7 @@ IEFuc3dlcnMifQ==">
 <h3 class="anchored" data-anchor-id="skipping-ahead">Skipping ahead</h3>
 <p>By default the TOC cannot be used to read ahead. Look at the sidebar now: the entries below this section are dimmed, a click on one does nothing, and each lights up only when its section is unlocked. A reader can see what is coming and where they are, but cannot open the whole tutorial at once.</p>
 <p>If you want readers to roam freely — reference material, or a tour like this one — turn on skipping too, in that same <code>tutorial_options()</code> call:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>learnr2<span class="sc">::</span><span class="fu">tutorial_options</span>(<span class="at">allow_skip =</span> <span class="cn">TRUE</span>, <span class="at">require_submission =</span> <span class="cn">FALSE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>learnr2<span class="sc">::</span><span class="fu">tutorial_options</span>(<span class="at">allow_skip =</span> <span class="cn">TRUE</span>, <span class="at">require_submission =</span> <span class="cn">FALSE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Then clicking any TOC entry unlocks every section up to that one and jumps there, like a classic <strong>learnr</strong> tutorial with <code>allow_skip: yes</code>. This page leaves skipping at its default so you can see the dimming in action. Without a TOC the setting has no effect, since there is nothing to click.</p>
 </section>
 <section id="pauses-without-a-heading" class="level3">
@@ -570,11 +613,11 @@ IEFuc3dlcnMifQ==">
 <section id="something-to-type-name-the-language" class="level3">
 <h3 class="anchored" data-anchor-id="something-to-type-name-the-language">Something to type: name the language</h3>
 <p>Quarto boxes a fenced block, colours it, and gives it a copy button only when the block names its language:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb14"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ls</span> <span class="at">-a</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb16"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ls</span> <span class="at">-a</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>That is written as:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb15"><pre class="sourceCode default code-with-copy"><code class="sourceCode default"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>```bash</span>
-<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>ls -a</span>
-<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>```</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb17"><pre class="sourceCode default code-with-copy"><code class="sourceCode default"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>```bash</span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>ls -a</span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>```</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Use <code>bash</code> for the bash Terminal, <code>r</code> for the R Terminal, and <code>yaml</code> for a YAML header. The copy button matters: a student who copies <code>show_file("analysis.qmd", chunk = "Last")</code> gets it right the first time.</p>
 </section>
 <section id="where-to-run-it-add-a-label" class="level3">
@@ -584,24 +627,24 @@ IEFuc3dlcnMifQ==">
 <div class="code-with-filename-file">
 <pre><strong>bash Terminal</strong></pre>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb16" data-filename="bash Terminal"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="ex">quarto</span> render analysis.qmd</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb18" data-filename="bash Terminal"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="ex">quarto</span> render analysis.qmd</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb17"><pre class="sourceCode default code-with-copy"><code class="sourceCode default"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>```{.bash filename="bash Terminal"}</span>
-<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>quarto render analysis.qmd</span>
-<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>```</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb19"><pre class="sourceCode default code-with-copy"><code class="sourceCode default"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>```{.bash filename="bash Terminal"}</span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>quarto render analysis.qmd</span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>```</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
 <section id="something-to-compare-against-mark-it-as-output" class="level3">
 <h3 class="anchored" data-anchor-id="something-to-compare-against-mark-it-as-output">Something to compare against: mark it as output</h3>
 <p>Expected output — a transcript of <code>ls</code>, or the answer shown after Continue — should not look like a command, or some students will type it. Mark it <code>{.output}</code> and it gets a lighter style, with a grey left edge and no copy button:</p>
 <pre class="output"><code>codespace-starter $ ls -a
 .  ..  .devcontainer  .git</code></pre>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb19"><pre class="sourceCode default code-with-copy"><code class="sourceCode default"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>```{.output}</span>
-<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>codespace-starter $ ls -a</span>
-<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>.  ..  .devcontainer  .git</span>
-<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>```</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb21"><pre class="sourceCode default code-with-copy"><code class="sourceCode default"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>```{.output}</span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>codespace-starter $ ls -a</span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>.  ..  .devcontainer  .git</span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>```</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Output that R itself prints gets the same style automatically, both from a <code>{webr}</code> cell (see section 1) and from an <code>{r}</code> chunk in the tutorial:</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="fu">mean</span>(<span class="fu">c</span>(<span class="dv">4</span>, <span class="dv">8</span>, <span class="dv">15</span>, <span class="dv">16</span>, <span class="dv">23</span>, <span class="dv">42</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="fu">mean</span>(<span class="fu">c</span>(<span class="dv">4</span>, <span class="dv">8</span>, <span class="dv">15</span>, <span class="dv">16</span>, <span class="dv">23</span>, <span class="dv">42</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] 18</code></pre>
 </div>
