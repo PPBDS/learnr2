@@ -25,7 +25,7 @@ to an email or upload to an LMS)."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">learnr2</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.3.9004</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.3.9005</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -102,7 +102,8 @@ every <code>{webr}</code> code exercise, each as a <code>{ id, answer }</code> p
 the widget's (or exercise's) stable id. A question never submitted has
 <code>answer: null</code>; a choice question's <code>answer</code> is an array of the picked
 options; an image-paste reflection's <code>answer</code> is the pasted screenshot
-as a PNG data-URL string.</p>
+as a data-URL string (WebP, or JPEG where the browser can't write
+WebP; see <code><a href="question.html">question()</a></code>'s <code>allow_image</code>).</p>
 <p>A <code>{webr}</code> exercise appears only under the condition quarto-live itself
 requires to keep a record of the reader's code at all: <code>#| persist: true</code> (already the convention every bundled tutorial follows). An
 exercise without <code>persist: true</code> has no saved copy of the reader's code

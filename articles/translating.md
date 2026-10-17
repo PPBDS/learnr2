@@ -665,11 +665,18 @@ learnr2::render_tutorials("inst/tutorials/<name>")  # a real Quarto render
 ```
 
 [`check_tutorial()`](https://ppbds.github.io/learnr2/reference/check_tutorial.md)
-catches a missing label, `echo: false` or `persist: true`, a graded
-exercise with a `.solution` div, a
+catches a missing or inline label, a missing `echo: false` or
+`persist: true`, a **learnr2** function called without its `learnr2::`
+prefix, a graded exercise with a `.solution` div, a hint or solution div
+naming an exercise that doesn’t exist, a
 [webr](https://github.com/cardiomoon/webr) package missing from the
-`webr:` list, and missing boilerplate. Then open the rendered HTML in a
-browser and click through it.
+`webr:` list, a second
+[`tutorial_options()`](https://ppbds.github.io/learnr2/reference/tutorial_options.md)
+call, and missing boilerplate. Those stop with an error. Three more
+checks only warn, because a tutorial can break them and still work: a
+code block with no language, prose that mentions **learnr** or
+**tutorial.helpers**, and classic keys left in the YAML header. Fix them
+too. Then open the rendered HTML in a browser and click through it.
 
 [`run_tutorial()`](https://ppbds.github.io/learnr2/reference/run_tutorial.md)
 reads the *installed* copy of a package, not your working files. While

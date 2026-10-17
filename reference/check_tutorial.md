@@ -33,13 +33,15 @@ check_tutorial(paths, skip = NULL, error = TRUE)
 
 - error:
 
-  If `TRUE` (the default), stop with an error listing every problem
-  found. If `FALSE`, just return them.
+  If `TRUE` (the default), stop with an error listing every error-level
+  problem found, after reporting any warning-level ones as a warning. If
+  `FALSE`, just return them all.
 
 ## Value
 
-A data frame of problems with columns `path`, `check`, and `message`,
-invisibly. It has zero rows when every check passed.
+A data frame of problems with columns `path`, `check`, `severity`
+(`"error"` or `"warning"`) and `message`, invisibly. It has zero rows
+when every check passed.
 
 ## Checks
 
@@ -100,11 +102,45 @@ Each check has a name, used in `skip`:
   learns what to install. `gradethis` is exempt, since the
   `_gradethis.qmd` include provides it.
 
+- `prefix` – every learnr2 function in an `{r}` chunk is called with its
+  `learnr2::` prefix. A tutorial never attaches the package, so a bare
+  [`question()`](https://ppbds.github.io/learnr2/reference/question.md)
+  fails at render time.
+
+- `options` –
+  [`tutorial_options()`](https://ppbds.github.io/learnr2/reference/tutorial_options.md)
+  is called at most once.
+
+- `divs` – every `.hint` and `.solution` fenced div names an `exercise=`
+  that some `{webr}` cell defines, and no graded exercise (one with a
+  `check: true` cell) has a `.solution` div, which the grader cannot
+  read.
+
+Three further checks report *warnings* rather than errors: with
+`error = TRUE` they are shown as one warning and do not stop. They cover
+house style that a tutorial can violate and still work:
+
+- `fences` – every fenced code block names a language
+  (```` ```bash ````, ```` ```r ````) or is marked
+  ```` ```{.output} ````. A bare ```` ``` ```` block renders as plain
+  text with no way to tell a command from its output. See the "Code,
+  commands and output" section of
+  [`vignette("translating")`](https://ppbds.github.io/learnr2/articles/translating.md).
+
+- `mentions` – the prose does not mention 'learnr' or
+  'tutorial.helpers'. Students should never hear of either. Text inside
+  a code block is not checked, since a quoted file may well name them.
+
+- `yaml` – the YAML header has none of the classic learnr keys
+  (`output`, `runtime`, `tutorial`, `progressive`, `allow_skip`) and no
+  document-wide `execute: echo: false`, which is not known to be safe
+  for `{webr}` cells.
+
 ## Examples
 
 ``` r
 qmd <- create_tutorial("checked", dir = tempfile(), open = FALSE)
-#> Created tutorial: /tmp/RtmpGVGaKE/file1a12590ae86a/checked/checked.qmd
+#> Created tutorial: /tmp/RtmpYt9aOK/file195024ce90e7/checked/checked.qmd
 check_tutorial(qmd)
 
 # Break the template, then see the problems instead of an error.
@@ -113,10 +149,10 @@ writeLines(lines[!grepl("^#\\| echo: false", lines)], qmd)
 problems <- check_tutorial(qmd, error = FALSE)
 problems[, c("check", "message")]
 #>   check                                                               message
-#> 1  echo line 15 (student-information-1): widget chunk needs `#| echo: false`.
-#> 2  echo     line 54 (a-quiz-question-1): widget chunk needs `#| echo: false`.
-#> 3  echo        line 67 (your-answers-1): widget chunk needs `#| echo: false`.
-#> 4  echo        line 77 (your-answers-2): widget chunk needs `#| echo: false`.
+#> 1  echo line 16 (student-information-1): widget chunk needs `#| echo: false`.
+#> 2  echo     line 55 (a-quiz-question-1): widget chunk needs `#| echo: false`.
+#> 3  echo        line 68 (your-answers-1): widget chunk needs `#| echo: false`.
+#> 4  echo        line 78 (your-answers-2): widget chunk needs `#| echo: false`.
 
 unlink(dirname(dirname(qmd)), recursive = TRUE)
 ```

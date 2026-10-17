@@ -2,6 +2,49 @@
 
 ## learnr2 (development version)
 
+- Accessibility: feedback, validation errors and editing notes are live
+  regions that screen readers announce; every answer box is labelled by
+  its question’s prompt (including when `show_text = FALSE` hides it);
+  choice answers form a labelled group; student-info fields carry
+  `aria-required` and flag invalid entries with `aria-invalid`; the
+  screenshot paste box is labelled and described; the confirm dialog
+  returns focus to the button that opened it. The Start Over button,
+  locked table-of-contents entries and the disabled Continue button now
+  meet the WCAG AA contrast ratio.
+
+- A widget whose payload can’t be decoded is marked as broken on the
+  page instead of stopping every later widget from rendering. A
+  submitted but empty text answer downloads as `""`, distinct from an
+  unsubmitted question’s `null`.
+
+- The feature tour, hello-learnr2, now shows `show_text = FALSE`,
+  screenshot-only questions (`allow_text = FALSE`) and replacing a
+  submitted screenshot.
+
+- [`check_tutorial()`](https://ppbds.github.io/learnr2/reference/check_tutorial.md)
+  enforces more of the authoring guide. New error-level checks: `prefix`
+  (every learnr2 function is called as `learnr2::fn()`), `options`
+  ([`tutorial_options()`](https://ppbds.github.io/learnr2/reference/tutorial_options.md)
+  at most once), `divs` (`.hint` and `.solution` divs name a real
+  exercise, and a graded exercise has no `.solution` div), plus inline
+  `{r label, opt=...}` options and the reserved label
+  `progressive-sections` under `labels`. Three new checks report
+  warnings rather than errors, since a tutorial can break them and still
+  work: `fences` (every code block names a language or is marked
+  `{.output}`), `mentions` (prose never names learnr or
+  tutorial.helpers) and `yaml` (no classic learnr keys, no document-wide
+  `execute: echo: false`). The returned data frame gains a `severity`
+  column, and with `error = TRUE` warning-level problems are reported as
+  one warning before any error. The `echo` check now also recognises
+  unprefixed widget calls.
+
+- Fixed: on a screenshot question, “Edit Answer” reopened the answer
+  without re-locking the section’s Continue button. Fixed: with
+  `localStorage` blocked by the browser, the download button and Start
+  Over threw instead of working without saved exercise code. Fixed: a
+  pasted image on a question with `validate = "integer"` was refused
+  because the empty text box was validated.
+
 - Code blocks in a tutorial now distinguish what to type from what to
   expect. A bare ```` ``` ```` fence, which Quarto shows as plain
   monospace text with no box, now gets the same grey box as a block that

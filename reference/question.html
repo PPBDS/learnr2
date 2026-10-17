@@ -13,7 +13,7 @@ questions, graded entirely in the reader's browser."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">learnr2</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.3.9004</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.3.9005</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -95,10 +95,10 @@ the <code><a href="answer.html">answer()</a></code> text(s).</p></li>
 <li><p><code>"reflection"</code> – an ungraded free-response question. After
 submitting, the reader sees the model answer (the <code>correct</code>
 <code><a href="answer.html">answer()</a></code> text(s)) and their own response is locked. If no <code><a href="answer.html">answer()</a></code>
-is marked <code>correct</code> – including passing none at all, e.g. for a
-genuinely open-ended prompt like "how many minutes did this take?"
-with no right answer to demonstrate – nothing is revealed; the
-reader's response is still saved and locked exactly the same.</p></li>
+is marked <code>correct</code> – including passing none at all, as for a
+"paste the command and its output" question with no model answer to
+show – nothing is revealed; the reader's response is still saved and
+locked exactly the same.</p></li>
 <li><p><code>"reflection_editable"</code> – like <code>"reflection"</code>, but a submitted
 response can be reopened. Submit locks it behind an "Edit" button;
 Edit reopens it, with a note that the change isn't saved until the
@@ -195,9 +195,10 @@ submit a <code>"text"</code>, <code>"reflection"</code>, or <code>"reflection_ed
 <code>"none"</code> (the default) accepts anything. <code>"integer"</code> requires the typed
 response to be a whole number (optionally signed, e.g. <code>-3</code>) – useful
 for a question like "how many minutes did this take?" where any honest
-number is fine, but free-form prose is not; see the <code>"reflection"</code>
-example below. Ignored (forced to <code>"none"</code>) for <code>"single"</code>/<code>"multiple"</code>
-questions.</p></dd>
+number is fine, but free-form prose is not; see the
+<code>"reflection_editable"</code> example below. A pasted image (<code>allow_image</code>)
+is not validated. Ignored (forced to <code>"none"</code>) for
+<code>"single"</code>/<code>"multiple"</code> questions.</p></dd>
 
 </dl></div>
     <div class="section level2">

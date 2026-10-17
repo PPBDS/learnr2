@@ -228,6 +228,21 @@ Verified against real renders.
   lighter output style. Quarto’s `filename` label is itself a `<pre>`,
   excluded explicitly. Authoring convention:
   `vignettes/translating.qmd`, “Code, commands and output”.
+- **Shared widget pieces** (2026-10): `makeStatus()`, `setFeedback()`,
+  `makeControls()`, `lockGraded()`, `wireTryAgain()` and
+  `questionTextId()` sit above `buildChoiceQuestion()`. The four
+  builders used to each carry their own copies of the feedback, Try
+  Again and Edit-reopen code, which drifted (three different “could not
+  be saved” strings). Add to the helpers rather than to one builder.
+  `renderWidget()` wraps every widget’s decode+build in a try/catch: one
+  bad payload used to stop every later widget on the page.
+- **Accessibility conventions** (2026-10): any text that changes to tell
+  the reader something (feedback, errors, notes) is a `makeStatus()`
+  live region; every input is `aria-labelledby` the question’s prompt
+  element (`<id>-text`, set in `renderQuestion()`); info fields get
+  `aria-required`/`aria-invalid`/`aria-describedby`; dialogs restore
+  focus to their opener. Grey text on white is `#6c757d` or darker
+  (4.5:1); `#adb5bd` is only for borders and backgrounds.
 - **Outbound links open in a new tab** (`openLinksInNewTabs()`): every
   `a[href]` except `#...`, `download`, `mailto:`/`tel:`/`javascript:`.
   Students worried when a tutorial “disappeared”. Quarto’s
@@ -330,8 +345,19 @@ Two layers, both in CI (`R-CMD-check.yaml`, `js-tests.yaml`).
   [`render_tutorials()`](https://ppbds.github.io/learnr2/reference/render_tutorials.md)
   over every bundled tutorial with real Quarto (`skip_on_cran()`,
   skipped without Quarto). `hello-learnr2` is checked with
-  `skip = c("echo", "minutes")`, since the tour shows its widget source
-  and has no minutes question.
+  `skip = c("echo", "minutes", "fences", "mentions")`, since the tour
+  shows its widget source, has no minutes question, shows a bare code
+  block on purpose and talks about learnr. The same skip list is in
+  `tools/render_tutorials_for_pages.R`; keep the two in step.
+- **[`check_tutorial()`](https://ppbds.github.io/learnr2/reference/check_tutorial.md)
+  has two severities** (2026-10). `warning_checks` (`fences`,
+  `mentions`, `yaml`) report as one
+  [`warning()`](https://rdrr.io/r/base/warning.html), everything else as
+  [`stop()`](https://rdrr.io/r/base/stop.html). Content packages’ tests
+  call `expect_no_error(check_tutorial(paths))`, so a style check that
+  errored would have broken their CI the day it shipped; a warning shows
+  up in their test output without failing it. Keep new style checks
+  warning-level and new correctness checks error-level.
 - **`withr` is in Suggests**, and every test file using it starts with
   `testthat::skip_if_not_installed("withr")` for CRAN’s no-Suggests
   check. Moving it to Imports instead gave a NOTE (“not imported from”),

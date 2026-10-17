@@ -47,7 +47,10 @@ plus every `{webr}` code exercise, each as a `{ id, answer }` pair keyed
 by the widget's (or exercise's) stable id. A question never submitted
 has `answer: null`; a choice question's `answer` is an array of the
 picked options; an image-paste reflection's `answer` is the pasted
-screenshot as a PNG data-URL string.
+screenshot as a data-URL string (WebP, or JPEG where the browser can't
+write WebP; see
+[`question()`](https://ppbds.github.io/learnr2/reference/question.md)'s
+`allow_image`).
 
 A `{webr}` exercise appears only under the condition quarto-live itself
 requires to keep a record of the reader's code at all:

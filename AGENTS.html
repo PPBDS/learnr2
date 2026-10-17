@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="index.html">learnr2</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.3.9004</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.3.9005</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -96,6 +96,10 @@
 <li>
 <strong>Code blocks: commands vs output</strong> (2026-10), CSS only, at the end of <code>quiz.css</code>. Quarto boxes a fenced block only when it names a language; a bare fence got a monospace font and nothing else, and tutorial.helpers sources use bare fences everywhere. Bare <code>&lt;pre&gt;</code>s in <code>#quarto-document-content</code> now get the grey command box; <code>pre.output</code> (<code>```{.output}</code>) and <code>.cell-output pre</code> (output of <code>{r}</code> chunks and <a href="https://github.com/cardiomoon/webr" class="external-link">webr</a> cells) get a lighter output style. Quarto’s <code>filename</code> label is itself a <code>&lt;pre&gt;</code>, excluded explicitly. Authoring convention: <code>vignettes/translating.qmd</code>, “Code, commands and output”.</li>
 <li>
+<strong>Shared widget pieces</strong> (2026-10): <code>makeStatus()</code>, <code>setFeedback()</code>, <code>makeControls()</code>, <code>lockGraded()</code>, <code>wireTryAgain()</code> and <code>questionTextId()</code> sit above <code>buildChoiceQuestion()</code>. The four builders used to each carry their own copies of the feedback, Try Again and Edit-reopen code, which drifted (three different “could not be saved” strings). Add to the helpers rather than to one builder. <code>renderWidget()</code> wraps every widget’s decode+build in a try/catch: one bad payload used to stop every later widget on the page.</li>
+<li>
+<strong>Accessibility conventions</strong> (2026-10): any text that changes to tell the reader something (feedback, errors, notes) is a <code>makeStatus()</code> live region; every input is <code>aria-labelledby</code> the question’s prompt element (<code>&lt;id&gt;-text</code>, set in <code>renderQuestion()</code>); info fields get <code>aria-required</code>/<code>aria-invalid</code>/<code>aria-describedby</code>; dialogs restore focus to their opener. Grey text on white is <code>#6c757d</code> or darker (4.5:1); <code>#adb5bd</code> is only for borders and backgrounds.</li>
+<li>
 <strong>Outbound links open in a new tab</strong> (<code>openLinksInNewTabs()</code>): every <code>a[href]</code> except <code>#...</code>, <code>download</code>, <code>mailto:</code>/<code>tel:</code>/<code>javascript:</code>. Students worried when a tutorial “disappeared”. Quarto’s <code>link-external-newwindow</code> would miss same-site links.</li>
 <li>
 <strong>Rendering a test copy of learnr2 changes needs an install.</strong> Quarto runs a tutorial’s R chunks in its own R process, which loads the <em>installed</em> learnr2, not a <code>load_all()</code> copy, so a render from a <code>load_all()</code> session still embeds the old <code>quiz.js</code>. Install the working tree into a scratch library (<code>R CMD INSTALL -l &lt;dir&gt; .</code>) and render with <code>R_LIBS=&lt;dir&gt;</code>, into a fresh output directory.</li>
@@ -131,7 +135,9 @@
 <li>
 <strong>One test serves for real</strong>: the “served root, against a real httpuv server” block fetches <code>/</code> from a live httpuv server, because stubs can only show that <code>index.html</code> was written. It fails if <code>write_root_index()</code> is removed.</li>
 <li>
-<strong>One test renders for real</strong>: the last test in <code>test-render-tutorials.R</code> runs <code><a href="reference/check_tutorial.html">check_tutorial()</a></code> and <code><a href="reference/render_tutorials.html">render_tutorials()</a></code> over every bundled tutorial with real Quarto (<code>skip_on_cran()</code>, skipped without Quarto). <code>hello-learnr2</code> is checked with <code>skip = c("echo", "minutes")</code>, since the tour shows its widget source and has no minutes question.</li>
+<strong>One test renders for real</strong>: the last test in <code>test-render-tutorials.R</code> runs <code><a href="reference/check_tutorial.html">check_tutorial()</a></code> and <code><a href="reference/render_tutorials.html">render_tutorials()</a></code> over every bundled tutorial with real Quarto (<code>skip_on_cran()</code>, skipped without Quarto). <code>hello-learnr2</code> is checked with <code>skip = c("echo", "minutes", "fences", "mentions")</code>, since the tour shows its widget source, has no minutes question, shows a bare code block on purpose and talks about learnr. The same skip list is in <code>tools/render_tutorials_for_pages.R</code>; keep the two in step.</li>
+<li>
+<strong><code><a href="reference/check_tutorial.html">check_tutorial()</a></code> has two severities</strong> (2026-10). <code>warning_checks</code> (<code>fences</code>, <code>mentions</code>, <code>yaml</code>) report as one <code><a href="https://rdrr.io/r/base/warning.html" class="external-link">warning()</a></code>, everything else as <code><a href="https://rdrr.io/r/base/stop.html" class="external-link">stop()</a></code>. Content packages’ tests call <code>expect_no_error(check_tutorial(paths))</code>, so a style check that errored would have broken their CI the day it shipped; a warning shows up in their test output without failing it. Keep new style checks warning-level and new correctness checks error-level.</li>
 <li>
 <strong><code>withr</code> is in Suggests</strong>, and every test file using it starts with <code>testthat::skip_if_not_installed("withr")</code> for CRAN’s no-Suggests check. Moving it to Imports instead gave a NOTE (“not imported from”), because no package code uses it.</li>
 <li>Deliberately untested: <code><a href="reference/live_extension_dir.html">live_extension_dir()</a></code>’s missing-package branch (needs a broken install).</li>
