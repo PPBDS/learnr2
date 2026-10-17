@@ -504,7 +504,9 @@ ls -a
 ````
 
 Use `bash` for the bash Terminal, `r` for the R Terminal, and `yaml` for a
-YAML header. The copy button matters: a student who copies
+YAML header. Text to type that is in no language, such as a prompt for an
+AI or a commit message, takes `default`, which boxes it with a copy button
+and colours nothing. The copy button matters: a student who copies
 `show_file("analysis.qmd", chunk = "Last")` gets it right the first time.
 
 ### Where to run it: add a label

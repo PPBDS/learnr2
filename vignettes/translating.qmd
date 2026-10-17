@@ -245,7 +245,7 @@ Choice and `"text"` questions, and `quiz()`, suit mechanics tutorials and featur
 
 When you convert a question, rewrite the prose around it to match. An instruction that says "copy" or "CP/CR" should now say what to screenshot. Any sentence explaining that pasted text may look messy goes, since it no longer applies. Keep the source's own answer, if it had one, as the answer shown after Continue: a screenshot of the expected page, or our answer chunk drawing the expected plot.
 
-The first screenshot question a student meets should say how to take a screenshot and how to paste it: `Cmd + Shift + 4` on a Mac, `Win + Shift + S` on Windows, then click in the answer box and press `Ctrl + V` (`Cmd + V` on a Mac). Later ones can just ask for the screenshot.
+The first screenshot question a student meets should say how to take a screenshot and how to paste it: `Cmd + Ctrl + Shift + 4` on a Mac (the plain `Cmd + Shift + 4` saves a file instead of copying), `Win + Shift + S` on Windows, then click in the answer box and press `Ctrl + V` (`Cmd + V` on a Mac). Later ones can just ask for the screenshot.
 
 Ask for one specific screenshot, never a hedged choice. "Paste a screenshot of your GitHub dashboard" works. "Paste a screenshot showing you're signed in, for example your profile page or the account menu" leaves the reader guessing which one counts. If it isn't obvious why that screen proves the step, say so.
 
@@ -331,6 +331,7 @@ That renders as the literal syntax, because there is no backtick in the source f
 A student needs to tell at a glance whether a block is something to *type*, something they will *see*, or neither. Quarto's theme only helps when a block names its language: ```` ```r ```` and ```` ```bash ```` get a grey box, syntax colours and a copy button, while a bare ```` ``` ```` fence used to get a monospace font and nothing else, so it read as oddly-typeset prose. **tutorial.helpers** sources use bare fences for everything, commands and transcripts alike. Tag every block as you translate:
 
 - **Something to type or run: name the language.** Use `bash` for the bash Terminal, `r` for the R Terminal, and `yaml` for YAML. That gives the block a box, colours and a copy button.
+- **Something to type that is in no language: tag it `default`.** A prompt for an AI, a commit message, lines for `.gitignore`, a URL to download from. Quarto boxes it and adds the copy button but colours nothing. Don't leave it bare, and don't mark it `{.output}`: it is something to type, not something to compare against.
 - **Where to run it: add a label.** When it isn't obvious which Terminal a command belongs in, label the block. The label appears in a bar above it:
 
   ````
