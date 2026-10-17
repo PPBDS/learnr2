@@ -22,7 +22,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">learnr2</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.3.9005</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.3.9006</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -335,7 +335,7 @@
 <strong>The student carries out several small steps in a row.</strong> Turning each one into its own question is sometimes more than the steps deserve. If every step is necessary, give the steps as plain instructions and end with a single screenshot of something that only looks right if all of them were done correctly. For example, after “create the repo, add a <code>.gitignore</code>, commit and push”, ask for a screenshot of the repo’s page on GitHub showing the <code>.gitignore</code> file. Pick the screen so a skipped or botched step shows: if the screenshot would look the same without one of the steps, that step needs its own check. When translating, use this for a run of steps the source left unchecked. Don’t merge questions the source already asks separately, since that pacing was the author’s choice.</li>
 </ol>
 <p>When you convert a question, rewrite the prose around it to match. An instruction that says “copy” or “CP/CR” should now say what to screenshot. Any sentence explaining that pasted text may look messy goes, since it no longer applies. Keep the source’s own answer, if it had one, as the answer shown after Continue: a screenshot of the expected page, or our answer chunk drawing the expected plot.</p>
-<p>The first screenshot question a student meets should say how to take a screenshot and how to paste it: <code>Cmd + Shift + 4</code> on a Mac, <code>Win + Shift + S</code> on Windows, then click in the answer box and press <code>Ctrl + V</code> (<code>Cmd + V</code> on a Mac). Later ones can just ask for the screenshot.</p>
+<p>The first screenshot question a student meets should say how to take a screenshot and how to paste it: <code>Cmd + Ctrl + Shift + 4</code> on a Mac (the plain <code>Cmd + Shift + 4</code> saves a file instead of copying), <code>Win + Shift + S</code> on Windows, then click in the answer box and press <code>Ctrl + V</code> (<code>Cmd + V</code> on a Mac). Later ones can just ask for the screenshot.</p>
 <p>Ask for one specific screenshot, never a hedged choice. “Paste a screenshot of your GitHub dashboard” works. “Paste a screenshot showing you’re signed in, for example your profile page or the account menu” leaves the reader guessing which one counts. If it isn’t obvious why that screen proves the step, say so.</p>
 <p>If the prompt reads better as ordinary text on the page, write it there and pass <code>show_text = FALSE</code>. Still repeat the wording in <code>text</code>, which is kept in the saved data and read to screen-reader users.</p>
 </section></section><section class="level2"><h2 id="images">Images<a class="anchor" aria-label="anchor" href="#images"></a>
@@ -413,6 +413,7 @@
 <p>A student needs to tell at a glance whether a block is something to <em>type</em>, something they will <em>see</em>, or neither. Quarto’s theme only helps when a block names its language: <code>```r</code> and <code>```bash</code> get a grey box, syntax colours and a copy button, while a bare <code>```</code> fence used to get a monospace font and nothing else, so it read as oddly-typeset prose. <strong>tutorial.helpers</strong> sources use bare fences for everything, commands and transcripts alike. Tag every block as you translate:</p>
 <ul>
 <li><p><strong>Something to type or run: name the language.</strong> Use <code>bash</code> for the bash Terminal, <code>r</code> for the R Terminal, and <code>yaml</code> for YAML. That gives the block a box, colours and a copy button.</p></li>
+<li><p><strong>Something to type that is in no language: tag it <code>default</code>.</strong> A prompt for an AI, a commit message, lines for <code>.gitignore</code>, a URL to download from. Quarto boxes it and adds the copy button but colours nothing. Don’t leave it bare, and don’t mark it <code>{.output}</code>: it is something to type, not something to compare against.</p></li>
 <li>
 <p><strong>Where to run it: add a label.</strong> When it isn’t obvious which Terminal a command belongs in, label the block. The label appears in a bar above it:</p>
 <pre><code>```{.bash filename="bash Terminal"}

@@ -408,7 +408,8 @@ had one, as the answer shown after Continue: a screenshot of the
 expected page, or our answer chunk drawing the expected plot.
 
 The first screenshot question a student meets should say how to take a
-screenshot and how to paste it: `Cmd + Shift + 4` on a Mac,
+screenshot and how to paste it: `Cmd + Ctrl + Shift + 4` on a Mac (the
+plain `Cmd + Shift + 4` saves a file instead of copying),
 `Win + Shift + S` on Windows, then click in the answer box and press
 `Ctrl + V` (`Cmd + V` on a Mac). Later ones can just ask for the
 screenshot.
@@ -625,6 +626,12 @@ as you translate:
 - **Something to type or run: name the language.** Use `bash` for the
   bash Terminal, `r` for the R Terminal, and `yaml` for YAML. That gives
   the block a box, colours and a copy button.
+
+- **Something to type that is in no language: tag it `default`.** A
+  prompt for an AI, a commit message, lines for `.gitignore`, a URL to
+  download from. Quarto boxes it and adds the copy button but colours
+  nothing. Don’t leave it bare, and don’t mark it `{.output}`: it is
+  something to type, not something to compare against.
 
 - **Where to run it: add a label.** When it isn’t obvious which Terminal
   a command belongs in, label the block. The label appears in a bar
