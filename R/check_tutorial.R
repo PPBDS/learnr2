@@ -44,6 +44,30 @@
 #'   `library()`, `require()`, or `pkg::`) is listed under `webr: packages:`
 #'   in the YAML header, the only place WebR learns what to install.
 #'   `gradethis` is exempt, since the `_gradethis.qmd` include provides it.
+#' * `prefix` -- every learnr2 function in an `{r}` chunk is called with
+#'   its `learnr2::` prefix. A tutorial never attaches the package, so a
+#'   bare `question()` fails at render time.
+#' * `options` -- [tutorial_options()] is called at most once.
+#' * `divs` -- every `.hint` and `.solution` fenced div names an
+#'   `exercise=` that some `{webr}` cell defines, and no graded exercise
+#'   (one with a `check: true` cell) has a `.solution` div, which the
+#'   grader cannot read.
+#'
+#' Three further checks report *warnings* rather than errors: with
+#' `error = TRUE` they are shown as one warning and do not stop. They cover
+#' house style that a tutorial can violate and still work:
+#' * `fences` -- every fenced code block names a language (```` ```bash ````,
+#'   ```` ```r ````) or is marked ```` ```{.output} ````. A bare ```` ``` ````
+#'   block renders as plain text with no way to tell a command from its
+#'   output. See the "Code, commands and output" section of
+#'   `vignette("translating")`.
+#' * `mentions` -- the prose does not mention 'learnr' or
+#'   'tutorial.helpers'. Students should never hear of either. Text inside
+#'   a code block is not checked, since a quoted file may well name them.
+#' * `yaml` -- the YAML header has none of the classic learnr keys
+#'   (`output`, `runtime`, `tutorial`, `progressive`, `allow_skip`) and no
+#'   document-wide `execute: echo: false`, which is not known to be safe
+#'   for `{webr}` cells.
 #'
 #' @param paths Character vector of tutorials to check: paths to `.qmd`
 #'   files, or to directories containing them, as for [render_tutorials()].
@@ -51,10 +75,12 @@
 #'   e.g. `"minutes"` for a tutorial that deliberately has no "how many
 #'   minutes" question.
 #' @param error If `TRUE` (the default), stop with an error listing every
-#'   problem found. If `FALSE`, just return them.
+#'   error-level problem found, after reporting any warning-level ones as
+#'   a warning. If `FALSE`, just return them all.
 #'
-#' @return A data frame of problems with columns `path`, `check`, and
-#'   `message`, invisibly. It has zero rows when every check passed.
+#' @return A data frame of problems with columns `path`, `check`,
+#'   `severity` (`"error"` or `"warning"`) and `message`, invisibly. It has
+#'   zero rows when every check passed.
 #' @export
 #' @examples
 #' qmd <- create_tutorial("checked", dir = tempfile(), open = FALSE)
@@ -95,30 +121,85 @@ check_tutorial <- function(paths, skip = NULL, error = TRUE) {
     problems <- data.frame(path = character(0), check = character(0),
                            message = character(0), stringsAsFactors = FALSE)
   }
+  problems$severity <- ifelse(problems$check %in% warning_checks, "warning", "error")
+  problems <- problems[, c("path", "check", "severity", "message")]
   rownames(problems) <- NULL
 
-  if (nrow(problems) > 0 && isTRUE(error)) {
-    stop(
-      nrow(problems), " problem(s) found:\n",
-      paste0("  ", fs::path_file(problems$path), " [", problems$check, "] ",
-             problems$message, collapse = "\n"),
-      call. = FALSE
-    )
+  if (isTRUE(error)) {
+    warn <- problems[problems$severity == "warning", , drop = FALSE]
+    if (nrow(warn) > 0) {
+      warning(
+        nrow(warn), " style problem(s) found:\n", format_problems(warn),
+        call. = FALSE
+      )
+    }
+    err <- problems[problems$severity == "error", , drop = FALSE]
+    if (nrow(err) > 0) {
+      stop(
+        nrow(err), " problem(s) found:\n", format_problems(err),
+        call. = FALSE
+      )
+    }
   }
   invisible(problems)
 }
 
+# Checks whose problems are reported as warnings, not errors (see ?check_tutorial).
+warning_checks <- c("fences", "mentions", "yaml")
+
+format_problems <- function(problems) {
+  paste0("  ", fs::path_file(problems$path), " [", problems$check, "] ",
+         problems$message, collapse = "\n")
+}
+
 # ---- parsing ----------------------------------------------------------------
 
-# Everything the checks need from one .qmd: its lines, YAML front matter
-# (NULL if unparseable), and its chunks -- a list of
-#   list(engine, label, options, body, line)
-# where `options` is a named list of the chunk's `#| key: value` lines
-# (values as strings, quotes stripped) and `body` is the remaining lines.
+# Everything the checks need from one .qmd: its path, its lines, YAML front
+# matter (NULL if unparseable), and its chunks -- a list of
+#   list(engine, header, label, options, body, line)
+# where `header` is whatever followed the engine inside the `{...}` of the
+# opening fence (the old inline-option style, e.g. "my-label, echo=FALSE"),
+# `options` is a named list of the chunk's `#| key: value` lines (values as
+# strings, quotes stripped) and `body` is the remaining lines.
 parse_tutorial <- function(qmd) {
   lines <- readLines(qmd, warn = FALSE, encoding = "UTF-8")
   yaml <- tryCatch(rmarkdown::yaml_front_matter(qmd), error = function(e) NULL)
-  list(path = qmd, lines = lines, yaml = yaml, chunks = parse_chunks(lines))
+  blocks <- parse_blocks(lines)
+  list(path = qmd, lines = lines, yaml = yaml, chunks = parse_chunks(lines),
+       blocks = blocks$blocks, in_block = blocks$in_block)
+}
+
+# Every fenced block in the document -- chunks, verbatim blocks and plain
+# code blocks alike -- as list(line, fence, info) where `info` is whatever
+# followed the opening backticks ("" for a bare fence, "{r}", "bash",
+# "{.output}", ...), plus a logical vector marking every line that is inside
+# a block (fences included). A block closes at the first line that is
+# exactly its opening fence, so a three-backtick line inside a four-backtick
+# block is content, not a fence.
+parse_blocks <- function(lines) {
+  blocks <- list()
+  in_block <- logical(length(lines))
+  i <- 1L
+  n <- length(lines)
+  while (i <= n) {
+    m <- regmatches(lines[i], regexec("^(`{3,})(.*)$", lines[i]))[[1]]
+    if (length(m) == 0) {
+      i <- i + 1L
+      next
+    }
+    fence <- m[2]
+    start <- i
+    in_block[i] <- TRUE
+    i <- i + 1L
+    while (i <= n && trimws(lines[i]) != fence) {
+      in_block[i] <- TRUE
+      i <- i + 1L
+    }
+    if (i <= n) in_block[i] <- TRUE
+    i <- i + 1L
+    blocks[[length(blocks) + 1]] <- list(line = start, fence = fence, info = trimws(m[3]))
+  }
+  list(blocks = blocks, in_block = in_block)
 }
 
 parse_chunks <- function(lines) {
@@ -176,7 +257,7 @@ parse_chunks <- function(lines) {
   chunks
 }
 
-# "l. 12 (label)" / "l. 12 (unlabelled {webr} chunk)" for messages.
+# "line 12 (label)" / "line 12 (unlabelled {webr} chunk)" for messages.
 chunk_ref <- function(chunk) {
   what <- if (is.na(chunk$label)) {
     paste0("unlabelled {", chunk$engine, "} chunk")
@@ -195,10 +276,23 @@ chunks_of <- function(doc, engine) {
   Filter(function(ch) identical(ch$engine, engine), doc$chunks)
 }
 
-widget_pattern <- "learnr2::(question|quiz|student_info|download_answers_button|tutorial_options)\\("
+widget_functions <- c("question", "quiz", "student_info", "download_answers_button",
+                      "tutorial_options")
+widget_pattern <- paste0(
+  "(^|[^A-Za-z0-9_.:])(learnr2::)?(", paste(widget_functions, collapse = "|"), ")\\("
+)
 
 is_widget_chunk <- function(chunk) {
   any(grepl(widget_pattern, chunk$body))
+}
+
+# learnr2 functions called in an {r} chunk body without the learnr2:: prefix.
+unprefixed_calls <- function(body) {
+  fns <- c(widget_functions, "answer")
+  pattern <- paste0("(^|[^A-Za-z0-9_.:])(", paste(fns, collapse = "|"), ")\\(")
+  hits <- regmatches(body, gregexpr(pattern, body))
+  calls <- sub("^[^A-Za-z]*", "", unlist(hits))
+  unique(sub("\\($", "", calls))
 }
 
 # Packages a {webr} body uses: library(x), require(x), requireNamespace("x"),
@@ -300,8 +394,16 @@ tutorial_checks <- list(
     chunks <- Filter(function(ch) ch$engine %in% c("r", "webr"), doc$chunks)
     msgs <- character(0)
     for (ch in chunks) {
+      if (nzchar(ch$header)) {
+        msgs <- c(msgs, paste0(chunk_ref(ch), ": options inside `{", ch$engine, " ",
+                               ch$header, "}`; put each on its own `#| key: value` line ",
+                               "(the label as `#| label:`)."))
+      }
       if (is.na(ch$label)) {
         msgs <- c(msgs, paste0(chunk_ref(ch), ": no `#| label:` line."))
+      } else if (identical(ch$label, "progressive-sections")) {
+        msgs <- c(msgs, paste0(chunk_ref(ch), ": the label `progressive-sections` is ",
+                               "reserved (it keys the saved Continue progress)."))
       }
     }
     labels <- vapply(chunks, function(ch) ch$label, character(1))
@@ -352,6 +454,106 @@ tutorial_checks <- list(
       paste0("package(s) used in {webr} cells but not listed under `webr: packages:`: ",
              paste(undeclared, collapse = ", "), ".")
     }
+  },
+
+  prefix = function(doc) {
+    msgs <- character(0)
+    for (ch in chunks_of(doc, "r")) {
+      bare <- unprefixed_calls(sub("#.*$", "", ch$body))
+      if (length(bare) > 0) {
+        msgs <- c(msgs, paste0(chunk_ref(ch), ": call ",
+                               paste0("`learnr2::", bare, "()`", collapse = ", "),
+                               " with the prefix; a tutorial never attaches learnr2."))
+      }
+    }
+    msgs
+  },
+
+  options = function(doc) {
+    calls <- Filter(function(ch) any(grepl("tutorial_options\\(", ch$body)), chunks_of(doc, "r"))
+    if (length(calls) > 1) {
+      paste0("`learnr2::tutorial_options()` is called ", length(calls), " times (lines ",
+             paste(vapply(calls, function(ch) ch$line, integer(1)), collapse = ", "),
+             "); call it once.")
+    }
+  },
+
+  divs = function(doc) {
+    webr <- chunks_of(doc, "webr")
+    defined <- unique(unlist(lapply(webr, function(ch) ch$options$exercise)))
+    checked <- unique(unlist(lapply(webr, function(ch) if (opt_true(ch, "check")) ch$options$exercise)))
+    div_lines <- grep("^:::+\\s*\\{\\s*\\.(hint|solution)\\b", doc$lines)
+    msgs <- character(0)
+    for (i in div_lines) {
+      m <- regmatches(doc$lines[i], regexec("\\.(hint|solution)\\b.*exercise\\s*=\\s*[\"']([^\"']+)[\"']", doc$lines[i]))[[1]]
+      if (length(m) == 0) {
+        msgs <- c(msgs, paste0("line ", i, ": `.hint`/`.solution` div has no `exercise=\"...\"`."))
+        next
+      }
+      kind <- m[2]
+      ex <- m[3]
+      if (!ex %in% defined) {
+        msgs <- c(msgs, paste0("line ", i, ": `.", kind, "` div names exercise `", ex,
+                               "`, which no `{webr}` cell defines."))
+      } else if (kind == "solution" && ex %in% checked) {
+        msgs <- c(msgs, paste0("line ", i, ": exercise `", ex, "` is graded (`check: true`), ",
+                               "so its solution must be a `solution: true` cell, not a ",
+                               "`.solution` div the grader cannot read."))
+      }
+    }
+    msgs
+  },
+
+  fences = function(doc) {
+    bare <- Filter(function(b) !nzchar(b$info), doc$blocks)
+    if (length(bare) == 0) {
+      return(character(0))
+    }
+    at <- vapply(bare, function(b) b$line, integer(1))
+    shown <- if (length(at) > 8) c(at[1:8], "...") else at
+    paste0(length(bare), " code block(s) with no language (line",
+           if (length(at) > 1) "s " else " ", paste(shown, collapse = ", "),
+           "): tag what the reader types as ```bash or ```r, and expected output as ",
+           "```{.output}.")
+  },
+
+  mentions = function(doc) {
+    prose <- doc$lines
+    prose[doc$in_block] <- ""
+    # The YAML header is not prose either (a classic `output: learnr::tutorial`
+    # is the yaml check's business).
+    fences <- which(grepl("^---\\s*$", prose))
+    if (length(fences) >= 2 && fences[1] == 1) {
+      prose[seq_len(fences[2])] <- ""
+    }
+    # HTML comments are notes to authors, not text students see.
+    prose <- gsub("<!--.*?-->", "", prose)
+    hits <- grep("\\btutorial\\.helpers\\b|\\blearnr\\b", prose, perl = TRUE)
+    if (length(hits) == 0) {
+      return(character(0))
+    }
+    shown <- if (length(hits) > 8) c(hits[1:8], "...") else hits
+    paste0("prose mentions learnr or tutorial.helpers (line",
+           if (length(hits) > 1) "s " else " ", paste(shown, collapse = ", "),
+           "): students should never hear of either; see `vignette(\"translating\")`.")
+  },
+
+  yaml = function(doc) {
+    y <- doc$yaml
+    msgs <- character(0)
+    old <- intersect(c("output", "runtime", "tutorial", "progressive", "allow_skip"), names(y))
+    if (length(old) > 0) {
+      msgs <- c(msgs, paste0("YAML header still has classic learnr key(s): ",
+                             paste0("`", old, ":`", collapse = ", "),
+                             "; delete them (learnr2 reveals sections itself; see ",
+                             "`learnr2::tutorial_options()` for `allow_skip`)."))
+    }
+    echo <- y$execute$echo
+    if (!is.null(echo) && isFALSE(echo)) {
+      msgs <- c(msgs, paste0("YAML `execute: echo: false` applies to every chunk, including ",
+                             "{webr} cells; put `#| echo: false` on each widget chunk instead."))
+    }
+    msgs
   }
 )
 

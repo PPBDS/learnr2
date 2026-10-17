@@ -19,7 +19,6 @@
 #' @param open Whether to open the new `.qmd` file in your editor: RStudio,
 #'   Positron or VS Code. Elsewhere its path is printed instead. Defaults to
 #'   `TRUE` in an interactive session.
-#'   Defaults to `TRUE` when interactive.
 #'
 #' @return The path to the created `.qmd` file, invisibly.
 #' @export

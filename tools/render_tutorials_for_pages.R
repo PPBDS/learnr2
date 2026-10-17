@@ -18,9 +18,10 @@ if (nrow(tutorials) == 0) {
 
 # Fail the build on any authoring mistake the static checks catch, before
 # spending time rendering. hello-learnr2 is a feature tour that deliberately
-# shows the R source of its widget chunks and has no "minutes" question.
+# shows the R source of its widget chunks, has no "minutes" question, shows
+# a bare code block to explain why not to use one, and talks about learnr.
 for (i in seq_len(nrow(tutorials))) {
-  skip <- if (tutorials$name[i] == "hello-learnr2") c("echo", "minutes") else NULL
+  skip <- if (tutorials$name[i] == "hello-learnr2") c("echo", "minutes", "fences", "mentions") else NULL
   learnr2::check_tutorial(tutorials$path[i], skip = skip)
 }
 

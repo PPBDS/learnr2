@@ -55,10 +55,10 @@ print.learnr2_answer <- function(x, ...) {
 #'   * `"reflection"` -- an ungraded free-response question. After
 #'     submitting, the reader sees the model answer (the `correct`
 #'     [answer()] text(s)) and their own response is locked. If no `answer()`
-#'     is marked `correct` -- including passing none at all, e.g. for a
-#'     genuinely open-ended prompt like "how many minutes did this take?"
-#'     with no right answer to demonstrate -- nothing is revealed; the
-#'     reader's response is still saved and locked exactly the same.
+#'     is marked `correct` -- including passing none at all, as for a
+#'     "paste the command and its output" question with no model answer to
+#'     show -- nothing is revealed; the reader's response is still saved and
+#'     locked exactly the same.
 #'   * `"reflection_editable"` -- like `"reflection"`, but a submitted
 #'     response can be reopened. Submit locks it behind an "Edit" button;
 #'     Edit reopens it, with a note that the change isn't saved until the
@@ -122,9 +122,10 @@ print.learnr2_answer <- function(x, ...) {
 #'   `"none"` (the default) accepts anything. `"integer"` requires the typed
 #'   response to be a whole number (optionally signed, e.g. `-3`) -- useful
 #'   for a question like "how many minutes did this take?" where any honest
-#'   number is fine, but free-form prose is not; see the `"reflection"`
-#'   example below. Ignored (forced to `"none"`) for `"single"`/`"multiple"`
-#'   questions.
+#'   number is fine, but free-form prose is not; see the
+#'   `"reflection_editable"` example below. A pasted image (`allow_image`)
+#'   is not validated. Ignored (forced to `"none"`) for
+#'   `"single"`/`"multiple"` questions.
 #'
 #' @return A `learnr2_question` object. Printed as an interactive HTML
 #'   widget in a rendered Quarto document; at the console it opens a browser

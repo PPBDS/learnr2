@@ -45,6 +45,28 @@ async function dispatchSyntheticPaste(page, selector, bytesOrLength, type, filen
   );
 }
 
+// Builds a real PNG of the given size in the page and pastes it into the
+// question's textarea through a synthetic paste event (no clipboard
+// permission needed, so this runs in local headless Chromium too).
+async function pasteGeneratedPng(page, width, height) {
+  await page.evaluate(async ({ width, height }) => {
+    const canvas = document.createElement("canvas");
+    canvas.width = width; canvas.height = height;
+    const ctx = canvas.getContext("2d");
+    // Noise, so the image doesn't compress to nothing.
+    const img = ctx.createImageData(width, height);
+    for (let i = 0; i < img.data.length; i++) img.data[i] = (i * 2654435761) % 256;
+    ctx.putImageData(img, 0, 0);
+    const blob = await new Promise((r) => canvas.toBlob(r, "image/png"));
+    const file = new File([blob], "shot.png", { type: "image/png" });
+    const dt = new DataTransfer();
+    dt.items.add(file);
+    document.querySelector(".learnr2-text-input").dispatchEvent(
+      new ClipboardEvent("paste", { clipboardData: dt, bubbles: true, cancelable: true })
+    );
+  }, { width, height });
+}
+
 test.describe("single-choice questions", () => {
   test("the correct answer shows positive feedback and hides submit", async ({ page }) => {
     await page.goto("/single-choice");
@@ -296,7 +318,7 @@ test.describe("image paste (allow_image)", () => {
     await expect(page.locator(".learnr2-image-paste-preview")).toBeVisible();
   });
 
-  test("a non-PNG raster image (GIF) is accepted and re-encoded as PNG", async ({ page }) => {
+  test("a non-PNG raster image (GIF) is accepted and re-encoded (as WebP or JPEG)", async ({ page }) => {
     // A screenshot isn't guaranteed to already be a PNG -- the real OS
     // clipboard format varies by platform (verified: only the *write*
     // side of the newer Async Clipboard API is documented as PNG-only;
@@ -308,7 +330,7 @@ test.describe("image paste (allow_image)", () => {
 
     await expect(page.locator(".learnr2-image-paste-error")).toBeHidden();
     await expect(page.locator(".learnr2-image-paste-preview")).toBeVisible();
-    // What's actually stored is always PNG, regardless of the source format.
+    // What's actually stored is always WebP or JPEG, regardless of the source format.
     const src = await page.locator(".learnr2-image-paste-preview").getAttribute("src");
     expect(src).toMatch(/^data:image\/(webp|jpeg);base64,/);
   });
@@ -1097,7 +1119,7 @@ test.describe("Start Over", () => {
     await expect(page.locator("#learnr2-info-student-info-name")).toHaveValue("");
   });
 
-  test("a plain window.confirm() is never used -- the dialog is in-page DOM content, since VS Code's Simple Browser webview (see item 0 of TODO.txt on how run_tutorial() ends up opening there) silently no-ops window.confirm()", async ({ page }) => {
+  test("a plain window.confirm() is never used -- the dialog is in-page DOM content, since VS Code's Simple Browser webview (see the R Tutorials extension's Simple Browser case", async ({ page }) => {
     await page.goto("/download-answers");
 
     let nativeDialogFired = false;
@@ -1415,28 +1437,6 @@ test.describe("progressive sections (Continue buttons)", () => {
 });
 
 test.describe("pasted screenshots are shrunk, and a full storage is reported", () => {
-  // Builds a real PNG of the given size in the page and pastes it into the
-  // question's textarea through a synthetic paste event (no clipboard
-  // permission needed, so this runs in local headless Chromium too).
-  async function pasteGeneratedPng(page, width, height) {
-    await page.evaluate(async ({ width, height }) => {
-      const canvas = document.createElement("canvas");
-      canvas.width = width; canvas.height = height;
-      const ctx = canvas.getContext("2d");
-      // Noise, so the image doesn't compress to nothing.
-      const img = ctx.createImageData(width, height);
-      for (let i = 0; i < img.data.length; i++) img.data[i] = (i * 2654435761) % 256;
-      ctx.putImageData(img, 0, 0);
-      const blob = await new Promise((r) => canvas.toBlob(r, "image/png"));
-      const file = new File([blob], "shot.png", { type: "image/png" });
-      const dt = new DataTransfer();
-      dt.items.add(file);
-      document.querySelector("textarea").dispatchEvent(
-        new ClipboardEvent("paste", { clipboardData: dt, bubbles: true, cancelable: true })
-      );
-    }, { width, height });
-  }
-
   test("a large screenshot is scaled to at most 1600px wide and stored small, as WebP or JPEG", async ({ page }) => {
     await page.goto("/reflection-image");
     await pasteGeneratedPng(page, 3200, 1800);
@@ -1485,6 +1485,170 @@ test.describe("pasted screenshots are shrunk, and a full storage is reported", (
     await expect(page.locator(".learnr2-storage-warning")).toBeVisible();
     await expect(page.locator(".learnr2-info .learnr2-submit")).toHaveText("Submit");
     await expect(page.locator("#learnr2-info-student-info-name")).toBeEditable();
+  });
+});
+
+test.describe("regressions: gate, blocked storage, image validation", () => {
+  test("Edit Answer on a submitted screenshot question re-locks Continue until a new image is submitted", async ({ page }) => {
+    await page.goto("/progressive-sections-gated-image");
+    await page.locator("#topic-one > .learnr2-continue-container .learnr2-continue").click();
+    const cont = page.locator("#exercise-1 .learnr2-continue");
+    await expect(cont).toBeDisabled();
+
+    await pasteGeneratedPng(page, 300, 200);
+    await expect(page.locator(".learnr2-image-paste-preview")).toBeVisible();
+    await page.locator("#exercise-1 .learnr2-submit").click();
+    await expect(cont).toBeEnabled();
+
+    // Reopening makes the question unsubmitted again: Continue must follow.
+    await page.locator("#exercise-1 .learnr2-image-edit").click();
+    await expect(cont).toBeDisabled();
+    await expect(page.locator("#exercise-1 .learnr2-continue-note")).toBeVisible();
+
+    await pasteGeneratedPng(page, 320, 200);
+    await page.locator("#exercise-1 .learnr2-submit").click();
+    await expect(cont).toBeEnabled();
+  });
+
+  test("with localStorage blocked, the download still produces a file and Start Over still reloads", async ({ page }) => {
+    await page.goto("/download-answers");
+    const errors = [];
+    page.on("pageerror", (e) => errors.push(e.message));
+    // Submit student info while storage still works, then block every read
+    // of quarto-live's exercise keys and the key listing Start Over uses.
+    await page.locator("#learnr2-info-student-info-name").fill("Ada Lovelace");
+    await page.locator("#learnr2-info-student-info-email").fill("ada@example.com");
+    await page.locator(".learnr2-info .learnr2-submit").click();
+    await page.evaluate(() => {
+      const realGet = Storage.prototype.getItem;
+      Storage.prototype.getItem = function (key) {
+        if (String(key).startsWith("editor-")) { throw new DOMException("blocked", "SecurityError"); }
+        return realGet.call(this, key);
+      };
+      Storage.prototype.key = function () { throw new DOMException("blocked", "SecurityError"); };
+    });
+
+    const downloadPromise = page.waitForEvent("download");
+    await page.locator(".learnr2-download-answers-btn").click();
+    const confirmBtn = page.locator(".learnr2-confirm-dialog-confirm");
+    if (await confirmBtn.count()) { await confirmBtn.click(); }
+    const download = await downloadPromise;
+    const chunks = [];
+    for await (const c of await download.createReadStream()) { chunks.push(c); }
+    const contents = JSON.parse(Buffer.concat(chunks).toString("utf8"));
+    expect(contents.info.name).toBe("Ada Lovelace");
+    // Exercise answers are unreadable, so they are reported as null, not thrown on.
+    expect(contents.answers.find((a) => a.id === "ex-attempted").answer).toBeNull();
+
+    await page.evaluate(() => { window.__sentinel = true; });
+    await page.locator(".learnr2-start-over").click();
+    await page.locator(".learnr2-confirm-dialog-confirm").click();
+    await page.waitForFunction(() => window.__sentinel === undefined);
+    expect(errors).toEqual([]);
+  });
+
+  test("a pasted image satisfies a question with validate = 'integer'", async ({ page }) => {
+    await page.goto("/reflection-image-integer");
+    await pasteGeneratedPng(page, 300, 200);
+    await expect(page.locator(".learnr2-image-paste-preview")).toBeVisible();
+    await page.locator(".learnr2-submit").click();
+    // Submitted: locked, with no "whole number" complaint.
+    await expect(page.locator(".learnr2-feedback")).toBeHidden();
+    await expect(page.locator(".learnr2-image-edit")).toBeVisible();
+    // Without an image, the integer rule still applies to typed text.
+    await page.evaluate(() => localStorage.clear());
+    await page.goto("/reflection-image-integer");
+    await page.locator(".learnr2-text-input").fill("about an hour");
+    await page.locator(".learnr2-submit").click();
+    await expect(page.locator(".learnr2-feedback")).toHaveText(/whole number/);
+  });
+});
+
+test.describe("accessibility and robustness", () => {
+  test("inputs are labelled by their question's prompt, choices form a group, feedback is a live region", async ({ page }) => {
+    await page.goto("/reflection-locked");
+    const textId = await page.locator(".learnr2-question-text").getAttribute("id");
+    expect(textId).toBe("reflection-locked-text");
+    await expect(page.locator("textarea")).toHaveAttribute("aria-labelledby", textId);
+    await expect(page.locator(".learnr2-feedback")).toHaveAttribute("role", "status");
+    await expect(page.locator(".learnr2-feedback")).toHaveAttribute("aria-live", "polite");
+
+    await page.goto("/single-choice");
+    const group = page.locator(".learnr2-answers");
+    await expect(group).toHaveAttribute("role", "group");
+    await expect(group).toHaveAttribute("aria-labelledby", "single-choice-text");
+
+    // show_text = FALSE keeps the prompt in the DOM for the label link.
+    await page.goto("/reflection-hidden-text");
+    const hidden = page.locator(".learnr2-question-text");
+    await expect(hidden).toHaveClass(/learnr2-visually-hidden/);
+    await expect(page.locator("textarea")).toHaveAttribute("aria-labelledby", await hidden.getAttribute("id"));
+  });
+
+  test("student info fields announce required state and invalid entries", async ({ page }) => {
+    await page.goto("/student-info");
+    const name = page.locator("#learnr2-info-student-info-name");
+    await expect(name).toHaveAttribute("aria-required", "true");
+    await expect(page.locator("#learnr2-info-student-info-id")).toHaveAttribute("aria-required", "false");
+    await page.locator(".learnr2-info .learnr2-submit").click();
+    await expect(name).toHaveAttribute("aria-invalid", "true");
+    const errId = await name.getAttribute("aria-describedby");
+    await expect(page.locator("#" + errId)).toBeVisible();
+    await expect(page.locator("#" + errId)).toHaveAttribute("role", "status");
+    await name.fill("Ada Lovelace");
+    await expect(name).not.toHaveAttribute("aria-invalid", "true");
+  });
+
+  test("the image paste box is a labelled, described target and the preview has alt text", async ({ page }) => {
+    await page.goto("/reflection-image");
+    const box = page.locator(".learnr2-image-paste");
+    await expect(box).toHaveAttribute("role", "textbox");
+    await expect(box).toHaveAttribute("aria-label", "Screenshot paste area");
+    const hint = await box.getAttribute("aria-describedby");
+    await expect(page.locator("#" + hint)).toContainText("paste");
+    await expect(page.locator(".learnr2-image-paste-preview")).toHaveAttribute("alt", "Your pasted screenshot");
+  });
+
+  test("dismissing the confirm dialog returns focus to the button that opened it", async ({ page }) => {
+    await page.goto("/download-answers");
+    await page.locator(".learnr2-start-over").focus();
+    await page.locator(".learnr2-start-over").click();
+    await expect(page.locator(".learnr2-confirm-dialog")).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(page.locator(".learnr2-confirm-dialog")).toHaveCount(0);
+    expect(await page.evaluate(() => document.activeElement.className)).toContain("learnr2-start-over");
+  });
+
+  test("one widget with a bad payload is marked broken and the rest still render", async ({ page }) => {
+    const errors = [];
+    page.on("pageerror", (e) => errors.push(e.message));
+    await page.goto("/broken-payload");
+    await expect(page.locator(".learnr2-widget-broken")).toContainText("could not be displayed");
+    const good = page.locator(".learnr2-question", { hasText: "Still here?" });
+    await expect(good.locator(".learnr2-submit")).toBeVisible();
+    await good.locator("input").first().check();
+    await good.locator(".learnr2-submit").click();
+    await expect(good.locator(".learnr2-feedback")).toHaveText("Correct!");
+    expect(errors).toEqual([]);
+  });
+
+  test("a submitted but empty text answer downloads as \"\", not null", async ({ page }) => {
+    await page.goto("/download-answers");
+    await page.locator("#learnr2-info-student-info-name").fill("Ada Lovelace");
+    await page.locator("#learnr2-info-student-info-email").fill("ada@example.com");
+    await page.locator(".learnr2-info .learnr2-submit").click();
+    const reflection = page.locator(".learnr2-question", { has: page.locator("textarea") }).first();
+    const id = await reflection.evaluate((n) => JSON.parse(atob(n.getAttribute("data-learnr2-question"))).id);
+    await reflection.locator(".learnr2-submit").click(); // empty, allowed
+    const downloadPromise = page.waitForEvent("download");
+    await page.locator(".learnr2-download-answers-btn").click();
+    const confirmBtn = page.locator(".learnr2-confirm-dialog-confirm");
+    if (await confirmBtn.count()) { await confirmBtn.click(); }
+    const download = await downloadPromise;
+    const chunks = [];
+    for await (const c of await download.createReadStream()) { chunks.push(c); }
+    const contents = JSON.parse(Buffer.concat(chunks).toString("utf8"));
+    expect(contents.answers.find((a) => a.id === id).answer).toBe("");
   });
 });
 

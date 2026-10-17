@@ -19,8 +19,7 @@ Defaults to \code{name}.}
 
 \item{open}{Whether to open the new \code{.qmd} file in your editor: RStudio,
 Positron or VS Code. Elsewhere its path is printed instead. Defaults to
-\code{TRUE} in an interactive session.
-Defaults to \code{TRUE} when interactive.}
+\code{TRUE} in an interactive session.}
 }
 \value{
 The path to the created \code{.qmd} file, invisibly.

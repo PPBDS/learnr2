@@ -116,7 +116,9 @@ test_that("every bundled tutorial passes check_tutorial() and renders with Quart
   for (i in seq_len(nrow(tutorials))) {
     # hello-learnr2 is a feature tour: it deliberately shows the R source of
     # its widget chunks, and has no "minutes" question.
-    skip <- if (tutorials$name[i] == "hello-learnr2") c("echo", "minutes") else NULL
+    # The tour shows its widget source, has no minutes question, shows a bare
+    # code block on purpose, and talks about learnr: skip those four checks.
+    skip <- if (tutorials$name[i] == "hello-learnr2") c("echo", "minutes", "fences", "mentions") else NULL
     expect_no_error(check_tutorial(tutorials$path[i], skip = skip))
   }
 

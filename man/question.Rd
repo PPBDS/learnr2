@@ -39,10 +39,10 @@ the \code{\link[=answer]{answer()}} text(s).
 \item \code{"reflection"} -- an ungraded free-response question. After
 submitting, the reader sees the model answer (the \code{correct}
 \code{\link[=answer]{answer()}} text(s)) and their own response is locked. If no \code{answer()}
-is marked \code{correct} -- including passing none at all, e.g. for a
-genuinely open-ended prompt like "how many minutes did this take?"
-with no right answer to demonstrate -- nothing is revealed; the
-reader's response is still saved and locked exactly the same.
+is marked \code{correct} -- including passing none at all, as for a
+"paste the command and its output" question with no model answer to
+show -- nothing is revealed; the reader's response is still saved and
+locked exactly the same.
 \item \code{"reflection_editable"} -- like \code{"reflection"}, but a submitted
 response can be reopened. Submit locks it behind an "Edit" button;
 Edit reopens it, with a note that the change isn't saved until the
@@ -117,9 +117,10 @@ submit a \code{"text"}, \code{"reflection"}, or \code{"reflection_editable"} ans
 \code{"none"} (the default) accepts anything. \code{"integer"} requires the typed
 response to be a whole number (optionally signed, e.g. \code{-3}) -- useful
 for a question like "how many minutes did this take?" where any honest
-number is fine, but free-form prose is not; see the \code{"reflection"}
-example below. Ignored (forced to \code{"none"}) for \code{"single"}/\code{"multiple"}
-questions.}
+number is fine, but free-form prose is not; see the
+\code{"reflection_editable"} example below. A pasted image (\code{allow_image})
+is not validated. Ignored (forced to \code{"none"}) for
+\code{"single"}/\code{"multiple"} questions.}
 }
 \value{
 A \code{learnr2_question} object. Printed as an interactive HTML

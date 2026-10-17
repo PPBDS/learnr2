@@ -1,5 +1,6 @@
 # Covers R/check_tutorial.R: check_tutorial(), parse_tutorial(),
-# parse_chunks(), webr_packages_used(), and every entry of tutorial_checks.
+# parse_chunks(), parse_blocks(), unprefixed_calls(), webr_packages_used(),
+# and every entry of tutorial_checks.
 
 # A tutorial that passes every check, assembled from the same pieces the
 # create_tutorial() template and the bundled tutorials use.
@@ -104,7 +105,7 @@ test_that("a well-formed tutorial passes every check and returns a zero-row fram
   res <- withVisible(check_tutorial(f))
   expect_false(res$visible)
   expect_s3_class(res$value, "data.frame")
-  expect_named(res$value, c("path", "check", "message"))
+  expect_named(res$value, c("path", "check", "severity", "message"))
   expect_identical(nrow(res$value), 0L)
   # The create_tutorial() template must pass too, or every new tutorial starts red.
   tpl <- create_tutorial("fresh", dir = withr::local_tempdir(), open = FALSE)
@@ -321,4 +322,114 @@ test_that("the ordering check accepts a number and flags anything else", {
   expect_match(fn(list(yaml = list(learnr2 = list(ordering = "first")))), "single number")
   expect_match(fn(list(yaml = list(learnr2 = list(ordering = c(1, 2))))), "single number")
   expect_match(fn(list(yaml = list(learnr2 = "x"))), "mapping")
+})
+
+# ---- checks added 2026-10 ------------------------------------------------
+
+test_that("prefix check flags learnr2 functions called without learnr2::", {
+  bare <- replacing('learnr2::question\\("Q\\?", learnr2::answer', 'question("Q?", answer')
+  res <- check_tutorial(write_qmd(bare), error = FALSE)
+  expect_identical(unique(res$check), "prefix")
+  expect_match(res$message, "vectors-5.*`learnr2::question\\(\\)`, `learnr2::answer\\(\\)`")
+  # ...and the echo rule still sees the unprefixed widget chunk.
+  bare_no_echo <- bare[!grepl("^#\\| echo: false", bare) | !grepl("vectors-5", c("", bare[-1]))]
+  expect_true("echo" %in% check_tutorial(write_qmd(without("^#\\| echo: false", bare)), error = FALSE)$check)
+  # A comment mentioning question( is not a call.
+  commented <- c(good_lines, "", "```{r}", "#| label: your-answers-3", "# see question() above", "```")
+  expect_false("prefix" %in% check_tutorial(write_qmd(commented), error = FALSE)$check)
+})
+
+test_that("options check allows one tutorial_options() chunk and flags a second", {
+  one <- c(good_lines, "", "```{r}", "#| label: your-answers-3", "#| echo: false",
+           "learnr2::tutorial_options(allow_skip = TRUE)", "```")
+  expect_identical(nrow(check_tutorial(write_qmd(one), error = FALSE)), 0L)
+  two <- c(one, "", "```{r}", "#| label: your-answers-4", "#| echo: false",
+           "learnr2::tutorial_options(require_submission = FALSE)", "```")
+  res <- check_tutorial(write_qmd(two), error = FALSE)
+  expect_identical(res$check, "options")
+  expect_match(res$message, "called 2 times")
+})
+
+test_that("divs check ties .hint/.solution divs to real exercises and keeps graded solutions in cells", {
+  ok <- c(good_lines, "", '::: { .hint exercise="ex_sum" }', "Use sum().", ":::")
+  expect_identical(nrow(check_tutorial(write_qmd(ok), error = FALSE)), 0L)
+
+  orphan <- c(good_lines, "", '::: { .hint exercise="ex_nope" }', "Hint.", ":::")
+  res <- check_tutorial(write_qmd(orphan), error = FALSE)
+  expect_identical(res$check, "divs")
+  expect_match(res$message, "ex_nope.*no `\\{webr\\}` cell defines")
+
+  # ex_sum is graded (check: true), so a .solution div is wrong for it.
+  graded <- c(good_lines, "", '::: { .solution exercise="ex_sum" }', "```r", "sum(1:3)", "```", ":::")
+  res <- check_tutorial(write_qmd(graded), error = FALSE)
+  expect_true(any(res$check == "divs" & grepl("graded", res$message)))
+
+  noid <- c(good_lines, "", "::: { .hint }", "Hint.", ":::")
+  expect_match(check_tutorial(write_qmd(noid), error = FALSE)$message, "no `exercise=")
+})
+
+test_that("labels check flags inline chunk options and the reserved progress label", {
+  inline <- replacing("^```\\{r\\}$", "```{r vectors-9, echo=FALSE}", good_lines)
+  res <- check_tutorial(write_qmd(inline), error = FALSE)
+  expect_true(any(res$check == "labels" & grepl("options inside `\\{r vectors-9, echo=FALSE\\}`", res$message)))
+
+  reserved <- replacing("^#\\| label: vectors-5$", "#| label: progressive-sections", good_lines)
+  res <- check_tutorial(write_qmd(reserved), error = FALSE)
+  expect_true(any(res$check == "labels" & grepl("reserved", res$message)))
+})
+
+test_that("fences is a warning-level check: bare code blocks are counted and listed", {
+  bare <- c(good_lines, "", "```", "ls -a", "```", "", "````", "codespace $ pwd", "````",
+            "", "```bash", "ls", "```", "", "```{.output}", "x", "```")
+  res <- check_tutorial(write_qmd(bare), error = FALSE)
+  expect_identical(res$check, "fences")
+  expect_identical(res$severity, "warning")
+  expect_match(res$message, "^2 code block\\(s\\) with no language \\(lines")
+  # Reported as a warning, not an error, when error = TRUE.
+  expect_warning(expect_no_error(check_tutorial(write_qmd(bare))), "style problem")
+  # A ```{r} line inside a {verbatim} block is content, not a bare fence.
+  verb <- c(good_lines, "", "````{verbatim}", "```{r}", "1 + 1", "```", "````")
+  expect_identical(nrow(check_tutorial(write_qmd(verb), error = FALSE)), 0L)
+})
+
+test_that("mentions is a warning-level check on prose only", {
+  prose <- c(good_lines, "", "This used to be a tutorial.helpers tutorial built on learnr.")
+  res <- check_tutorial(write_qmd(prose), error = FALSE)
+  expect_identical(res$check, "mentions")
+  expect_identical(res$severity, "warning")
+  expect_match(res$message, "line ", fixed = TRUE)
+  # Inside a code block (a quoted Dockerfile, say) or an HTML comment is fine,
+  # and "learnr2" is not "learnr".
+  quoted <- c(good_lines, "", "```bash", "R -e 'install.packages(\"learnr\")'", "```",
+              "<!-- ported from tutorial.helpers -->", "learnr2 is the package.")
+  expect_identical(nrow(check_tutorial(write_qmd(quoted), error = FALSE)), 0L)
+})
+
+test_that("yaml is a warning-level check for classic learnr keys and a document-wide echo", {
+  old <- replacing("^toc: true$", "toc: true\noutput:\n  learnr::tutorial:\n    allow_skip: yes\nruntime: shiny_prerendered", good_lines)
+  res <- check_tutorial(write_qmd(old), error = FALSE)
+  expect_identical(unique(res$check), "yaml")
+  expect_match(res$message, "`output:`, `runtime:`")
+  echo <- replacing("^toc: true$", "toc: true\nexecute:\n  echo: false", good_lines)
+  expect_match(check_tutorial(write_qmd(echo), error = FALSE)$message, "execute: echo: false")
+})
+
+test_that("error = TRUE stops on error-level problems after warning about style ones", {
+  both <- c(without("^#\\| persist: true"), "", "```", "ls", "```")
+  expect_warning(expect_error(check_tutorial(write_qmd(both)), "1 problem\\(s\\) found"), "1 style problem")
+})
+
+test_that("parse_blocks() records every fenced block and which lines are inside one", {
+  lines <- c("text", "```bash", "ls", "```", "more", "````{verbatim}", "```{r}", "x", "```", "````", "end")
+  b <- learnr2:::parse_blocks(lines)
+  expect_length(b$blocks, 2)
+  expect_identical(vapply(b$blocks, function(x) x$info, character(1)), c("bash", "{verbatim}"))
+  expect_identical(vapply(b$blocks, function(x) x$line, integer(1)), c(2L, 6L))
+  expect_identical(which(!b$in_block), c(1L, 5L, 11L))
+})
+
+test_that("unprefixed_calls() finds bare learnr2 calls and ignores prefixed ones", {
+  expect_identical(learnr2:::unprefixed_calls("learnr2::question(\"a\", answer(\"b\"))"), "answer")
+  expect_identical(learnr2:::unprefixed_calls("my_question(1)"), character(0))
+  expect_identical(learnr2:::unprefixed_calls("learnr2::quiz()"), character(0))
 })

@@ -452,6 +452,30 @@ const PAUSES_BLOCKS = [
     ["summary", "Summary"]
   ])
 ];
+// An allow_image reflection under the default submission gate, for the
+// "Edit Answer reopens -> Continue re-locks" regression test.
+FIXTURES["progressive-sections-gated-image"] = [
+  sectionBlock("topic-one", 2, "Topic one", "<p>Topic intro.</p>\n", [
+    sectionBlock("exercise-1", 3, "Exercise 1", "<p>Paste it.</p>\n" +
+      questionBlock(question({ id: "topic-one-1", type: "reflection", text: "Paste a screenshot.", allowImage: true, editLabel: "Edit Answer" }))),
+    sectionBlock("exercise-2", 3, "Exercise 2", "<p>Next.</p>\n")
+  ])
+];
+
+// allow_image together with validate = "integer": the image must be
+// accepted without the (empty, hidden) text box being validated.
+FIXTURES["reflection-image-integer"] = [
+  questionBlock(question({ id: "reflection-image-integer", type: "reflection", text: "Minutes, or a screenshot.", allowImage: true, validate: "integer" }))
+];
+
+// One widget with an undecodable payload, followed by a good one: the bad
+// widget must not stop the good one from rendering.
+FIXTURES["broken-payload"] = [
+  '<div class="learnr2-question" data-learnr2-question="not*base64*at*all"><noscript></noscript></div>\n',
+  questionBlock(question({ id: "after-broken", text: "Still here?", type: "single",
+    answers: [answer("Yes", true), answer("No")] }))
+];
+
 FIXTURES["links"] = [
   '<p><a id="ext" href="https://example.com/">external</a>' +
   ' <a id="rel" href="other-page.html">same site</a>' +

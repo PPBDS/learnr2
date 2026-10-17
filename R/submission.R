@@ -131,7 +131,8 @@ print.learnr2_info <- function(x, ...) {
 #' the widget's (or exercise's) stable id. A question never submitted has
 #' `answer: null`; a choice question's `answer` is an array of the picked
 #' options; an image-paste reflection's `answer` is the pasted screenshot
-#' as a PNG data-URL string.
+#' as a data-URL string (WebP, or JPEG where the browser can't write
+#' WebP; see [question()]'s `allow_image`).
 #'
 #' A `{webr}` exercise appears only under the condition quarto-live itself
 #' requires to keep a record of the reader's code at all: `#| persist:
@@ -330,7 +331,7 @@ encode_base36 <- function(n) {
 }
 
 # POSIXct/numeric -> time code. Mirrors encodeDownloadTime() in quiz.js;
-# used by tests and the roxygen example.
+# used by the tests.
 encode_submission_time <- function(when) {
   encode_base36(floor(as.numeric(when)) * .time_mul + .time_add)
 }

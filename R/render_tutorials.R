@@ -116,7 +116,7 @@ resolve_tutorial_paths <- function(paths) {
   vapply(paths, function(p) {
     if (fs::is_dir(p)) {
       doc <- tutorial_doc(p)
-      if (is.na(doc) || !identical(fs::path_ext(doc), "qmd")) {
+      if (is.na(doc)) {
         stop("No .qmd tutorial found in directory ", p, ".", call. = FALSE)
       }
       return(as.character(fs::path_abs(doc)))

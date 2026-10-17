@@ -15,11 +15,13 @@ e.g. \code{"minutes"} for a tutorial that deliberately has no "how many
 minutes" question.}
 
 \item{error}{If \code{TRUE} (the default), stop with an error listing every
-problem found. If \code{FALSE}, just return them.}
+error-level problem found, after reporting any warning-level ones as
+a warning. If \code{FALSE}, just return them all.}
 }
 \value{
-A data frame of problems with columns \code{path}, \code{check}, and
-\code{message}, invisibly. It has zero rows when every check passed.
+A data frame of problems with columns \code{path}, \code{check},
+\code{severity} (\code{"error"} or \code{"warning"}) and \code{message}, invisibly. It has
+zero rows when every check passed.
 }
 \description{
 Static checks on a tutorial's \code{.qmd} source for the mistakes that look
@@ -68,6 +70,32 @@ fails with "No solution code was found".
 \code{library()}, \code{require()}, or \verb{pkg::}) is listed under \verb{webr: packages:}
 in the YAML header, the only place WebR learns what to install.
 \code{gradethis} is exempt, since the \verb{_gradethis.qmd} include provides it.
+\item \code{prefix} -- every learnr2 function in an \code{{r}} chunk is called with
+its \verb{learnr2::} prefix. A tutorial never attaches the package, so a
+bare \code{question()} fails at render time.
+\item \code{options} -- \code{\link[=tutorial_options]{tutorial_options()}} is called at most once.
+\item \code{divs} -- every \code{.hint} and \code{.solution} fenced div names an
+\verb{exercise=} that some \code{{webr}} cell defines, and no graded exercise
+(one with a \code{check: true} cell) has a \code{.solution} div, which the
+grader cannot read.
+}
+
+Three further checks report \emph{warnings} rather than errors: with
+\code{error = TRUE} they are shown as one warning and do not stop. They cover
+house style that a tutorial can violate and still work:
+\itemize{
+\item \code{fences} -- every fenced code block names a language (\verb{```bash},
+\verb{```r}) or is marked \verb{```\{.output\}}. A bare \verb{```}
+block renders as plain text with no way to tell a command from its
+output. See the "Code, commands and output" section of
+\code{vignette("translating")}.
+\item \code{mentions} -- the prose does not mention 'learnr' or
+'tutorial.helpers'. Students should never hear of either. Text inside
+a code block is not checked, since a quoted file may well name them.
+\item \code{yaml} -- the YAML header has none of the classic learnr keys
+(\code{output}, \code{runtime}, \code{tutorial}, \code{progressive}, \code{allow_skip}) and no
+document-wide \code{execute: echo: false}, which is not known to be safe
+for \code{{webr}} cells.
 }
 }
 

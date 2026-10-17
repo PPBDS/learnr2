@@ -37,7 +37,8 @@ every \code{{webr}} code exercise, each as a \verb{\{ id, answer \}} pair keyed 
 the widget's (or exercise's) stable id. A question never submitted has
 \code{answer: null}; a choice question's \code{answer} is an array of the picked
 options; an image-paste reflection's \code{answer} is the pasted screenshot
-as a PNG data-URL string.
+as a data-URL string (WebP, or JPEG where the browser can't write
+WebP; see \code{\link[=question]{question()}}'s \code{allow_image}).
 
 A \code{{webr}} exercise appears only under the condition quarto-live itself
 requires to keep a record of the reader's code at all: \verb{#| persist: true} (already the convention every bundled tutorial follows). An

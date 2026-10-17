@@ -15,7 +15,14 @@ inst/tutorials/*/*.html
 inst/tutorials/*/*_files
 inst/tutorials/*/*.knit.md
 
+# pkgdown site: built and deployed by .github/workflows/pkgdown.yaml, never committed
+docs/
+
 # Playwright
 tests/js/node_modules
 tests/js/test-results
 tests/js/playwright-report
+
+# testthat failure snapshots from local runs
+tests/testthat/_problems
+tests/testthat/testthat-problems.rds
