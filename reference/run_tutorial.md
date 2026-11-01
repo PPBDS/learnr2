@@ -5,8 +5,7 @@ into a per-user cache – or reuses that render, if nothing has changed –
 and, when `open` is `TRUE`, serves it to a browser. learnr2 runs only
 its own Quarto (`.qmd`) tutorials and does not depend on 'learnr'. Asked
 for a classic 'learnr' tutorial (an `.Rmd`), it stops and says to run
-that one with
-[`learnr::run_tutorial()`](https://pkgs.rstudio.com/learnr/reference/run_tutorial.html).
+that one with `learnr::run_tutorial()`.
 
 ## Usage
 
@@ -55,12 +54,11 @@ run_tutorial(
   Whether to serve the tutorial and open it in a browser. Defaults to
   `TRUE` when interactive. When `TRUE`, this call blocks (like
   [`httpuv::runStaticServer()`](https://rstudio.github.io/httpuv/reference/runStaticServer.html)
-  or [`shiny::runApp()`](https://rdrr.io/pkg/shiny/man/runApp.html))
-  until you interrupt it (Ctrl+C, or the console's Stop button) – see
-  the sections below for why. When `FALSE`, the tutorial is rendered (or
-  found in the cache) and its path returned without serving or blocking.
-  Note that under `Rscript` the default is `FALSE`, so pass
-  `open = TRUE` explicitly there.
+  or `shiny::runApp()`) until you interrupt it (Ctrl+C, or the console's
+  Stop button) – see the sections below for why. When `FALSE`, the
+  tutorial is rendered (or found in the cache) and its path returned
+  without serving or blocking. Note that under `Rscript` the default is
+  `FALSE`, so pass `open = TRUE` explicitly there.
 
 - refresh:
 

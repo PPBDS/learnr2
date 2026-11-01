@@ -407,12 +407,14 @@ goes, since it no longer applies. Keep the source’s own answer, if it
 had one, as the answer shown after Continue: a screenshot of the
 expected page, or our answer chunk drawing the expected plot.
 
-The first screenshot question a student meets should say how to take a
-screenshot and how to paste it: `Cmd + Ctrl + Shift + 4` on a Mac (the
-plain `Cmd + Shift + 4` saves a file instead of copying),
-`Win + Shift + S` on Windows, then click in the answer box and press
-`Ctrl + V` (`Cmd + V` on a Mac). Later ones can just ask for the
-screenshot.
+How to take a screenshot is taught once, in a student’s first tutorials
+(in our curriculum, the Orientation, Workflow and Code tutorials of
+`vscode.tutorials`): `Cmd + Ctrl + Shift + 4` on a Mac (the plain
+`Cmd + Shift + 4` saves a file instead of copying), `Win + Shift + S` on
+Windows, `Ctrl + Shift + Show windows` on a Chromebook, then click in
+the answer box and press `Ctrl + V` (`Cmd + V` on a Mac). Every later
+screenshot question, in any tutorial, just asks for the screenshot. Do
+not repeat or paraphrase the key combinations.
 
 Ask for one specific screenshot, never a hedged choice. “Paste a
 screenshot of your GitHub dashboard” works. “Paste a screenshot showing
@@ -726,10 +728,8 @@ treats the `.qmd` as data and ignores it.
 
 Classic tooling, in turn, only ever looks for `.Rmd`:
 
-- [`learnr::available_tutorials()`](https://pkgs.rstudio.com/learnr/reference/available_tutorials.html)
-  doesn’t list a directory holding only a `.qmd`, so
-  [`learnr::run_tutorial()`](https://pkgs.rstudio.com/learnr/reference/run_tutorial.html)
-  can’t launch it.
+- `learnr::available_tutorials()` doesn’t list a directory holding only
+  a `.qmd`, so `learnr::run_tutorial()` can’t launch it.
 - `tutorial.helpers::return_tutorial_paths()` keeps only `.Rmd` files,
   so a host package whose tests render tutorials through it neither
   renders nor fails on the `.qmd`. It simply goes untested.

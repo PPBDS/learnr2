@@ -79,14 +79,12 @@ input in backticks, function names with `()`, no semicolons.
   `.Rmd` is skipped by
   [`available_tutorials()`](https://ppbds.github.io/learnr2/reference/available_tutorials.md);
   [`run_tutorial()`](https://ppbds.github.io/learnr2/reference/run_tutorial.md)
-  on one stops and names
-  [`learnr::run_tutorial()`](https://pkgs.rstudio.com/learnr/reference/run_tutorial.html)
+  on one stops and names `learnr::run_tutorial()`
   (`is_classic_tutorial()`). learnr is in no DESCRIPTION field and no
   code path calls it. It used to be Suggested, with
   [`run_tutorial()`](https://ppbds.github.io/learnr2/reference/run_tutorial.md)
-  handing classic tutorials to
-  [`learnr::run_tutorial()`](https://pkgs.rstudio.com/learnr/reference/run_tutorial.html)
-  so the R Tutorials extension could run everything through learnr2.
+  handing classic tutorials to `learnr::run_tutorial()` so the R
+  Tutorials extension could run everything through learnr2.
   [`available_tutorials()`](https://ppbds.github.io/learnr2/reference/available_tutorials.md)
   keeps its `type` argument and its `format` and `package_dependencies`
   columns, now constant (`"quarto"`, `character(0)`), so tools written

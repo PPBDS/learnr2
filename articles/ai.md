@@ -325,10 +325,8 @@ revising is the point, and the minutes question at the end of every
 tutorial uses it, since there is no right answer to copy. Don’t reach
 for it otherwise.
 
-Unlike
-[`learnr::question_text()`](https://pkgs.rstudio.com/learnr/reference/question_text.html),
-where the prompt was prose above the chunk and the question itself got
-`NULL` for text, a
+Unlike `learnr::question_text()`, where the prompt was prose above the
+chunk and the question itself got `NULL` for text, a
 [`learnr2::question()`](https://ppbds.github.io/learnr2/reference/question.md)
 always carries its prompt in `text`: that string is what the student
 sees in the question box, what is saved with their answer, and what

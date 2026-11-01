@@ -29,8 +29,7 @@ available_tutorials(package = NULL, type = "all")
   Kept so existing callers keep working: `"all"` (the default) and
   `"quarto"` both list every learnr2 tutorial. learnr2 no longer handles
   classic learnr tutorials, so `"rmarkdown"` is an error; use
-  [`learnr::available_tutorials()`](https://pkgs.rstudio.com/learnr/reference/available_tutorials.html)
-  for those.
+  `learnr::available_tutorials()` for those.
 
 ## Value
 

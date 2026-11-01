@@ -76,8 +76,8 @@
   classic `.Rmd`.
   [`run_tutorial()`](https://ppbds.github.io/learnr2/reference/run_tutorial.md)
   on a classic tutorial stops with a message to run it with
-  [`learnr::run_tutorial()`](https://pkgs.rstudio.com/learnr/reference/run_tutorial.html);
-  it used to hand such tutorials to learnr itself. For compatibility,
+  `learnr::run_tutorial()`; it used to hand such tutorials to learnr
+  itself. For compatibility,
   [`available_tutorials()`](https://ppbds.github.io/learnr2/reference/available_tutorials.md)
   keeps its `type` argument (`"all"` and `"quarto"` give the same list;
   `"rmarkdown"` is now an error) and its `format` and
@@ -110,6 +110,8 @@
   download.
 
 ## learnr2 0.1.3
+
+CRAN release: 2026-10-20
 
 - [`student_info()`](https://ppbds.github.io/learnr2/reference/student_info.md)
   and `"reflection_editable"` questions now have a clear Edit/Submit
@@ -259,21 +261,19 @@
   now runs classic ‘learnr’ tutorials too. When the named tutorial’s
   `format` is `"rmarkdown"` (an `.Rmd` with
   `runtime: shiny_prerendered`), it is handed to
-  [`learnr::run_tutorial()`](https://pkgs.rstudio.com/learnr/reference/run_tutorial.html)
-  instead of being rendered with Quarto, so a tool such as the “R
-  Tutorials” VS Code extension can list and run both kinds of tutorial
-  through learnr2 alone. ‘learnr’ is only Suggested: any package that
-  bundles classic tutorials already depends on it, so it is installed
-  whenever such a tutorial is. `open = FALSE` is an error for an
-  `"rmarkdown"` tutorial, which has no render-only mode.
+  `learnr::run_tutorial()` instead of being rendered with Quarto, so a
+  tool such as the “R Tutorials” VS Code extension can list and run both
+  kinds of tutorial through learnr2 alone. ‘learnr’ is only Suggested:
+  any package that bundles classic tutorials already depends on it, so
+  it is installed whenever such a tutorial is. `open = FALSE` is an
+  error for an `"rmarkdown"` tutorial, which has no render-only mode.
 
 - [`available_tutorials()`](https://ppbds.github.io/learnr2/reference/available_tutorials.md)
   gains a `package_dependencies` list column, the R packages each
   tutorial needs installed locally: `character(0)` for a `"quarto"`
   tutorial (its exercises run in the browser via WebR), what
-  [`learnr::available_tutorials()`](https://pkgs.rstudio.com/learnr/reference/available_tutorials.html)
-  reports for an `"rmarkdown"` one, or `NA` when ‘learnr’ is not
-  installed to ask.
+  `learnr::available_tutorials()` reports for an `"rmarkdown"` one, or
+  `NA` when ‘learnr’ is not installed to ask.
 
 - New
   [`render_tutorials()`](https://ppbds.github.io/learnr2/reference/render_tutorials.md)
