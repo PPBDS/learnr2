@@ -18,10 +18,12 @@
 #' [download_answers_button()] so a reader can turn their work in.
 #'
 #' @param fields A named character vector of field key/label pairs to
-#'   collect. Defaults to name, email, and an optional ID, matching
-#'   'tutorial.helpers''s `info_section.Rmd`. A field named `"email"` is
-#'   additionally checked for an `"@"` character, regardless of whether it
-#'   is `required`.
+#'   collect, e.g. `c(name = "Full name:", section = "Section:")`. `NULL`,
+#'   the default, gives the three fields of 'tutorial.helpers''s
+#'   `info_section.Rmd` -- `name`, `email` and an optional `id` -- labelled
+#'   in the page language (see the "Language" section of [question()]).
+#'   A field named `"email"` is additionally checked for an `"@"`
+#'   character, regardless of whether it is `required`.
 #' @param required Character vector of keys (from `fields`) the reader must
 #'   fill in. Defaults to whichever of `"name"` and `"email"` are actually
 #'   present in `fields`, so ID is optional by default and supplying custom
@@ -34,27 +36,33 @@
 #'   `localStorage`. Defaults to `"student-info"`; change it if a single
 #'   tutorial embeds more than one `student_info()` form.
 #' @param submit_button Button label while the form is open for editing.
+#'   `NULL`, the default, means the page language's "Submit".
 #' @param edit_button Button label while the form is locked on a
-#'   submission. Clicking it reopens the form.
+#'   submission. Clicking it reopens the form. `NULL`, the default, means
+#'   the page language's "Edit".
 #'
 #' @return A `learnr2_info` object, printed as an interactive HTML form.
 #' @export
 #' @examples
 #' student_info()
 #' student_info(fields = c(name = "Full name:", section = "Section:"), required = "name")
-student_info <- function(fields = c(
-                            name = "Name:",
-                            email = "Email:",
-                            id = "ID (if requested by your instructor):"
-                          ),
-                          required = intersect(c("name", "email"), names(fields)),
+student_info <- function(fields = NULL,
+                          required = intersect(c("name", "email"), names(fields) %||% default_info_fields),
                           id = "student-info",
-                          submit_button = "Submit",
-                          edit_button = "Edit") {
+                          submit_button = NULL,
+                          edit_button = NULL) {
+  # The default fields carry no label: quiz.js labels them in the document's
+  # language (field_name, field_email, field_id in lang/<lang>.json).
+  default_labels <- is.null(fields)
+  if (default_labels) {
+    fields <- stats::setNames(rep(NA_character_, length(default_info_fields)), default_info_fields)
+  }
   if (!is.character(fields) || length(fields) == 0 ||
       is.null(names(fields)) || any(!nzchar(names(fields)))) {
     stop("`fields` must be a named character vector, e.g. c(name = \"Name:\").", call. = FALSE)
   }
+  check_label(submit_button, "submit_button")
+  check_label(edit_button, "edit_button")
   if (!is.character(id) || length(id) != 1 || !nzchar(id)) {
     stop("`id` must be a single non-empty string.", call. = FALSE)
   }
@@ -77,7 +85,7 @@ student_info <- function(fields = c(
     fields = lapply(seq_along(fields), function(i) {
       list(
         key = field_keys[i],
-        label = unname(fields[i]),
+        label = if (default_labels) NULL else unname(fields[i]),
         required = field_keys[i] %in% required
       )
     }),
@@ -88,13 +96,15 @@ student_info <- function(fields = c(
   structure(list(payload = payload), class = "learnr2_info")
 }
 
+default_info_fields <- c("name", "email", "id")
+
 info_div <- function(info) {
   json <- jsonlite::toJSON(info$payload, auto_unbox = TRUE, null = "null")
   encoded <- jsonlite::base64_enc(charToRaw(as.character(json)))
   htmltools::tags$div(
     class = "learnr2-info",
     `data-learnr2-info` = encoded,
-    htmltools::tags$noscript("This form requires JavaScript.")
+    htmltools::tags$noscript(tutorial_string("noscript_info"))
   )
 }
 
@@ -152,7 +162,9 @@ print.learnr2_info <- function(x, ...) {
 #'
 #' @param filename_prefix Prefix for the downloaded file's name. Defaults
 #'   to `"learnr2-answers"`.
-#' @param label Button label. Defaults to `"Download My Answers"`.
+#' @param label Button label. `NULL`, the default, means the page
+#'   language's "Download My Answers" (see the "Language" section of
+#'   [question()]).
 #'
 #' @return A `learnr2_download_button` object, printed as an interactive
 #'   HTML button.
@@ -160,13 +172,11 @@ print.learnr2_info <- function(x, ...) {
 #' @examples
 #' download_answers_button()
 download_answers_button <- function(filename_prefix = "learnr2-answers",
-                                     label = "Download My Answers") {
+                                     label = NULL) {
   if (!is.character(filename_prefix) || length(filename_prefix) != 1 || !nzchar(filename_prefix)) {
     stop("`filename_prefix` must be a single non-empty string.", call. = FALSE)
   }
-  if (!is.character(label) || length(label) != 1 || !nzchar(label)) {
-    stop("`label` must be a single non-empty string.", call. = FALSE)
-  }
+  check_label(label, "label")
 
   payload <- list(filenamePrefix = filename_prefix, label = label)
   structure(list(payload = payload), class = "learnr2_download_button")
@@ -178,7 +188,7 @@ download_button_div <- function(button) {
   htmltools::tags$div(
     class = "learnr2-download-answers",
     `data-learnr2-download` = encoded,
-    htmltools::tags$noscript("This button requires JavaScript.")
+    htmltools::tags$noscript(tutorial_string("noscript_download"))
   )
 }
 

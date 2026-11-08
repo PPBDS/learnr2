@@ -8,13 +8,13 @@ question(
   text,
   ...,
   type = c("auto", "single", "multiple", "text", "reflection", "reflection_editable"),
-  correct = "Correct!",
-  incorrect = "Incorrect.",
+  correct = NULL,
+  incorrect = NULL,
   allow_retry = FALSE,
   random_answer_order = FALSE,
-  submit_button = "Submit Answer",
-  try_again_button = "Try Again",
-  edit_button = "Edit Answer",
+  submit_button = NULL,
+  try_again_button = NULL,
+  edit_button = NULL,
   id = NULL,
   allow_image = FALSE,
   allow_text = TRUE,
@@ -52,10 +52,12 @@ count: an ordinary \code{"reflection"} stays locked for good, so a reader
 can't reopen it and paste in the model answer they were just shown.
 }}
 
-\item{correct}{Message shown when the reader answers correctly. Unused
-for \code{"reflection"}/\code{"reflection_editable"} questions.}
+\item{correct}{Message shown when the reader answers correctly. \code{NULL},
+the default, means the page language's "Correct!" (see "Language"
+below). Unused for \code{"reflection"}/\code{"reflection_editable"} questions.}
 
-\item{incorrect}{Message shown when the reader answers incorrectly. Unused
+\item{incorrect}{Message shown when the reader answers incorrectly.
+\code{NULL}, the default, means the page language's "Incorrect.". Unused
 for \code{"reflection"}/\code{"reflection_editable"} questions.}
 
 \item{allow_retry}{Allow the reader to try again after an incorrect
@@ -65,12 +67,14 @@ answer? Defaults to \code{FALSE}. Unused for
 \item{random_answer_order}{Shuffle answer order each time the page loads?
 Defaults to \code{FALSE}. Only applies to \code{"single"}/\code{"multiple"} questions.}
 
-\item{submit_button, try_again_button}{Button labels.}
+\item{submit_button, try_again_button}{Button labels. \code{NULL}, the
+default, means the page language's "Submit Answer" and "Try Again".}
 
 \item{edit_button}{Button label shown while a submitted
 \code{"reflection_editable"} question, or a \code{"reflection"} question with
 \code{allow_image = TRUE}, is locked; clicking it reopens the answer for
-editing (only the image, for the latter). Ignored otherwise.}
+editing (only the image, for the latter). \code{NULL}, the default, means
+the page language's "Edit Answer". Ignored otherwise.}
 
 \item{id}{Stable identifier for this question: it keys the reader's saved
 answer (see "Progress persistence" below) and is the \code{id} the question
@@ -133,6 +137,19 @@ client-side interactive widget --- no Shiny or R server required. Supports
 single-choice ("radio"), multiple-choice ("checkbox"), and free-text
 questions, graded entirely in the reader's browser.
 }
+\section{Language}{
+
+Every label and message learnr2 itself puts on the page -- these
+buttons, "Continue", "Start Over", the feedback and notes -- follows the
+document's language, Quarto's \verb{lang:} YAML key (\code{lang: fr}), which also
+translates Quarto's own table of contents and code-copy tooltip. A label
+passed explicitly to this function is used as given, in any language.
+learnr2 ships English and French; a \verb{lang:} with no translation falls
+back to English, and \code{check_tutorial()} says so. To reword single
+strings, or to see the list of them, see \code{\link[=tutorial_options]{tutorial_options()}}; to add a
+language, see the "Language" section of \code{vignette("translating")}.
+}
+
 \section{Progress persistence}{
 
 Once a reader submits an answer, it is saved in the browser's

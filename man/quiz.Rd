@@ -4,12 +4,14 @@
 \alias{quiz}
 \title{Group questions into a quiz}
 \usage{
-quiz(..., caption = "Quiz")
+quiz(..., caption = NULL)
 }
 \arguments{
 \item{...}{One or more \code{\link[=question]{question()}} objects.}
 
-\item{caption}{Heading shown above the questions.}
+\item{caption}{Heading shown above the questions. \code{NULL}, the default,
+means the page language's "Quiz" (see the "Language" section of
+\code{\link[=question]{question()}}).}
 }
 \value{
 A \code{learnr2_quiz} object, printed as a set of interactive widgets.

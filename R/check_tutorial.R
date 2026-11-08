@@ -53,7 +53,7 @@
 #'   (one with a `check: true` cell) has a `.solution` div, which the
 #'   grader cannot read.
 #'
-#' Three further checks report *warnings* rather than errors: with
+#' Four further checks report *warnings* rather than errors: with
 #' `error = TRUE` they are shown as one warning and do not stop. They cover
 #' house style that a tutorial can violate and still work:
 #' * `fences` -- every fenced code block names a language (```` ```bash ````,
@@ -68,6 +68,11 @@
 #'   (`output`, `runtime`, `tutorial`, `progressive`, `allow_skip`) and no
 #'   document-wide `execute: echo: false`, which is not known to be safe
 #'   for `{webr}` cells.
+#' * `language` -- if the YAML header sets `lang:`, learnr2 ships interface
+#'   strings for that language, so the Continue and Submit buttons match
+#'   the rest of the page. Without a translation they stay English. See
+#'   the "Language" section of `vignette("translating")` for how to add
+#'   one.
 #'
 #' @param paths Character vector of tutorials to check: paths to `.qmd`
 #'   files, or to directories containing them, as for [render_tutorials()].
@@ -145,7 +150,7 @@ check_tutorial <- function(paths, skip = NULL, error = TRUE) {
 }
 
 # Checks whose problems are reported as warnings, not errors (see ?check_tutorial).
-warning_checks <- c("fences", "mentions", "yaml")
+warning_checks <- c("fences", "mentions", "yaml", "language")
 
 format_problems <- function(problems) {
   paste0("  ", fs::path_file(problems$path), " [", problems$check, "] ",
@@ -554,6 +559,21 @@ tutorial_checks <- list(
                              "{webr} cells; put `#| echo: false` on each widget chunk instead."))
     }
     msgs
+  },
+
+  language = function(doc) {
+    lang <- doc$yaml$lang
+    if (is.null(lang) || !is.character(lang) || length(lang) != 1) {
+      return(character(0))
+    }
+    primary <- tolower(sub("[-_].*$", "", lang))
+    if (primary == "en" || resolve_lang(lang) != "en") {
+      return(character(0))
+    }
+    paste0("YAML `lang: ", lang, "` has no learnr2 translation (available: ",
+           paste(available_languages(), collapse = ", "),
+           "), so buttons and messages stay English; see the \"Language\" section of ",
+           "`vignette(\"translating\")` to add one.")
   }
 )
 

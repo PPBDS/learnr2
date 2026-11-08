@@ -463,6 +463,29 @@ drop, so the reader compares before they read on. Here is one now.
 You just clicked through a pause. In the `.qmd` it is three hash marks on
 a line by themselves; in the sidebar it has no entry.
 
+### Language
+
+Everything **learnr2** writes on the page --- **Continue**, **Start Over**,
+**Submit Answer**, the feedback, the notes and error messages, the default
+labels of `student_info()` --- follows the document's language, which is
+Quarto's own `lang:` key in the YAML header. A tutorial with `lang: fr`
+gets a French table of contents from Quarto and French buttons from
+**learnr2**, with the **Run Code**, **Show Hint** and **Show Solution**
+buttons of the code cells relabelled too. The prose is the author's, in
+whatever language they write it.
+
+**learnr2** ships English and French. A language it has no translation for
+falls back to English, and `check_tutorial()` warns about it. To reword
+single strings, pass `language` to `tutorial_options()`:
+
+```r
+learnr2::tutorial_options(language = list(continue = "Next"))
+```
+
+The keys are those of `system.file("extdata/quiz/lang/en.json", package =
+"learnr2")`. Translations are welcome: see the "Language" section of the
+"Translating learnr Tutorials" vignette.
+
 ### Start Over
 
 Every answer, pasted image, and exercise edit on a page is saved in the

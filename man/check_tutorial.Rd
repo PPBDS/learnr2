@@ -80,7 +80,7 @@ bare \code{question()} fails at render time.
 grader cannot read.
 }
 
-Three further checks report \emph{warnings} rather than errors: with
+Four further checks report \emph{warnings} rather than errors: with
 \code{error = TRUE} they are shown as one warning and do not stop. They cover
 house style that a tutorial can violate and still work:
 \itemize{
@@ -96,6 +96,11 @@ a code block is not checked, since a quoted file may well name them.
 (\code{output}, \code{runtime}, \code{tutorial}, \code{progressive}, \code{allow_skip}) and no
 document-wide \code{execute: echo: false}, which is not known to be safe
 for \code{{webr}} cells.
+\item \code{language} -- if the YAML header sets \verb{lang:}, learnr2 ships interface
+strings for that language, so the Continue and Submit buttons match
+the rest of the page. Without a translation they stay English. See
+the "Language" section of \code{vignette("translating")} for how to add
+one.
 }
 }
 

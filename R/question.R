@@ -66,20 +66,24 @@ print.learnr2_answer <- function(x, ...) {
 #'     Meant for answers with nothing to copy, such as a minutes-spent
 #'     count: an ordinary `"reflection"` stays locked for good, so a reader
 #'     can't reopen it and paste in the model answer they were just shown.
-#' @param correct Message shown when the reader answers correctly. Unused
-#'   for `"reflection"`/`"reflection_editable"` questions.
-#' @param incorrect Message shown when the reader answers incorrectly. Unused
+#' @param correct Message shown when the reader answers correctly. `NULL`,
+#'   the default, means the page language's "Correct!" (see "Language"
+#'   below). Unused for `"reflection"`/`"reflection_editable"` questions.
+#' @param incorrect Message shown when the reader answers incorrectly.
+#'   `NULL`, the default, means the page language's "Incorrect.". Unused
 #'   for `"reflection"`/`"reflection_editable"` questions.
 #' @param allow_retry Allow the reader to try again after an incorrect
 #'   answer? Defaults to `FALSE`. Unused for
 #'   `"reflection"`/`"reflection_editable"` questions.
 #' @param random_answer_order Shuffle answer order each time the page loads?
 #'   Defaults to `FALSE`. Only applies to `"single"`/`"multiple"` questions.
-#' @param submit_button,try_again_button Button labels.
+#' @param submit_button,try_again_button Button labels. `NULL`, the
+#'   default, means the page language's "Submit Answer" and "Try Again".
 #' @param edit_button Button label shown while a submitted
 #'   `"reflection_editable"` question, or a `"reflection"` question with
 #'   `allow_image = TRUE`, is locked; clicking it reopens the answer for
-#'   editing (only the image, for the latter). Ignored otherwise.
+#'   editing (only the image, for the latter). `NULL`, the default, means
+#'   the page language's "Edit Answer". Ignored otherwise.
 #' @param id Stable identifier for this question: it keys the reader's saved
 #'   answer (see "Progress persistence" below) and is the `id` the question
 #'   appears under in a [download_answers_button()] submission. Defaults to
@@ -130,6 +134,17 @@ print.learnr2_answer <- function(x, ...) {
 #' @return A `learnr2_question` object. Printed as an interactive HTML
 #'   widget in a rendered Quarto document; at the console it opens a browser
 #'   preview in an interactive session and prints the HTML source otherwise.
+#'
+#' @section Language:
+#' Every label and message learnr2 itself puts on the page -- these
+#' buttons, "Continue", "Start Over", the feedback and notes -- follows the
+#' document's language, Quarto's `lang:` YAML key (`lang: fr`), which also
+#' translates Quarto's own table of contents and code-copy tooltip. A label
+#' passed explicitly to this function is used as given, in any language.
+#' learnr2 ships English and French; a `lang:` with no translation falls
+#' back to English, and `check_tutorial()` says so. To reword single
+#' strings, or to see the list of them, see [tutorial_options()]; to add a
+#' language, see the "Language" section of `vignette("translating")`.
 #'
 #' @section Progress persistence:
 #' Once a reader submits an answer, it is saved in the browser's
@@ -192,13 +207,13 @@ question <- function(text,
                         "auto", "single", "multiple", "text",
                         "reflection", "reflection_editable"
                       ),
-                      correct = "Correct!",
-                      incorrect = "Incorrect.",
+                      correct = NULL,
+                      incorrect = NULL,
                       allow_retry = FALSE,
                       random_answer_order = FALSE,
-                      submit_button = "Submit Answer",
-                      try_again_button = "Try Again",
-                      edit_button = "Edit Answer",
+                      submit_button = NULL,
+                      try_again_button = NULL,
+                      edit_button = NULL,
                       id = NULL,
                       allow_image = FALSE,
                       allow_text = TRUE,
@@ -213,6 +228,10 @@ question <- function(text,
 
   if (missing(text) || !is.character(text) || length(text) != 1) {
     stop("`text` must be a single string.", call. = FALSE)
+  }
+
+  for (arg in c("correct", "incorrect", "submit_button", "try_again_button", "edit_button")) {
+    check_label(get(arg), arg)
   }
 
   answers <- list(...)
@@ -337,7 +356,9 @@ question_id <- function(id, text) {
 #' Group questions into a quiz
 #'
 #' @param ... One or more [question()] objects.
-#' @param caption Heading shown above the questions.
+#' @param caption Heading shown above the questions. `NULL`, the default,
+#'   means the page language's "Quiz" (see the "Language" section of
+#'   [question()]).
 #'
 #' @return A `learnr2_quiz` object, printed as a set of interactive widgets.
 #' @export
@@ -350,7 +371,8 @@ question_id <- function(id, text) {
 #'     answer("22")
 #'   )
 #' )
-quiz <- function(..., caption = "Quiz") {
+quiz <- function(..., caption = NULL) {
+  check_label(caption, "caption")
   questions <- list(...)
   is_question <- vapply(questions, inherits, logical(1), "learnr2_question")
   if (length(questions) == 0 || !all(is_question)) {
@@ -359,8 +381,21 @@ quiz <- function(..., caption = "Quiz") {
   structure(list(caption = caption, questions = questions), class = "learnr2_quiz")
 }
 
+# A label argument: NULL (take the document language's default string, see
+# R/language.R) or one non-empty string.
+check_label <- function(x, name) {
+  if (!is.null(x) && (!is.character(x) || length(x) != 1 || is.na(x) || !nzchar(x))) {
+    stop("`", name, "` must be NULL or a single non-empty string.", call. = FALSE)
+  }
+  invisible(TRUE)
+}
+
 # ---- Rendering -------------------------------------------------------------
 
+# `head` carries the interface strings for the document's language (see
+# R/language.R), so they reach quiz.js before it renders anything, on any
+# page with at least one widget. htmltools keeps the first dependency of a
+# given name, and every call in one render resolves the same language.
 learnr2_dependency <- function() {
   htmltools::htmlDependency(
     name = "learnr2-quiz",
@@ -368,6 +403,7 @@ learnr2_dependency <- function() {
     src = system.file("extdata", "quiz", package = "learnr2"),
     script = "quiz.js",
     stylesheet = "quiz.css",
+    head = language_script(),
     all_files = FALSE
   )
 }
@@ -378,7 +414,7 @@ question_div <- function(question) {
   htmltools::tags$div(
     class = "learnr2-question",
     `data-learnr2-question` = encoded,
-    htmltools::tags$noscript("This quiz question requires JavaScript.")
+    htmltools::tags$noscript(tutorial_string("noscript_question"))
   )
 }
 
@@ -395,7 +431,7 @@ quiz_html.learnr2_question <- function(x) {
 quiz_html.learnr2_quiz <- function(x) {
   container <- htmltools::tags$div(
     class = "learnr2-quiz",
-    htmltools::tags$div(class = "learnr2-quiz-caption", x$caption),
+    htmltools::tags$div(class = "learnr2-quiz-caption", x$caption %||% tutorial_string("quiz")),
     lapply(x$questions, question_div)
   )
   htmltools::attachDependencies(container, learnr2_dependency())

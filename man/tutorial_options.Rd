@@ -4,7 +4,11 @@
 \alias{tutorial_options}
 \title{Set tutorial-wide options}
 \usage{
-tutorial_options(allow_skip = FALSE, require_submission = TRUE)
+tutorial_options(
+  allow_skip = FALSE,
+  require_submission = TRUE,
+  language = NULL
+)
 }
 \arguments{
 \item{allow_skip}{Logical. May the reader use a table-of-contents link to
@@ -14,6 +18,10 @@ unlock and jump to a section they have not reached yet? Default
 \item{require_submission}{Logical. Must every question and student-info
 form in a section be submitted before its "Continue" button works?
 Default \code{TRUE}.}
+
+\item{language}{\code{NULL}, or a named list or character vector of interface
+strings to override, e.g. \code{list(continue = "Next")}. See "Interface
+language" below.}
 }
 \value{
 A \code{learnr2_options} object, printed as an invisible HTML
@@ -64,11 +72,28 @@ learnr2's own \code{hello-learnr2} feature tour. \code{{webr}} code cells are no
 part of this check; they have no notion of being "submitted".
 }
 
+\section{Interface language}{
+
+Every string learnr2 puts on the page follows the document's language,
+Quarto's \verb{lang:} YAML key: \code{lang: fr} gives French "Continuer",
+"Recommencer", "Soumettre la réponse" and so on, alongside Quarto's own
+French table of contents. English is the default and the fallback for a
+language learnr2 does not ship. \code{language} rewords single strings on
+top of that, for a course that wants "Next" rather than "Continue",
+say. Its names are the keys of the string table,
+\code{system.file("extdata/quiz/lang/en.json", package = "learnr2")}; a
+string may contain the placeholders the English one does, such as
+\code{{title}} in \code{continue_to} or \code{{n}} in \code{continue_note_other}. An
+unknown key is an error. The labels of \code{\link[=question]{question()}}, \code{\link[=student_info]{student_info()}}
+and \code{\link[=download_answers_button]{download_answers_button()}} can also be set per call.
+}
+
 \section{Defaults}{
 
 \itemize{
 \item \code{allow_skip = FALSE}
 \item \code{require_submission = TRUE}
+\item \code{language = NULL}
 }
 }
 
@@ -76,4 +101,5 @@ part of this check; they have no notion of being "submitted".
 tutorial_options()
 tutorial_options(allow_skip = TRUE)
 tutorial_options(require_submission = FALSE)
+tutorial_options(language = list(continue = "Next", start_over = "Reset"))
 }

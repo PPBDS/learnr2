@@ -8,15 +8,20 @@ test_that("student_info() builds the default name/email/id fields", {
   expect_equal(info$payload$id, "learnr2-info-student-info")
   expect_length(info$payload$fields, 3)
   expect_equal(info$payload$fields[[1]]$key, "name")
-  expect_equal(info$payload$fields[[1]]$label, "Name:")
+  # Default fields have no label: quiz.js labels them in the page language.
+  expect_null(info$payload$fields[[1]]$label)
+  expect_equal(learnr2:::tutorial_string("field_name", "en"), "Name:")
 })
 
 test_that("student_info() has a Submit button label, customizable like question()'s", {
   info <- student_info()
-  expect_equal(info$payload$submitLabel, "Submit")
+  expect_null(info$payload$submitLabel)
+  expect_null(info$payload$editLabel)
 
-  custom <- student_info(submit_button = "Save Info")
+  custom <- student_info(submit_button = "Save Info", edit_button = "Change")
   expect_equal(custom$payload$submitLabel, "Save Info")
+  expect_equal(custom$payload$editLabel, "Change")
+  expect_error(student_info(submit_button = ""), "single non-empty string")
 })
 
 test_that("name and email are required by default, id is not", {
@@ -71,7 +76,7 @@ test_that("download_answers_button() has sensible defaults and can be customized
   btn <- download_answers_button()
   expect_s3_class(btn, "learnr2_download_button")
   expect_equal(btn$payload$filenamePrefix, "learnr2-answers")
-  expect_equal(btn$payload$label, "Download My Answers")
+  expect_null(btn$payload$label)
 
   btn2 <- download_answers_button(filename_prefix = "class-101", label = "Turn In")
   expect_equal(btn2$payload$filenamePrefix, "class-101")

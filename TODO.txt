@@ -1,1 +1,66 @@
-No items currently.
+## Do These
+
+Whenever a student downloads an answer JSON file, the file should list, at the top, the name of the package, the version number of the package and the name of the tutorial.
+
+## load_tutorial()
+
+Take a json answer file from a previous session.
+
+1) Identify the package and the version number and the tutorial name from the json file. Issue warning if you can't. (I guess it is OK if there is no version number, but we still need a warning.)
+
+2) Confirm that we have that package installed. Confirm that that tutorial is in that package. (Issue warning and then stop if either is not true.)
+
+3) Not sure if this step or 4) should go next. run_tutorial() to build the HTML file. (Or maybe we need to "stick in" the answers from the JSON file at the same time we build it?)
+
+4) Check that all the IDs in the JSON file correspond to IDs in the HTML. Issue a detailed warning if they do not, but continue on anyway.
+
+5) Insert any answers from the JSON file (which have a matching ID) into the HTML file. Discard any answers which do not have a matching ID.
+
+6) Open the resulting HTML file. We want this file to "look/act" just like the student had just started the tutorial from scratch and entered all those answers by hand. They can then continue to work on the tutorial, fixing any mistakes. They then download a new JSON file which they can resubmit.
+
+
+run "run_tutorial()"
+
+
+## Think about this
+
+
+We need to think about restarts and resubmissions. For example, a student finishes a tutorial and submits her answer json file. But it has a major problem. I want to reject the submission and tell her to fix things. The most common issue is that she submitted a URL which does not work.
+
+So, how does the student "restart" this tutorial. starting from just the json file, in such a way that all her answers are there?
+
+But that is only the first step. Because, before, she was not able to edit anything she had already submitted. One approach is to change some URL-type questions to be editable from the start. That seems like a good idea since, after all, there is no "right" answer for students to copy. 
+
+So, would that restart leave those questions as editable? Would the other questions be editable? Nothing wrong with that I guess. Who cares if an answer which was not editable before can be edited now. 
+
+One nice aspect of this is that, even if a student loses his copy of his submitted json file, he can always (?) just download it from Canvas and start from there.
+
+So, maybe we need a function, load_tutorial() 
+
+
+
+### Cheating concerns
+
+Do we need to worry about cheating? What prevents a student from taking his friends JSON file, loading it up, changing the name/email address, and then downloading a new JSON answer file? Won't this generate a new hash which will record the cheaters name so that, from our point of view, his submitted JSON file looks legit? 
+
+Perhaps the solution is that load_tutorial() requires that the JSPN file includes a hash. (Preventing a cheater from just deleting it.) It then reports what the hash says about whose work this is, and warns the user that they better not be cheating. It then records that hash (where?). Then, when answers are downloaded, both the old hash and a newly generated one are placed in the JSON file. We can examine them both to "confirm" that they come from the same person.
+
+Or maybe this is overkill and we don't need to worry about this sort of "by hand" cheating. The real concern is the use of an AI which can enter answers in an HTML form . . .
+
+
+### More checks
+
+We need to write some functions which check all the tutorials in a package and can be used by package authors. One that we already have "runs" all the tutorials to ensure that they work. (Or so we rely on package authors to, by hand, make a list of all the tutorials and then we process them? Would be nice if we relieved them of that. )
+
+One function should check that the all the exercise ids (is that the right term) in a single tutorial are unique. It fails if they are not.
+
+Perhaps there should be a single function, like check_tutorials() which is the only thing a package author needs to run for her testing. It first figures out all the installed tutorials. It then, for each tutorial, runs the individual tests. Right now, there are only three tests: 
+
+a) check unique ids 
+
+b) check that the tutorial records its name, package and version number in the JSON file. (So, I guess we need a function which does that which tutorials can call.)
+
+c) Check that any exercise which asks for a URL can be edited. (This is important because the most common case of student resubmissions is fixing a broken URL.) Might this be overly prescriptive? Perhaps. But, really, best practices suggest that all URL questions will require answers which are unique for that student, so we don't need to worry about them just copy/pasting our answer. This is important for the common case in which we 
+
+c) run the tutorial to confirm that it builds correctly. Obviously, there could be other tests as well.
+

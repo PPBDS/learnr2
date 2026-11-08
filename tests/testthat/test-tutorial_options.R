@@ -27,6 +27,16 @@ test_that("tutorial_options() validates allow_skip", {
   expect_error(tutorial_options(require_submission = "no"), "`require_submission` must be TRUE or FALSE")
 })
 
+test_that("tutorial_options(language = ...) carries interface-string overrides", {
+  opts <- tutorial_options(language = list(continue = "Next", start_over = "Reset"))
+  expect_equal(opts$payload$language, list(continue = "Next", start_over = "Reset"))
+  expect_equal(tutorial_options(language = c(continue = "Next"))$payload$language, list(continue = "Next"))
+  expect_null(tutorial_options()$payload$language)
+  expect_error(tutorial_options(language = "Next"), "named list")
+  expect_error(tutorial_options(language = list(continue = 1)), "single string")
+  expect_error(tutorial_options(language = list(contnue = "Next")), "no interface string named `contnue`")
+})
+
 test_that("options_div() emits a hidden element quiz.js can decode", {
   div <- learnr2:::options_div(tutorial_options(allow_skip = TRUE))
   html <- as.character(div)

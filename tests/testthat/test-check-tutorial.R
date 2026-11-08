@@ -405,6 +405,18 @@ test_that("mentions is a warning-level check on prose only", {
   expect_identical(nrow(check_tutorial(write_qmd(quoted), error = FALSE)), 0L)
 })
 
+test_that("language is a warning-level check: a `lang:` with no translation is reported", {
+  res <- check_tutorial(write_qmd(replacing("^toc: true$", "lang: xx")), error = FALSE)
+  expect_identical(res$check, "language")
+  expect_identical(res$severity, "warning")
+  expect_match(res$message, "`lang: xx` has no learnr2 translation")
+  expect_match(res$message, "available: en, fr")
+  # Shipped languages, regional variants of them, and English pass.
+  expect_equal(nrow(check_tutorial(write_qmd(replacing("^toc: true$", "lang: fr")), error = FALSE)), 0)
+  expect_equal(nrow(check_tutorial(write_qmd(replacing("^toc: true$", "lang: fr-CA")), error = FALSE)), 0)
+  expect_equal(nrow(check_tutorial(write_qmd(replacing("^toc: true$", "lang: en-GB")), error = FALSE)), 0)
+})
+
 test_that("yaml is a warning-level check for classic learnr keys and a document-wide echo", {
   old <- replacing("^toc: true$", "toc: true\noutput:\n  learnr::tutorial:\n    allow_skip: yes\nruntime: shiny_prerendered", good_lines)
   res <- check_tutorial(write_qmd(old), error = FALSE)

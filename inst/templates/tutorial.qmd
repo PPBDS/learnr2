@@ -3,6 +3,8 @@ title: "{{title}}"
 format: live-html
 engine: knitr
 toc: true
+# Buttons and messages follow the document language, e.g.
+# lang: fr
 # List every package any {webr} cell uses, e.g.
 # webr:
 #   packages:

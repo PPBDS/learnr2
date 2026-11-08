@@ -92,6 +92,29 @@ function optionsBlock(payload) {
   return '<div class="learnr2-options" data-learnr2-options="' + encode(payload) + '" hidden></div>\n';
 }
 
+// Stands in for what learnr2_dependency() puts in <head> for a tutorial
+// whose YAML sets `lang:` (R/language.R): the resolved string table as a
+// global, from the real shipped translation file.
+function stringsBlock(lang) {
+  const strings = require("../../inst/extdata/quiz/lang/" + lang + ".json");
+  return "<script>window.learnr2Strings = " + JSON.stringify(strings) + ";</script>\n";
+}
+
+// A quarto-live exercise button as its bundle renders it (renderButton()
+// in live-runtime.js): an <a role="button"> holding an icon and a
+// <span class="btn-label-exercise-editor"> with the English text. The
+// real buttons appear only once WebR has initialised the editor, so the
+// fixture adds one after a delay too.
+function liveButtonScript(text, delayMs) {
+  return (
+    "<script>setTimeout(function () {" +
+    'var a = document.createElement("a"); a.className = "btn btn-exercise-editor"; a.setAttribute("role", "button"); a.setAttribute("aria-label", ' + JSON.stringify(text) + ");" +
+    'var s = document.createElement("span"); s.className = "btn-label-exercise-editor"; s.innerText = ' + JSON.stringify(text) + ";" +
+    'a.appendChild(s); document.getElementById("live-cell").appendChild(a);' +
+    "}, " + delayMs + ");</script>\n"
+  );
+}
+
 // Stands in for a real quarto-live {webr} exercise cell's own static
 // markup -- a <script type="webr-<blockId>-contents"> holding base64-
 // encoded {attr, code} JSON. Confirmed against the real bundled
@@ -512,6 +535,43 @@ FIXTURES["progressive-sections-gated"] = PAUSES_BLOCKS;
 // on it: TOC links unlock and jump instead of being dimmed.
 FIXTURES["progressive-sections-skip"] = FIXTURES["progressive-sections"].concat([
   optionsBlock(tutorialOptions({ allowSkip: true }))
+]);
+
+// A French tutorial: `lang: fr` in the YAML, every widget with its default
+// (null) labels, and a quarto-live button arriving late.
+FIXTURES["french"] = [
+  stringsBlock("fr"),
+  sectionBlock("introduction", 2, "Introduction", "<p>Bonjour.</p>\n" +
+    infoBlock(info({
+      fields: [
+        { key: "name", label: null, required: true },
+        { key: "email", label: null, required: true },
+        { key: "section", label: "Groupe :", required: false }
+      ],
+      submitLabel: null,
+      editLabel: null
+    }))),
+  sectionBlock("exercice-1", 2, "Exercice 1", "<p>Choisissez.</p>\n" +
+    questionBlock(question({
+      id: "fr-choice", text: "2 + 2 ?", type: "single",
+      answers: [answer("4", true), answer("5", false)],
+      correctMessage: null, incorrectMessage: null, submitLabel: null, tryAgainLabel: null, editLabel: null,
+      allowRetry: true
+    })) +
+    questionBlock(question({
+      id: "fr-reflection", text: "Expliquez.", type: "reflection",
+      answers: [answer("Parce que.", true)],
+      submitLabel: null, editLabel: null
+    })) +
+    '<div id="live-cell"></div>\n' + liveButtonScript("Run Code", 300)),
+  sectionBlock("fin", 2, "Fin", "<p>Fin.</p>\n" + downloadBlock(downloadButton({ label: null }))),
+  tocScript([["introduction", "Introduction"], ["exercice-1", "Exercice 1"], ["fin", "Fin"]])
+];
+
+// The same page with learnr2::tutorial_options(language = ...) overriding
+// one key on top of the French table.
+FIXTURES["french-override"] = FIXTURES["french"].concat([
+  optionsBlock(tutorialOptions({ language: { continue_to: "Suite : {title}" } }))
 ]);
 
 // Any fixture is also available as "<name>-no-toc": the same blocks on a

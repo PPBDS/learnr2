@@ -1,5 +1,7 @@
 "use strict";
 const { test, expect } = require("@playwright/test");
+const fs = require("fs");
+const path = require("path");
 
 const TINY_PNG_BASE64 =
   "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=";
@@ -1662,5 +1664,103 @@ test.describe("links", () => {
     for (const id of ["hash", "mail", "dl"]) {
       await expect(page.locator("#" + id)).not.toHaveAttribute("target", "_blank");
     }
+  });
+});
+
+test.describe("interface language", () => {
+  test("quiz.js's built-in English table matches lang/en.json key for key", async () => {
+    const quizDir = path.join(__dirname, "..", "..", "inst", "extdata", "quiz");
+    const source = fs.readFileSync(path.join(quizDir, "quiz.js"), "utf8");
+    const match = source.match(/var STRINGS_EN = (\{[\s\S]*?\n  \});/);
+    expect(match).not.toBeNull();
+    const builtIn = JSON.parse(match[1]);
+    const file = JSON.parse(fs.readFileSync(path.join(quizDir, "lang", "en.json"), "utf8"));
+    expect(builtIn).toEqual(file);
+    // The French file translates every key and keeps every placeholder.
+    const fr = JSON.parse(fs.readFileSync(path.join(quizDir, "lang", "fr.json"), "utf8"));
+    expect(Object.keys(fr).sort()).toEqual(Object.keys(file).sort());
+    for (const key of Object.keys(file)) {
+      for (const holder of file[key].match(/\{\w+\}/g) || []) {
+        expect(fr[key]).toContain(holder);
+      }
+    }
+  });
+
+  test("a lang: fr page renders every learnr2 control in French", async ({ page }) => {
+    await page.goto("/french");
+    await page.evaluate(() => localStorage.clear());
+    await page.reload();
+
+    await expect(page.locator(".learnr2-start-over")).toHaveText("Recommencer");
+    await expect(page.locator(".learnr2-continue")).toHaveText("Continuer : Exercice 1");
+
+    // Default field labels come from the table; a custom one is kept.
+    const labels = page.locator(".learnr2-info-label");
+    await expect(labels.nth(0)).toHaveText("Nom : *");
+    await expect(labels.nth(1)).toHaveText("Adresse e-mail : *");
+    await expect(labels.nth(2)).toHaveText("Groupe :");
+    const infoSubmit = page.locator(".learnr2-info .learnr2-submit");
+    await expect(infoSubmit).toHaveText("Soumettre");
+    await infoSubmit.click();
+    await expect(page.locator(".learnr2-info .learnr2-info-error").first()).toHaveText("Ce champ est obligatoire.");
+    await page.locator("#learnr2-info-student-info-name").fill("Léo");
+    await page.locator("#learnr2-info-student-info-email").fill("leo@example.org");
+    await infoSubmit.click();
+    await expect(page.locator(".learnr2-info .learnr2-feedback")).toHaveText("C'est bon.");
+    await expect(infoSubmit).toHaveText("Modifier");
+
+    // The gate note counts in French, singular and plural.
+    await page.locator("#introduction .learnr2-continue").click();
+    const note = page.locator("#exercice-1 .learnr2-continue-note");
+    await expect(note).toHaveText("Soumettez les 2 réponses ci-dessus pour continuer.");
+
+    const choice = page.locator(".learnr2-question").nth(0);
+    await expect(choice.locator(".learnr2-submit")).toHaveText("Soumettre la réponse");
+    await choice.locator(".learnr2-submit").click();
+    await expect(choice.locator(".learnr2-feedback")).toHaveText("Veuillez sélectionner une réponse.");
+    await choice.locator("input").nth(1).check();
+    await choice.locator(".learnr2-submit").click();
+    await expect(choice.locator(".learnr2-feedback")).toHaveText("Incorrect.");
+    await expect(choice.locator(".learnr2-try-again")).toHaveText("Réessayer");
+    await choice.locator(".learnr2-try-again").click();
+    await choice.locator("input").nth(0).check();
+    await choice.locator(".learnr2-submit").click();
+    await expect(choice.locator(".learnr2-feedback")).toHaveText("Correct !");
+    await expect(note).toHaveText("Soumettez votre réponse ci-dessus pour continuer.");
+
+    const reflection = page.locator(".learnr2-question").nth(1);
+    await reflection.locator(".learnr2-text-input").fill("Voilà.");
+    await reflection.locator(".learnr2-submit").click();
+    await expect(reflection.locator(".learnr2-model-answer-label")).toHaveText("Réponse modèle :");
+
+    // quarto-live's late-arriving button is relabelled, text and aria-label.
+    const live = page.locator("#live-cell .btn-exercise-editor");
+    await expect(live.locator("span")).toHaveText("Exécuter le code");
+    await expect(live).toHaveAttribute("aria-label", "Exécuter le code");
+
+    await page.locator("#exercice-1 .learnr2-continue").click();
+    await expect(page.locator(".learnr2-download-answers-btn")).toHaveText("Télécharger mes réponses");
+
+    // Start Over's dialog, in French, with Cancel.
+    await page.locator(".learnr2-start-over").click();
+    await expect(page.locator(".learnr2-confirm-dialog-message")).toContainText("Recommencer tout le tutoriel");
+    await expect(page.locator(".learnr2-confirm-dialog-cancel")).toHaveText("Annuler");
+    await expect(page.locator(".learnr2-confirm-dialog-confirm")).toHaveText("Recommencer");
+    await page.locator(".learnr2-confirm-dialog-cancel").click();
+  });
+
+  test("tutorial_options(language = ...) overrides single keys on top of the page language", async ({ page }) => {
+    await page.goto("/french-override");
+    await page.evaluate(() => localStorage.clear());
+    await page.reload();
+    await expect(page.locator(".learnr2-continue")).toHaveText("Suite : Exercice 1");
+    await expect(page.locator(".learnr2-start-over")).toHaveText("Recommencer");
+  });
+
+  test("an English page is untouched: no table injected, quarto-live buttons left alone", async ({ page }) => {
+    await page.goto("/progressive-sections-gated");
+    await expect(page.locator(".learnr2-start-over")).toHaveText("Start Over");
+    const english = await page.evaluate(() => window.learnr2Strings === undefined);
+    expect(english).toBe(true);
   });
 });

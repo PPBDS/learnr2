@@ -5,20 +5,21 @@
 \title{Collect student identifying information}
 \usage{
 student_info(
-  fields = c(name = "Name:", email = "Email:", id =
-    "ID (if requested by your instructor):"),
-  required = intersect(c("name", "email"), names(fields)),
+  fields = NULL,
+  required = intersect(c("name", "email"), names(fields) \%||\% default_info_fields),
   id = "student-info",
-  submit_button = "Submit",
-  edit_button = "Edit"
+  submit_button = NULL,
+  edit_button = NULL
 )
 }
 \arguments{
 \item{fields}{A named character vector of field key/label pairs to
-collect. Defaults to name, email, and an optional ID, matching
-'tutorial.helpers''s \code{info_section.Rmd}. A field named \code{"email"} is
-additionally checked for an \code{"@"} character, regardless of whether it
-is \code{required}.}
+collect, e.g. \code{c(name = "Full name:", section = "Section:")}. \code{NULL},
+the default, gives the three fields of 'tutorial.helpers''s
+\code{info_section.Rmd} -- \code{name}, \code{email} and an optional \code{id} -- labelled
+in the page language (see the "Language" section of \code{\link[=question]{question()}}).
+A field named \code{"email"} is additionally checked for an \code{"@"}
+character, regardless of whether it is \code{required}.}
 
 \item{required}{Character vector of keys (from \code{fields}) the reader must
 fill in. Defaults to whichever of \code{"name"} and \code{"email"} are actually
@@ -33,10 +34,12 @@ is an error.}
 \code{localStorage}. Defaults to \code{"student-info"}; change it if a single
 tutorial embeds more than one \code{student_info()} form.}
 
-\item{submit_button}{Button label while the form is open for editing.}
+\item{submit_button}{Button label while the form is open for editing.
+\code{NULL}, the default, means the page language's "Submit".}
 
 \item{edit_button}{Button label while the form is locked on a
-submission. Clicking it reopens the form.}
+submission. Clicking it reopens the form. \code{NULL}, the default, means
+the page language's "Edit".}
 }
 \value{
 A \code{learnr2_info} object, printed as an interactive HTML form.

@@ -4,16 +4,15 @@
 \alias{download_answers_button}
 \title{Add a "download my answers" button}
 \usage{
-download_answers_button(
-  filename_prefix = "learnr2-answers",
-  label = "Download My Answers"
-)
+download_answers_button(filename_prefix = "learnr2-answers", label = NULL)
 }
 \arguments{
 \item{filename_prefix}{Prefix for the downloaded file's name. Defaults
 to \code{"learnr2-answers"}.}
 
-\item{label}{Button label. Defaults to \code{"Download My Answers"}.}
+\item{label}{Button label. \code{NULL}, the default, means the page
+language's "Download My Answers" (see the "Language" section of
+\code{\link[=question]{question()}}).}
 }
 \value{
 A \code{learnr2_download_button} object, printed as an interactive

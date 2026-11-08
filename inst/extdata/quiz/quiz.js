@@ -25,6 +25,106 @@
   // quarto-live's internal state to match it).
   var pageUrl = window.location.href.split("#")[0];
 
+  // ---- Interface strings -------------------------------------------------
+  // Every string the reader sees goes through t(). English is built in,
+  // below, and must match inst/extdata/quiz/lang/en.json key for key (a
+  // test in tests/js compares them). The R side resolves the document's
+  // language -- Quarto's `lang:` YAML key -- to inst/extdata/quiz/lang/
+  // <lang>.json and injects that table into <head> as window.learnr2Strings
+  // before this script runs (learnr2_dependency(), R/language.R);
+  // learnr2::tutorial_options(language = list(...)) then overrides single
+  // keys through the options div. A key missing from a translation falls
+  // back to English, one key at a time. The English table is kept as pure
+  // JSON so the parity test can read it.
+  var STRINGS_EN = {
+    "continue": "Continue",
+    "continue_to": "Continue: {title}",
+    "continue_note_one": "Submit your answer above to continue.",
+    "continue_note_other": "Submit the {n} answers above to continue.",
+    "start_over": "Start Over",
+    "start_over_confirm": "Start over this entire tutorial? Every saved answer, pasted image, and exercise on this device will be permanently cleared. This cannot be undone.",
+    "cancel": "Cancel",
+    "submit_answer": "Submit Answer",
+    "try_again": "Try Again",
+    "edit_answer": "Edit Answer",
+    "correct": "Correct!",
+    "incorrect": "Incorrect.",
+    "select_answer": "Please select an answer.",
+    "integer_required": "Please enter a whole number (e.g. 42).",
+    "model_answer": "Model answer:",
+    "quiz": "Quiz",
+    "paste_area_label": "Screenshot paste area",
+    "paste_hint": "Paste a screenshot with Ctrl+V (or Cmd+V) into the text box above, or click here and paste it directly.",
+    "paste_hint_image_only": "Click here, then paste a screenshot with Ctrl+V (or Cmd+V).",
+    "pasted_image_alt": "Your pasted screenshot",
+    "remove_image": "Remove image",
+    "paste_not_image": "Please paste an image (copy a screenshot, then press Ctrl+V here).",
+    "image_unreadable": "Could not read the pasted image. Please try again.",
+    "image_too_large": "That image is too large (max 20MB). Try a smaller screenshot.",
+    "image_required": "Paste an image before submitting.",
+    "editing_note": "Editing. Submit to save your changes.",
+    "replacing_note": "Click the image box and paste a new screenshot (Ctrl+V or Cmd+V), then Submit.",
+    "not_saved": "This could not be saved. See the warning at the top of the page.",
+    "storage_full": "Your last answer was NOT saved: this browser's storage for this site is full. Pasted screenshots take the most room. Remove one with \"Remove image\", or use Start Over on a tutorial you have already downloaded and turned in, then submit again.",
+    "storage_blocked": "This browser is blocking storage for this page, so your answers will not be kept if you leave or reload it. Download your answers before you close the page.",
+    "submit": "Submit",
+    "edit": "Edit",
+    "field_name": "Name:",
+    "field_email": "Email:",
+    "field_id": "ID (if requested by your instructor):",
+    "field_required": "This field is required.",
+    "email_invalid": "Please include an \"@\" in the email address.",
+    "info_ok": "Looks good.",
+    "info_fix": "Please fix the highlighted field(s) above.",
+    "download_answers": "Download My Answers",
+    "download_blocked": "Before downloading, please submit your student information above.",
+    "download_unanswered_one": "You haven't submitted an answer for 1 question: {list}. Download anyway?",
+    "download_unanswered_other": "You haven't submitted an answer for {n} questions: {list}. Download anyway?",
+    "download_anyway": "Download Anyway",
+    "widget_broken": "This part of the tutorial could not be displayed. Reload the page; if that doesn't help, tell your instructor.",
+    "noscript_question": "This quiz question requires JavaScript.",
+    "noscript_info": "This form requires JavaScript.",
+    "noscript_download": "This button requires JavaScript.",
+    "run_code": "Run Code",
+    "show_hint": "Show Hint",
+    "next_hint": "Next Hint",
+    "show_solution": "Show Solution"
+  };
+  var STRINGS = Object.assign({}, STRINGS_EN);
+
+  function initStrings() {
+    if (window.learnr2Strings && typeof window.learnr2Strings === "object") {
+      Object.assign(STRINGS, window.learnr2Strings);
+    }
+    var overrides = readTutorialOptions().language;
+    if (overrides && typeof overrides === "object") {
+      Object.assign(STRINGS, overrides);
+    }
+  }
+
+  // t("continue_to", { title: "Exercise 2" }): the string for `key`, with
+  // every {name} replaced from `vars`. tn() picks `key_one` or `key_other`
+  // by `n` and supplies it as {n}.
+  function t(key, vars) {
+    var text = STRINGS[key];
+    if (typeof text !== "string") {
+      text = typeof STRINGS_EN[key] === "string" ? STRINGS_EN[key] : key;
+    }
+    return text.replace(/\{(\w+)\}/g, function (match, name) {
+      return vars && Object.prototype.hasOwnProperty.call(vars, name) ? String(vars[name]) : match;
+    });
+  }
+
+  function tn(key, n, vars) {
+    return t(key + (n === 1 ? "_one" : "_other"), Object.assign({ n: n }, vars || {}));
+  }
+
+  // A payload label the R side left null (its default) takes the
+  // language's string; an explicit label, in any language, wins.
+  function labelOr(value, key) {
+    return typeof value === "string" ? value : t(key);
+  }
+
   function decodeBase64Json(value) {
     var binary = atob(value);
     var bytes = new Uint8Array(binary.length);
@@ -74,8 +174,8 @@
   // ungraded reflection question ("how many minutes did this take?").
   // `data.validate` is "none" (never blocks submission) unless the R side
   // set it explicitly, so this is a no-op for every other question.
-  var VALIDATION_MESSAGES = {
-    integer: "Please enter a whole number (e.g. 42)."
+  var VALIDATION_KEYS = {
+    integer: "integer_required"
   };
 
   function passesValidation(value, validate) {
@@ -156,12 +256,7 @@
 
   var storageWarning = null;
   function reportStorageFailure(e) {
-    var message = isQuotaError(e) ?
-      "Your last answer was NOT saved: this browser's storage for this site is full. " +
-      "Pasted screenshots take the most room. Remove one with \"Remove image\", or use " +
-      "Start Over on a tutorial you have already downloaded and turned in, then submit again." :
-      "This browser is blocking storage for this page, so your answers will not be kept " +
-      "if you leave or reload it. Download your answers before you close the page.";
+    var message = t(isQuotaError(e) ? "storage_full" : "storage_blocked");
     if (!storageWarning) {
       storageWarning = el("div", { class: "learnr2-storage-warning", role: "alert" });
       var main = document.getElementById("quarto-document-content") || document.body;
@@ -199,8 +294,8 @@
   // The Submit / Try Again pair every graded question has.
   function makeControls(data) {
     return {
-      submit: el("button", { type: "button", class: "learnr2-submit", text: data.submitLabel }),
-      tryAgain: el("button", { type: "button", class: "learnr2-try-again d-none", text: data.tryAgainLabel })
+      submit: el("button", { type: "button", class: "learnr2-submit", text: labelOr(data.submitLabel, "submit_answer") }),
+      tryAgain: el("button", { type: "button", class: "learnr2-try-again d-none", text: labelOr(data.tryAgainLabel, "try_again") })
     };
   }
 
@@ -258,7 +353,7 @@
       var allCorrect = chosen.length === totalCorrect &&
         chosen.every(function (a) { return a.correct; });
 
-      var message = allCorrect ? data.correctMessage : data.incorrectMessage;
+      var message = allCorrect ? labelOr(data.correctMessage, "correct") : labelOr(data.incorrectMessage, "incorrect");
       var extra = chosen.map(function (a) { return a.message; }).filter(Boolean);
       if (extra.length > 0) {
         message = message + " " + extra.join(" ");
@@ -274,7 +369,7 @@
     ctl.submit.addEventListener("click", function () {
       var checked = Array.prototype.slice.call(list.querySelectorAll("input:checked"));
       if (checked.length === 0) {
-        setFeedback(feedback, "incorrect", "Please select an answer.");
+        setFeedback(feedback, "incorrect", t("select_answer"));
         return;
       }
       var chosen = checked.map(function (input) {
@@ -321,7 +416,7 @@
       var match = data.answers.find(function (a) { return normalizeText(a.text) === normalized; });
       var correct = !!(match && match.correct);
 
-      var message = correct ? data.correctMessage : data.incorrectMessage;
+      var message = correct ? labelOr(data.correctMessage, "correct") : labelOr(data.incorrectMessage, "incorrect");
       if (match && match.message) {
         message = message + " " + match.message;
       }
@@ -333,7 +428,7 @@
 
     ctl.submit.addEventListener("click", function () {
       if (!passesValidation(input.value, data.validate)) {
-        setFeedback(feedback, "incorrect", VALIDATION_MESSAGES[data.validate]);
+        setFeedback(feedback, "incorrect", t(VALIDATION_KEYS[data.validate]));
         return;
       }
       var correct = applyOutcome(input.value);
@@ -446,20 +541,17 @@
     var placeholderId = "learnr2-paste-hint-" + (++pasteAreaCount);
     var wrapper = el("div", {
       class: "learnr2-image-paste", tabindex: "0", role: "textbox",
-      "aria-label": "Screenshot paste area", "aria-describedby": placeholderId
+      "aria-label": t("paste_area_label"), "aria-describedby": placeholderId
     });
     var placeholder = el("div", {
       class: "learnr2-image-paste-placeholder", id: placeholderId,
-      text: noTextBox
-        ? "Click here, then paste a screenshot with Ctrl+V (or Cmd+V)."
-        : "Paste a screenshot with Ctrl+V (or Cmd+V) into the text box " +
-          "above, or click here and paste it directly."
+      text: t(noTextBox ? "paste_hint_image_only" : "paste_hint")
     });
-    var preview = el("img", { class: "learnr2-image-paste-preview d-none", alt: "Your pasted screenshot" });
+    var preview = el("img", { class: "learnr2-image-paste-preview d-none", alt: t("pasted_image_alt") });
     var error = makeStatus("learnr2-image-paste-error");
     var remove = el(
       "button",
-      { type: "button", class: "learnr2-image-paste-remove d-none", text: "Remove image" }
+      { type: "button", class: "learnr2-image-paste-remove d-none", text: t("remove_image") }
     );
 
     var dataUrl = null;
@@ -541,7 +633,7 @@
       }
       if (!imageItem) {
         if (!silent) {
-          setError("Please paste an image (copy a screenshot, then press Ctrl+V here).");
+          setError(t("paste_not_image"));
         }
         return;
       }
@@ -549,11 +641,11 @@
 
       var file = imageItem.getAsFile();
       if (!file) {
-        setError("Could not read the pasted image. Please try again.");
+        setError(t("image_unreadable"));
         return;
       }
       if (file.size > MAX_BYTES) {
-        setError("That image is too large (max 20MB). Try a smaller screenshot.");
+        setError(t("image_too_large"));
         return;
       }
 
@@ -563,7 +655,7 @@
           setImage(dataUrl);
         },
         function () {
-          setError("Could not read the pasted image. Please try again.");
+          setError(t("image_unreadable"));
         }
       );
     }
@@ -619,7 +711,7 @@
       : el("textarea", Object.assign({ class: "learnr2-text-input learnr2-textarea", rows: "4" }, labelled));
     var reveal = el("div", { class: "learnr2-model-answer d-none" });
     var feedback = makeStatus("learnr2-feedback");
-    var submit = el("button", { type: "button", class: "learnr2-submit", text: data.submitLabel });
+    var submit = el("button", { type: "button", class: "learnr2-submit", text: labelOr(data.submitLabel, "submit_answer") });
     var answers = el("div", { class: "learnr2-answers" }, [textarea]);
     // A locked image question can still swap its screenshot: its Edit
     // button (labelled `editLabel`, like reflection_editable's) reopens only
@@ -662,7 +754,7 @@
         return;
       }
       reveal.textContent = "";
-      reveal.appendChild(el("div", { class: "learnr2-model-answer-label", text: "Model answer:" }));
+      reveal.appendChild(el("div", { class: "learnr2-model-answer-label", text: t("model_answer") }));
       modelAnswers.forEach(function (text) {
         reveal.appendChild(el("p", { text: text }));
       });
@@ -677,7 +769,7 @@
     // (widgetPending()).
     var locked = false;
     var note = makeStatus("learnr2-editing-note");
-    note.textContent = EDITING_NOTE;
+    note.textContent = t("editing_note");
 
     function setLocked(isLocked, isEditing) {
       locked = isLocked;
@@ -690,15 +782,15 @@
         imagePaste.setDisabled(isLocked);
       }
       if (editable) {
-        submit.textContent = isLocked ? data.editLabel : data.submitLabel;
+        submit.textContent = isLocked ? labelOr(data.editLabel, "edit_answer") : labelOr(data.submitLabel, "submit_answer");
       } else {
         submit.classList.toggle("d-none", isLocked);
       }
       if (replace) {
-        replace.textContent = data.editLabel;
+        replace.textContent = labelOr(data.editLabel, "edit_answer");
         replace.classList.toggle("d-none", !isLocked);
       }
-      note.textContent = replacing ? REPLACING_NOTE : EDITING_NOTE;
+      note.textContent = t(replacing ? "replacing_note" : "editing_note");
       note.classList.toggle("d-none", isLocked || !isEditing);
     }
 
@@ -726,7 +818,7 @@
         return;
       }
       if ((replacing || imageOnly) && !imagePaste.getDataUrl()) {
-        setFeedback(feedback, "incorrect", "Paste an image before submitting.");
+        setFeedback(feedback, "incorrect", t("image_required"));
         return;
       }
       var image = imagePaste ? imagePaste.getDataUrl() : null;
@@ -735,7 +827,7 @@
       // empty) text box used to refuse every image-only answer on a
       // question with validate = "integer".
       if (!image && !passesValidation(textarea.value, data.validate)) {
-        setFeedback(feedback, "incorrect", VALIDATION_MESSAGES[data.validate]);
+        setFeedback(feedback, "incorrect", t(VALIDATION_KEYS[data.validate]));
         return;
       }
       setFeedback(feedback, null);
@@ -749,7 +841,7 @@
       if (!stored) {
         // Not received, so don't present it as submitted: leave it open to
         // retry once there is room (see reportStorageFailure()).
-        setFeedback(feedback, "incorrect", NOT_SAVED_MESSAGE);
+        setFeedback(feedback, "incorrect", t("not_saved"));
         return;
       }
       showModelAnswer();
@@ -820,10 +912,8 @@
   // signal their changes had gone in.) Ordinary "reflection" questions do
   // not get this cycle: they stay locked for good, so a reader can't reopen
   // one and paste in the model answer they were just shown.
-  var EDITING_NOTE = "Editing. Submit to save your changes.";
-  var REPLACING_NOTE = "Click the image box and paste a new screenshot " +
-    "(Ctrl+V or Cmd+V), then Submit.";
-  var NOT_SAVED_MESSAGE = "This could not be saved. See the warning at the top of the page.";
+  // The note's text is t("editing_note"), or t("replacing_note") while a
+  // screenshot is being swapped; a refused save shows t("not_saved").
 
   // student_info() storage, per form: the flat field keys hold the last
   // *submitted* values (what the download reports); `submitted` is true only
@@ -894,9 +984,9 @@
         var missing = field.required && !value;
         var invalidEmail = !missing && field.key === "email" && value && !isValidEmail(value);
         if (missing) {
-          error.textContent = "This field is required.";
+          error.textContent = t("field_required");
         } else if (invalidEmail) {
-          error.textContent = "Please include an \"@\" in the email address.";
+          error.textContent = t("email_invalid");
         }
         var problem = missing || invalidEmail;
         error.classList.toggle("d-none", !problem);
@@ -924,21 +1014,24 @@
       });
       inputs[field.key] = input;
 
-      var labelText = field.required ? field.label + " *" : field.label;
+      // A default field (name/email/id) arrives with a null label, which
+      // the language table fills; a custom field always names its own.
+      var fieldLabel = typeof field.label === "string" ? field.label : t("field_" + field.key);
+      var labelText = field.required ? fieldLabel + " *" : fieldLabel;
       var label = el("label", { class: "learnr2-info-label", for: inputId, text: labelText });
       container.appendChild(el("div", { class: "learnr2-info-row" }, [label, input, error]));
     });
 
     var feedback = makeStatus("learnr2-feedback");
     var note = makeStatus("learnr2-editing-note");
-    note.textContent = EDITING_NOTE;
+    note.textContent = t("editing_note");
     var submit = el("button", { type: "button", class: "learnr2-submit" });
 
     function render() {
       Object.keys(inputs).forEach(function (key) {
         inputs[key].disabled = locked;
       });
-      submit.textContent = locked ? data.editLabel : data.submitLabel;
+      submit.textContent = locked ? labelOr(data.editLabel, "edit") : labelOr(data.submitLabel, "submit");
       note.classList.toggle("d-none", locked || !editing);
     }
 
@@ -968,12 +1061,12 @@
         locked = false;
         editing = true;
         render();
-        setFeedback(feedback, "incorrect", NOT_SAVED_MESSAGE);
+        setFeedback(feedback, "incorrect", t("not_saved"));
         return;
       }
       render();
       setFeedback(feedback, allValid ? "correct" : "incorrect",
-        allValid ? "Looks good." : "Please fix the highlighted field(s) above.");
+        t(allValid ? "info_ok" : "info_fix"));
     });
 
     render();
@@ -1004,18 +1097,14 @@
       saved[fieldKey] : "";
   }
 
-  // Every student_info() form on the page that is not currently submitted --
-  // never submitted, or reopened with Edit and not resubmitted. Blocks the
+  // Is any student_info() form on the page not currently submitted --
+  // never submitted, or reopened with Edit and not resubmitted? Blocks the
   // download: the submission identifies the student, so it must be one they
   // actually confirmed.
-  function infoFieldProblems() {
-    var problems = [];
-    document.querySelectorAll(".learnr2-info[data-learnr2-info]").forEach(function (node) {
-      if (widgetPending(node)) {
-        problems.push("submit your student information above");
-      }
-    });
-    return problems;
+  function infoPending() {
+    return Array.prototype.some.call(
+      document.querySelectorAll(".learnr2-info[data-learnr2-info]"), widgetPending
+    );
   }
 
   // Every question, across every .learnr2-question on the page, that is not
@@ -1048,8 +1137,7 @@
       node.textContent = "";
       build(node, data);
     } catch (e) {
-      node.textContent = "This part of the tutorial could not be displayed. " +
-        "Reload the page; if that doesn't help, tell your instructor.";
+      node.textContent = t("widget_broken");
       node.classList.add("learnr2-widget-broken");
       if (window.console && console.error) {
         console.error("learnr2: could not render widget", node, e);
@@ -1244,13 +1332,12 @@
   }
 
   function buildDownloadButton(node, data) {
-    var button = el("button", { type: "button", class: "learnr2-download-answers-btn", text: data.label });
+    var button = el("button", { type: "button", class: "learnr2-download-answers-btn", text: labelOr(data.label, "download_answers") });
     var error = el("div", { class: "learnr2-download-error d-none" });
 
     button.addEventListener("click", async function () {
-      var problems = infoFieldProblems();
-      if (problems.length > 0) {
-        error.textContent = "Before downloading, please " + problems.join(", and ") + ".";
+      if (infoPending()) {
+        error.textContent = t("download_blocked");
         error.classList.remove("d-none");
         return;
       }
@@ -1259,10 +1346,8 @@
       var unanswered = unansweredQuestionLabels();
       if (unanswered.length > 0) {
         var confirmed = await showConfirmDialog(
-          "You haven't submitted an answer for " + unanswered.length +
-          " question" + (unanswered.length === 1 ? "" : "s") + ": " +
-          unanswered.join("; ") + ". Download anyway?",
-          "Download Anyway"
+          tn("download_unanswered", unanswered.length, { list: unanswered.join("; ") }),
+          t("download_anyway")
         );
         if (!confirmed) {
           return;
@@ -1355,7 +1440,7 @@
         }
         resolve(result);
       }
-      var cancelButton = el("button", { type: "button", class: "learnr2-confirm-dialog-cancel", text: "Cancel" });
+      var cancelButton = el("button", { type: "button", class: "learnr2-confirm-dialog-cancel", text: t("cancel") });
       var confirmButton = el("button", { type: "button", class: "learnr2-confirm-dialog-confirm", text: confirmLabel });
       cancelButton.addEventListener("click", function () { settle(false); });
       confirmButton.addEventListener("click", function () { settle(true); });
@@ -1411,14 +1496,9 @@
     if (document.querySelector(".learnr2-start-over")) {
       return;
     }
-    var button = el("button", { type: "button", class: "learnr2-start-over", text: "Start Over" });
+    var button = el("button", { type: "button", class: "learnr2-start-over", text: t("start_over") });
     button.addEventListener("click", function () {
-      showConfirmDialog(
-        "Start over this entire tutorial? Every saved answer, pasted " +
-        "image, and exercise on this device will be permanently cleared. " +
-        "This cannot be undone.",
-        "Start Over"
-      ).then(function (confirmed) {
+      showConfirmDialog(t("start_over_confirm"), t("start_over")).then(function (confirmed) {
         if (!confirmed) {
           return;
         }
@@ -1680,11 +1760,7 @@
       var locked = pending.length > 0;
       gate.button.disabled = locked;
       gate.container.classList.toggle("learnr2-continue-locked", locked);
-      gate.note.textContent = locked
-        ? (pending.length === 1
-            ? "Submit your answer above to continue."
-            : "Submit the " + pending.length + " answers above to continue.")
-        : "";
+      gate.note.textContent = locked ? tn("continue_note", pending.length) : "";
       gate.note.classList.toggle("d-none", !locked);
     }
 
@@ -1699,7 +1775,7 @@
       var button = el("button", {
         type: "button",
         class: "learnr2-continue",
-        text: title ? "Continue: " + title : "Continue"
+        text: title ? t("continue_to", { title: title }) : t("continue")
       });
       button.addEventListener("click", function () {
         if (button.disabled) {
@@ -1815,6 +1891,57 @@
     });
   }
 
+  // quarto-live's exercise buttons -- Run Code, Show Hint, Next Hint, Show
+  // Solution, Start Over -- are English literals inside its minified bundle
+  // with no option to change them (r-wasm/quarto-live#3 and #74, open since
+  // 2024). Each editor builds its buttons when WebR has initialised it,
+  // long after this script runs, so they are relabelled as they appear.
+  // The English text is the only stable handle: the buttons share their
+  // classes except Run Code. Skipped entirely when the page is in English.
+  var LIVE_LABELS = {
+    "Run Code": "run_code",
+    "Show Hint": "show_hint",
+    "Next Hint": "next_hint",
+    "Show Solution": "show_solution",
+    "Start Over": "start_over"
+  };
+  var LIVE_LABEL_SELECTOR = "span.btn-label-exercise-editor";
+
+  function relabelLiveButton(span) {
+    var key = LIVE_LABELS[span.textContent.trim()];
+    if (!key) {
+      return;
+    }
+    span.textContent = t(key);
+    var button = span.closest("[role=button]");
+    if (button) {
+      button.setAttribute("aria-label", t(key));
+    }
+  }
+
+  function relabelLiveButtons() {
+    var english = Object.keys(LIVE_LABELS).every(function (text) {
+      return t(LIVE_LABELS[text]) === text;
+    });
+    if (english || !window.MutationObserver) {
+      return;
+    }
+    document.querySelectorAll(LIVE_LABEL_SELECTOR).forEach(relabelLiveButton);
+    new MutationObserver(function (mutations) {
+      mutations.forEach(function (mutation) {
+        Array.prototype.forEach.call(mutation.addedNodes, function (node) {
+          if (node.nodeType !== 1) {
+            return;
+          }
+          if (node.matches(LIVE_LABEL_SELECTOR)) {
+            relabelLiveButton(node);
+          }
+          node.querySelectorAll(LIVE_LABEL_SELECTOR).forEach(relabelLiveButton);
+        });
+      });
+    }).observe(document.body, { childList: true, subtree: true });
+  }
+
   var initialized = false;
   function init() {
     // The page-level listeners below (document click, TOC click, resize)
@@ -1823,6 +1950,8 @@
       return;
     }
     initialized = true;
+    // Before any widget renders: everything below reads t().
+    initStrings();
     document
       .querySelectorAll(".learnr2-question:not([data-learnr2-initialized])")
       .forEach(renderQuestion);
@@ -1835,6 +1964,7 @@
     injectStartOverButton();
     initProgressiveSections();
     openLinksInNewTabs();
+    relabelLiveButtons();
   }
 
   if (document.readyState === "loading") {

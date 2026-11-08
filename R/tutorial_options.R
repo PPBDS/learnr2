@@ -42,9 +42,24 @@
 #' learnr2's own `hello-learnr2` feature tour. `{webr}` code cells are not
 #' part of this check; they have no notion of being "submitted".
 #'
+#' @section Interface language:
+#' Every string learnr2 puts on the page follows the document's language,
+#' Quarto's `lang:` YAML key: `lang: fr` gives French "Continuer",
+#' "Recommencer", "Soumettre la réponse" and so on, alongside Quarto's own
+#' French table of contents. English is the default and the fallback for a
+#' language learnr2 does not ship. `language` rewords single strings on
+#' top of that, for a course that wants "Next" rather than "Continue",
+#' say. Its names are the keys of the string table,
+#' `system.file("extdata/quiz/lang/en.json", package = "learnr2")`; a
+#' string may contain the placeholders the English one does, such as
+#' `{title}` in `continue_to` or `{n}` in `continue_note_other`. An
+#' unknown key is an error. The labels of [question()], [student_info()]
+#' and [download_answers_button()] can also be set per call.
+#'
 #' @section Defaults:
 #' * `allow_skip = FALSE`
 #' * `require_submission = TRUE`
+#' * `language = NULL`
 #'
 #' @param allow_skip Logical. May the reader use a table-of-contents link to
 #'   unlock and jump to a section they have not reached yet? Default
@@ -52,6 +67,9 @@
 #' @param require_submission Logical. Must every question and student-info
 #'   form in a section be submitted before its "Continue" button works?
 #'   Default `TRUE`.
+#' @param language `NULL`, or a named list or character vector of interface
+#'   strings to override, e.g. `list(continue = "Next")`. See "Interface
+#'   language" below.
 #'
 #' @return A `learnr2_options` object, printed as an invisible HTML
 #'   element that the page's JavaScript reads at load.
@@ -60,11 +78,41 @@
 #' tutorial_options()
 #' tutorial_options(allow_skip = TRUE)
 #' tutorial_options(require_submission = FALSE)
-tutorial_options <- function(allow_skip = FALSE, require_submission = TRUE) {
+#' tutorial_options(language = list(continue = "Next", start_over = "Reset"))
+tutorial_options <- function(allow_skip = FALSE, require_submission = TRUE,
+                             language = NULL) {
   check_flag(allow_skip, "allow_skip")
   check_flag(require_submission, "require_submission")
   payload <- list(allowSkip = allow_skip, requireSubmission = require_submission)
+  if (!is.null(language)) {
+    payload$language <- check_language_overrides(language)
+  }
   structure(list(payload = payload), class = "learnr2_options")
+}
+
+# `language`: a named list or character vector of interface strings,
+# keyed as in inst/extdata/quiz/lang/en.json. Returned as a named list of
+# single strings. Unknown keys are an error, since a typo would otherwise
+# silently change nothing.
+check_language_overrides <- function(language) {
+  if ((!is.list(language) && !is.character(language)) || length(language) == 0 ||
+      is.null(names(language)) || any(!nzchar(names(language)))) {
+    stop("`language` must be a named list or character vector, e.g. ",
+         "list(continue = \"Next\").", call. = FALSE)
+  }
+  values <- lapply(language, function(v) {
+    if (!is.character(v) || length(v) != 1 || is.na(v)) {
+      stop("Every element of `language` must be a single string.", call. = FALSE)
+    }
+    v
+  })
+  unknown <- setdiff(names(values), names(tutorial_strings("en")))
+  if (length(unknown) > 0) {
+    stop("`language` has no interface string named ", paste0("`", unknown, "`", collapse = ", "),
+         ". See the keys in `system.file(\"extdata/quiz/lang/en.json\", package = \"learnr2\")`.",
+         call. = FALSE)
+  }
+  values
 }
 
 check_flag <- function(x, name) {
