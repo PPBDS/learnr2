@@ -1679,6 +1679,25 @@
     // Clamp -- a tutorial edited to have fewer sections since this was saved
     // shouldn't leave every remaining section permanently hidden.
     var unlocked = Math.min(Math.max(typeof saved === "number" ? saved : 1, 1), sections.length);
+    // Answers put back by learnr2::load_tutorial() arrive with no saved
+    // progress. A section holding a submitted widget was necessarily
+    // reached, so open through the last such section; the Continue after
+    // it then waits on whatever is still pending there, as usual. In
+    // normal use every submitted widget is already in an unlocked section,
+    // so this changes nothing.
+    var lastAnswered = -1;
+    sections.forEach(function (section, i) {
+      var widgets = section.querySelectorAll(
+        ".learnr2-question[data-learnr2-question], .learnr2-info[data-learnr2-info]"
+      );
+      if (Array.prototype.some.call(widgets, function (node) { return !widgetPending(node); })) {
+        lastAnswered = i;
+      }
+    });
+    if (lastAnswered + 1 > unlocked) {
+      unlocked = Math.min(lastAnswered + 1, sections.length);
+      saveState({ id: PROGRESS_ID }, unlocked);
+    }
 
     var options = readTutorialOptions();
     var toc = document.getElementById("quarto-margin-sidebar");

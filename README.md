@@ -70,6 +70,9 @@ copied alongside it, so it renders out of the box with Quarto or
   buttons, the table of contents can't be used to read ahead unless
   `tutorial_options(allow_skip = TRUE)` says so, and every page has a
   "Start Over" button that clears saved progress.
+- **Resubmission** — `load_tutorial()` reopens a tutorial from a student's
+  downloaded JSON file with every answer filled in, so they can fix one
+  and download again.
 - **Translated interface** — set Quarto's `lang:` key and every button
   and message follows (English and French so far; translations welcome,
   see the "Language" section of the "Translating learnr Tutorials"

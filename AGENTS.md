@@ -229,6 +229,21 @@ subsections) behind a Continue button. Verified against real renders.
   `a[href]` except `#...`, `download`, `mailto:`/`tel:`/`javascript:`.
   Students worried when a tutorial "disappeared". Quarto's
   `link-external-newwindow` would miss same-site links.
+- **`load_tutorial()` restores a download through a page, not the HTML**
+  (2026-11). Answers live in `localStorage` keyed by the tutorial's
+  address, and that address differs between `127.0.0.1` and a Codespaces
+  forwarded port, so R cannot know the key. `load_tutorial()` parses the
+  *rendered* page for its widgets (`page_widgets()`, the same markup
+  `quiz.js` reads), rebuilds the stored shapes (`restore_entries()`), and
+  writes `learnr2-restore.html` beside the tutorial; that page derives the
+  tutorial's address from its own, stores the entries, and forwards.
+  `quiz.js` then opens the tutorial through the last section holding a
+  submitted widget when no progress is saved (a no-op in normal use).
+  `serve_tutorial(page =)` opens a file inside the tutorial's directory
+  and reports `served_here` so the restore page can be deleted once our
+  own server stops. Exercise code is keyed by quarto-live's block id, not
+  the exercise label, so the map is read from the `<script type="webr-N-
+  contents">` tags.
 - **The download file's header comes through the environment** (2026-11).
   `render_tutorials()` copies a tutorial into a work directory before
   Quarto renders it, and Quarto knits in its own R process, so the knit
@@ -312,7 +327,7 @@ Two layers, both in CI (`R-CMD-check.yaml`, `js-tests.yaml`).
 `test-question.R`, `test-submission.R`, `test-tutorials.R`,
 `test-tutorial_options.R`, `test-extension.R`, `test-create-tutorial.R`,
 `test-show_file.R`, `test-render-tutorials.R`, `test-check-tutorial.R`,
-`test-check-tutorials.R`, `test-language.R`.
+`test-check-tutorials.R`, `test-language.R`, `test-load_tutorial.R`.
 
 - Every exported function and internal helper has a test; call internals
   as `learnr2:::helper()`.

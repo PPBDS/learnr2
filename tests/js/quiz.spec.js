@@ -1776,3 +1776,37 @@ test.describe("interface language", () => {
     expect(english).toBe(true);
   });
 });
+
+test.describe("restoring a download (load_tutorial)", () => {
+  test("a restore page stores the answers under the tutorial's address and the tutorial opens where they left off", async ({ page }) => {
+    await page.goto("/progressive-sections-gated");
+    await page.evaluate(() => localStorage.clear());
+    await page.goto("/restore-gated");
+    await page.waitForURL("**/progressive-sections-gated");
+
+    // The restored reflection is submitted and locked, with the model answer shown...
+    const question = page.locator("#exercise-1 .learnr2-question");
+    await expect(question.locator(".learnr2-text-input")).toHaveValue("my restored paste");
+    await expect(question.locator(".learnr2-submit")).toHaveText("Edit Answer");
+    // ...so its section is open without a saved progress value, and the
+    // Continue after it is enabled, as if the reader had answered by hand.
+    await expect(page.locator("#exercise-1")).toBeVisible();
+    await expect(page.locator("#section")).toBeHidden();
+    await expect(page.locator("#exercise-1 .learnr2-continue")).toBeEnabled();
+    // Progress is saved, so a reload keeps the section open.
+    await page.reload();
+    await expect(page.locator("#exercise-1")).toBeVisible();
+  });
+
+  test("a submitted answer in a later section opens that section even with no saved progress", async ({ page }) => {
+    await page.goto("/progressive-sections-gated");
+    await page.evaluate(() => {
+      localStorage.clear();
+      localStorage.setItem("learnr2-" + location.href.split("#")[0] + "#topic-one-1",
+        JSON.stringify({ value: "typed earlier", submitted: true }));
+    });
+    await page.reload();
+    await expect(page.locator("#exercise-1")).toBeVisible();
+    await expect(page.locator("#topic-one > .learnr2-continue-container")).toHaveCount(0);
+  });
+});

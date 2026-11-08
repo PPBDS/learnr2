@@ -585,6 +585,23 @@ FIXTURES["french-override"] = FIXTURES["french"].concat([
   optionsBlock(tutorialOptions({ language: { continue_to: "Suite : {title}" } }))
 ]);
 
+// What learnr2::load_tutorial() writes next to a rendered tutorial: a page
+// that stores the downloaded answers under the tutorial's own address and
+// forwards to it (R/load_tutorial.R, write_restore_page()). Here the
+// "tutorial" is the gated fixture; the entries mirror restore_entries().
+FIXTURES["restore-gated"] = [
+  '<script type="application/json" id="learnr2-restore">' + JSON.stringify([
+    { prefix: "learnr2-", id: "topic-one-1", value: { value: "my restored paste", submitted: true }, raw: false },
+    { prefix: "learnr2-", id: "learnr2-info-student-info", value: { name: "Ada", email: "ada@example.com", submitted: true }, raw: false }
+  ]) + "</script>\n" +
+  "<script>(function () {" +
+  'var entries = JSON.parse(document.getElementById("learnr2-restore").textContent);' +
+  'var pageUrl = window.location.origin + "/progressive-sections-gated";' +
+  'entries.forEach(function (e) { window.localStorage.setItem(e.prefix + pageUrl + "#" + e.id, e.raw ? e.value : JSON.stringify(e.value)); });' +
+  "window.location.replace(pageUrl);" +
+  "})();</script>\n"
+];
+
 // Any fixture is also available as "<name>-no-toc": the same blocks on a
 // page with no sidebar element at all, which is what Quarto emits for a
 // tutorial rendered with `toc: false`.

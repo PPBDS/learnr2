@@ -630,10 +630,14 @@ codespace_base_url <- function(port) {
 
 # Serve the cache root on the fixed port and open `tutorial`'s address --
 # or, if a learnr2 server is already serving that root, just open it there.
-serve_tutorial <- function(tutorial, root) {
+# `page` is a file inside the tutorial's directory to open instead of the
+# tutorial itself (load_tutorial()'s restore page). The result carries
+# attribute `served_here`: TRUE when this call ran the server until it was
+# stopped, FALSE when an existing server was used.
+serve_tutorial <- function(tutorial, root, page = NULL) {
   port <- learnr2_port()
-  local <- tutorial_url(tutorial$package, tutorial$name, port)
-  url <- public_tutorial_url(tutorial$package, tutorial$name, port)
+  local <- paste0(tutorial_url(tutorial$package, tutorial$name, port), page)
+  url <- paste0(public_tutorial_url(tutorial$package, tutorial$name, port), page)
   root <- as.character(fs::path_abs(root))
   write_root_index(root, tutorial$package, tutorial$name)
 
@@ -653,7 +657,7 @@ serve_tutorial <- function(tutorial, root) {
       url, " there."
     )
     open_in_browser(local, url)
-    return(invisible(url))
+    return(invisible(structure(url, served_here = FALSE)))
   }
   if (identical(running$state, "other")) {
     stop(
@@ -676,7 +680,7 @@ serve_tutorial <- function(tutorial, root) {
   )
   open_in_browser(local, url)
   block_serving()
-  invisible(url)
+  invisible(structure(url, served_here = TRUE))
 }
 
 write_server_marker <- function(root, port) {

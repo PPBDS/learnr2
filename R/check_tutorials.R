@@ -92,10 +92,7 @@ check_download_header <- function(html, tutorial) {
   if (length(m) < 2) {
     return("rendered page has no download button, so a download from it names no package or tutorial.")
   }
-  payload <- tryCatch(
-    jsonlite::fromJSON(rawToChar(jsonlite::base64_dec(m[2])), simplifyVector = FALSE),
-    error = function(e) NULL
-  )
+  payload <- decode_payload(m[2])
   if (is.null(payload)) {
     return("the download button's payload could not be decoded.")
   }

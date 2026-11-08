@@ -90,6 +90,14 @@ test_that("check_tutorials() errors when the package has no tutorials", {
   expect_error(check_tutorials("empty.pkg"), "No learnr2 tutorials found in package `empty.pkg`")
 })
 
+test_that("decode_payload() copes with htmltools' entity-escaped line wrapping", {
+  json <- paste0('{"id":"x","long":"', strrep("a", 120), '"}')
+  wrapped <- gsub("\n", "&#10;", jsonlite::base64_enc(charToRaw(json)))
+  expect_true(grepl("&#10;", wrapped, fixed = TRUE))
+  expect_equal(learnr2:::decode_payload(wrapped)$id, "x")
+  expect_null(learnr2:::decode_payload("!!!"))
+})
+
 test_that("check_download_header() explains a missing button or an undecodable payload", {
   html <- withr::local_tempfile(fileext = ".html")
   tut <- data.frame(package = "p", name = "n", path = "/nowhere/n/n.qmd", stringsAsFactors = FALSE)
