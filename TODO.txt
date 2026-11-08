@@ -1,10 +1,7 @@
-## Do These
-
-Whenever a student downloads an answer JSON file, the file should list, at the top, the name of the package, the version number of the package and the name of the tutorial, inside the JSON, of course.
 
 ## load_tutorial()
 
-Take a json answer file from a previous session.
+Accepts a json answer file which a student has downloaded from a previous session.
 
 1) Identify the package and the version number and the tutorial name from the json file. Issue warning if you can't. (I guess it is OK if there is no version number, but we still need a warning.)
 
@@ -48,19 +45,5 @@ Perhaps the solution is that load_tutorial() requires that the JSON file include
 Or maybe this is overkill and we don't need to worry about this sort of "by hand" cheating. The real concern is the use of an AI which can enter answers in an HTML form . . .
 
 
-### More checks
 
-We need to write some functions which check all the tutorials in a package and can be used by package authors. One that we already have "runs" all the tutorials to ensure that they work. (Or do we rely on package authors to, by hand, make a list of all the tutorials and then we process them? Would be nice if we relieved them of that. )
-
-One function should check that the all the exercise ids (is that the right term?) in a single tutorial are unique. It fails if they are not.
-
-Perhaps there should be a single function, like check_tutorials() which is the only thing a package author needs to run for her testing. It first figures out all the installed tutorials. It then, for each tutorial, runs the individual tests. Right now, there are only three tests: 
-
-a) check unique ids 
-
-b) check that the tutorial records its name, package and version number in the JSON file. (So, I guess we need a function which does that which tutorials can call.)
-
-c) Check that any exercise which asks for a URL can be edited. (This is important because the most common case of student resubmissions is fixing a broken URL.) Might this be overly prescriptive? Perhaps. But, really, best practices suggest that all URL questions will require answers which are unique for that student, so we don't need to worry about them just copy/pasting our answer. This is important for the common case in which we 
-
-c) run the tutorial to confirm that it builds correctly. Obviously, there could be other tests as well.
 

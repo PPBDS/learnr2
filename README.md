@@ -75,6 +75,10 @@ copied alongside it, so it renders out of the box with Quarto or
   see the "Language" section of the "Translating learnr Tutorials"
   vignette).
 
+Content packages test every tutorial they ship with one call,
+`check_tutorials("my.tutorials")`, which runs the static checks, renders
+each tutorial and checks the rendered page.
+
 See the bundled `hello-learnr2` tutorial and the reference index for details.
 Two vignettes cover writing tutorials: "Tutorials in the Age of AI" on how a
 tutorial should teach, and "Translating learnr Tutorials" on how one is put

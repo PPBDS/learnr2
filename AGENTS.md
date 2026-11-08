@@ -48,7 +48,11 @@ input in backticks, function names with `()`, no semicolons.
   the default, disables a section's Continue until every `question()` and
   `student_info()` above it is submitted. Reason: we show our answer right
   after the reader's, and an editable box beside it invites copying it
-  back. `reflection_editable` is for the minutes question only.
+  back. `reflection_editable` is for two kinds of question: the minutes
+  question, and any question whose answer is a URL (2026-11). A wrong URL
+  is the commonest reason a student resubmits, and a URL is theirs alone,
+  so reopening it copies nothing of ours; `check_tutorial()`'s `urls`
+  check enforces it.
   One exception (2026-10): a submitted `allow_image` reflection has a
   "Edit Answer" button (`edit_button`) that reopens only the image box (text box hidden
   and disabled, `editing: true` so it counts as unsubmitted, Submit
@@ -160,7 +164,8 @@ subsections) behind a Continue button. Verified against real renders.
   (`getClientRects()`), otherwise right after `#title-block-header`, and a
   resize listener moves it. Fixtures: the `-no-toc` variants.
 - **Edit/Submit cycle** (2026-10), for `student_info()` and
-  `reflection_editable` only. Submit locks the fields and shows "Edit";
+  `reflection_editable` (the minutes question and URL questions) only.
+  Submit locks the fields and shows "Edit";
   Edit only reopens them, shows "Submit" and an editing note
   (`EDITING_NOTE`). Received means last submitted: `widgetPending()` (used
   by the Continue gate and the download) treats a reopened widget as
@@ -307,7 +312,7 @@ Two layers, both in CI (`R-CMD-check.yaml`, `js-tests.yaml`).
 `test-question.R`, `test-submission.R`, `test-tutorials.R`,
 `test-tutorial_options.R`, `test-extension.R`, `test-create-tutorial.R`,
 `test-show_file.R`, `test-render-tutorials.R`, `test-check-tutorial.R`,
-`test-language.R`.
+`test-check-tutorials.R`, `test-language.R`.
 
 - Every exported function and internal helper has a test; call internals
   as `learnr2:::helper()`.
@@ -328,6 +333,14 @@ Two layers, both in CI (`R-CMD-check.yaml`, `js-tests.yaml`).
   shows its widget source, has no minutes question, shows a bare code
   block on purpose and talks about learnr. The same skip list is in
   `tools/render_tutorials_for_pages.R`; keep the two in step.
+- **`check_tutorials()` is the content-package entry point** (2026-11). It
+  lists a package's tutorials itself (`available_tutorials()`, so a
+  `load_all()` checkout is read from source), runs `check_tutorial()`,
+  renders each with `render_tutorials()` and decodes the rendered page's
+  download payload to confirm it names the package, version and tutorial
+  (`check_download_header()`). Content packages used to hand-roll the
+  three-line equivalent; their tests now make one call. Its tests mock
+  `available_tutorials()` and `quarto::quarto_render()`, never rendering.
 - **`check_tutorial()` has two severities** (2026-10). `warning_checks`
   (`fences`, `mentions`, `yaml`, `language`) report as one `warning()`, everything
   else as `stop()`. Content packages' tests call

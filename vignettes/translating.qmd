@@ -227,9 +227,10 @@ Translate a `check` chunk that uses **gradethis**, such as `gradethis::grade_thi
 - **A choice question**, built from `answer(..., correct = TRUE)` options, keeps the default `type = "auto"`. It becomes single or multiple choice by how many answers are correct. Use `type = "text"` for a typed exact-match answer.
 - **`question_text()`**, the **tutorial.helpers** workhorse for both "explain in your own words" and CP/CR evidence questions, becomes `type = "reflection"`. Its correct answer's text, if it has one, is revealed as a model answer after the reader submits. It is never graded against their wording. Drop the options with no equivalent: `try_again_button`, `rows`, `options`, `trim` and `placeholder`.
 - **`question_numeric()`** becomes `type = "reflection_editable"` with `validate = "integer"` and no `answer()`, as in the minutes question.
+- **A question whose answer is a URL** ("Copy and paste the URL for your repository") is also `type = "reflection_editable"`. A wrong URL is the commonest reason a student resubmits, and a URL is theirs alone, so letting them fix it copies nothing of ours. `check_tutorial()` insists on it (`urls`).
 - **Custom `answer_fn` checkers**, regular expressions and partial credit have no equivalent. Reduce them to plain `answer()` matches, or to a `"reflection"` question if the point was open-ended.
 
-Use `"reflection"`, not `"reflection_editable"`, for the old `allow_retry = TRUE, try_again_button = "Edit Answer"` idiom. **learnr2** locks every submitted answer by default, and [Tutorials in the Age of AI](ai.html) explains why: we show our answer right after the reader's, and an editable box next to it invites copying.
+Otherwise use `"reflection"`, not `"reflection_editable"`, for the old `allow_retry = TRUE, try_again_button = "Edit Answer"` idiom. **learnr2** locks every submitted answer by default, and [Tutorials in the Age of AI](ai.html) explains why: we show our answer right after the reader's, and an editable box next to it invites copying.
 
 A `question()` always carries its prompt in `text`. That string is shown in the question box, saved with the answer, and printed beside it in the downloaded file. Where **tutorial.helpers** put the prompt in prose above a `question_text(NULL, ...)` chunk, move the question into `text` and keep any longer set-up prose above the chunk.
 
@@ -379,6 +380,12 @@ Syntax that looks right can still be wrong in ways only the rendered page shows,
 ```r
 learnr2::check_tutorial("inst/tutorials/<name>")    # labels, echo, persist, boilerplate, packages
 learnr2::render_tutorials("inst/tutorials/<name>")  # a real Quarto render
+```
+
+For a whole package, one call does both for every tutorial and also checks that each rendered page's download file will name the package, its version and the tutorial. It is what a content package's `tests/testthat/test-tutorials.R` should run:
+
+```r
+learnr2::check_tutorials("my.tutorials", render = !is.null(quarto::quarto_path()))
 ```
 
 `check_tutorial()` catches a missing or inline label, a missing `echo: false` or `persist: true`, a **learnr2** function called without its `learnr2::` prefix, a graded exercise with a `.solution` div, a hint or solution div naming an exercise that doesn't exist, a `{webr}` package missing from the `webr:` list, a second `tutorial_options()` call, and missing boilerplate. Those stop with an error. Four more checks only warn, because a tutorial can break them and still work: a code block with no language, prose that mentions **learnr** or **tutorial.helpers**, classic keys left in the YAML header, and a `lang:` **learnr2** has no translation for. Fix them too. Then open the rendered HTML in a browser and click through it.

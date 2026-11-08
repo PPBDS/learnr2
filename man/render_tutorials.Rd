@@ -46,17 +46,16 @@ usually the first sign of something that will also be slow for readers.
 }
 \section{In a content package's tests}{
 
-A package of tutorials can check every one of them from
+A package of tutorials need not list them: \code{\link[=check_tutorials]{check_tutorials()}} finds
+every tutorial, runs \code{\link[=check_tutorial]{check_tutorial()}} on each, renders each with this
+function and checks the rendered page. One call in
 \code{tests/testthat/test-tutorials.R}:
 
-\if{html}{\out{<div class="sourceCode r">}}\preformatted{tutorials <- available_tutorials(package = "my.tutorials")
-render_tutorials(tutorials$path)
-check_tutorial(tutorials$path)
+\if{html}{\out{<div class="sourceCode r">}}\preformatted{check_tutorials("my.tutorials", render = !is.null(quarto::quarto_path()))
 }\if{html}{\out{</div>}}
 
-Guard that test with \code{testthat::skip_on_cran()} and
-\code{testthat::skip_if(is.null(quarto::quarto_path()))}, since it needs the
-Quarto command line tool.
+Guard that test with \code{testthat::skip_on_cran()}, since rendering needs
+the Quarto command line tool and takes a few seconds per tutorial.
 }
 
 \examples{

@@ -33,18 +33,17 @@
 #'   by tutorial (the directory name), invisibly.
 #' @export
 #' @section In a content package's tests:
-#' A package of tutorials can check every one of them from
+#' A package of tutorials need not list them: [check_tutorials()] finds
+#' every tutorial, runs [check_tutorial()] on each, renders each with this
+#' function and checks the rendered page. One call in
 #' `tests/testthat/test-tutorials.R`:
 #'
 #' ```r
-#' tutorials <- available_tutorials(package = "my.tutorials")
-#' render_tutorials(tutorials$path)
-#' check_tutorial(tutorials$path)
+#' check_tutorials("my.tutorials", render = !is.null(quarto::quarto_path()))
 #' ```
 #'
-#' Guard that test with `testthat::skip_on_cran()` and
-#' `testthat::skip_if(is.null(quarto::quarto_path()))`, since it needs the
-#' Quarto command line tool.
+#' Guard that test with `testthat::skip_on_cran()`, since rendering needs
+#' the Quarto command line tool and takes a few seconds per tutorial.
 #'
 #' @examples
 #' # Scaffold a tutorial, then render it the way a test would. Needs the

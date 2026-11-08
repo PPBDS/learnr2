@@ -226,8 +226,10 @@ learnr2::question(
 submitted response can be reopened. Submit locks it behind an "Edit
 Answer" button, and Edit reopens it, with the button back to Submit and a
 note that the change isn't saved until then. Reserve it for answers with
-nothing to copy, such as the minutes question at the end of a tutorial
-(see section 9):
+nothing to copy: the minutes question at the end of a tutorial (see
+section 9), and a question whose answer is a URL of the reader's own, such
+as their repository's address, since a mistyped URL is the commonest reason
+a student has to resubmit:
 
 ```{r}
 #| label: quiz-questions-5

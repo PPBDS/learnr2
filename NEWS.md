@@ -1,5 +1,14 @@
 # learnr2 (development version)
 
+* New `check_tutorials()`: the one call a content package's tests need. It
+  finds every tutorial in a package, runs `check_tutorial()` on each,
+  renders each, and checks that the rendered page's download file names
+  the package, its version and the tutorial. `check_tutorial()` gains
+  three checks: `exercises` (no two `{webr}` editor cells share an
+  `#| exercise:` id), `urls` (a question asking the reader to paste a URL
+  is `type = "reflection_editable"`, since a wrong URL is the commonest
+  reason to resubmit and a URL is the student's own), and an extension of
+  `labels` to explicit `id =` arguments that collide with a label.
 * The downloaded answers file now opens with what it is a submission for:
   `package` and `version` (the package the tutorial ships in and its
   version as rendered), `tutorial` (the tutorial's name), `title` and

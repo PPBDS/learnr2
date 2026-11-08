@@ -7,7 +7,9 @@
 #' encodes them so a content package can enforce them in its tests, the way
 #' `tutorial.helpers::check_tutorial_defaults()` did for 'learnr' tutorials.
 #' Pair it with [render_tutorials()]: rendering proves the document builds,
-#' these checks catch what a successful render does not.
+#' these checks catch what a successful render does not. [check_tutorials()]
+#' does both for every tutorial in a package, and is what a content
+#' package's test should call.
 #'
 #' @section Checks:
 #' Each check has a name, used in `skip`:
@@ -44,6 +46,15 @@
 #'   `library()`, `require()`, or `pkg::`) is listed under `webr: packages:`
 #'   in the YAML header, the only place WebR learns what to install.
 #'   `gradethis` is exempt, since the `_gradethis.qmd` include provides it.
+#' * `exercises` -- no two `{webr}` cells are the editor for the same
+#'   `#| exercise:` id. 'quarto-live' refuses such a document at render
+#'   time; this says so first.
+#' * `urls` -- a `question()` whose prompt asks the reader to copy or paste
+#'   a URL is `type = "reflection_editable"`, not a `"reflection"` that
+#'   locks on submit. A wrong URL is the commonest reason a student
+#'   resubmits, and a URL is theirs alone, so letting them correct it
+#'   cannot copy our answer. A screenshot question (`allow_image = TRUE`)
+#'   is exempt.
 #' * `prefix` -- every learnr2 function in an `{r}` chunk is called with
 #'   its `learnr2::` prefix. A tutorial never attaches the package, so a
 #'   bare `question()` fails at render time.
@@ -127,9 +138,14 @@ check_tutorial <- function(paths, skip = NULL, error = TRUE) {
                            message = character(0), stringsAsFactors = FALSE)
   }
   problems$severity <- ifelse(problems$check %in% warning_checks, "warning", "error")
-  problems <- problems[, c("path", "check", "severity", "message")]
-  rownames(problems) <- NULL
+  report_problems(problems, error)
+}
 
+# Shared by check_tutorial() and check_tutorials(): tidy the problems frame,
+# warn about the warning-level rows, stop on the error-level ones.
+report_problems <- function(problems, error) {
+  problems <- problems[, c("path", "check", "severity", "message"), drop = FALSE]
+  rownames(problems) <- NULL
   if (isTRUE(error)) {
     warn <- problems[problems$severity == "warning", , drop = FALSE]
     if (nrow(warn) > 0) {
@@ -147,6 +163,11 @@ check_tutorial <- function(paths, skip = NULL, error = TRUE) {
     }
   }
   invisible(problems)
+}
+
+no_problems <- function() {
+  data.frame(path = character(0), check = character(0), severity = character(0),
+             message = character(0), stringsAsFactors = FALSE)
 }
 
 # Checks whose problems are reported as warnings, not errors (see ?check_tutorial).
@@ -291,6 +312,18 @@ is_widget_chunk <- function(chunk) {
   any(grepl(widget_pattern, chunk$body))
 }
 
+# Does a question's prompt ask the reader to hand in a URL? A sentence in
+# which "paste" (or enter/submit/provide) comes before "URL": "Copy and
+# paste the URL for your repository", "paste the URL of that page below".
+# "Download the file from this URL: ..." has no such verb, "copy the URL in
+# your address bar, then run curl ... URL" copies it for a command, and
+# "open the URL, then paste the code" has the verb after: all instructions,
+# not requests for a URL as the answer.
+asks_for_url <- function(text) {
+  sentences <- strsplit(text, "(?<=[.!?])\\s+", perl = TRUE)[[1]]
+  any(grepl("\\b(paste|enter|submit|provide)\\b[^.!?]*\\bURL\\b", sentences, ignore.case = TRUE))
+}
+
 # learnr2 functions called in an {r} chunk body without the learnr2:: prefix.
 unprefixed_calls <- function(body) {
   fns <- c(widget_functions, "answer")
@@ -417,6 +450,62 @@ tutorial_checks <- list(
       at <- vapply(chunks[which(labels == d)], function(ch) ch$line, integer(1))
       msgs <- c(msgs, paste0("label `", d, "` is used by more than one chunk (lines ",
                              paste(at, collapse = ", "), ")."))
+    }
+    # A question's id is its chunk label unless it passes `id =`; an explicit
+    # id that repeats a label or another explicit id merges two questions'
+    # saved answers, just as a duplicated label would.
+    explicit <- lapply(chunks, function(ch) {
+      m <- regmatches(ch$body, gregexpr("\\bid\\s*=\\s*[\"']([^\"']+)[\"']", ch$body))
+      sub("^.*[\"']([^\"']+)[\"']$", "\\1", unlist(m))
+    })
+    ids <- c(labels[!is.na(labels)], unlist(explicit))
+    clashes <- setdiff(unique(ids[duplicated(ids)]), dups)
+    for (d in clashes) {
+      at <- vapply(chunks[vapply(seq_along(chunks), function(i) {
+        identical(labels[i], d) || d %in% explicit[[i]]
+      }, logical(1))], function(ch) ch$line, integer(1))
+      msgs <- c(msgs, paste0("question id `", d, "` (an `id =` argument) is also used as a ",
+                             "label or id elsewhere (lines ", paste(at, collapse = ", "),
+                             "); the two would share one saved answer."))
+    }
+    msgs
+  },
+
+  exercises = function(doc) {
+    # The editor cell of an exercise: `exercise:` set, and not one of the
+    # supporting cells. quarto-live refuses a duplicate at render time; the
+    # check says so before rendering.
+    editors <- Filter(function(ch) {
+      !is.null(ch$options$exercise) &&
+        !any(vapply(c("setup", "check", "solution", "hint"), function(o) opt_true(ch, o), logical(1)))
+    }, chunks_of(doc, "webr"))
+    ids <- vapply(editors, function(ch) ch$options$exercise, character(1))
+    dups <- unique(ids[duplicated(ids)])
+    vapply(dups, function(d) {
+      at <- vapply(editors[ids == d], function(ch) ch$line, integer(1))
+      paste0("exercise `", d, "` has more than one editor cell (lines ",
+             paste(at, collapse = ", "), "); each `#| exercise:` id belongs to exactly one ",
+             "cell plus its setup/hint/solution/check cells.")
+    }, character(1), USE.NAMES = FALSE)
+  },
+
+  urls = function(doc) {
+    msgs <- character(0)
+    for (ch in chunks_of(doc, "r")) {
+      body <- paste(ch$body, collapse = " ")
+      if (!grepl("learnr2::question\\(", body)) next
+      text <- regmatches(body, regexec("question\\(\\s*[\"']((?:[^\"'\\\\]|\\\\.)*)[\"']", body, perl = TRUE))[[1]]
+      if (length(text) < 2) next
+      type <- regmatches(body, regexec("type\\s*=\\s*[\"']([a-z_]+)[\"']", body))[[1]]
+      type <- if (length(type) == 2) type[2] else "auto"
+      if (!type %in% c("reflection", "text")) next
+      if (grepl("allow_image\\s*=\\s*TRUE", body)) next
+      if (asks_for_url(text[2])) {
+        msgs <- c(msgs, paste0(chunk_ref(ch), ": asks for a URL but is `type = \"", type,
+                               "\"`, which locks on submit. Use `type = \"reflection_editable\"`: ",
+                               "a wrong URL is the commonest reason a student resubmits, and a URL ",
+                               "is theirs alone, so letting them fix it copies nothing of ours."))
+      }
     }
     msgs
   },

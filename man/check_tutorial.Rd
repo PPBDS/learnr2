@@ -31,7 +31,9 @@ Each one is a rule from this package's authoring guide; this function
 encodes them so a content package can enforce them in its tests, the way
 \code{tutorial.helpers::check_tutorial_defaults()} did for 'learnr' tutorials.
 Pair it with \code{\link[=render_tutorials]{render_tutorials()}}: rendering proves the document builds,
-these checks catch what a successful render does not.
+these checks catch what a successful render does not. \code{\link[=check_tutorials]{check_tutorials()}}
+does both for every tutorial in a package, and is what a content
+package's test should call.
 }
 \section{Checks}{
 
@@ -70,6 +72,15 @@ fails with "No solution code was found".
 \code{library()}, \code{require()}, or \verb{pkg::}) is listed under \verb{webr: packages:}
 in the YAML header, the only place WebR learns what to install.
 \code{gradethis} is exempt, since the \verb{_gradethis.qmd} include provides it.
+\item \code{exercises} -- no two \code{{webr}} cells are the editor for the same
+\verb{#| exercise:} id. 'quarto-live' refuses such a document at render
+time; this says so first.
+\item \code{urls} -- a \code{question()} whose prompt asks the reader to copy or paste
+a URL is \code{type = "reflection_editable"}, not a \code{"reflection"} that
+locks on submit. A wrong URL is the commonest reason a student
+resubmits, and a URL is theirs alone, so letting them correct it
+cannot copy our answer. A screenshot question (\code{allow_image = TRUE})
+is exempt.
 \item \code{prefix} -- every learnr2 function in an \code{{r}} chunk is called with
 its \verb{learnr2::} prefix. A tutorial never attaches the package, so a
 bare \code{question()} fails at render time.

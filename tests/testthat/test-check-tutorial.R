@@ -178,8 +178,9 @@ test_that("persist check requires persist: true on exercise cells, not on setup/
 
 test_that("solution check requires a solution: true cell for every graded exercise", {
   res <- check_tutorial(write_qmd(without("^#\\| solution: true")), error = FALSE)
-  # Dropping the option also turns that cell into a persist-less exercise cell.
-  expect_setequal(res$check, c("persist", "solution"))
+  # Dropping the option also turns that cell into a persist-less second
+  # editor cell for ex_sum, which `persist` and `exercises` both report.
+  expect_setequal(res$check, c("persist", "solution", "exercises"))
   expect_match(res$message[res$check == "solution"],
                "exercise `ex_sum` has a `check: true` cell but no `solution: true` cell")
   # A .solution div does not satisfy it.
@@ -403,6 +404,50 @@ test_that("mentions is a warning-level check on prose only", {
   quoted <- c(good_lines, "", "```bash", "R -e 'install.packages(\"learnr\")'", "```",
               "<!-- ported from tutorial.helpers -->", "learnr2 is the package.")
   expect_identical(nrow(check_tutorial(write_qmd(quoted), error = FALSE)), 0L)
+})
+
+test_that("exercises: two editor cells for one exercise id are an error", {
+  dup <- c(good_lines[seq_len(which(good_lines == "## Your answers") - 1)],
+           "```{webr}", "#| label: vectors-6", "#| exercise: ex_sum", "#| persist: true", "sum(1:3)", "```", "",
+           good_lines[which(good_lines == "## Your answers"):length(good_lines)])
+  res <- check_tutorial(write_qmd(dup), error = FALSE)
+  expect_identical(res$check, "exercises")
+  expect_match(res$message, "exercise `ex_sum` has more than one editor cell")
+  # Setup/check/solution/hint cells share the id by design.
+  expect_false("exercises" %in% failing_checks(good_lines))
+})
+
+test_that("labels: an explicit `id =` that repeats a label or another id is an error", {
+  clash <- sub('learnr2::question\\("Q\\?", learnr2::answer\\("a", correct = TRUE\\)\\)',
+               'learnr2::question("Q?", learnr2::answer("a", correct = TRUE), id = "your-answers-1")',
+               good_lines)
+  res <- check_tutorial(write_qmd(clash), error = FALSE)
+  expect_identical(res$check, "labels")
+  expect_match(res$message, "question id `your-answers-1`")
+  expect_false("labels" %in% failing_checks(sub('id = "your-answers-1"', 'id = "something-else"', clash)))
+})
+
+test_that("urls: a question asking the reader to paste a URL must be reflection_editable", {
+  url_q <- function(type, extra = "") c(
+    "```{r}", "#| label: vectors-7", "#| echo: false",
+    "learnr2::question(",
+    '  "Copy and paste the URL for your repository.",',
+    paste0('  type = "', type, '"', extra),
+    ")", "```", ""
+  )
+  with_q <- function(q) c(good_lines[seq_len(which(good_lines == "## Your answers") - 1)], q,
+                          good_lines[which(good_lines == "## Your answers"):length(good_lines)])
+  res <- check_tutorial(write_qmd(with_q(url_q("reflection"))), error = FALSE)
+  expect_identical(res$check, "urls")
+  expect_match(res$message, "asks for a URL but is `type = \"reflection\"`")
+  expect_false("urls" %in% failing_checks(with_q(url_q("reflection_editable"))))
+  # A screenshot question is exempt; so is a prompt that merely mentions a URL.
+  expect_false("urls" %in% failing_checks(with_q(url_q("reflection", ",\n  allow_image = TRUE"))))
+  expect_true(learnr2:::asks_for_url("Copy/paste the resulting URL below."))
+  expect_true(learnr2:::asks_for_url("Open your repo on GitHub, click index.qmd, and paste the URL of that page below."))
+  expect_false(learnr2:::asks_for_url("Download movies.csv from this URL: https://example.org/x.csv. CP/CR."))
+  expect_false(learnr2:::asks_for_url("Copy the URL in your address bar, then run curl -o x URL. CP/CR."))
+  expect_false(learnr2:::asks_for_url("Open the URL it shows and paste the verification code into the terminal."))
 })
 
 test_that("language is a warning-level check: a `lang:` with no translation is reported", {
