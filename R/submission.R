@@ -152,6 +152,16 @@ print.learnr2_info <- function(x, ...) {
 #' this is a structural limit of quarto-live's own editor, not something
 #' `download_answers_button()` chooses to skip.
 #'
+#' The file opens with what it is a submission *for*: `package` and
+#' `version` (the package the tutorial ships in, and that package's version
+#' as rendered), `tutorial` (the tutorial's name, its directory under
+#' `inst/tutorials/`), `title` (its YAML title) and `learnr2Version`. These
+#' are filled in at render time -- by [render_tutorials()], and so by
+#' [run_tutorial()] and [prerender_tutorials()], which know where the
+#' tutorial came from, or from the `.qmd`'s own location when it is
+#' rendered with `quarto render` inside a package tree. A tutorial outside
+#' any package has `package` and `version` `null`.
+#'
 #' The download also carries a `metadata` block (timezone, browser info, and
 #' a random per-device id persisted across the reader's visits) and a `time`
 #' field: the moment the reader clicked "Download", lightly obfuscated so the
@@ -178,8 +188,47 @@ download_answers_button <- function(filename_prefix = "learnr2-answers",
   }
   check_label(label, "label")
 
-  payload <- list(filenamePrefix = filename_prefix, label = label)
+  identity <- render_identity()
+  payload <- list(
+    filenamePrefix = filename_prefix,
+    label = label,
+    package = identity$package,
+    version = identity$version,
+    tutorial = identity$tutorial,
+    title = identity$title,
+    learnr2Version = as.character(utils::packageVersion("learnr2"))
+  )
   structure(list(payload = payload), class = "learnr2_download_button")
+}
+
+# What the download file's header says about the tutorial being rendered.
+# render_tutorials() passes the source tutorial's identity through the
+# environment (TUTORIAL_ENV in R/render_tutorials.R), since Quarto knits in
+# its own R process from a copy of the tutorial. Without that -- a plain
+# `quarto render` of a .qmd -- the file being knit is read from its own
+# location. At the console there is no tutorial, and every field is NULL.
+render_identity <- function() {
+  knitting <- isTRUE(getOption("knitr.in.progress"))
+  env <- Sys.getenv(unname(TUTORIAL_ENV), unset = "", names = TRUE)
+  identity <- if (nzchar(env[[TUTORIAL_ENV[["tutorial"]]]])) {
+    list(
+      package = if (nzchar(env[[TUTORIAL_ENV[["package"]]]])) env[[TUTORIAL_ENV[["package"]]]],
+      version = if (nzchar(env[[TUTORIAL_ENV[["version"]]]])) env[[TUTORIAL_ENV[["version"]]]],
+      tutorial = env[[TUTORIAL_ENV[["tutorial"]]]]
+    )
+  } else if (knitting) {
+    input <- tryCatch(knitr::current_input(dir = TRUE), error = function(e) NULL)
+    if (is.null(input) || !nzchar(input)) list() else tutorial_identity(input)
+  } else {
+    list()
+  }
+  title <- if (knitting) rmarkdown::metadata$title else NULL
+  list(
+    package = identity$package,
+    version = identity$version,
+    tutorial = identity$tutorial,
+    title = if (is.character(title) && length(title) == 1) title else NULL
+  )
 }
 
 download_button_div <- function(button) {

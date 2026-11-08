@@ -50,7 +50,15 @@ function info(overrides) {
 
 function downloadButton(overrides) {
   return Object.assign(
-    { filenamePrefix: "learnr2-answers", label: "Download My Answers" },
+    {
+      filenamePrefix: "learnr2-answers",
+      label: "Download My Answers",
+      package: "test.tutorials",
+      version: "1.2.3",
+      tutorial: "download-answers",
+      title: "Download answers fixture",
+      learnr2Version: "0.0.0.9000"
+    },
     overrides
   );
 }

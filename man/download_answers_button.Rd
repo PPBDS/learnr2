@@ -46,6 +46,16 @@ anywhere -- \code{learnr2} included -- so it can't appear in the download;
 this is a structural limit of quarto-live's own editor, not something
 \code{download_answers_button()} chooses to skip.
 
+The file opens with what it is a submission \emph{for}: \code{package} and
+\code{version} (the package the tutorial ships in, and that package's version
+as rendered), \code{tutorial} (the tutorial's name, its directory under
+\verb{inst/tutorials/}), \code{title} (its YAML title) and \code{learnr2Version}. These
+are filled in at render time -- by \code{\link[=render_tutorials]{render_tutorials()}}, and so by
+\code{\link[=run_tutorial]{run_tutorial()}} and \code{\link[=prerender_tutorials]{prerender_tutorials()}}, which know where the
+tutorial came from, or from the \code{.qmd}'s own location when it is
+rendered with \verb{quarto render} inside a package tree. A tutorial outside
+any package has \code{package} and \code{version} \code{null}.
+
 The download also carries a \code{metadata} block (timezone, browser info, and
 a random per-device id persisted across the reader's visits) and a \code{time}
 field: the moment the reader clicked "Download", lightly obfuscated so the

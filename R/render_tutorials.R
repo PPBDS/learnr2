@@ -78,12 +78,15 @@ render_tutorials <- function(paths,
 
     message("Rendering ", name, " (", qmd, ") ...")
     started <- Sys.time()
-    tryCatch(
+    # Quarto knits in its own R process, which sees the copy in work_dir,
+    # not the source path, so the tutorial's package is handed over in the
+    # environment (read by render_identity() in R/submission.R).
+    with_tutorial_env(tutorial_identity(qmd), tryCatch(
       quarto::quarto_render(input = as.character(qmd_copy), quiet = quiet),
       error = function(e) {
         stop("Failed to render ", qmd, ": ", conditionMessage(e), call. = FALSE)
       }
-    )
+    ))
     html <- fs::path_ext_set(qmd_copy, "html")
     if (!fs::file_exists(html)) {
       stop("Rendering ", qmd, " produced no ", fs::path_file(html), ".", call. = FALSE)
@@ -96,6 +99,63 @@ render_tutorials <- function(paths,
 
   message("Rendered ", length(rendered), " tutorial(s).")
   invisible(rendered)
+}
+
+# Which tutorial a .qmd (or its directory) is, and which package it belongs
+# to, from where it sits: `<pkg>/inst/tutorials/<name>/` in a source tree or
+# a pkgload::load_all() checkout, or `<lib>/<pkg>/tutorials/<name>/` once
+# installed. The tutorial's name is its directory's name, the id
+# run_tutorial() uses. Package and version are read from that package's
+# own DESCRIPTION, not from whatever version happens to be installed. A
+# tutorial outside any package has package and version NULL.
+tutorial_identity <- function(path) {
+  path <- fs::path_abs(path)
+  dir <- if (fs::is_dir(path)) path else fs::path_dir(path)
+  parent <- fs::path_dir(dir)
+  package <- NULL
+  version <- NULL
+  if (identical(fs::path_file(parent), "tutorials")) {
+    grand <- fs::path_dir(parent)
+    root <- if (fs::file_exists(fs::path(grand, "DESCRIPTION"))) {
+      grand
+    } else if (identical(fs::path_file(grand), "inst") &&
+               fs::file_exists(fs::path(fs::path_dir(grand), "DESCRIPTION"))) {
+      fs::path_dir(grand)
+    }
+    if (!is.null(root)) {
+      desc <- tryCatch(
+        read.dcf(fs::path(root, "DESCRIPTION"), fields = c("Package", "Version")),
+        error = function(e) NULL
+      )
+      if (!is.null(desc) && nrow(desc) == 1) {
+        package <- desc[1, "Package"]
+        version <- desc[1, "Version"]
+        if (is.na(package)) package <- NULL
+        if (is.na(version)) version <- NULL
+      }
+    }
+  }
+  list(package = unname(package), version = unname(version), tutorial = fs::path_file(dir))
+}
+
+TUTORIAL_ENV <- c(
+  package = "LEARNR2_TUTORIAL_PACKAGE",
+  version = "LEARNR2_TUTORIAL_VERSION",
+  tutorial = "LEARNR2_TUTORIAL_NAME"
+)
+
+# Evaluate `expr` with the tutorial's identity in the environment, for the
+# Quarto subprocess, then put the environment back as it was.
+with_tutorial_env <- function(identity, expr) {
+  previous <- Sys.getenv(unname(TUTORIAL_ENV), unset = NA, names = TRUE)
+  on.exit({
+    keep <- !is.na(previous)
+    if (any(keep)) do.call(Sys.setenv, as.list(previous[keep]))
+    if (any(!keep)) Sys.unsetenv(names(previous)[!keep])
+  }, add = TRUE)
+  values <- vapply(names(TUTORIAL_ENV), function(k) identity[[k]] %||% "", character(1))
+  do.call(Sys.setenv, as.list(stats::setNames(values, unname(TUTORIAL_ENV))))
+  expr
 }
 
 # Normalise `paths` (files and/or directories) to the .qmd files they denote,

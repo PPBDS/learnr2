@@ -1,5 +1,14 @@
 # learnr2 (development version)
 
+* The downloaded answers file now opens with what it is a submission for:
+  `package` and `version` (the package the tutorial ships in and its
+  version as rendered), `tutorial` (the tutorial's name), `title` and
+  `learnr2Version`, ahead of the answers. `render_tutorials()`, and so
+  `run_tutorial()` and `prerender_tutorials()`, work these out from where
+  the tutorial lives (`<pkg>/inst/tutorials/<name>/` or an installed
+  `<pkg>/tutorials/<name>/`) and pass them to the render; a plain
+  `quarto render` inside a package tree finds them the same way, and a
+  tutorial outside any package reports `null` for package and version.
 * The interface follows the document's language. Set Quarto's `lang:` key
   (`lang: fr`) and every string learnr2 puts on the page -- Continue, Start
   Over, Submit Answer, Try Again, Edit, the feedback, notes and error

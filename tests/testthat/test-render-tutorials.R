@@ -6,6 +6,51 @@
 # so a check run without Suggests (CRAN's noSuggests) passes.
 testthat::skip_if_not_installed("withr")
 
+test_that("tutorial_identity() reads the package from a source tree or an installed package", {
+  root <- withr::local_tempdir()
+  # Source tree: <pkg>/inst/tutorials/<name>/<name>.qmd
+  src <- fs::path(root, "src", "my.tutorials")
+  fs::dir_create(fs::path(src, "inst", "tutorials", "orientation"))
+  writeLines(c("Package: my.tutorials", "Version: 1.4.2"), fs::path(src, "DESCRIPTION"))
+  qmd <- fs::path(src, "inst", "tutorials", "orientation", "orientation.qmd")
+  writeLines("---\ntitle: x\n---", qmd)
+  expect_equal(learnr2:::tutorial_identity(qmd),
+               list(package = "my.tutorials", version = "1.4.2", tutorial = "orientation"))
+  expect_equal(learnr2:::tutorial_identity(fs::path_dir(qmd))$tutorial, "orientation")
+
+  # Installed: <lib>/<pkg>/tutorials/<name>/
+  lib <- fs::path(root, "lib", "other.tutorials")
+  fs::dir_create(fs::path(lib, "tutorials", "intro"))
+  writeLines(c("Package: other.tutorials", "Version: 0.9"), fs::path(lib, "DESCRIPTION"))
+  expect_equal(learnr2:::tutorial_identity(fs::path(lib, "tutorials", "intro", "intro.qmd")),
+               list(package = "other.tutorials", version = "0.9", tutorial = "intro"))
+
+  # Outside any package: the directory name is all there is.
+  loose <- fs::path(root, "loose", "demo")
+  fs::dir_create(loose)
+  expect_equal(learnr2:::tutorial_identity(fs::path(loose, "demo.qmd")),
+               list(package = NULL, version = NULL, tutorial = "demo"))
+  # A tutorials/ directory with no DESCRIPTION above it is not a package.
+  fs::dir_create(fs::path(root, "nopkg", "tutorials", "demo"))
+  expect_null(learnr2:::tutorial_identity(fs::path(root, "nopkg", "tutorials", "demo"))$package)
+})
+
+test_that("with_tutorial_env() sets the identity for the render and restores the environment", {
+  withr::local_envvar(LEARNR2_TUTORIAL_PACKAGE = "before", LEARNR2_TUTORIAL_VERSION = NA,
+                      LEARNR2_TUTORIAL_NAME = NA)
+  seen <- learnr2:::with_tutorial_env(
+    list(package = "my.tutorials", version = "1.4.2", tutorial = "orientation"),
+    Sys.getenv(c("LEARNR2_TUTORIAL_PACKAGE", "LEARNR2_TUTORIAL_VERSION", "LEARNR2_TUTORIAL_NAME"))
+  )
+  expect_equal(unname(seen), c("my.tutorials", "1.4.2", "orientation"))
+  expect_equal(Sys.getenv("LEARNR2_TUTORIAL_PACKAGE"), "before")
+  expect_identical(Sys.getenv("LEARNR2_TUTORIAL_NAME", unset = NA), NA_character_)
+  # No package: the variables are set but empty, so render_identity() sees
+  # "no package" rather than a stale value from an outer render.
+  seen <- learnr2:::with_tutorial_env(list(tutorial = "demo"), Sys.getenv("LEARNR2_TUTORIAL_PACKAGE"))
+  expect_equal(seen, "")
+})
+
 test_that("resolve_tutorial_paths() accepts .qmd files and tutorial directories, and rejects the rest", {
   d <- withr::local_tempdir()
   qmd <- fs::path(d, "lesson.qmd")

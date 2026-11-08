@@ -654,6 +654,17 @@ test.describe("download answers button", () => {
     }
     const contents = JSON.parse(Buffer.concat(chunks).toString("utf8"));
 
+    // The file opens with what it is a submission for, in this order, before
+    // anything the reader typed.
+    expect(Object.keys(contents).slice(0, 6)).toEqual([
+      "package", "version", "tutorial", "title", "learnr2Version", "page"
+    ]);
+    expect(contents.package).toBe("test.tutorials");
+    expect(contents.version).toBe("1.2.3");
+    expect(contents.tutorial).toBe("download-answers");
+    expect(contents.title).toBe("Download answers fixture");
+    expect(contents.learnr2Version).toBe("0.0.0.9000");
+
     expect(contents.info).toEqual({ name: "Ada Lovelace", email: "ada@example.com", id: null });
     // Two question() widgets plus the two persist:true {webr} exercises in
     // the fixture -- all one flat list now, each entry just { id, answer }.

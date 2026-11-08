@@ -1,6 +1,6 @@
 ## Do These
 
-Whenever a student downloads an answer JSON file, the file should list, at the top, the name of the package, the version number of the package and the name of the tutorial.
+Whenever a student downloads an answer JSON file, the file should list, at the top, the name of the package, the version number of the package and the name of the tutorial, inside the JSON, of course.
 
 ## load_tutorial()
 
@@ -43,16 +43,16 @@ So, maybe we need a function, load_tutorial()
 
 Do we need to worry about cheating? What prevents a student from taking his friends JSON file, loading it up, changing the name/email address, and then downloading a new JSON answer file? Won't this generate a new hash which will record the cheaters name so that, from our point of view, his submitted JSON file looks legit? 
 
-Perhaps the solution is that load_tutorial() requires that the JSPN file includes a hash. (Preventing a cheater from just deleting it.) It then reports what the hash says about whose work this is, and warns the user that they better not be cheating. It then records that hash (where?). Then, when answers are downloaded, both the old hash and a newly generated one are placed in the JSON file. We can examine them both to "confirm" that they come from the same person.
+Perhaps the solution is that load_tutorial() requires that the JSON file includes a hash. (Preventing a cheater from just deleting it.) It then reports what the hash says about whose work this is, and warns the user that they better not be cheating. It then records that hash (where?). Then, when answers are downloaded, both the old hash and a newly generated one are placed in the JSON file. We can examine them both to "confirm" that they come from the same person.
 
 Or maybe this is overkill and we don't need to worry about this sort of "by hand" cheating. The real concern is the use of an AI which can enter answers in an HTML form . . .
 
 
 ### More checks
 
-We need to write some functions which check all the tutorials in a package and can be used by package authors. One that we already have "runs" all the tutorials to ensure that they work. (Or so we rely on package authors to, by hand, make a list of all the tutorials and then we process them? Would be nice if we relieved them of that. )
+We need to write some functions which check all the tutorials in a package and can be used by package authors. One that we already have "runs" all the tutorials to ensure that they work. (Or do we rely on package authors to, by hand, make a list of all the tutorials and then we process them? Would be nice if we relieved them of that. )
 
-One function should check that the all the exercise ids (is that the right term) in a single tutorial are unique. It fails if they are not.
+One function should check that the all the exercise ids (is that the right term?) in a single tutorial are unique. It fails if they are not.
 
 Perhaps there should be a single function, like check_tutorials() which is the only thing a package author needs to run for her testing. It first figures out all the installed tutorials. It then, for each tutorial, runs the individual tests. Right now, there are only three tests: 
 

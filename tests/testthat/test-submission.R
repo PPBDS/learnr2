@@ -83,6 +83,37 @@ test_that("download_answers_button() has sensible defaults and can be customized
   expect_equal(btn2$payload$label, "Turn In")
 })
 
+test_that("download_answers_button() records what the file is a submission for", {
+  # At the console there is no tutorial being rendered: nulls, but the keys
+  # are there so quiz.js always finds them.
+  withr::local_envvar(LEARNR2_TUTORIAL_PACKAGE = NA, LEARNR2_TUTORIAL_VERSION = NA,
+                      LEARNR2_TUTORIAL_NAME = NA)
+  btn <- download_answers_button()
+  expect_true(all(c("package", "version", "tutorial", "title", "learnr2Version") %in% names(btn$payload)))
+  expect_null(btn$payload$package)
+  expect_null(btn$payload$tutorial)
+  expect_equal(btn$payload$learnr2Version, as.character(utils::packageVersion("learnr2")))
+  json <- jsonlite::toJSON(btn$payload, auto_unbox = TRUE, null = "null")
+  expect_match(as.character(json), '"package":null', fixed = TRUE)
+
+  # render_tutorials() hands the source tutorial's identity over in the
+  # environment, which wins over anything else.
+  withr::local_envvar(LEARNR2_TUTORIAL_PACKAGE = "my.tutorials", LEARNR2_TUTORIAL_VERSION = "2.0.1",
+                      LEARNR2_TUTORIAL_NAME = "orientation")
+  btn <- download_answers_button()
+  expect_equal(btn$payload$package, "my.tutorials")
+  expect_equal(btn$payload$version, "2.0.1")
+  expect_equal(btn$payload$tutorial, "orientation")
+  expect_null(btn$payload$title)
+
+  # A tutorial outside any package: name only.
+  withr::local_envvar(LEARNR2_TUTORIAL_PACKAGE = "", LEARNR2_TUTORIAL_VERSION = "",
+                      LEARNR2_TUTORIAL_NAME = "standalone")
+  id <- learnr2:::render_identity()
+  expect_null(id$package)
+  expect_equal(id$tutorial, "standalone")
+})
+
 test_that("download_answers_button() validates its arguments", {
   expect_error(download_answers_button(filename_prefix = ""), "single non-empty string")
   expect_error(download_answers_button(label = ""), "single non-empty string")
