@@ -552,11 +552,14 @@ dWlyZWQiOmZhbHNlfV0sInN1Ym1pdExhYmVsIjpudWxsLCJlZGl0TGFiZWwiOm51bGx9">
 </div>
 </div>
 </div>
-<p><code>download_answers_button()</code> gathers every <code>question()</code> and <code>student_info()</code> answer already saved on the page into one readable JSON file and downloads it — so a reader can save their work and turn it in (attach to an email, upload to an LMS), all without a server to submit to. The download also carries browser info, a per-device id, and a <code>time</code> field: the moment the reader clicked “Download”, lightly obfuscated so the raw timestamp isn’t readable or hand-editable in the file. Recover it with <code>learnr2::submission_time(path)</code>. Nothing else is hashed or signed — with no server involved there is no way to <em>prevent</em> a reader editing their answers; this just keeps the submission time honest at a glance:</p>
+<p><code>download_answers_button()</code> gathers every <code>question()</code> and <code>student_info()</code> answer already saved on the page into one readable JSON file and downloads it — so a reader can save their work and turn it in (attach to an email, upload to an LMS), all without a server to submit to. The file opens with what it is a submission for: the tutorial’s package and that package’s version, the tutorial’s name and title, and the <strong>learnr2</strong> version, all filled in when the tutorial was rendered. The download also carries browser info, a per-device id, and a <code>time</code> field: the moment the reader clicked “Download”, lightly obfuscated so the raw timestamp isn’t readable or hand-editable in the file. Recover it with <code>learnr2::submission_time(path)</code>. Nothing else is hashed or signed — with no server involved there is no way to <em>prevent</em> a reader editing their answers; this just keeps the submission time honest at a glance:</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>learnr2<span class="sc">::</span><span class="fu">download_answers_button</span>(<span class="at">filename_prefix =</span> <span class="st">"hello-learnr2"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output-display">
-<div class="learnr2-download-answers" data-learnr2-download="eyJmaWxlbmFtZVByZWZpeCI6ImhlbGxvLWxlYXJucjIiLCJsYWJlbCI6bnVsbH0=">
+<div class="learnr2-download-answers" data-learnr2-download="eyJmaWxlbmFtZVByZWZpeCI6ImhlbGxvLWxlYXJucjIiLCJsYWJlbCI6bnVsbCwicGFja2Fn
+ZSI6ImxlYXJucjIiLCJ2ZXJzaW9uIjoiMC4xLjMuOTAwOCIsInR1dG9yaWFsIjoiaGVsbG8t
+bGVhcm5yMiIsInRpdGxlIjoiSGVsbG8gbGVhcm5yMiIsImxlYXJucjJWZXJzaW9uIjoiMC4x
+LjMuOTAwOCJ9">
 <noscript>This button requires JavaScript.</noscript>
 </div>
 </div>

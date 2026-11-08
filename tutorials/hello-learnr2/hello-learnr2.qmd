@@ -377,7 +377,10 @@ learnr2::student_info()
 `download_answers_button()` gathers every `question()` and `student_info()`
 answer already saved on the page into one readable JSON file and downloads
 it --- so a reader can save their work and turn it in (attach to an email,
-upload to an LMS), all without a server to submit to. The download also
+upload to an LMS), all without a server to submit to. The file opens with
+what it is a submission for: the tutorial's package and that package's
+version, the tutorial's name and title, and the **learnr2** version, all
+filled in when the tutorial was rendered. The download also
 carries browser info, a per-device id, and a `time` field: the moment the
 reader clicked "Download", lightly obfuscated so the raw timestamp isn't
 readable or hand-editable in the file. Recover it with

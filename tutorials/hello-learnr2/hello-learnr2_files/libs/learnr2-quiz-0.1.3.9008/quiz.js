@@ -1263,7 +1263,11 @@
     return { id: attr.exercise, answer: storageGet(storageKey) };
   }
 
-  async function collectAnswers() {
+  // `data` is the download button's payload, which carries what the file is
+  // a submission for (package, version, tutorial, title, learnr2Version),
+  // resolved on the R side at render time. Those go first, so a grader
+  // opening the file sees them before the answers.
+  async function collectAnswers(data) {
     // Submitted values only (see infoFieldValue()): the download is blocked
     // until every student_info() form is submitted, so these are what the
     // reader confirmed, never half-typed edits.
@@ -1312,7 +1316,15 @@
         });
       });
 
+    function header(key) {
+      return typeof data[key] === "string" ? data[key] : null;
+    }
     return {
+      package: header("package"),
+      version: header("version"),
+      tutorial: header("tutorial"),
+      title: header("title"),
+      learnr2Version: header("learnr2Version"),
       page: window.location.href,
       info: info,
       answers: answers,
@@ -1357,7 +1369,7 @@
         }
       }
 
-      var payload = await collectAnswers();
+      var payload = await collectAnswers(data);
       var stamp = new Date().toISOString().replace(/[:.]/g, "-");
       triggerDownload(data.filenamePrefix + "-" + stamp + ".json", payload);
     });
