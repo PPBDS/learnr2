@@ -5,7 +5,7 @@ Group questions into a quiz
 ## Usage
 
 ``` r
-quiz(..., caption = "Quiz")
+quiz(..., caption = NULL)
 ```
 
 ## Arguments
@@ -18,7 +18,9 @@ quiz(..., caption = "Quiz")
 
 - caption:
 
-  Heading shown above the questions.
+  Heading shown above the questions. `NULL`, the default, means the page
+  language's "Quiz" (see the "Language" section of
+  [`question()`](https://ppbds.github.io/learnr2/reference/question.md)).
 
 ## Value
 
@@ -37,7 +39,7 @@ quiz(
 )
 #> <div class="learnr2-quiz">
 #>   <div class="learnr2-quiz-caption">Arithmetic</div>
-#>   <div class="learnr2-question" data-learnr2-question="eyJpZCI6IndoYXQtaXMtMi0yIiwidGV4dCI6IldoYXQgaXMgMiArIDI/IiwidHlwZSI6InNp&#10;bmdsZSIsImFuc3dlcnMiOlt7InRleHQiOiI0IiwiY29ycmVjdCI6dHJ1ZSwibWVzc2FnZSI6&#10;bnVsbH0seyJ0ZXh0IjoiMjIiLCJjb3JyZWN0IjpmYWxzZSwibWVzc2FnZSI6bnVsbH1dLCJj&#10;b3JyZWN0TWVzc2FnZSI6IkNvcnJlY3QhIiwiaW5jb3JyZWN0TWVzc2FnZSI6IkluY29ycmVj&#10;dC4iLCJhbGxvd1JldHJ5IjpmYWxzZSwicmFuZG9tQW5zd2VyT3JkZXIiOmZhbHNlLCJzdWJt&#10;aXRMYWJlbCI6IlN1Ym1pdCBBbnN3ZXIiLCJ0cnlBZ2FpbkxhYmVsIjoiVHJ5IEFnYWluIiwi&#10;ZWRpdExhYmVsIjoiRWRpdCBBbnN3ZXIiLCJhbGxvd0ltYWdlIjpmYWxzZSwiYWxsb3dUZXh0&#10;Ijp0cnVlLCJzaG93VGV4dCI6dHJ1ZSwidmFsaWRhdGUiOiJub25lIn0=">
+#>   <div class="learnr2-question" data-learnr2-question="eyJpZCI6IndoYXQtaXMtMi0yIiwidGV4dCI6IldoYXQgaXMgMiArIDI/IiwidHlwZSI6InNp&#10;bmdsZSIsImFuc3dlcnMiOlt7InRleHQiOiI0IiwiY29ycmVjdCI6dHJ1ZSwibWVzc2FnZSI6&#10;bnVsbH0seyJ0ZXh0IjoiMjIiLCJjb3JyZWN0IjpmYWxzZSwibWVzc2FnZSI6bnVsbH1dLCJj&#10;b3JyZWN0TWVzc2FnZSI6bnVsbCwiaW5jb3JyZWN0TWVzc2FnZSI6bnVsbCwiYWxsb3dSZXRy&#10;eSI6ZmFsc2UsInJhbmRvbUFuc3dlck9yZGVyIjpmYWxzZSwic3VibWl0TGFiZWwiOm51bGws&#10;InRyeUFnYWluTGFiZWwiOm51bGwsImVkaXRMYWJlbCI6bnVsbCwiYWxsb3dJbWFnZSI6ZmFs&#10;c2UsImFsbG93VGV4dCI6dHJ1ZSwic2hvd1RleHQiOnRydWUsInZhbGlkYXRlIjoibm9uZSJ9&#10;">
 #>     <noscript>This quiz question requires JavaScript.</noscript>
 #>   </div>
 #> </div>

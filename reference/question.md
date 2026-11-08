@@ -12,13 +12,13 @@ question(
   text,
   ...,
   type = c("auto", "single", "multiple", "text", "reflection", "reflection_editable"),
-  correct = "Correct!",
-  incorrect = "Incorrect.",
+  correct = NULL,
+  incorrect = NULL,
   allow_retry = FALSE,
   random_answer_order = FALSE,
-  submit_button = "Submit Answer",
-  try_again_button = "Try Again",
-  edit_button = "Edit Answer",
+  submit_button = NULL,
+  try_again_button = NULL,
+  edit_button = NULL,
   id = NULL,
   allow_image = FALSE,
   allow_text = TRUE,
@@ -73,12 +73,14 @@ question(
 
 - correct:
 
-  Message shown when the reader answers correctly. Unused for
-  `"reflection"`/`"reflection_editable"` questions.
+  Message shown when the reader answers correctly. `NULL`, the default,
+  means the page language's "Correct!" (see "Language" below). Unused
+  for `"reflection"`/`"reflection_editable"` questions.
 
 - incorrect:
 
-  Message shown when the reader answers incorrectly. Unused for
+  Message shown when the reader answers incorrectly. `NULL`, the
+  default, means the page language's "Incorrect.". Unused for
   `"reflection"`/`"reflection_editable"` questions.
 
 - allow_retry:
@@ -93,14 +95,16 @@ question(
 
 - submit_button, try_again_button:
 
-  Button labels.
+  Button labels. `NULL`, the default, means the page language's "Submit
+  Answer" and "Try Again".
 
 - edit_button:
 
   Button label shown while a submitted `"reflection_editable"` question,
   or a `"reflection"` question with `allow_image = TRUE`, is locked;
   clicking it reopens the answer for editing (only the image, for the
-  latter). Ignored otherwise.
+  latter). `NULL`, the default, means the page language's "Edit Answer".
+  Ignored otherwise.
 
 - id:
 
@@ -171,6 +175,21 @@ A `learnr2_question` object. Printed as an interactive HTML widget in a
 rendered Quarto document; at the console it opens a browser preview in
 an interactive session and prints the HTML source otherwise.
 
+## Language
+
+Every label and message learnr2 itself puts on the page – these buttons,
+"Continue", "Start Over", the feedback and notes – follows the
+document's language, Quarto's `lang:` YAML key (`lang: fr`), which also
+translates Quarto's own table of contents and code-copy tooltip. A label
+passed explicitly to this function is used as given, in any language.
+learnr2 ships English and French; a `lang:` with no translation falls
+back to English, and
+[`check_tutorial()`](https://ppbds.github.io/learnr2/reference/check_tutorial.md)
+says so. To reword single strings, or to see the list of them, see
+[`tutorial_options()`](https://ppbds.github.io/learnr2/reference/tutorial_options.md);
+to add a language, see the "Language" section of
+[`vignette("translating")`](https://ppbds.github.io/learnr2/articles/translating.md).
+
 ## Progress persistence
 
 Once a reader submits an answer, it is saved in the browser's
@@ -222,7 +241,7 @@ question(
   answer("48"),
   allow_retry = TRUE
 )
-#> <div class="learnr2-question" data-learnr2-question="eyJpZCI6IndoYXQtaXMtNi10aW1lcy03IiwidGV4dCI6IldoYXQgaXMgNiB0aW1lcyA3PyIs&#10;InR5cGUiOiJzaW5nbGUiLCJhbnN3ZXJzIjpbeyJ0ZXh0IjoiNDIiLCJjb3JyZWN0Ijp0cnVl&#10;LCJtZXNzYWdlIjpudWxsfSx7InRleHQiOiIzNiIsImNvcnJlY3QiOmZhbHNlLCJtZXNzYWdl&#10;IjpudWxsfSx7InRleHQiOiI0OCIsImNvcnJlY3QiOmZhbHNlLCJtZXNzYWdlIjpudWxsfV0s&#10;ImNvcnJlY3RNZXNzYWdlIjoiQ29ycmVjdCEiLCJpbmNvcnJlY3RNZXNzYWdlIjoiSW5jb3Jy&#10;ZWN0LiIsImFsbG93UmV0cnkiOnRydWUsInJhbmRvbUFuc3dlck9yZGVyIjpmYWxzZSwic3Vi&#10;bWl0TGFiZWwiOiJTdWJtaXQgQW5zd2VyIiwidHJ5QWdhaW5MYWJlbCI6IlRyeSBBZ2FpbiIs&#10;ImVkaXRMYWJlbCI6IkVkaXQgQW5zd2VyIiwiYWxsb3dJbWFnZSI6ZmFsc2UsImFsbG93VGV4&#10;dCI6dHJ1ZSwic2hvd1RleHQiOnRydWUsInZhbGlkYXRlIjoibm9uZSJ9">
+#> <div class="learnr2-question" data-learnr2-question="eyJpZCI6IndoYXQtaXMtNi10aW1lcy03IiwidGV4dCI6IldoYXQgaXMgNiB0aW1lcyA3PyIs&#10;InR5cGUiOiJzaW5nbGUiLCJhbnN3ZXJzIjpbeyJ0ZXh0IjoiNDIiLCJjb3JyZWN0Ijp0cnVl&#10;LCJtZXNzYWdlIjpudWxsfSx7InRleHQiOiIzNiIsImNvcnJlY3QiOmZhbHNlLCJtZXNzYWdl&#10;IjpudWxsfSx7InRleHQiOiI0OCIsImNvcnJlY3QiOmZhbHNlLCJtZXNzYWdlIjpudWxsfV0s&#10;ImNvcnJlY3RNZXNzYWdlIjpudWxsLCJpbmNvcnJlY3RNZXNzYWdlIjpudWxsLCJhbGxvd1Jl&#10;dHJ5Ijp0cnVlLCJyYW5kb21BbnN3ZXJPcmRlciI6ZmFsc2UsInN1Ym1pdExhYmVsIjpudWxs&#10;LCJ0cnlBZ2FpbkxhYmVsIjpudWxsLCJlZGl0TGFiZWwiOm51bGwsImFsbG93SW1hZ2UiOmZh&#10;bHNlLCJhbGxvd1RleHQiOnRydWUsInNob3dUZXh0Ijp0cnVlLCJ2YWxpZGF0ZSI6Im5vbmUi&#10;fQ==">
 #>   <noscript>This quiz question requires JavaScript.</noscript>
 #> </div>
 
@@ -233,7 +252,7 @@ question(
   type = "reflection_editable",
   validate = "integer"
 )
-#> <div class="learnr2-question" data-learnr2-question="eyJpZCI6Imhvdy1tYW55LW1pbnV0ZXMtYXBwcm94aW1hdGVseS1kaWQtdGhpcy10YWtlIiwi&#10;dGV4dCI6IkhvdyBtYW55IG1pbnV0ZXMsIGFwcHJveGltYXRlbHksIGRpZCB0aGlzIHRha2U/&#10;IiwidHlwZSI6InJlZmxlY3Rpb25fZWRpdGFibGUiLCJhbnN3ZXJzIjpbXSwiY29ycmVjdE1l&#10;c3NhZ2UiOiJDb3JyZWN0ISIsImluY29ycmVjdE1lc3NhZ2UiOiJJbmNvcnJlY3QuIiwiYWxs&#10;b3dSZXRyeSI6ZmFsc2UsInJhbmRvbUFuc3dlck9yZGVyIjpmYWxzZSwic3VibWl0TGFiZWwi&#10;OiJTdWJtaXQgQW5zd2VyIiwidHJ5QWdhaW5MYWJlbCI6IlRyeSBBZ2FpbiIsImVkaXRMYWJl&#10;bCI6IkVkaXQgQW5zd2VyIiwiYWxsb3dJbWFnZSI6ZmFsc2UsImFsbG93VGV4dCI6dHJ1ZSwi&#10;c2hvd1RleHQiOnRydWUsInZhbGlkYXRlIjoiaW50ZWdlciJ9">
+#> <div class="learnr2-question" data-learnr2-question="eyJpZCI6Imhvdy1tYW55LW1pbnV0ZXMtYXBwcm94aW1hdGVseS1kaWQtdGhpcy10YWtlIiwi&#10;dGV4dCI6IkhvdyBtYW55IG1pbnV0ZXMsIGFwcHJveGltYXRlbHksIGRpZCB0aGlzIHRha2U/&#10;IiwidHlwZSI6InJlZmxlY3Rpb25fZWRpdGFibGUiLCJhbnN3ZXJzIjpbXSwiY29ycmVjdE1l&#10;c3NhZ2UiOm51bGwsImluY29ycmVjdE1lc3NhZ2UiOm51bGwsImFsbG93UmV0cnkiOmZhbHNl&#10;LCJyYW5kb21BbnN3ZXJPcmRlciI6ZmFsc2UsInN1Ym1pdExhYmVsIjpudWxsLCJ0cnlBZ2Fp&#10;bkxhYmVsIjpudWxsLCJlZGl0TGFiZWwiOm51bGwsImFsbG93SW1hZ2UiOmZhbHNlLCJhbGxv&#10;d1RleHQiOnRydWUsInNob3dUZXh0Ijp0cnVlLCJ2YWxpZGF0ZSI6ImludGVnZXIifQ==">
 #>   <noscript>This quiz question requires JavaScript.</noscript>
 #> </div>
 ```

@@ -53,6 +53,7 @@ directory.
 | a bare `###` directly under a `##` heading | delete it, since the heading already starts the section |
 | any other bare `###` divider | keep it, since it becomes a Continue stop with no heading |
 | `allow_skip: yes` in the YAML | `learnr2::tutorial_options(allow_skip = TRUE)` |
+| `language: fr` in the YAML (classic learnr’s button translations) | Quarto’s `lang: fr`, which translates Quarto’s chrome and learnr2’s buttons alike (see below) |
 | `knitr::include_graphics("images/x.png")` | `![](images/x.png)` |
 | a bare ```` ``` ```` or `block |` ````` bash ```` or ```` `````r `for a command,` ````` {.output} ```` for expected output | | a four-backtick block around a plain transcript | an ordinary three-backtick block | | `<pre><code>` with `&#96;` entities, to show a chunk | a four-backtick `{verbatim}` block | | escaped backticks, ``\`\`\` ``, in a sentence | inline code with a longer delimiter, as in ```` `` ````` \`\` \`\`\`\` |  |
 | prose sending the reader to RStudio or a local console to configure it | rewrite around the page, or drop it (see below) |
@@ -661,6 +662,55 @@ untagged block still reads as code, but it gets no colours and no copy
 button. Tag it anyway. Inline code in a sentence, `` `whoami` ``, needs
 nothing: single backticks already give it a code font and a light tint.
 
+## Language
+
+Everything **learnr2** itself writes on the page is translatable: the
+Continue and Start Over buttons, Submit, Try Again and Edit, the
+feedback, the notes under a locked Continue, the error messages, the
+screenshot box’s prompts, and the default labels of
+[`student_info()`](https://ppbds.github.io/learnr2/reference/student_info.md)
+and
+[`download_answers_button()`](https://ppbds.github.io/learnr2/reference/download_answers_button.md).
+The language is Quarto’s own `lang:` key in the YAML header:
+
+``` yaml
+lang: fr
+```
+
+That one line gives the reader a French table of contents and code-copy
+tooltip from Quarto, and French buttons and messages from **learnr2**.
+**quarto-live**’s own Run Code, Show Hint and Show Solution buttons are
+relabelled too. The tutorial’s prose is yours to write in whatever
+language you like. **learnr2** ships English and French. A `lang:` it
+has no file for falls back to English, and
+[`check_tutorial()`](https://ppbds.github.io/learnr2/reference/check_tutorial.md)
+warns about it. Regional tags work: `lang: fr-CA` uses the French
+strings.
+
+To reword single strings for one tutorial, pass `language` to
+[`tutorial_options()`](https://ppbds.github.io/learnr2/reference/tutorial_options.md):
+
+``` r
+
+learnr2::tutorial_options(language = list(continue = "Next", start_over = "Reset"))
+```
+
+The names are the keys of the string table,
+`system.file("extdata/quiz/lang/en.json", package = "learnr2")`. A
+string keeps the placeholders the English one has: `{title}` in
+`continue_to`, `{n}` in `continue_note_other` and
+`download_unanswered_other`, `{list}` in the download messages. The
+labels of a single widget can also be set in the call, as in
+`question(submit_button = "Valider")`.
+
+To add a language, copy `en.json` to
+`inst/extdata/quiz/lang/<code>.json` in the **learnr2** source,
+translate every value, keep every key and placeholder, and open a pull
+request. The tests check that each file has exactly the English keys.
+Use the two-letter code where one exists (`de`, `es`), a regional one
+(`pt-BR`) only when the regional form is what you are translating into,
+since a plain `lang: pt` then falls back to English.
+
 ## Check it by rendering it
 
 Syntax that looks right can still be wrong in ways only the rendered
@@ -681,11 +731,12 @@ naming an exercise that doesn’t exist, a
 [webr](https://github.com/cardiomoon/webr) package missing from the
 `webr:` list, a second
 [`tutorial_options()`](https://ppbds.github.io/learnr2/reference/tutorial_options.md)
-call, and missing boilerplate. Those stop with an error. Three more
+call, and missing boilerplate. Those stop with an error. Four more
 checks only warn, because a tutorial can break them and still work: a
 code block with no language, prose that mentions **learnr** or
-**tutorial.helpers**, and classic keys left in the YAML header. Fix them
-too. Then open the rendered HTML in a browser and click through it.
+**tutorial.helpers**, classic keys left in the YAML header, and a
+`lang:` **learnr2** has no translation for. Fix them too. Then open the
+rendered HTML in a browser and click through it.
 
 [`run_tutorial()`](https://ppbds.github.io/learnr2/reference/run_tutorial.md)
 reads the *installed* copy of a package, not your working files. While

@@ -13,7 +13,7 @@ there is no model answer to reveal."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">learnr2</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.3.9006</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.3.9007</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -54,12 +54,11 @@ there is no model answer to reveal.</p>
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">student_info</span><span class="op">(</span></span>
-<span>  fields <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>name <span class="op">=</span> <span class="st">"Name:"</span>, email <span class="op">=</span> <span class="st">"Email:"</span>, id <span class="op">=</span></span>
-<span>    <span class="st">"ID (if requested by your instructor):"</span><span class="op">)</span>,</span>
-<span>  required <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sets.html" class="external-link">intersect</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"name"</span>, <span class="st">"email"</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">fields</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>  fields <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  required <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sets.html" class="external-link">intersect</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"name"</span>, <span class="st">"email"</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">fields</span><span class="op">)</span> <span class="op"><a href="https://rdrr.io/r/base/Control.html" class="external-link">%||%</a></span> <span class="va">default_info_fields</span><span class="op">)</span>,</span>
 <span>  id <span class="op">=</span> <span class="st">"student-info"</span>,</span>
-<span>  submit_button <span class="op">=</span> <span class="st">"Submit"</span>,</span>
-<span>  edit_button <span class="op">=</span> <span class="st">"Edit"</span></span>
+<span>  submit_button <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  edit_button <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -69,10 +68,12 @@ there is no model answer to reveal.</p>
 
 <dl><dt id="arg-fields">fields<a class="anchor" aria-label="anchor" href="#arg-fields"></a></dt>
 <dd><p>A named character vector of field key/label pairs to
-collect. Defaults to name, email, and an optional ID, matching
-'tutorial.helpers”s <code>info_section.Rmd</code>. A field named <code>"email"</code> is
-additionally checked for an <code>"@"</code> character, regardless of whether it
-is <code>required</code>.</p></dd>
+collect, e.g. <code>c(name = "Full name:", section = "Section:")</code>. <code>NULL</code>,
+the default, gives the three fields of 'tutorial.helpers”s
+<code>info_section.Rmd</code> – <code>name</code>, <code>email</code> and an optional <code>id</code> – labelled
+in the page language (see the "Language" section of <code><a href="question.html">question()</a></code>).
+A field named <code>"email"</code> is additionally checked for an <code>"@"</code>
+character, regardless of whether it is <code>required</code>.</p></dd>
 
 
 <dt id="arg-required">required<a class="anchor" aria-label="anchor" href="#arg-required"></a></dt>
@@ -93,12 +94,14 @@ tutorial embeds more than one <code>student_info()</code> form.</p></dd>
 
 
 <dt id="arg-submit-button">submit_button<a class="anchor" aria-label="anchor" href="#arg-submit-button"></a></dt>
-<dd><p>Button label while the form is open for editing.</p></dd>
+<dd><p>Button label while the form is open for editing.
+<code>NULL</code>, the default, means the page language's "Submit".</p></dd>
 
 
 <dt id="arg-edit-button">edit_button<a class="anchor" aria-label="anchor" href="#arg-edit-button"></a></dt>
 <dd><p>Button label while the form is locked on a
-submission. Clicking it reopens the form.</p></dd>
+submission. Clicking it reopens the form. <code>NULL</code>, the default, means
+the page language's "Edit".</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -123,11 +126,11 @@ last submitted entry, and is blocked until the form is submitted. A
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="fu">student_info</span><span class="op">(</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;div class="learnr2-info" data-learnr2-info="eyJpZCI6ImxlYXJucjItaW5mby1zdHVkZW50LWluZm8iLCJmaWVsZHMiOlt7ImtleSI6Im5h&amp;#10;bWUiLCJsYWJlbCI6Ik5hbWU6IiwicmVxdWlyZWQiOnRydWV9LHsia2V5IjoiZW1haWwiLCJs&amp;#10;YWJlbCI6IkVtYWlsOiIsInJlcXVpcmVkIjp0cnVlfSx7ImtleSI6ImlkIiwibGFiZWwiOiJJ&amp;#10;RCAoaWYgcmVxdWVzdGVkIGJ5IHlvdXIgaW5zdHJ1Y3Rvcik6IiwicmVxdWlyZWQiOmZhbHNl&amp;#10;fV0sInN1Ym1pdExhYmVsIjoiU3VibWl0IiwiZWRpdExhYmVsIjoiRWRpdCJ9"&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;div class="learnr2-info" data-learnr2-info="eyJpZCI6ImxlYXJucjItaW5mby1zdHVkZW50LWluZm8iLCJmaWVsZHMiOlt7ImtleSI6Im5h&amp;#10;bWUiLCJsYWJlbCI6bnVsbCwicmVxdWlyZWQiOnRydWV9LHsia2V5IjoiZW1haWwiLCJsYWJl&amp;#10;bCI6bnVsbCwicmVxdWlyZWQiOnRydWV9LHsia2V5IjoiaWQiLCJsYWJlbCI6bnVsbCwicmVx&amp;#10;dWlyZWQiOmZhbHNlfV0sInN1Ym1pdExhYmVsIjpudWxsLCJlZGl0TGFiZWwiOm51bGx9"&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   &lt;noscript&gt;This form requires JavaScript.&lt;/noscript&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;/div&gt;</span>
 <span class="r-in"><span><span class="fu">student_info</span><span class="op">(</span>fields <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>name <span class="op">=</span> <span class="st">"Full name:"</span>, section <span class="op">=</span> <span class="st">"Section:"</span><span class="op">)</span>, required <span class="op">=</span> <span class="st">"name"</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;div class="learnr2-info" data-learnr2-info="eyJpZCI6ImxlYXJucjItaW5mby1zdHVkZW50LWluZm8iLCJmaWVsZHMiOlt7ImtleSI6Im5h&amp;#10;bWUiLCJsYWJlbCI6IkZ1bGwgbmFtZToiLCJyZXF1aXJlZCI6dHJ1ZX0seyJrZXkiOiJzZWN0&amp;#10;aW9uIiwibGFiZWwiOiJTZWN0aW9uOiIsInJlcXVpcmVkIjpmYWxzZX1dLCJzdWJtaXRMYWJl&amp;#10;bCI6IlN1Ym1pdCIsImVkaXRMYWJlbCI6IkVkaXQifQ=="&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;div class="learnr2-info" data-learnr2-info="eyJpZCI6ImxlYXJucjItaW5mby1zdHVkZW50LWluZm8iLCJmaWVsZHMiOlt7ImtleSI6Im5h&amp;#10;bWUiLCJsYWJlbCI6IkZ1bGwgbmFtZToiLCJyZXF1aXJlZCI6dHJ1ZX0seyJrZXkiOiJzZWN0&amp;#10;aW9uIiwibGFiZWwiOiJTZWN0aW9uOiIsInJlcXVpcmVkIjpmYWxzZX1dLCJzdWJtaXRMYWJl&amp;#10;bCI6bnVsbCwiZWRpdExhYmVsIjpudWxsfQ=="&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   &lt;noscript&gt;This form requires JavaScript.&lt;/noscript&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;/div&gt;</span>
 </code></pre></div>

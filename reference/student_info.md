@@ -10,12 +10,11 @@ nothing here is graded and there is no model answer to reveal.
 
 ``` r
 student_info(
-  fields = c(name = "Name:", email = "Email:", id =
-    "ID (if requested by your instructor):"),
-  required = intersect(c("name", "email"), names(fields)),
+  fields = NULL,
+  required = intersect(c("name", "email"), names(fields) %||% default_info_fields),
   id = "student-info",
-  submit_button = "Submit",
-  edit_button = "Edit"
+  submit_button = NULL,
+  edit_button = NULL
 )
 ```
 
@@ -23,10 +22,14 @@ student_info(
 
 - fields:
 
-  A named character vector of field key/label pairs to collect. Defaults
-  to name, email, and an optional ID, matching 'tutorial.helpers”s
-  `info_section.Rmd`. A field named `"email"` is additionally checked
-  for an `"@"` character, regardless of whether it is `required`.
+  A named character vector of field key/label pairs to collect, e.g.
+  `c(name = "Full name:", section = "Section:")`. `NULL`, the default,
+  gives the three fields of 'tutorial.helpers”s `info_section.Rmd` –
+  `name`, `email` and an optional `id` – labelled in the page language
+  (see the "Language" section of
+  [`question()`](https://ppbds.github.io/learnr2/reference/question.md)).
+  A field named `"email"` is additionally checked for an `"@"`
+  character, regardless of whether it is `required`.
 
 - required:
 
@@ -47,12 +50,14 @@ student_info(
 
 - submit_button:
 
-  Button label while the form is open for editing.
+  Button label while the form is open for editing. `NULL`, the default,
+  means the page language's "Submit".
 
 - edit_button:
 
   Button label while the form is locked on a submission. Clicking it
-  reopens the form.
+  reopens the form. `NULL`, the default, means the page language's
+  "Edit".
 
 ## Value
 
@@ -80,11 +85,11 @@ so a reader can turn their work in.
 
 ``` r
 student_info()
-#> <div class="learnr2-info" data-learnr2-info="eyJpZCI6ImxlYXJucjItaW5mby1zdHVkZW50LWluZm8iLCJmaWVsZHMiOlt7ImtleSI6Im5h&#10;bWUiLCJsYWJlbCI6Ik5hbWU6IiwicmVxdWlyZWQiOnRydWV9LHsia2V5IjoiZW1haWwiLCJs&#10;YWJlbCI6IkVtYWlsOiIsInJlcXVpcmVkIjp0cnVlfSx7ImtleSI6ImlkIiwibGFiZWwiOiJJ&#10;RCAoaWYgcmVxdWVzdGVkIGJ5IHlvdXIgaW5zdHJ1Y3Rvcik6IiwicmVxdWlyZWQiOmZhbHNl&#10;fV0sInN1Ym1pdExhYmVsIjoiU3VibWl0IiwiZWRpdExhYmVsIjoiRWRpdCJ9">
+#> <div class="learnr2-info" data-learnr2-info="eyJpZCI6ImxlYXJucjItaW5mby1zdHVkZW50LWluZm8iLCJmaWVsZHMiOlt7ImtleSI6Im5h&#10;bWUiLCJsYWJlbCI6bnVsbCwicmVxdWlyZWQiOnRydWV9LHsia2V5IjoiZW1haWwiLCJsYWJl&#10;bCI6bnVsbCwicmVxdWlyZWQiOnRydWV9LHsia2V5IjoiaWQiLCJsYWJlbCI6bnVsbCwicmVx&#10;dWlyZWQiOmZhbHNlfV0sInN1Ym1pdExhYmVsIjpudWxsLCJlZGl0TGFiZWwiOm51bGx9">
 #>   <noscript>This form requires JavaScript.</noscript>
 #> </div>
 student_info(fields = c(name = "Full name:", section = "Section:"), required = "name")
-#> <div class="learnr2-info" data-learnr2-info="eyJpZCI6ImxlYXJucjItaW5mby1zdHVkZW50LWluZm8iLCJmaWVsZHMiOlt7ImtleSI6Im5h&#10;bWUiLCJsYWJlbCI6IkZ1bGwgbmFtZToiLCJyZXF1aXJlZCI6dHJ1ZX0seyJrZXkiOiJzZWN0&#10;aW9uIiwibGFiZWwiOiJTZWN0aW9uOiIsInJlcXVpcmVkIjpmYWxzZX1dLCJzdWJtaXRMYWJl&#10;bCI6IlN1Ym1pdCIsImVkaXRMYWJlbCI6IkVkaXQifQ==">
+#> <div class="learnr2-info" data-learnr2-info="eyJpZCI6ImxlYXJucjItaW5mby1zdHVkZW50LWluZm8iLCJmaWVsZHMiOlt7ImtleSI6Im5h&#10;bWUiLCJsYWJlbCI6IkZ1bGwgbmFtZToiLCJyZXF1aXJlZCI6dHJ1ZX0seyJrZXkiOiJzZWN0&#10;aW9uIiwibGFiZWwiOiJTZWN0aW9uOiIsInJlcXVpcmVkIjpmYWxzZX1dLCJzdWJtaXRMYWJl&#10;bCI6bnVsbCwiZWRpdExhYmVsIjpudWxsfQ==">
 #>   <noscript>This form requires JavaScript.</noscript>
 #> </div>
 ```

@@ -9,7 +9,11 @@ behaves as described under "Defaults" below.
 ## Usage
 
 ``` r
-tutorial_options(allow_skip = FALSE, require_submission = TRUE)
+tutorial_options(
+  allow_skip = FALSE,
+  require_submission = TRUE,
+  language = NULL
+)
 ```
 
 ## Arguments
@@ -23,6 +27,12 @@ tutorial_options(allow_skip = FALSE, require_submission = TRUE)
 
   Logical. Must every question and student-info form in a section be
   submitted before its "Continue" button works? Default `TRUE`.
+
+- language:
+
+  `NULL`, or a named list or character vector of interface strings to
+  override, e.g. `list(continue = "Next")`. See "Interface language"
+  below.
 
 ## Value
 
@@ -70,11 +80,32 @@ be free to skim, such as learnr2's own `hello-learnr2` feature tour.
 `{webr}` code cells are not part of this check; they have no notion of
 being "submitted".
 
+## Interface language
+
+Every string learnr2 puts on the page follows the document's language,
+Quarto's `lang:` YAML key: `lang: fr` gives French "Continuer",
+"Recommencer", "Soumettre la réponse" and so on, alongside Quarto's own
+French table of contents. English is the default and the fallback for a
+language learnr2 does not ship. `language` rewords single strings on top
+of that, for a course that wants "Next" rather than "Continue", say. Its
+names are the keys of the string table,
+`system.file("extdata/quiz/lang/en.json", package = "learnr2")`; a
+string may contain the placeholders the English one does, such as
+`{title}` in `continue_to` or `{n}` in `continue_note_other`. An unknown
+key is an error. The labels of
+[`question()`](https://ppbds.github.io/learnr2/reference/question.md),
+[`student_info()`](https://ppbds.github.io/learnr2/reference/student_info.md)
+and
+[`download_answers_button()`](https://ppbds.github.io/learnr2/reference/download_answers_button.md)
+can also be set per call.
+
 ## Defaults
 
 - `allow_skip = FALSE`
 
 - `require_submission = TRUE`
+
+- `language = NULL`
 
 ## Examples
 
@@ -85,4 +116,6 @@ tutorial_options(allow_skip = TRUE)
 #> <div class="learnr2-options" data-learnr2-options="eyJhbGxvd1NraXAiOnRydWUsInJlcXVpcmVTdWJtaXNzaW9uIjp0cnVlfQ==" hidden></div>
 tutorial_options(require_submission = FALSE)
 #> <div class="learnr2-options" data-learnr2-options="eyJhbGxvd1NraXAiOmZhbHNlLCJyZXF1aXJlU3VibWlzc2lvbiI6ZmFsc2V9" hidden></div>
+tutorial_options(language = list(continue = "Next", start_over = "Reset"))
+#> <div class="learnr2-options" data-learnr2-options="eyJhbGxvd1NraXAiOmZhbHNlLCJyZXF1aXJlU3VibWlzc2lvbiI6dHJ1ZSwibGFuZ3VhZ2Ui&#10;OnsiY29udGludWUiOiJOZXh0Iiwic3RhcnRfb3ZlciI6IlJlc2V0In19" hidden></div>
 ```

@@ -216,6 +216,31 @@ Verified against real renders.
   exception is a screenshot (`allow_image`) reflection, which can reopen
   its image box; see “Submit once, then locked” under Settled design
   decisions.
+- **Interface strings** (2026-11, issue \#7). Every reader-visible
+  string in `quiz.js` goes through `t(key, vars)` / `tn(key, n, vars)`
+  over `STRINGS`: the built-in English table `STRINGS_EN` (pure JSON, so
+  the Playwright parity test can parse it), overlaid by
+  `window.learnr2Strings` (the document language’s
+  `inst/extdata/quiz/lang/<lang>.json`, injected into `<head>` by
+  `learnr2_dependency()` via `R/language.R`, which reads Quarto’s
+  `lang:` from
+  [`rmarkdown::metadata`](https://pkgs.rstudio.com/rmarkdown/reference/metadata.html)
+  at knit time), overlaid by `tutorial_options(language = ...)` from the
+  options div. R-side label defaults are `NULL`, so JS fills them
+  (`labelOr()`); the R side itself uses `tutorial_string()` only for
+  render-time text (noscript, quiz caption). Adding a string means:
+  `en.json`, `STRINGS_EN`, every other `lang/*.json` (test-language.R
+  checks key parity). quarto-live’s Run Code/Show Hint/Show
+  Solution/Start Over are English literals in its bundle with no option
+  (upstream \#3, \#74), so `relabelLiveButtons()` rewrites
+  `span.btn-label-exercise-editor` by English text via a
+  MutationObserver, skipped on English pages. Don’t patch the bundle: it
+  is replaced wholesale on extension updates. The language is Quarto’s
+  `lang:` key rather than a
+  [`tutorial_options()`](https://ppbds.github.io/learnr2/reference/tutorial_options.md)
+  switch because Quarto must see it too (TOC title, copy tooltip) and
+  both halves of learnr2 can read it; it is the one YAML key quiz.js
+  depends on, indirectly.
 - **Code blocks: commands vs output** (2026-10), CSS only, at the end of
   `quiz.css`. Quarto boxes a fenced block only when it names a language;
   a bare fence got a monospace font and nothing else, and
@@ -323,7 +348,8 @@ Two layers, both in CI (`R-CMD-check.yaml`, `js-tests.yaml`).
 **R, `tests/testthat/` (edition 3).** One `test-*.R` per `R/*.R` file:
 `test-question.R`, `test-submission.R`, `test-tutorials.R`,
 `test-tutorial_options.R`, `test-extension.R`, `test-create-tutorial.R`,
-`test-show_file.R`, `test-render-tutorials.R`, `test-check-tutorial.R`.
+`test-show_file.R`, `test-render-tutorials.R`, `test-check-tutorial.R`,
+`test-language.R`.
 
 - Every exported function and internal helper has a test; call internals
   as `learnr2:::helper()`.
@@ -349,7 +375,7 @@ Two layers, both in CI (`R-CMD-check.yaml`, `js-tests.yaml`).
   `tools/render_tutorials_for_pages.R`; keep the two in step.
 - **[`check_tutorial()`](https://ppbds.github.io/learnr2/reference/check_tutorial.md)
   has two severities** (2026-10). `warning_checks` (`fences`,
-  `mentions`, `yaml`) report as one
+  `mentions`, `yaml`, `language`) report as one
   [`warning()`](https://rdrr.io/r/base/warning.html), everything else as
   [`stop()`](https://rdrr.io/r/base/stop.html). Content packages’ tests
   call `expect_no_error(check_tutorial(paths))`, so a style check that

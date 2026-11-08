@@ -116,7 +116,7 @@ Each check has a name, used in `skip`:
   `check: true` cell) has a `.solution` div, which the grader cannot
   read.
 
-Three further checks report *warnings* rather than errors: with
+Four further checks report *warnings* rather than errors: with
 `error = TRUE` they are shown as one warning and do not stop. They cover
 house style that a tutorial can violate and still work:
 
@@ -136,11 +136,18 @@ house style that a tutorial can violate and still work:
   document-wide `execute: echo: false`, which is not known to be safe
   for `{webr}` cells.
 
+- `language` – if the YAML header sets `lang:`, learnr2 ships interface
+  strings for that language, so the Continue and Submit buttons match
+  the rest of the page. Without a translation they stay English. See the
+  "Language" section of
+  [`vignette("translating")`](https://ppbds.github.io/learnr2/articles/translating.md)
+  for how to add one.
+
 ## Examples
 
 ``` r
 qmd <- create_tutorial("checked", dir = tempfile(), open = FALSE)
-#> Created tutorial: /tmp/RtmpeUQOzL/file1970621ecd3/checked/checked.qmd
+#> Created tutorial: /tmp/Rtmpm1ocBi/file1a471c05f293/checked/checked.qmd
 check_tutorial(qmd)
 
 # Break the template, then see the problems instead of an error.
@@ -149,10 +156,10 @@ writeLines(lines[!grepl("^#\\| echo: false", lines)], qmd)
 problems <- check_tutorial(qmd, error = FALSE)
 problems[, c("check", "message")]
 #>   check                                                               message
-#> 1  echo line 16 (student-information-1): widget chunk needs `#| echo: false`.
-#> 2  echo     line 55 (a-quiz-question-1): widget chunk needs `#| echo: false`.
-#> 3  echo        line 68 (your-answers-1): widget chunk needs `#| echo: false`.
-#> 4  echo        line 78 (your-answers-2): widget chunk needs `#| echo: false`.
+#> 1  echo line 18 (student-information-1): widget chunk needs `#| echo: false`.
+#> 2  echo     line 57 (a-quiz-question-1): widget chunk needs `#| echo: false`.
+#> 3  echo        line 70 (your-answers-1): widget chunk needs `#| echo: false`.
+#> 4  echo        line 80 (your-answers-2): widget chunk needs `#| echo: false`.
 
 unlink(dirname(dirname(qmd)), recursive = TRUE)
 ```

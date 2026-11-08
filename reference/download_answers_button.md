@@ -17,10 +17,7 @@ turn in themselves (e.g. attach to an email or upload to an LMS).
 ## Usage
 
 ``` r
-download_answers_button(
-  filename_prefix = "learnr2-answers",
-  label = "Download My Answers"
-)
+download_answers_button(filename_prefix = "learnr2-answers", label = NULL)
 ```
 
 ## Arguments
@@ -32,7 +29,9 @@ download_answers_button(
 
 - label:
 
-  Button label. Defaults to `"Download My Answers"`.
+  Button label. `NULL`, the default, means the page language's "Download
+  My Answers" (see the "Language" section of
+  [`question()`](https://ppbds.github.io/learnr2/reference/question.md)).
 
 ## Value
 
@@ -73,7 +72,7 @@ their answers; this only keeps the submission time honest at a glance.
 
 ``` r
 download_answers_button()
-#> <div class="learnr2-download-answers" data-learnr2-download="eyJmaWxlbmFtZVByZWZpeCI6ImxlYXJucjItYW5zd2VycyIsImxhYmVsIjoiRG93bmxvYWQg&#10;TXkgQW5zd2VycyJ9">
+#> <div class="learnr2-download-answers" data-learnr2-download="eyJmaWxlbmFtZVByZWZpeCI6ImxlYXJucjItYW5zd2VycyIsImxhYmVsIjpudWxsfQ==">
 #>   <noscript>This button requires JavaScript.</noscript>
 #> </div>
 ```

@@ -79,6 +79,10 @@ alongside it, so it renders out of the box with Quarto or
   “Continue” buttons, the table of contents can’t be used to read ahead
   unless `tutorial_options(allow_skip = TRUE)` says so, and every page
   has a “Start Over” button that clears saved progress.
+- **Translated interface** — set Quarto’s `lang:` key and every button
+  and message follows (English and French so far; translations welcome,
+  see the “Language” section of the “Translating learnr Tutorials”
+  vignette).
 
 See the bundled `hello-learnr2` tutorial and the reference index for
 details. Two vignettes cover writing tutorials: “Tutorials in the Age of

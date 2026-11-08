@@ -2,6 +2,31 @@
 
 ## learnr2 (development version)
 
+- The interface follows the document’s language. Set Quarto’s `lang:`
+  key (`lang: fr`) and every string learnr2 puts on the page – Continue,
+  Start Over, Submit Answer, Try Again, Edit, the feedback, notes and
+  error messages, the screenshot box’s prompts, the default labels of
+  [`student_info()`](https://ppbds.github.io/learnr2/reference/student_info.md),
+  [`download_answers_button()`](https://ppbds.github.io/learnr2/reference/download_answers_button.md)
+  and [`quiz()`](https://ppbds.github.io/learnr2/reference/quiz.md) – is
+  translated, as are quarto-live’s Run Code, Show Hint and Show Solution
+  buttons. English and French ship; a language with no translation falls
+  back to English, which
+  [`check_tutorial()`](https://ppbds.github.io/learnr2/reference/check_tutorial.md)
+  now warns about (`language`).
+  `tutorial_options(language = list(continue = "Next"))` rewords single
+  strings. The label arguments of
+  [`question()`](https://ppbds.github.io/learnr2/reference/question.md),
+  [`quiz()`](https://ppbds.github.io/learnr2/reference/quiz.md),
+  [`student_info()`](https://ppbds.github.io/learnr2/reference/student_info.md)
+  and
+  [`download_answers_button()`](https://ppbds.github.io/learnr2/reference/download_answers_button.md)
+  now default to `NULL`, meaning the page language’s string; an explicit
+  label is used as given. Translations live in
+  `inst/extdata/quiz/lang/<lang>.json`; see the “Language” section of
+  [`vignette("translating")`](https://ppbds.github.io/learnr2/articles/translating.md)
+  to add one ([\#7](https://github.com/PPBDS/learnr2/issues/7)).
+
 - Accessibility: feedback, validation errors and editing notes are live
   regions that screen readers announce; every answer box is labelled by
   its question’s prompt (including when `show_text = FALSE` hides it);

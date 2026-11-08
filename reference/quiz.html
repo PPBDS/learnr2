@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">learnr2</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.3.9006</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.3.9007</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -44,7 +44,7 @@
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">quiz</span><span class="op">(</span><span class="va">...</span>, caption <span class="op">=</span> <span class="st">"Quiz"</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">quiz</span><span class="op">(</span><span class="va">...</span>, caption <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -56,7 +56,9 @@
 
 
 <dt id="arg-caption">caption<a class="anchor" aria-label="anchor" href="#arg-caption"></a></dt>
-<dd><p>Heading shown above the questions.</p></dd>
+<dd><p>Heading shown above the questions. <code>NULL</code>, the default,
+means the page language's "Quiz" (see the "Language" section of
+<code><a href="question.html">question()</a></code>).</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -76,7 +78,7 @@
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;div class="learnr2-quiz"&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   &lt;div class="learnr2-quiz-caption"&gt;Arithmetic&lt;/div&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   &lt;div class="learnr2-question" data-learnr2-question="eyJpZCI6IndoYXQtaXMtMi0yIiwidGV4dCI6IldoYXQgaXMgMiArIDI/IiwidHlwZSI6InNp&amp;#10;bmdsZSIsImFuc3dlcnMiOlt7InRleHQiOiI0IiwiY29ycmVjdCI6dHJ1ZSwibWVzc2FnZSI6&amp;#10;bnVsbH0seyJ0ZXh0IjoiMjIiLCJjb3JyZWN0IjpmYWxzZSwibWVzc2FnZSI6bnVsbH1dLCJj&amp;#10;b3JyZWN0TWVzc2FnZSI6IkNvcnJlY3QhIiwiaW5jb3JyZWN0TWVzc2FnZSI6IkluY29ycmVj&amp;#10;dC4iLCJhbGxvd1JldHJ5IjpmYWxzZSwicmFuZG9tQW5zd2VyT3JkZXIiOmZhbHNlLCJzdWJt&amp;#10;aXRMYWJlbCI6IlN1Ym1pdCBBbnN3ZXIiLCJ0cnlBZ2FpbkxhYmVsIjoiVHJ5IEFnYWluIiwi&amp;#10;ZWRpdExhYmVsIjoiRWRpdCBBbnN3ZXIiLCJhbGxvd0ltYWdlIjpmYWxzZSwiYWxsb3dUZXh0&amp;#10;Ijp0cnVlLCJzaG93VGV4dCI6dHJ1ZSwidmFsaWRhdGUiOiJub25lIn0="&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   &lt;div class="learnr2-question" data-learnr2-question="eyJpZCI6IndoYXQtaXMtMi0yIiwidGV4dCI6IldoYXQgaXMgMiArIDI/IiwidHlwZSI6InNp&amp;#10;bmdsZSIsImFuc3dlcnMiOlt7InRleHQiOiI0IiwiY29ycmVjdCI6dHJ1ZSwibWVzc2FnZSI6&amp;#10;bnVsbH0seyJ0ZXh0IjoiMjIiLCJjb3JyZWN0IjpmYWxzZSwibWVzc2FnZSI6bnVsbH1dLCJj&amp;#10;b3JyZWN0TWVzc2FnZSI6bnVsbCwiaW5jb3JyZWN0TWVzc2FnZSI6bnVsbCwiYWxsb3dSZXRy&amp;#10;eSI6ZmFsc2UsInJhbmRvbUFuc3dlck9yZGVyIjpmYWxzZSwic3VibWl0TGFiZWwiOm51bGws&amp;#10;InRyeUFnYWluTGFiZWwiOm51bGwsImVkaXRMYWJlbCI6bnVsbCwiYWxsb3dJbWFnZSI6ZmFs&amp;#10;c2UsImFsbG93VGV4dCI6dHJ1ZSwic2hvd1RleHQiOnRydWUsInZhbGlkYXRlIjoibm9uZSJ9&amp;#10;"&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>     &lt;noscript&gt;This quiz question requires JavaScript.&lt;/noscript&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   &lt;/div&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;/div&gt;</span>
