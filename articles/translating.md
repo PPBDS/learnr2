@@ -679,10 +679,11 @@ lang: fr
 
 That one line gives the reader a French table of contents and code-copy
 tooltip from Quarto, and French buttons and messages from **learnr2**.
-**quarto-live**’s own Run Code, Show Hint and Show Solution buttons are
-relabelled too. The tutorial’s prose is yours to write in whatever
-language you like. **learnr2** ships English and French. A `lang:` it
-has no file for falls back to English, and
+**quarto-live**’s own Run Code, Show Hint and Show Solution buttons and
+its Exercise and R Code captions are relabelled too. The tutorial’s
+prose is yours to write in whatever language you like. **learnr2** ships
+English and French. A `lang:` it has no file for falls back to English,
+and
 [`check_tutorial()`](https://ppbds.github.io/learnr2/reference/check_tutorial.md)
 warns about it. Regional tags work: `lang: fr-CA` uses the French
 strings.

@@ -10,8 +10,8 @@
   [`download_answers_button()`](https://ppbds.github.io/learnr2/reference/download_answers_button.md)
   and [`quiz()`](https://ppbds.github.io/learnr2/reference/quiz.md) – is
   translated, as are quarto-live’s Run Code, Show Hint and Show Solution
-  buttons. English and French ship; a language with no translation falls
-  back to English, which
+  buttons and its Exercise / R Code cell captions. English and French
+  ship; a language with no translation falls back to English, which
   [`check_tutorial()`](https://ppbds.github.io/learnr2/reference/check_tutorial.md)
   now warns about (`language`).
   `tutorial_options(language = list(continue = "Next"))` rewords single
