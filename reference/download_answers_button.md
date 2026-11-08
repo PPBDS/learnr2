@@ -59,6 +59,20 @@ reader's code anywhere – `learnr2` included – so it can't appear in the
 download; this is a structural limit of quarto-live's own editor, not
 something `download_answers_button()` chooses to skip.
 
+The file opens with what it is a submission *for*: `package` and
+`version` (the package the tutorial ships in, and that package's version
+as rendered), `tutorial` (the tutorial's name, its directory under
+`inst/tutorials/`), `title` (its YAML title) and `learnr2Version`. These
+are filled in at render time – by
+[`render_tutorials()`](https://ppbds.github.io/learnr2/reference/render_tutorials.md),
+and so by
+[`run_tutorial()`](https://ppbds.github.io/learnr2/reference/run_tutorial.md)
+and
+[`prerender_tutorials()`](https://ppbds.github.io/learnr2/reference/prerender_tutorials.md),
+which know where the tutorial came from, or from the `.qmd`'s own
+location when it is rendered with `quarto render` inside a package tree.
+A tutorial outside any package has `package` and `version` `null`.
+
 The download also carries a `metadata` block (timezone, browser info,
 and a random per-device id persisted across the reader's visits) and a
 `time` field: the moment the reader clicked "Download", lightly
@@ -72,7 +86,7 @@ their answers; this only keeps the submission time honest at a glance.
 
 ``` r
 download_answers_button()
-#> <div class="learnr2-download-answers" data-learnr2-download="eyJmaWxlbmFtZVByZWZpeCI6ImxlYXJucjItYW5zd2VycyIsImxhYmVsIjpudWxsfQ==">
+#> <div class="learnr2-download-answers" data-learnr2-download="eyJmaWxlbmFtZVByZWZpeCI6ImxlYXJucjItYW5zd2VycyIsImxhYmVsIjpudWxsLCJwYWNr&#10;YWdlIjpudWxsLCJ2ZXJzaW9uIjpudWxsLCJ0dXRvcmlhbCI6bnVsbCwidGl0bGUiOm51bGws&#10;ImxlYXJucjJWZXJzaW9uIjoiMC4xLjMuOTAwOCJ9">
 #>   <noscript>This button requires JavaScript.</noscript>
 #> </div>
 ```

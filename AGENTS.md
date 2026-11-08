@@ -271,6 +271,22 @@ Verified against real renders.
   `a[href]` except `#...`, `download`, `mailto:`/`tel:`/`javascript:`.
   Students worried when a tutorial “disappeared”. Quarto’s
   `link-external-newwindow` would miss same-site links.
+- **The download file’s header comes through the environment**
+  (2026-11).
+  [`render_tutorials()`](https://ppbds.github.io/learnr2/reference/render_tutorials.md)
+  copies a tutorial into a work directory before Quarto renders it, and
+  Quarto knits in its own R process, so the knit cannot see where the
+  tutorial came from. `tutorial_identity(qmd)` reads package, version
+  and name from the *source* path (`inst/tutorials/` in a source tree or
+  pkgload checkout, `tutorials/` once installed, each package’s own
+  DESCRIPTION) and `with_tutorial_env()` hands them to the subprocess as
+  `LEARNR2_TUTORIAL_*` variables, which
+  [`download_answers_button()`](https://ppbds.github.io/learnr2/reference/download_answers_button.md)
+  reads via `render_identity()`; a plain `quarto render` falls back to
+  [`knitr::current_input()`](https://rdrr.io/pkg/knitr/man/current_input.html)’s
+  location. The variables are set even when empty, so a nested or
+  earlier render’s values can’t leak into a tutorial that has no
+  package.
 - **Rendering a test copy of learnr2 changes needs an install.** Quarto
   runs a tutorial’s R chunks in its own R process, which loads the
   *installed* learnr2, not a `load_all()` copy, so a render from a
