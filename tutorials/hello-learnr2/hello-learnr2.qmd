@@ -471,7 +471,7 @@ labels of `student_info()` --- follows the document's language, which is
 Quarto's own `lang:` key in the YAML header. A tutorial with `lang: fr`
 gets a French table of contents from Quarto and French buttons from
 **learnr2**, with the **Run Code**, **Show Hint** and **Show Solution**
-buttons of the code cells relabelled too. The prose is the author's, in
+buttons and the **Exercise** captions of the code cells relabelled too. The prose is the author's, in
 whatever language they write it.
 
 **learnr2** ships English and French. A language it has no translation for
