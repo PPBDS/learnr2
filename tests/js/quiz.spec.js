@@ -1737,6 +1737,7 @@ test.describe("interface language", () => {
     const live = page.locator("#live-cell .btn-exercise-editor");
     await expect(live.locator("span")).toHaveText("Exécuter le code");
     await expect(live).toHaveAttribute("aria-label", "Exécuter le code");
+    await expect(page.locator("#live-cell .exercise-editor-header > div > div").first()).toHaveText("Exercice");
 
     await page.locator("#exercice-1 .learnr2-continue").click();
     await expect(page.locator(".learnr2-download-answers-btn")).toHaveText("Télécharger mes réponses");

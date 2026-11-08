@@ -6,7 +6,7 @@
   messages, the screenshot box's prompts, the default labels of
   `student_info()`, `download_answers_button()` and `quiz()` -- is
   translated, as are quarto-live's Run Code, Show Hint and Show Solution
-  buttons. English and French ship; a language with no translation falls
+  buttons and its Exercise / R Code cell captions. English and French ship; a language with no translation falls
   back to English, which `check_tutorial()` now warns about (`language`).
   `tutorial_options(language = list(continue = "Next"))` rewords single
   strings. The label arguments of `question()`, `quiz()`, `student_info()`

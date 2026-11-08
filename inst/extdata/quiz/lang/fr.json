@@ -50,5 +50,8 @@
   "run_code": "Exécuter le code",
   "show_hint": "Afficher l'indice",
   "next_hint": "Indice suivant",
-  "show_solution": "Afficher la solution"
+  "show_solution": "Afficher la solution",
+  "caption_exercise": "Exercice",
+  "caption_r": "Code R",
+  "caption_python": "Code Python"
 }

@@ -50,5 +50,8 @@
   "run_code": "Run Code",
   "show_hint": "Show Hint",
   "next_hint": "Next Hint",
-  "show_solution": "Show Solution"
+  "show_solution": "Show Solution",
+  "caption_exercise": "Exercise",
+  "caption_r": "R Code",
+  "caption_python": "Python Code"
 }

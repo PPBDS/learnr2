@@ -108,9 +108,12 @@ function stringsBlock(lang) {
 function liveButtonScript(text, delayMs) {
   return (
     "<script>setTimeout(function () {" +
+    'var h = document.createElement("div"); h.className = "card-header exercise-editor-header d-flex justify-content-between";' +
+    'var left = document.createElement("div"); left.className = "d-flex align-items-center gap-3";' +
+    'var cap = document.createElement("div"); cap.innerHTML = "Exercise"; left.appendChild(cap);' +
     'var a = document.createElement("a"); a.className = "btn btn-exercise-editor"; a.setAttribute("role", "button"); a.setAttribute("aria-label", ' + JSON.stringify(text) + ");" +
     'var s = document.createElement("span"); s.className = "btn-label-exercise-editor"; s.innerText = ' + JSON.stringify(text) + ";" +
-    'a.appendChild(s); document.getElementById("live-cell").appendChild(a);' +
+    'a.appendChild(s); left.appendChild(a); h.appendChild(left); document.getElementById("live-cell").appendChild(h);' +
     "}, " + delayMs + ");</script>\n"
   );
 }

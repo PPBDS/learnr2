@@ -88,7 +88,10 @@
     "run_code": "Run Code",
     "show_hint": "Show Hint",
     "next_hint": "Next Hint",
-    "show_solution": "Show Solution"
+    "show_solution": "Show Solution",
+    "caption_exercise": "Exercise",
+    "caption_r": "R Code",
+    "caption_python": "Python Code"
   };
   var STRINGS = Object.assign({}, STRINGS_EN);
 
@@ -1892,28 +1895,34 @@
   }
 
   // quarto-live's exercise buttons -- Run Code, Show Hint, Next Hint, Show
-  // Solution, Start Over -- are English literals inside its minified bundle
-  // with no option to change them (r-wasm/quarto-live#3 and #74, open since
-  // 2024). Each editor builds its buttons when WebR has initialised it,
-  // long after this script runs, so they are relabelled as they appear.
-  // The English text is the only stable handle: the buttons share their
-  // classes except Run Code. Skipped entirely when the page is in English.
+  // Solution, Start Over -- and its cell captions -- Exercise, R Code,
+  // Python Code -- are English literals inside its minified bundle with no
+  // option to change them (r-wasm/quarto-live#3 and #74, open since 2024;
+  // a PR adding i18next-based translation is pending). Each editor builds
+  // its header when its OJS cell runs, after this script, so they are
+  // relabelled as they appear. The English text is the only stable
+  // handle: the buttons share their classes except Run Code, and the
+  // caption is a bare <div>. Skipped entirely when the page is in English.
   var LIVE_LABELS = {
     "Run Code": "run_code",
     "Show Hint": "show_hint",
     "Next Hint": "next_hint",
     "Show Solution": "show_solution",
-    "Start Over": "start_over"
+    "Start Over": "start_over",
+    "Exercise": "caption_exercise",
+    "R Code": "caption_r",
+    "Python Code": "caption_python"
   };
-  var LIVE_LABEL_SELECTOR = "span.btn-label-exercise-editor";
+  var LIVE_LABEL_SELECTOR =
+    "span.btn-label-exercise-editor, .exercise-editor-header > div:first-child > div:first-child";
 
-  function relabelLiveButton(span) {
-    var key = LIVE_LABELS[span.textContent.trim()];
+  function relabelLiveButton(node) {
+    var key = LIVE_LABELS[node.textContent.trim()];
     if (!key) {
       return;
     }
-    span.textContent = t(key);
-    var button = span.closest("[role=button]");
+    node.textContent = t(key);
+    var button = node.closest("[role=button]");
     if (button) {
       button.setAttribute("aria-label", t(key));
     }

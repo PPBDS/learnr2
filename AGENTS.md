@@ -187,10 +187,11 @@ subsections) behind a Continue button. Verified against real renders.
   uses `tutorial_string()` only for render-time text (noscript, quiz
   caption). Adding a string means: `en.json`, `STRINGS_EN`, every other
   `lang/*.json` (test-language.R checks key parity). quarto-live's Run
-  Code/Show Hint/Show Solution/Start Over are English literals in its
-  bundle with no option (upstream #3, #74), so `relabelLiveButtons()`
-  rewrites `span.btn-label-exercise-editor` by English text via a
-  MutationObserver, skipped on English pages. Don't patch the bundle: it
+  Code/Show Hint/Show Solution/Start Over buttons and Exercise/R Code
+  captions are English literals in its bundle with no option (upstream
+  #3, #74; our i18next PR is pending), so `relabelLiveButtons()`
+  rewrites them by English text via a MutationObserver, skipped on
+  English pages. Once the PR ships in the bundled extension, delete it. Don't patch the bundle: it
   is replaced wholesale on extension updates. The language is Quarto's
   `lang:` key rather than a `tutorial_options()` switch because Quarto
   must see it too (TOC title, copy tooltip) and both halves of learnr2
