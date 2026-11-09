@@ -1798,6 +1798,82 @@ test.describe("restoring a download (load_tutorial)", () => {
     await expect(page.locator("#exercise-1")).toBeVisible();
   });
 
+  const answersFile = (overrides) => ({
+    name: "class-101-2026-11-08.json",
+    mimeType: "application/json",
+    buffer: Buffer.from(JSON.stringify(Object.assign({
+      package: "test.tutorials", version: "1.2.3", tutorial: "download-answers",
+      info: { name: "Ada Lovelace", email: "ada@example.com", id: null },
+      answers: [
+        { id: "single-choice", answer: ["42"] },
+        { id: "reflection-locked", answer: "Mine, restored." },
+        { id: "ex-attempted", answer: "sum(1:3)" },
+        { id: "ex-untouched", answer: null },
+        { id: "gone-away", answer: "stale" }
+      ],
+      metadata: {}, time: "abc"
+    }, overrides)))
+  });
+
+  test("the Load Answers button takes a downloaded file, says what it will do, and restores it in place", async ({ page }) => {
+    await page.goto("/download-answers");
+    await page.evaluate(() => localStorage.clear());
+    await page.reload();
+    await expect(page.locator(".learnr2-load-answers")).toHaveText("Load Answers");
+
+    await page.locator(".learnr2-load-answers-input").setInputFiles(answersFile());
+    const dialog = page.locator(".learnr2-confirm-dialog");
+    await expect(dialog).toContainText("Load the 4 answer(s) in class-101-2026-11-08.json?");
+    await expect(dialog).toContainText("1 answer(s) in the file match nothing on this page and will be left out: gone-away.");
+    await expect(dialog).not.toContainText("was downloaded from the tutorial");
+    await Promise.all([page.waitForLoadState(), dialog.locator(".learnr2-confirm-dialog-confirm").click()]);
+
+    const choice = page.locator(".learnr2-question").filter({ hasText: "6 times 7" });
+    await expect(choice.locator("input:checked + span")).toHaveText("42");
+    await expect(choice.locator(".learnr2-feedback")).toHaveText("Correct!");
+    const reflection = page.locator(".learnr2-question").filter({ hasText: "sky is blue" });
+    await expect(reflection.locator(".learnr2-text-input")).toHaveValue("Mine, restored.");
+    await expect(reflection.locator(".learnr2-text-input")).toBeDisabled();
+    await expect(page.locator("#learnr2-info-student-info-name")).toHaveValue("Ada Lovelace");
+    await expect(page.locator(".learnr2-info .learnr2-submit")).toHaveText("Edit");
+    const code = await page.evaluate(() => localStorage.getItem("editor-" + location.href.split("#")[0] + "#webr-1-contents"));
+    expect(code).toBe("sum(1:3)");
+    expect(await page.evaluate(() => localStorage.getItem("editor-" + location.href.split("#")[0] + "#webr-2-contents"))).toBeNull();
+  });
+
+  test("a file from another tutorial is flagged, and cancelling changes nothing", async ({ page }) => {
+    await page.goto("/download-answers");
+    await page.evaluate(() => localStorage.clear());
+    await page.reload();
+    await page.locator(".learnr2-load-answers-input").setInputFiles(answersFile({ tutorial: "some-other-tutorial" }));
+    const dialog = page.locator(".learnr2-confirm-dialog");
+    await expect(dialog).toContainText('was downloaded from the tutorial "some-other-tutorial", not this one');
+    await dialog.locator(".learnr2-confirm-dialog-cancel").click();
+    await expect(page.locator(".learnr2-question").filter({ hasText: "sky is blue" }).locator(".learnr2-text-input")).toHaveValue("");
+  });
+
+  test("a file that is not an answers file is refused with a message", async ({ page }) => {
+    await page.goto("/download-answers");
+    await page.locator(".learnr2-load-answers-input").setInputFiles({
+      name: "notes.json", mimeType: "application/json", buffer: Buffer.from('{"hello": "world"}')
+    });
+    await expect(page.locator(".learnr2-load-answers-error")).toHaveText("notes.json is not a learnr2 answers file.");
+    await expect(page.locator(".learnr2-confirm-dialog")).toHaveCount(0);
+  });
+
+  test("dropping an answers file on the page starts the same load", async ({ page }) => {
+    await page.goto("/download-answers");
+    await page.evaluate(() => localStorage.clear());
+    await page.reload();
+    await page.evaluate((json) => {
+      const file = new File([json], "dropped.json", { type: "application/json" });
+      const dt = new DataTransfer();
+      dt.items.add(file);
+      document.body.dispatchEvent(new DragEvent("drop", { dataTransfer: dt, bubbles: true, cancelable: true }));
+    }, answersFile().buffer.toString("utf8"));
+    await expect(page.locator(".learnr2-confirm-dialog")).toContainText("Load the 4 answer(s) in dropped.json?");
+  });
+
   test("a submitted answer in a later section opens that section even with no saved progress", async ({ page }) => {
     await page.goto("/progressive-sections-gated");
     await page.evaluate(() => {

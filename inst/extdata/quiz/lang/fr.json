@@ -53,5 +53,11 @@
   "show_solution": "Afficher la solution",
   "caption_exercise": "Exercice",
   "caption_r": "Code R",
-  "caption_python": "Code Python"
+  "caption_python": "Code Python",
+  "load_answers": "Charger des réponses",
+  "load_answers_confirm": "Charger les {n} réponse(s) de {file} ? Tout ce qui est enregistré sur cet appareil pour ce tutoriel sera remplacé par le contenu du fichier.",
+  "load_answers_other_tutorial": "{file} provient du tutoriel « {tutorial} », pas de celui-ci. Charger quand même ses réponses ici ?",
+  "load_answers_dropped": "{n} réponse(s) du fichier ne correspondent à rien sur cette page et seront ignorées : {list}.",
+  "load_answers_invalid": "{file} n'est pas un fichier de réponses learnr2.",
+  "load_answers_drop_hint": "Ou déposez un fichier de réponses téléchargé n'importe où sur la page."
 }

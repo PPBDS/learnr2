@@ -91,7 +91,13 @@
     "show_solution": "Show Solution",
     "caption_exercise": "Exercise",
     "caption_r": "R Code",
-    "caption_python": "Python Code"
+    "caption_python": "Python Code",
+    "load_answers": "Load Answers",
+    "load_answers_confirm": "Load the {n} answer(s) in {file}? Everything saved on this device for this tutorial will be replaced by what the file holds.",
+    "load_answers_other_tutorial": "{file} was downloaded from the tutorial \"{tutorial}\", not this one. Load its answers here anyway?",
+    "load_answers_dropped": "{n} answer(s) in the file match nothing on this page and will be left out: {list}.",
+    "load_answers_invalid": "{file} is not a learnr2 answers file.",
+    "load_answers_drop_hint": "Or drop a downloaded answers file anywhere on the page."
   };
   var STRINGS = Object.assign({}, STRINGS_EN);
 
@@ -1507,6 +1513,157 @@
     main.insertBefore(container, main.firstChild);
   }
 
+  // ---- Load Answers (restore a downloaded file in the browser) ----------
+  // The in-page counterpart of learnr2::load_tutorial(): a reader hands
+  // back the JSON they downloaded (chosen with the button, or dropped on the
+  // page) and every answer in it whose id matches a widget on this page is
+  // saved as if they had just submitted it, then the page reloads. Needs no
+  // R, so it works on a GitHub Pages copy too. The stored shapes are those
+  // the builders above save and restore from; keep the two in step.
+
+  // id -> { kind, data } for everything on the page an answer can go to.
+  function pageWidgets() {
+    var widgets = {};
+    document.querySelectorAll(".learnr2-question[data-learnr2-question]").forEach(function (node) {
+      try {
+        var data = decodeBase64Json(node.getAttribute("data-learnr2-question"));
+        widgets[data.id] = { kind: "question", data: data };
+      } catch (e) { /* a broken payload cannot take an answer either */ }
+    });
+    document.querySelectorAll('script[type^="webr-"][type$="-contents"]').forEach(function (script) {
+      try {
+        var attr = decodeBase64Json(script.textContent).attr || {};
+        if (attr.exercise && attr.persist) {
+          widgets[attr.exercise] = { kind: "exercise", storageId: attr.id || script.type };
+        }
+      } catch (e) { /* not an exercise cell */ }
+    });
+    return widgets;
+  }
+
+  function infoForms() {
+    return Array.prototype.map.call(
+      document.querySelectorAll(".learnr2-info[data-learnr2-info]"),
+      function (node) { return decodeBase64Json(node.getAttribute("data-learnr2-info")); }
+    );
+  }
+
+  // What this page's download button says a download from it is for.
+  function pageTutorialName() {
+    var node = document.querySelector(".learnr2-download-answers[data-learnr2-download]");
+    if (!node) {
+      return null;
+    }
+    try {
+      return decodeBase64Json(node.getAttribute("data-learnr2-download")).tutorial || null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  // The saved state for one downloaded answer, or null when it matches
+  // nothing. Mirrors restore_entries() in R/load_tutorial.R.
+  function restoredState(widget, answer) {
+    if (widget.kind === "exercise") {
+      return { key: "editor-" + pageUrl + "#" + widget.storageId, value: String(answer), raw: true };
+    }
+    var data = widget.data;
+    var state;
+    if (data.type === "single" || data.type === "multiple") {
+      state = { selected: Array.isArray(answer) ? answer.map(String) : [String(answer)] };
+    } else if (data.type === "text") {
+      state = { value: String(answer) };
+    } else if (typeof answer === "string" && answer.indexOf("data:image/") === 0) {
+      state = { value: "", image: answer, submitted: true };
+    } else {
+      state = { value: String(answer), submitted: true };
+    }
+    return { key: storageKey(data), value: state, raw: false };
+  }
+
+  function planRestore(file) {
+    var widgets = pageWidgets();
+    var entries = [];
+    var dropped = [];
+    (file.answers || []).forEach(function (a) {
+      if (!a || typeof a.id !== "string" || a.answer === null || a.answer === undefined) {
+        return;
+      }
+      var widget = widgets[a.id];
+      if (widget) {
+        entries.push(restoredState(widget, a.answer));
+      } else {
+        dropped.push(a.id);
+      }
+    });
+    if (file.info && typeof file.info === "object") {
+      infoForms().forEach(function (form) {
+        var state = {};
+        var any = false;
+        form.fields.forEach(function (field) {
+          if (typeof file.info[field.key] === "string") {
+            state[field.key] = file.info[field.key];
+            any = true;
+          }
+        });
+        if (any) {
+          state.submitted = true;
+          entries.push({ key: storageKey(form), value: state, raw: false });
+        }
+      });
+    }
+    return { entries: entries, dropped: dropped };
+  }
+
+  function loadAnswersFile(fileObject, status) {
+    var reader = new FileReader();
+    reader.onload = function () {
+      var file = null;
+      try {
+        file = JSON.parse(reader.result);
+      } catch (e) { /* reported below */ }
+      if (!file || typeof file !== "object" || !Array.isArray(file.answers)) {
+        status.textContent = t("load_answers_invalid", { file: fileObject.name });
+        status.classList.remove("d-none");
+        return;
+      }
+      status.classList.add("d-none");
+      var plan = planRestore(file);
+      var question = "";
+      var here = pageTutorialName();
+      if (typeof file.tutorial === "string" && here && file.tutorial !== here) {
+        question = t("load_answers_other_tutorial", { file: fileObject.name, tutorial: file.tutorial }) + " ";
+      }
+      question += t("load_answers_confirm", { n: plan.entries.length, file: fileObject.name });
+      if (plan.dropped.length > 0) {
+        question += " " + t("load_answers_dropped", { n: plan.dropped.length, list: plan.dropped.join(", ") });
+      }
+      showConfirmDialog(question, t("load_answers")).then(function (confirmed) {
+        if (!confirmed) {
+          return;
+        }
+        clearAllProgress();
+        var ok = true;
+        plan.entries.forEach(function (entry) {
+          try {
+            window.localStorage.setItem(entry.key, entry.raw ? entry.value : JSON.stringify(entry.value));
+          } catch (e) {
+            ok = false;
+            reportStorageFailure(e);
+          }
+        });
+        if (ok) {
+          window.location.reload();
+        }
+      });
+    };
+    reader.readAsText(fileObject);
+  }
+
+  function isAnswersFile(fileObject) {
+    return !!fileObject && (/\.json$/i.test(fileObject.name) || fileObject.type === "application/json");
+  }
+
   function injectStartOverButton() {
     if (document.querySelector(".learnr2-start-over")) {
       return;
@@ -1521,7 +1678,34 @@
         window.location.reload();
       });
     });
-    var container = el("div", { class: "learnr2-start-over-container" }, [button]);
+
+    // Load Answers: a hidden file input behind a button styled like Start
+    // Over, plus drag-and-drop of a .json anywhere on the page.
+    var input = el("input", { type: "file", accept: "application/json,.json", class: "learnr2-load-answers-input d-none" });
+    var load = el("button", { type: "button", class: "learnr2-load-answers", text: t("load_answers"), title: t("load_answers_drop_hint") });
+    var status = makeStatus("learnr2-load-answers-error");
+    load.addEventListener("click", function () { input.click(); });
+    input.addEventListener("change", function () {
+      if (input.files && input.files[0]) {
+        loadAnswersFile(input.files[0], status);
+        input.value = "";
+      }
+    });
+    document.addEventListener("dragover", function (event) {
+      var items = event.dataTransfer && event.dataTransfer.items;
+      if (items && items.length > 0 && items[0].kind === "file") {
+        event.preventDefault();
+      }
+    });
+    document.addEventListener("drop", function (event) {
+      var files = event.dataTransfer && event.dataTransfer.files;
+      if (files && files.length > 0 && isAnswersFile(files[0])) {
+        event.preventDefault();
+        loadAnswersFile(files[0], status);
+      }
+    });
+
+    var container = el("div", { class: "learnr2-start-over-container" }, [load, button, input, status]);
     placeStartOverButton(container);
     // The sidebar can appear or disappear after load (a window resized
     // across Quarto's breakpoint, a phone rotated), so follow it. Moving

@@ -243,7 +243,12 @@ subsections) behind a Continue button. Verified against real renders.
   and reports `served_here` so the restore page can be deleted once our
   own server stops. Exercise code is keyed by quarto-live's block id, not
   the exercise label, so the map is read from the `<script type="webr-N-
-  contents">` tags.
+  contents">` tags. The browser-side twin is `loadAnswersFile()` in
+  `quiz.js` (the Load Answers button and a document `drop` listener):
+  `planRestore()` matches ids against `pageWidgets()` and
+  `restoredState()` builds the same shapes; the two must stay in step
+  with the builders' saved formats. It clears the tutorial's storage
+  first, so a load is a restart from the file, then reloads.
 - **The download file's header comes through the environment** (2026-11).
   `render_tutorials()` copies a tutorial into a work directory before
   Quarto renders it, and Quarto knits in its own R process, so the knit

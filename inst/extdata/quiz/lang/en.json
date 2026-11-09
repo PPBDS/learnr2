@@ -53,5 +53,11 @@
   "show_solution": "Show Solution",
   "caption_exercise": "Exercise",
   "caption_r": "R Code",
-  "caption_python": "Python Code"
+  "caption_python": "Python Code",
+  "load_answers": "Load Answers",
+  "load_answers_confirm": "Load the {n} answer(s) in {file}? Everything saved on this device for this tutorial will be replaced by what the file holds.",
+  "load_answers_other_tutorial": "{file} was downloaded from the tutorial \"{tutorial}\", not this one. Load its answers here anyway?",
+  "load_answers_dropped": "{n} answer(s) in the file match nothing on this page and will be left out: {list}.",
+  "load_answers_invalid": "{file} is not a learnr2 answers file.",
+  "load_answers_drop_hint": "Or drop a downloaded answers file anywhere on the page."
 }

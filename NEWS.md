@@ -7,6 +7,9 @@
   `package`, `version` and `tutorial`, stops if the package or tutorial is
   not installed, warns if the version differs or an answer matches nothing
   on the page, and unlocks the tutorial through the last restored answer.
+  Every tutorial page also gets a **Load Answers** button beside Start
+  Over, and accepts a dropped answers file, doing the same in the browser
+  with no R at all, so it works on a GitHub Pages copy too.
 * New `check_tutorials()`: the one call a content package's tests need. It
   finds every tutorial in a package, runs `check_tutorial()` on each,
   renders each, and checks that the rendered page's download file names

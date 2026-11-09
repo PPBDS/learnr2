@@ -58,6 +58,18 @@ server is stopped the page is deleted; if an already-running learnr2
 server was used instead, it stays until the next load or re-render.
 }
 
+\section{The same thing without R}{
+
+Every tutorial page also has a \strong{Load Answers} button beside \strong{Start
+Over}, and accepts a dropped \code{.json} file anywhere on the page. It does
+in the browser what this function does from R, matching ids the same
+way, so a reader of a published copy of a tutorial (on GitHub Pages,
+say) can pick up a download without an R session. This function is for
+the student in a Codespace, where the tutorial must be rendered and
+served first, and for the "R Tutorials" VS Code extension's \strong{Load
+Answers File...} command, which calls it.
+}
+
 \examples{
 \dontrun{
 load_tutorial("~/Downloads/orientation-2026-11-08T14-02-11-305Z.json")

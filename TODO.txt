@@ -1,23 +1,4 @@
 
-## Think about this
-
-
-We need to think about restarts and resubmissions. For example, a student finishes a tutorial and submits her answer json file. But it has a major problem. I want to reject the submission and tell her to fix things. The most common issue is that she submitted a URL which does not work.
-
-So, how does the student "restart" this tutorial. starting from just the json file, in such a way that all her answers are there?
-
-
-
-But that is only the first step. Because, before, she was not able to edit anything she had already submitted. One approach is to change some URL-type questions to be editable from the start. That seems like a good idea since, after all, there is no "right" answer for students to copy. 
-
-So, would that restart leave those questions as editable? Would the other questions be editable? Nothing wrong with that I guess. Who cares if an answer which was not editable before can be edited now. 
-
-One nice aspect of this is that, even if a student loses his copy of his submitted json file, he can always (?) just download it from Canvas and start from there.
-
-So, maybe we need a function, load_tutorial() 
-
-
-
 ### Cheating concerns
 
 Do we need to worry about cheating? What prevents a student from taking his friends JSON file, loading it up, changing the name/email address, and then downloading a new JSON answer file? Won't this generate a new hash which will record the cheaters name so that, from our point of view, his submitted JSON file looks legit? 

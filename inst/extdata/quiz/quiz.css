@@ -330,7 +330,8 @@ section.learnr2-pause > h3 {
   text-align: center;
 }
 
-.learnr2-start-over {
+.learnr2-start-over,
+.learnr2-load-answers {
   width: auto;
   padding: 0.1rem 0.5rem;
   border: none;
@@ -340,9 +341,22 @@ section.learnr2-pause > h3 {
   font-size: 0.75rem;
 }
 
-.learnr2-start-over:hover {
+.learnr2-start-over:hover,
+.learnr2-load-answers:hover {
   color: #343a40;
   text-decoration: underline;
+}
+
+/* Load Answers sits beside Start Over, styled the same; its error (a file
+   that isn't an answers file) appears under the two. */
+.learnr2-load-answers {
+  margin-right: 0.75rem;
+}
+
+.learnr2-load-answers-error {
+  margin-top: 0.4rem;
+  font-size: 0.75rem;
+  color: #b02a37;
 }
 
 /* The no-sidebar placement (`toc: false`, or a screen too narrow for

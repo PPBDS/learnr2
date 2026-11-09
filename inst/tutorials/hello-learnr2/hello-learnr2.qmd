@@ -509,6 +509,15 @@ top of the tutorial, directly under the title, where it stays visible no
 matter how far the reader has progressed. Either way the reader always has
 exactly one.
 
+Beside it sits **Load Answers**, the way back from a downloaded file. A
+reader who downloaded their answers and has to change one (a mistyped
+URL, say) picks that file, or drops it anywhere on the page, and every
+answer in it is filled in as if just submitted, with the page open where
+they left off; locked questions stay locked, editable ones stay editable.
+The same thing from R is `learnr2::load_tutorial(path)`, which also
+renders the tutorial first, so it suits a student working in a Codespace;
+the button needs no R at all, so it works on a published copy of the page.
+
 ## 10. Code, commands, and output
 
 Tutorials constantly show text a student must type, and text they should
