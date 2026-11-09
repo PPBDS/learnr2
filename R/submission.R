@@ -166,9 +166,20 @@ print.learnr2_info <- function(x, ...) {
 #' a random per-device id persisted across the reader's visits) and a `time`
 #' field: the moment the reader clicked "Download", lightly obfuscated so the
 #' raw timestamp isn't readable or hand-editable in the file. Recover it with
-#' [submission_time()]. Nothing else is hashed or signed -- a determined
-#' reader can still edit their answers; this only keeps the submission time
-#' honest at a glance.
+#' [submission_time()].
+#'
+#' The file ends with two fields for the grader. `fingerprint` is a SHA-256
+#' of the submission's identifying content (time, device id, `loadedFrom`,
+#' the info fields and every answer), so a name or an answer edited by hand
+#' in the file no longer matches it; [check_submission()] recomputes and
+#' compares. `loadedFrom` is `null` unless the page was restored from an
+#' earlier download ([load_tutorial()] or the page's Load Answers button),
+#' in which case it records that file's `time`, device id, fingerprint,
+#' name and email, so a resubmission can be traced to the file it grew
+#' from. Neither is a signature: everything runs in the reader's browser
+#' with no secret, so a reader who reads the code can regenerate both. They
+#' make the common case, a copied file with the name changed, visible; they
+#' do not make the file tamper-proof.
 #'
 #' @param filename_prefix Prefix for the downloaded file's name. Defaults
 #'   to `"learnr2-answers"`.
@@ -266,9 +277,8 @@ print.learnr2_download_button <- function(x, ...) {
 #' student could read it, or swap in a different plausible time without
 #' re-running the encoder. This function reverses it.
 #'
-#' Nothing else in the file is hashed or signed, so this does **not** detect
-#' edited answers. If you need that, compare against work submitted through a
-#' channel you control.
+#' This reads only `time`. For the file's `fingerprint` and `loadedFrom`
+#' provenance, see [check_submission()].
 #'
 #' @param x Path to a JSON file downloaded via [download_answers_button()],
 #'   or the raw `time` string from one.
@@ -393,4 +403,117 @@ encode_base36 <- function(n) {
 # used by the tests.
 encode_submission_time <- function(when) {
   encode_base36(floor(as.numeric(when)) * .time_mul + .time_add)
+}
+
+#' Check a submission's fingerprint and provenance
+#'
+#' Every file from [download_answers_button()] ends with a `fingerprint`,
+#' a SHA-256 of its identifying content, and a `loadedFrom` block when the
+#' page it came from had been restored from an earlier download. This
+#' recomputes the fingerprint from the file's own `time`, device id,
+#' `loadedFrom`, info fields and answers and says whether it still matches,
+#' then reports where the file came from. A file whose name or answers were
+#' edited by hand after downloading fails the check. It is not proof of
+#' anything: the scheme runs in the browser with no secret, so a reader who
+#' studies `quiz.js` can regenerate a fingerprint. It catches the ordinary
+#' case, a copied file with the name changed, and makes a resubmission
+#' traceable to the file it grew from.
+#'
+#' SHA-256 comes from `tools::sha256sum()`, available from R 4.5.0; on an
+#' older R the fingerprint is reported as `"unchecked"`.
+#'
+#' @param path Path to a JSON file downloaded via [download_answers_button()].
+#'
+#' @return Invisibly, a list: `time` (POSIXct, UTC, or `NULL`), `name`,
+#'   `email`, `device` (the per-device id), `fingerprint` (one of
+#'   `"valid"`, `"invalid"`, `"missing"`, `"unchecked"`) and `loaded_from`
+#'   (the file's provenance block as a list, or `NULL`). Also prints a
+#'   summary.
+#' @seealso [submission_time()], [load_tutorial()].
+#' @export
+#' @examples
+#' answers <- tempfile(fileext = ".json")
+#' writeLines('{"time": "52mz7x0xv", "info": {"name": "Ada"}, "answers": []}', answers)
+#' check_submission(answers)
+check_submission <- function(path) {
+  file <- read_answers_file(path)
+  info <- file$info %||% list()
+  device <- file$metadata$deviceId
+  state <- if (!is_string(file$fingerprint)) {
+    "missing"
+  } else if (!exists("sha256sum", asNamespace("tools"))) {
+    "unchecked"
+  } else if (identical(sha256_text(canonical_submission(file)), tolower(file$fingerprint))) {
+    "valid"
+  } else {
+    "invalid"
+  }
+  when <- if (is_string(file$time)) decode_submission_time(file$time) else NULL
+  from <- if (is.list(file$loadedFrom)) file$loadedFrom else NULL
+
+  lines <- c(
+    paste0("Submitted: ", if (is.null(when)) "unknown" else format(when, "%Y-%m-%d %H:%M:%S UTC", tz = "UTC")),
+    paste0("Name: ", info$name %||% "(none)", "  Email: ", info$email %||% "(none)"),
+    paste0("Device: ", device %||% "(none)"),
+    paste0("Fingerprint: ", switch(state,
+      valid = "valid (the file matches what was downloaded)",
+      invalid = "INVALID (the file was edited after it was downloaded)",
+      missing = "missing (downloaded before fingerprints, or stripped)",
+      unchecked = "unchecked (tools::sha256sum() needs R 4.5.0 or later)"
+    ))
+  )
+  if (!is.null(from)) {
+    from_when <- if (is_string(from$time)) decode_submission_time(from$time) else NULL
+    lines <- c(lines, paste0(
+      "Loaded from: a file downloaded ",
+      if (is.null(from_when)) "at an unknown time" else format(from_when, "%Y-%m-%d %H:%M:%S UTC", tz = "UTC"),
+      " by ", from$name %||% "(no name)", " <", from$email %||% "no email", ">",
+      " on device ", from$deviceId %||% "(unknown)",
+      if (!identical(from$deviceId, device)) " -- a DIFFERENT device from this download" else ""
+    ))
+  } else {
+    lines <- c(lines, "Loaded from: nothing (a fresh run of the tutorial)")
+  }
+  message(paste(lines, collapse = "\n"))
+  invisible(list(time = when, name = info$name, email = info$email, device = device,
+                 fingerprint = state, loaded_from = from))
+}
+
+# The text the fingerprint hashes. Mirrors canonicalSubmission() in quiz.js
+# line for line: header, time, device, the loaded-from file's fingerprint,
+# the info fields in byte order of their keys (JavaScript sorts by code
+# unit; `method = "radix"` does the same, not the session locale), then
+# every answer in file order -- an array joined with U+001F, a missing
+# answer as "<null>".
+canonical_submission <- function(file) {
+  info <- file$info %||% list()
+  from <- file$loadedFrom
+  lines <- c(
+    "learnr2-fingerprint-v1",
+    paste0("time=", file$time %||% ""),
+    paste0("device=", file$metadata$deviceId %||% ""),
+    paste0("loadedFrom=", if (is.list(from) && is_string(from$fingerprint)) from$fingerprint else "")
+  )
+  for (key in sort(names(info), method = "radix")) {
+    lines <- c(lines, paste0("info.", key, "=", if (is.null(info[[key]])) "" else as.character(info[[key]])))
+  }
+  for (a in file$answers) {
+    v <- a$answer
+    text <- if (is.null(v)) {
+      "<null>"
+    } else if (is.list(v)) {
+      paste(vapply(v, as.character, character(1)), collapse = "\u001f")
+    } else {
+      as.character(v)
+    }
+    lines <- c(lines, paste0("answer.", a$id, "=", text))
+  }
+  paste(lines, collapse = "\n")
+}
+
+sha256_text <- function(text) {
+  tmp <- tempfile()
+  on.exit(unlink(tmp), add = TRUE)
+  writeBin(charToRaw(enc2utf8(text)), tmp)
+  unname(tools::sha256sum(tmp))
 }

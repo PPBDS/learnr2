@@ -226,6 +226,67 @@ test_that("decode_submission_time() rejects codes that don't fit the scheme", {
   expect_true(is.na(learnr2:::decode_base36("hello world")))
 })
 
+# The same fixture, canonical text and hash are pinned in tests/js/quiz.spec.js;
+# the two implementations must agree on them.
+fingerprint_fixture <- function() list(
+  time = "abc",
+  metadata = list(deviceId = "dev-1"),
+  info = list(name = "Ada", email = "ada@example.com", id = NULL),
+  answers = list(list(id = "q1", answer = list("a", "b")), list(id = "q2", answer = "Because."),
+                 list(id = "q3", answer = NULL)),
+  loadedFrom = NULL
+)
+fingerprint_canonical <- paste(c(
+  "learnr2-fingerprint-v1", "time=abc", "device=dev-1", "loadedFrom=",
+  "info.email=ada@example.com", "info.id=", "info.name=Ada",
+  "answer.q1=a\u001fb", "answer.q2=Because.", "answer.q3=<null>"
+), collapse = "\n")
+
+test_that("canonical_submission() produces the pinned text, and sha256_text() hashes it", {
+  skip_if_not(exists("sha256sum", asNamespace("tools")))
+  expect_identical(learnr2:::canonical_submission(fingerprint_fixture()), fingerprint_canonical)
+  expect_match(learnr2:::sha256_text(fingerprint_canonical), "^[0-9a-f]{64}$")
+  # A loaded-from fingerprint is part of the text, so stripping it changes the hash.
+  with_from <- utils::modifyList(fingerprint_fixture(), list(loadedFrom = list(fingerprint = "ff00")))
+  expect_match(learnr2:::canonical_submission(with_from), "loadedFrom=ff00", fixed = TRUE)
+})
+
+write_fingerprinted <- function(dir, tamper = identity, fingerprint = TRUE) {
+  file <- fingerprint_fixture()
+  if (isTRUE(fingerprint)) file$fingerprint <- learnr2:::sha256_text(learnr2:::canonical_submission(file))
+  file <- tamper(file)
+  path <- fs::path(dir, "sub.json")
+  jsonlite::write_json(file, path, auto_unbox = TRUE, null = "null")
+  as.character(path)
+}
+
+test_that("check_submission() tells a pristine file from an edited one, and reports provenance", {
+  skip_if_not(exists("sha256sum", asNamespace("tools")))
+  dir <- withr::local_tempdir()
+  expect_message(res <- check_submission(write_fingerprinted(dir)), "Fingerprint: valid")
+  expect_equal(res$fingerprint, "valid")
+  expect_equal(res$name, "Ada")
+  expect_null(res$loaded_from)
+
+  edited <- write_fingerprinted(dir, function(f) { f$info$name <- "Bob"; f })
+  expect_message(res <- check_submission(edited), "Fingerprint: INVALID")
+  expect_equal(res$fingerprint, "invalid")
+  edited_answer <- write_fingerprinted(dir, function(f) { f$answers[[2]]$answer <- "Copied."; f })
+  expect_equal(suppressMessages(check_submission(edited_answer))$fingerprint, "invalid")
+
+  expect_message(res <- check_submission(write_fingerprinted(dir, fingerprint = FALSE)), "Fingerprint: missing")
+  expect_equal(res$fingerprint, "missing")
+
+  with_from <- write_fingerprinted(dir, function(f) {
+    f$loadedFrom <- list(time = "abc", deviceId = "dev-0", fingerprint = "ff00", name = "Carol", email = "c@x.org")
+    f$fingerprint <- learnr2:::sha256_text(learnr2:::canonical_submission(f))
+    f
+  })
+  expect_message(res <- check_submission(with_from), "Loaded from: .*by Carol <c@x.org> on device dev-0 -- a DIFFERENT device")
+  expect_equal(res$fingerprint, "valid")
+  expect_equal(res$loaded_from$name, "Carol")
+})
+
 test_that("submission_time() decodes a bare time code", {
   code <- learnr2:::encode_submission_time(as.POSIXct("2026-01-15 12:00:00", tz = "UTC"))
   res <- withVisible(suppressMessages(submission_time(code)))

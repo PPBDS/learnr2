@@ -388,9 +388,13 @@ reader clicked "Download", lightly obfuscated so the raw timestamp isn't
 readable or hand-editable in the file. Recover it with
 `learnr2::submission_time(path)`, and give the whole file back to
 `learnr2::load_tutorial(path)` to reopen the tutorial with every answer
-filled in, for a student who needs to fix one. Nothing else is hashed or signed --- with
-no server involved there is no way to *prevent* a reader editing their
-answers; this just keeps the submission time honest at a glance:
+filled in, for a student who needs to fix one. The file ends with a
+`fingerprint`, a hash of its own contents that
+`learnr2::check_submission(path)` recomputes, so a name or an answer
+edited by hand in the file shows up, and with `loadedFrom`, which records
+the earlier file a resubmission was restored from. With no server involved
+nothing can *prevent* a determined reader from editing their answers; these
+make the ordinary case visible:
 
 ```{r}
 #| label: student-info-and-submission-2

@@ -229,6 +229,19 @@ restore_entries <- function(answers, widgets, path = "the answers file") {
                                              value = c(values, list(submitted = TRUE)), raw = FALSE)
     }
   }
+  # Where these answers came from, carried into the next download as
+  # `loadedFrom` (see check_submission()).
+  str_or_null <- function(x) if (is_string(x)) x else NULL
+  entries[[length(entries) + 1]] <- list(
+    prefix = "learnr2-", id = "loaded-from", raw = FALSE,
+    value = list(
+      time = str_or_null(answers$time),
+      deviceId = str_or_null(answers$metadata$deviceId),
+      fingerprint = str_or_null(answers$fingerprint),
+      name = str_or_null(answers$info$name),
+      email = str_or_null(answers$info$email)
+    )
+  )
   if (length(unmatched) > 0) {
     warning(
       length(unmatched), " answer(s) in '", path, "' match no question or exercise in the ",

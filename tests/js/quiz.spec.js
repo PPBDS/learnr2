@@ -2,6 +2,21 @@
 const { test, expect } = require("@playwright/test");
 const fs = require("fs");
 const path = require("path");
+const crypto = require("crypto");
+
+// Mirrors canonicalSubmission() in quiz.js and canonical_submission() in
+// R/submission.R; the pinned fixture below is shared with test-submission.R.
+function canonicalSubmission(payload) {
+  const from = payload.loadedFrom && typeof payload.loadedFrom.fingerprint === "string" ? payload.loadedFrom.fingerprint : "";
+  const lines = ["learnr2-fingerprint-v1", "time=" + payload.time, "device=" + payload.metadata.deviceId, "loadedFrom=" + from];
+  Object.keys(payload.info).sort().forEach((k) => lines.push("info." + k + "=" + (payload.info[k] == null ? "" : String(payload.info[k]))));
+  payload.answers.forEach((a) => {
+    const v = a.answer;
+    lines.push("answer." + a.id + "=" + (v == null ? "<null>" : Array.isArray(v) ? v.map(String).join("\u001f") : String(v)));
+  });
+  return lines.join("\n");
+}
+const sha256 = (text) => crypto.createHash("sha256").update(text, "utf8").digest("hex");
 
 const TINY_PNG_BASE64 =
   "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=";
@@ -686,6 +701,15 @@ test.describe("download answers button", () => {
     const decodedSecs = (parseInt(contents.time, 36) - 1000003) / 8093;
     expect(Number.isInteger(decodedSecs)).toBe(true);
     expect(Math.abs(decodedSecs - Date.now() / 1000)).toBeLessThan(60);
+
+    // The file ends with its fingerprint, which anyone can recompute from the
+    // file's own content, and no provenance for a fresh run.
+    expect(Object.keys(contents).slice(-2)).toEqual(["loadedFrom", "fingerprint"]);
+    expect(contents.loadedFrom).toBeNull();
+    expect(contents.fingerprint).toMatch(/^[0-9a-f]{64}$/);
+    expect(contents.fingerprint).toBe(sha256(canonicalSubmission(contents)));
+    // A hand edit to the name would no longer match.
+    expect(sha256(canonicalSubmission(Object.assign({}, contents, { info: { name: "Bob", email: "ada@example.com", id: null } })))).not.toBe(contents.fingerprint);
 
     // metadata: what a browser can actually expose (no computer name/username,
     // and no timestamp -- that's what `time` is for).
@@ -1777,6 +1801,22 @@ test.describe("interface language", () => {
   });
 });
 
+test.describe("fingerprint canonical text", () => {
+  test("the pinned fixture produces the pinned canonical text (shared with test-submission.R)", async () => {
+    const fixture = {
+      time: "abc", metadata: { deviceId: "dev-1" },
+      info: { name: "Ada", email: "ada@example.com", id: null },
+      answers: [{ id: "q1", answer: ["a", "b"] }, { id: "q2", answer: "Because." }, { id: "q3", answer: null }],
+      loadedFrom: null
+    };
+    expect(canonicalSubmission(fixture)).toBe([
+      "learnr2-fingerprint-v1", "time=abc", "device=dev-1", "loadedFrom=",
+      "info.email=ada@example.com", "info.id=", "info.name=Ada",
+      "answer.q1=a\u001fb", "answer.q2=Because.", "answer.q3=<null>"
+    ].join("\n"));
+  });
+});
+
 test.describe("restoring a download (load_tutorial)", () => {
   test("a restore page stores the answers under the tutorial's address and the tutorial opens where they left off", async ({ page }) => {
     await page.goto("/progressive-sections-gated");
@@ -1839,6 +1879,17 @@ test.describe("restoring a download (load_tutorial)", () => {
     const code = await page.evaluate(() => localStorage.getItem("editor-" + location.href.split("#")[0] + "#webr-1-contents"));
     expect(code).toBe("sum(1:3)");
     expect(await page.evaluate(() => localStorage.getItem("editor-" + location.href.split("#")[0] + "#webr-2-contents"))).toBeNull();
+
+    // A download from the restored page says where it came from, and its
+    // fingerprint covers that provenance.
+    const downloadPromise = page.waitForEvent("download");
+    await page.locator(".learnr2-download-answers-btn").click();
+    const download = await downloadPromise;
+    const chunks = [];
+    for await (const chunk of await download.createReadStream()) chunks.push(chunk);
+    const contents = JSON.parse(Buffer.concat(chunks).toString("utf8"));
+    expect(contents.loadedFrom).toEqual({ time: "abc", deviceId: null, fingerprint: null, name: "Ada Lovelace", email: "ada@example.com" });
+    expect(contents.fingerprint).toBe(sha256(canonicalSubmission(contents)));
   });
 
   test("a file from another tutorial is flagged, and cancelling changes nothing", async ({ page }) => {

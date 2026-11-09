@@ -76,7 +76,11 @@ test_that("restore_entries() rebuilds quiz.js's saved shapes and drops what matc
                  "1 answer\\(s\\) in 'f.json' match no question.*`gone-5`")
   by_id <- stats::setNames(entries, vapply(entries, function(e) e$id, character(1)))
   expect_setequal(names(by_id), c("intro-1", "intro-2", "intro-3", "intro-4", "webr-7-contents",
-                                  "learnr2-info-student-info"))
+                                  "learnr2-info-student-info", "loaded-from"))
+  # Where the answers came from travels with them, for check_submission().
+  expect_equal(by_id[["loaded-from"]]$value$time, "abc")
+  expect_equal(by_id[["loaded-from"]]$value$name, "Ada")
+  expect_null(by_id[["loaded-from"]]$value$fingerprint)
   expect_equal(by_id[["intro-1"]]$value, list(selected = list("a")))
   expect_equal(by_id[["intro-2"]]$value, list(value = "yes"))
   expect_equal(by_id[["intro-3"]]$value, list(value = "Because.", submitted = TRUE))
@@ -131,7 +135,7 @@ test_that("load_tutorial() restores a file's answers and opens the restore page"
   seen <- local_loadable()
   answers <- write_answers(seen$dir)
   expect_warning(
-    expect_message(res <- load_tutorial(answers, open = TRUE, output_dir = withr::local_tempdir()), "Restored 6 answer"),
+    expect_message(res <- load_tutorial(answers, open = TRUE, output_dir = withr::local_tempdir()), "Restored 7 answer"),
     "`gone-5`"
   )
   expect_equal(seen$page, "learnr2-restore.html")

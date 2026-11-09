@@ -25,9 +25,8 @@ student could read it, or swap in a different plausible time without
 re-running the encoder. This function reverses it.
 }
 \details{
-Nothing else in the file is hashed or signed, so this does \strong{not} detect
-edited answers. If you need that, compare against work submitted through a
-channel you control.
+This reads only \code{time}. For the file's \code{fingerprint} and \code{loadedFrom}
+provenance, see \code{\link[=check_submission]{check_submission()}}.
 }
 \examples{
 # Decode a bare time code:

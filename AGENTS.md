@@ -249,6 +249,17 @@ subsections) behind a Continue button. Verified against real renders.
   `restoredState()` builds the same shapes; the two must stay in step
   with the builders' saved formats. It clears the tutorial's storage
   first, so a load is a restart from the file, then reloads.
+- **Fingerprint and provenance are tamper-evident, not tamper-proof**
+  (2026-11). `fingerprint` is SHA-256 of `canonicalSubmission()`'s text
+  (quiz.js) and `canonical_submission()` (R/submission.R) must produce
+  the identical text; a pinned fixture in both test suites holds them to
+  it. There is no secret: a reader who reads quiz.js can regenerate it,
+  so the aim is the hand-edited copy of a friend's file, not forgery.
+  `loadedFrom` (storage id `loaded-from`, a reserved label) is written by
+  both loaders and is inside the hashed text, so deleting it breaks the
+  fingerprint. `sha256Hex()` returns null without SubtleCrypto (plain
+  http from a non-local address) and `check_submission()` then reports
+  "missing"; `tools::sha256sum()` needs R >= 4.5, reported as "unchecked".
 - **The download file's header comes through the environment** (2026-11).
   `render_tutorials()` copies a tutorial into a work directory before
   Quarto renders it, and Quarto knits in its own R process, so the knit

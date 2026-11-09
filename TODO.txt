@@ -1,12 +1,1 @@
-
-### Cheating concerns
-
-Do we need to worry about cheating? What prevents a student from taking his friends JSON file, loading it up, changing the name/email address, and then downloading a new JSON answer file? Won't this generate a new hash which will record the cheaters name so that, from our point of view, his submitted JSON file looks legit? 
-
-Perhaps the solution is that load_tutorial() requires that the JSON file includes a hash. (Preventing a cheater from just deleting it.) It then reports what the hash says about whose work this is, and warns the user that they better not be cheating. It then records that hash (where?). Then, when answers are downloaded, both the old hash and a newly generated one are placed in the JSON file. We can examine them both to "confirm" that they come from the same person.
-
-Or maybe this is overkill and we don't need to worry about this sort of "by hand" cheating. The real concern is the use of an AI which can enter answers in an HTML form . . .
-
-
-
-
+ 

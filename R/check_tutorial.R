@@ -439,9 +439,10 @@ tutorial_checks <- list(
       }
       if (is.na(ch$label)) {
         msgs <- c(msgs, paste0(chunk_ref(ch), ": no `#| label:` line."))
-      } else if (identical(ch$label, "progressive-sections")) {
-        msgs <- c(msgs, paste0(chunk_ref(ch), ": the label `progressive-sections` is ",
-                               "reserved (it keys the saved Continue progress)."))
+      } else if (ch$label %in% c("progressive-sections", "loaded-from")) {
+        msgs <- c(msgs, paste0(chunk_ref(ch), ": the label `", ch$label, "` is reserved (",
+                               if (ch$label == "progressive-sections") "it keys the saved Continue progress"
+                               else "it keys where a loaded answers file came from", ")."))
       }
     }
     labels <- vapply(chunks, function(ch) ch$label, character(1))

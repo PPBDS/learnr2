@@ -10,6 +10,12 @@
   Every tutorial page also gets a **Load Answers** button beside Start
   Over, and accepts a dropped answers file, doing the same in the browser
   with no R at all, so it works on a GitHub Pages copy too.
+* The downloaded file ends with a `fingerprint`, a SHA-256 of its
+  identifying content, and a `loadedFrom` block when the page had been
+  restored from an earlier download. New `check_submission()` recomputes
+  the fingerprint, so a file whose name or answers were edited by hand is
+  reported as such, and prints the provenance. Neither is a signature;
+  they make a copied file with the name changed visible, no more.
 * New `check_tutorials()`: the one call a content package's tests need. It
   finds every tutorial in a package, runs `check_tutorial()` on each,
   renders each, and checks that the rendered page's download file names

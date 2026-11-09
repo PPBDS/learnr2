@@ -406,6 +406,12 @@ test_that("mentions is a warning-level check on prose only", {
   expect_identical(nrow(check_tutorial(write_qmd(quoted), error = FALSE)), 0L)
 })
 
+test_that("labels: `loaded-from` is reserved like `progressive-sections`", {
+  res <- check_tutorial(write_qmd(replacing("^#\\| label: vectors-5$", "#| label: loaded-from")), error = FALSE)
+  expect_identical(res$check, "labels")
+  expect_match(res$message, "`loaded-from` is reserved")
+})
+
 test_that("exercises: two editor cells for one exercise id are an error", {
   dup <- c(good_lines[seq_len(which(good_lines == "## Your answers") - 1)],
            "```{webr}", "#| label: vectors-6", "#| exercise: ex_sum", "#| persist: true", "sum(1:3)", "```", "",

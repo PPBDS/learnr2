@@ -1269,6 +1269,70 @@
     return { id: attr.exercise, answer: storageGet(storageKey) };
   }
 
+  // ---- Fingerprint and provenance -----------------------------------------
+  // The download ends with `fingerprint`: SHA-256 of a fixed text built from
+  // what identifies the submission (time, device, loadedFrom, info,
+  // answers), and `loadedFrom`: who the file this page was restored from
+  // belonged to, if it was (load_tutorial() or the Load Answers button).
+  // Neither is a signature -- there is no server and no secret, and this
+  // code is public -- so they do not *prevent* editing. They make a hand
+  // edit to the name or an answer, or a deleted provenance block, show up
+  // when learnr2::check_submission() recomputes the hash, which is what
+  // catches a copied file with the name changed. The canonical text is
+  // mirrored by canonical_submission() in R/submission.R; change both.
+  var FINGERPRINT_HEADER = "learnr2-fingerprint-v1";
+  var LOADED_FROM_ID = "loaded-from";
+
+  function canonicalSubmission(payload) {
+    var from = payload.loadedFrom && typeof payload.loadedFrom.fingerprint === "string"
+      ? payload.loadedFrom.fingerprint : "";
+    var lines = [
+      FINGERPRINT_HEADER,
+      "time=" + payload.time,
+      "device=" + payload.metadata.deviceId,
+      "loadedFrom=" + from
+    ];
+    Object.keys(payload.info).sort().forEach(function (key) {
+      var v = payload.info[key];
+      lines.push("info." + key + "=" + (v === null || v === undefined ? "" : String(v)));
+    });
+    payload.answers.forEach(function (a) {
+      var v = a.answer;
+      var text = v === null || v === undefined ? "<null>"
+        : Array.isArray(v) ? v.map(String).join("\u001f") : String(v);
+      lines.push("answer." + a.id + "=" + text);
+    });
+    return lines.join("\n");
+  }
+
+  // Hex SHA-256, or null where the browser offers no SubtleCrypto (a page
+  // served over plain http from a non-local address).
+  async function sha256Hex(text) {
+    if (!(window.crypto && window.crypto.subtle && window.TextEncoder)) {
+      return null;
+    }
+    try {
+      var digest = await window.crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
+      return Array.prototype.map.call(new Uint8Array(digest), function (b) {
+        return ("0" + b.toString(16)).slice(-2);
+      }).join("");
+    } catch (e) {
+      return null;
+    }
+  }
+
+  // What to remember about a file whose answers are being restored.
+  function provenanceOf(file) {
+    var str = function (v) { return typeof v === "string" ? v : null; };
+    return {
+      time: str(file.time),
+      deviceId: str(file.metadata && file.metadata.deviceId),
+      fingerprint: str(file.fingerprint),
+      name: str(file.info && file.info.name),
+      email: str(file.info && file.info.email)
+    };
+  }
+
   // `data` is the download button's payload, which carries what the file is
   // a submission for (package, version, tutorial, title, learnr2Version),
   // resolved on the R side at render time. Those go first, so a grader
@@ -1325,7 +1389,8 @@
     function header(key) {
       return typeof data[key] === "string" ? data[key] : null;
     }
-    return {
+    var loadedFrom = loadState({ id: LOADED_FROM_ID });
+    var payload = {
       package: header("package"),
       version: header("version"),
       tutorial: header("tutorial"),
@@ -1335,8 +1400,12 @@
       info: info,
       answers: answers,
       metadata: captureMetadata(),
-      time: encodeDownloadTime()
+      time: encodeDownloadTime(),
+      loadedFrom: loadedFrom && typeof loadedFrom === "object" ? loadedFrom : null,
+      fingerprint: null
     };
+    payload.fingerprint = await sha256Hex(canonicalSubmission(payload));
+    return payload;
   }
 
   function triggerDownload(filename, dataObj) {
@@ -1644,6 +1713,7 @@
         }
         clearAllProgress();
         var ok = true;
+        plan.entries.push({ key: storageKey({ id: LOADED_FROM_ID }), value: provenanceOf(file), raw: false });
         plan.entries.forEach(function (entry) {
           try {
             window.localStorage.setItem(entry.key, entry.raw ? entry.value : JSON.stringify(entry.value));

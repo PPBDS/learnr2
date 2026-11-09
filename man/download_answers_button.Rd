@@ -60,9 +60,20 @@ The download also carries a \code{metadata} block (timezone, browser info, and
 a random per-device id persisted across the reader's visits) and a \code{time}
 field: the moment the reader clicked "Download", lightly obfuscated so the
 raw timestamp isn't readable or hand-editable in the file. Recover it with
-\code{\link[=submission_time]{submission_time()}}. Nothing else is hashed or signed -- a determined
-reader can still edit their answers; this only keeps the submission time
-honest at a glance.
+\code{\link[=submission_time]{submission_time()}}.
+
+The file ends with two fields for the grader. \code{fingerprint} is a SHA-256
+of the submission's identifying content (time, device id, \code{loadedFrom},
+the info fields and every answer), so a name or an answer edited by hand
+in the file no longer matches it; \code{\link[=check_submission]{check_submission()}} recomputes and
+compares. \code{loadedFrom} is \code{null} unless the page was restored from an
+earlier download (\code{\link[=load_tutorial]{load_tutorial()}} or the page's Load Answers button),
+in which case it records that file's \code{time}, device id, fingerprint,
+name and email, so a resubmission can be traced to the file it grew
+from. Neither is a signature: everything runs in the reader's browser
+with no secret, so a reader who reads the code can regenerate both. They
+make the common case, a copied file with the name changed, visible; they
+do not make the file tamper-proof.
 }
 \examples{
 download_answers_button()
