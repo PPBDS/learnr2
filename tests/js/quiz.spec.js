@@ -109,6 +109,29 @@ test.describe("single-choice questions", () => {
   });
 });
 
+test.describe("random answer order", () => {
+  test("the options are shuffled between loads but grade and restore the same", async ({ page }) => {
+    await page.goto("/random-order");
+    await page.evaluate(() => localStorage.clear());
+    const orders = new Set();
+    for (let i = 0; i < 8; i++) {
+      await page.reload();
+      orders.add((await page.locator(".learnr2-answer span").allTextContents()).join(","));
+    }
+    // Six options have 720 orderings; eight loads all identical is a 1 in 720^7 event.
+    expect(orders.size).toBeGreaterThan(1);
+    for (const order of orders) expect(order.split(",").sort()).toEqual(["1", "2", "3", "5", "7", "9"]);
+    // Grading follows the option, not its position, and the saved pick is
+    // found again after a reshuffle.
+    await page.locator(".learnr2-answer").filter({ hasText: /^2$/ }).locator("input").check();
+    await page.locator(".learnr2-submit").click();
+    await expect(page.locator(".learnr2-feedback")).toHaveText("Correct!");
+    await page.reload();
+    await expect(page.locator(".learnr2-feedback")).toHaveText("Correct!");
+    await expect(page.locator("input:checked + span")).toHaveText("2");
+  });
+});
+
 test.describe("multiple-choice questions", () => {
   test("a partial selection is graded incorrect", async ({ page }) => {
     await page.goto("/multiple-choice");

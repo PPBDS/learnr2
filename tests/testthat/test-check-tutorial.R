@@ -213,6 +213,11 @@ test_that("packages check compares {webr} usage against webr: packages:, ignorin
   expect_identical(nrow(check_tutorial(write_qmd(inl), error = FALSE)), 0L)
 })
 
+test_that("webr_packages_used() is empty for a tutorial with no {webr} cells", {
+  doc <- learnr2:::parse_tutorial(write_qmd(good_lines[!grepl("^```\\{webr\\}", good_lines)]))
+  expect_identical(learnr2:::webr_packages_used(doc), character(0))
+})
+
 test_that("skip leaves named checks out, and rejects unknown names", {
   f <- write_qmd(without('validate = "integer"'))
   expect_error(check_tutorial(f), "\\[minutes\\]")

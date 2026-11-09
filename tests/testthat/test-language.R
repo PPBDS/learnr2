@@ -72,9 +72,9 @@ test_that("the dependency, the widgets and their noscript text follow the docume
   expect_match(as.character(learnr2:::info_div(student_info())), "Ce formulaire", fixed = TRUE)
   expect_match(as.character(learnr2:::download_button_div(download_answers_button())),
                "Ce bouton", fixed = TRUE)
-  expect_match(as.character(learnr2:::quiz_html(quiz(question("Q?", answer("a", correct = TRUE))))),
+  expect_match(as.character(learnr2:::widget_html(quiz(question("Q?", answer("a", correct = TRUE))))),
                ">Quiz<", fixed = TRUE)
-  expect_match(as.character(learnr2:::quiz_html(quiz(question("Q?", answer("a", correct = TRUE)), caption = "Arithmétique"))),
+  expect_match(as.character(learnr2:::widget_html(quiz(question("Q?", answer("a", correct = TRUE)), caption = "Arithmétique"))),
                ">Arithmétique<", fixed = TRUE)
 })
 

@@ -319,7 +319,7 @@ test_that("quiz() requires question() objects", {
 
 test_that("rendered question HTML embeds a decodable payload", {
   q <- question("6 * 7?", answer("42", correct = TRUE), answer("36"))
-  html <- learnr2:::quiz_html(q)
+  html <- learnr2:::widget_html(q)
   expect_true(inherits(html, "shiny.tag"))
 
   encoded <- html$attribs[["data-learnr2-question"]]
@@ -341,7 +341,7 @@ test_that("rendered quiz HTML contains one div per question", {
     question("3 + 3?", answer("6", correct = TRUE)),
     caption = "Arithmetic"
   )
-  html <- as.character(learnr2:::quiz_html(qz))
+  html <- as.character(learnr2:::widget_html(qz))
   expect_match(html, "learnr2-quiz-caption")
   expect_equal(lengths(regmatches(html, gregexpr("learnr2-question\"", html))), 2)
 })
@@ -375,7 +375,7 @@ test_that("print.learnr2_question prints HTML source non-interactively, without 
   expect_identical(result$value, q)
 })
 
-test_that("knit_print.learnr2_question renders via quiz_html(), tagged for knitr as knit_asis", {
+test_that("knit_print.learnr2_question renders via widget_html(), tagged for knitr as knit_asis", {
   q <- question("6 * 7?", answer("42", correct = TRUE), answer("36"))
   kp <- knitr::knit_print(q)
   expect_s3_class(kp, "knit_asis")
@@ -430,15 +430,6 @@ test_that("current_chunk_label() returns the running chunk's label, but rejects 
   expect_null(learnr2:::current_chunk_label())
 })
 
-test_that("learnr2_dependency() bundles quiz.js and quiz.css as an htmlDependency", {
-  dep <- learnr2:::learnr2_dependency()
-  expect_s3_class(dep, "html_dependency")
-  expect_equal(dep$name, "learnr2-quiz")
-  expect_equal(dep$script, "quiz.js")
-  expect_equal(dep$stylesheet, "quiz.css")
-  expect_true(fs::file_exists(fs::path(dep$src$file, dep$script)))
-  expect_true(fs::file_exists(fs::path(dep$src$file, dep$stylesheet)))
-})
 
 test_that("question_id() disambiguates within one render but is stable across question texts", {
   # Fresh registry state is not guaranteed between test files, so use ids

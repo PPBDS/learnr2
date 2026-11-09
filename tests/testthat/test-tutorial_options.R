@@ -1,5 +1,5 @@
 # Covers R/tutorial_options.R: tutorial_options(), options_div(),
-# options_html(), and the print/knit_print methods.
+# widget_html(), and the print/knit_print methods.
 
 # withr is a Suggests package: skip the whole file if it isn't installed,
 # so a check run without Suggests (CRAN's noSuggests) passes.
@@ -48,8 +48,8 @@ test_that("options_div() emits a hidden element quiz.js can decode", {
   expect_true(decoded$allowSkip)
 })
 
-test_that("options_html() attaches the learnr2-quiz dependency", {
-  deps <- htmltools::findDependencies(learnr2:::options_html(tutorial_options()))
+test_that("widget_html() attaches the learnr2-quiz dependency", {
+  deps <- htmltools::findDependencies(learnr2:::widget_html(tutorial_options()))
   expect_equal(deps[[1]]$name, "learnr2-quiz")
 })
 

@@ -36,6 +36,25 @@ tutorial *content* changes, change it in the vignette, not here. Also see
 Vignette prose follows the house style: package names **bold**, keyboard
 input in backticks, function names with `()`, no semicolons.
 
+## Where things are
+
+- `R/tutorials.R` lists tutorials (`available_tutorials()`, pkgload
+  detection); `R/run_tutorial.R` renders into the cache and serves
+  (`run_tutorial()`, `prerender_tutorials()`, `probe_server()`);
+  `R/render_tutorials.R` renders and works out a tutorial's package
+  (`tutorial_identity()`); `R/load_tutorial.R` restores a download.
+- `R/question.R`, `R/submission.R` (`student_info()`, the download button,
+  `submission_time()`, `check_submission()`), `R/tutorial_options.R` build
+  widget payloads; `R/widgets.R` turns any of them into the `<div>` plus
+  dependency and holds the shared print/knit methods; `R/language.R` the
+  string tables; `R/utils.R` the small argument checks.
+- `R/check_tutorial.R` is the per-file static checks, `R/check_tutorials.R`
+  the whole-package run; `R/show_file.R` is ported from tutorial.helpers.
+- `inst/extdata/quiz/quiz.js` is one file, in the order: strings and
+  storage, shared widget pieces, the four builders, download and
+  fingerprint, Load Answers, Start Over, options, progressive reveal, init.
+  `quiz.css` beside it; `lang/*.json` the translations.
+
 ## Settled design decisions
 
 - **Instructions beat templates.** A template shows what a correct file
@@ -167,7 +186,7 @@ subsections) behind a Continue button. Verified against real renders.
   `reflection_editable` (the minutes question and URL questions) only.
   Submit locks the fields and shows "Edit";
   Edit only reopens them, shows "Submit" and an editing note
-  (`EDITING_NOTE`). Received means last submitted: `widgetPending()` (used
+  (`t("editing_note")`). Received means last submitted: `widgetPending()` (used
   by the Continue gate and the download) treats a reopened widget as
   unsubmitted, the download reads submitted values, never the live DOM,
   and is blocked until every `student_info()` is submitted. Info storage:
@@ -330,7 +349,7 @@ subsections) behind a Continue button. Verified against real renders.
   briefly still accepts connections that nothing answers, long enough on
   Windows to be misread as "something else holds the port".
   `probe_server()` re-checks that verdict (`attempts`, `wait`), and tests
-  use `free_port()` (in `test-tutorials.R`), never
+  use `free_port()` (in `tests/testthat/helper-stubs.R`), never
   `httpuv::randomPort()` directly. Found from the actual CI job log
   (`gh api repos/PPBDS/learnr2/actions/jobs/<id>/logs`) after a first fix
   based on guessing; get the log before fixing.
@@ -339,19 +358,18 @@ subsections) behind a Continue button. Verified against real renders.
 
 Two layers, both in CI (`R-CMD-check.yaml`, `js-tests.yaml`).
 
-**R, `tests/testthat/` (edition 3).** One `test-*.R` per `R/*.R` file:
-`test-question.R`, `test-submission.R`, `test-tutorials.R`,
-`test-tutorial_options.R`, `test-extension.R`, `test-create-tutorial.R`,
-`test-show_file.R`, `test-render-tutorials.R`, `test-check-tutorial.R`,
-`test-check-tutorials.R`, `test-language.R`, `test-load_tutorial.R`.
+**R, `tests/testthat/` (edition 3).** One `test-*.R` per `R/*.R` file,
+same name (`test-run_tutorial.R` for `R/run_tutorial.R`, and so on).
+Stubs shared across files live in `helper-stubs.R`: `local_stub_quarto()`,
+`local_stub_serving()`, `local_dev_tutorial_package()`, `free_port()`.
 
 - Every exported function and internal helper has a test; call internals
-  as `learnr2:::helper()`.
+  as `learnr2:::helper()`. Coverage (`covr::package_coverage()`) is about
+  99%; what is left is error branches that need a broken install.
 - Heavy calls are mocked with `local_mocked_bindings()`: `quarto`, `httpuv`,
   `utils`, plus learnr2's own seams `probe_server()`,
-  `open_in_browser()` and `block_serving()` (see `local_stub_serving()` and
-  `local_stub_quarto()`). No test boots WebR, opens a browser, or hits the
-  network.
+  `open_in_browser()` and `block_serving()`. No test boots WebR, opens a
+  browser, or hits the network.
 - **One test serves for real**: the "served root, against a real httpuv
   server" block fetches `/` from a live httpuv server, because stubs can
   only show that `index.html` was written. It fails if
@@ -390,7 +408,9 @@ Two layers, both in CI (`R-CMD-check.yaml`, `js-tests.yaml`).
 `quiz.spec.js` against a local fixture server (`server.js`, `fixtures.js`)
 and `persistence.spec.js` across a real browser restart. Any fixture is
 also served as `<name>-no-toc`, without a sidebar. The six image-paste
-tests fail in local headless Chromium (clipboard) but pass in CI.
+tests fail in local headless Chromium (clipboard) but pass in CI. Fixture
+payloads mirror the R `payload <- list(...)` shapes by hand; when a payload
+field changes, change `fixtures.js` too.
 
 Run: `R -q -e 'devtools::test()'`, and `cd tests/js && npx playwright test`.
 

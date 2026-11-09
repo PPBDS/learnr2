@@ -115,8 +115,6 @@ load_tutorial <- function(path,
 
 RESTORE_FILE <- "learnr2-restore.html"
 
-is_string <- function(x) is.character(x) && length(x) == 1 && !is.na(x) && nzchar(x)
-
 read_answers_file <- function(path) {
   if (!is_string(path) || !file.exists(path)) {
     stop("`path` must be the path of a downloaded answers file.", call. = FALSE)
@@ -136,7 +134,7 @@ read_answers_file <- function(path) {
 # Read from the same markup quiz.js reads, so the two agree.
 page_widgets <- function(html) {
   page <- paste(readLines(html, warn = FALSE, encoding = "UTF-8"), collapse = "\n")
-  decode <- function(b64) decode_payload(b64)
+  decode <- decode_payload
   attr_values <- function(attr) {
     m <- regmatches(page, gregexpr(paste0(attr, "=\"[^\"]+\""), page))[[1]]
     gsub(paste0("^", attr, "=\"|\"$"), "", m)
@@ -170,17 +168,6 @@ page_widgets <- function(html) {
     }
   }
   list(questions = questions, info = info, exercises = exercises)
-}
-
-# A widget's base64 JSON payload, as found in the page. jsonlite wraps long
-# base64 at 76 columns and htmltools writes each newline as `&#10;` (a
-# carriage return as `&#13;`), so those entities and any whitespace are
-# dropped first; browsers' atob() ignores the newlines the same way. NULL
-# if it still won't decode.
-decode_payload <- function(b64) {
-  clean <- gsub("&#10;|&#13;|\\s", "", b64)
-  tryCatch(jsonlite::fromJSON(rawToChar(jsonlite::base64_dec(clean)), simplifyVector = FALSE),
-           error = function(e) NULL)
 }
 
 # The localStorage entries that reproduce `answers` on the page: a list of

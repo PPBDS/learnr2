@@ -165,11 +165,6 @@ report_problems <- function(problems, error) {
   invisible(problems)
 }
 
-no_problems <- function() {
-  data.frame(path = character(0), check = character(0), severity = character(0),
-             message = character(0), stringsAsFactors = FALSE)
-}
-
 # Checks whose problems are reported as warnings, not errors (see ?check_tutorial).
 warning_checks <- c("fences", "mentions", "yaml", "language")
 
@@ -666,5 +661,3 @@ tutorial_checks <- list(
            "`vignette(\"translating\")` to add one.")
   }
 )
-
-`%||%` <- function(x, y) if (is.null(x)) y else x

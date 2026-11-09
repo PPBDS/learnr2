@@ -123,26 +123,14 @@ check_flag <- function(x, name) {
 }
 
 options_div <- function(x) {
-  json <- jsonlite::toJSON(x$payload, auto_unbox = TRUE, null = "null")
-  encoded <- jsonlite::base64_enc(charToRaw(as.character(json)))
-  htmltools::tags$div(
-    class = "learnr2-options",
-    `data-learnr2-options` = encoded,
-    hidden = NA
-  )
+  widget_div("learnr2-options", "data-learnr2-options", x$payload, hidden = TRUE)
 }
 
-options_html <- function(x) {
-  htmltools::attachDependencies(options_div(x), learnr2_dependency())
-}
+#' @exportS3Method
+widget_html.learnr2_options <- function(x) with_dependency(options_div(x))
 
 #' @exportS3Method knitr::knit_print
-knit_print.learnr2_options <- function(x, ...) {
-  knitr::knit_print(options_html(x), ...)
-}
+knit_print.learnr2_options <- function(x, ...) knit_widget(x, ...)
 
 #' @export
-print.learnr2_options <- function(x, ...) {
-  print(options_html(x), browse = interactive())
-  invisible(x)
-}
+print.learnr2_options <- function(x, ...) print_widget(x)

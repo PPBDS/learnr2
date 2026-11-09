@@ -32,9 +32,7 @@ create_tutorial <- function(name,
                             dir,
                             title = name,
                             open = interactive()) {
-  if (missing(name) || !is.character(name) || length(name) != 1 || !nzchar(name)) {
-    stop("`name` must be a single non-empty string.", call. = FALSE)
-  }
+  check_string(if (missing(name)) NULL else name, "name")
   check_dir_arg(dir, missing(dir))
 
   tutorial_dir <- fs::path(fs::path_abs(dir), name)
@@ -66,13 +64,9 @@ create_tutorial <- function(name,
 
 # Best-effort open of a file in the user's editor, with no IDE package
 # needed. RStudio and Positron both send utils::file.edit() to their editor
-# (each sets an environment variable we can detect). VS Code, including a
-# Codespace, puts a `code` command on the PATH of its terminals that opens a
-# file in the editor. Anywhere else -- a plain terminal, where file.edit()
-# would start vi -- just say where the file is. (This used to try
-# rstudioapi::navigateToFile() first, which is what the RSTUDIO branch
-# already does, and fall back to utils::browseURL(), which handed the .qmd
-# to whatever app the operating system associates with it.)
+# (each sets an environment variable). VS Code, including a Codespace, puts
+# a `code` command on the PATH of its terminals. Anywhere else, where
+# file.edit() would start vi, just say where the file is.
 open_file <- function(path) {
   if (nzchar(Sys.getenv("RSTUDIO")) || nzchar(Sys.getenv("POSITRON"))) {
     utils::file.edit(path)

@@ -121,7 +121,7 @@ test_that("download_answers_button() validates its arguments", {
 
 test_that("rendered info/button HTML embeds a decodable payload with the quiz dependency", {
   info <- student_info()
-  info_html_obj <- learnr2:::info_html(info)
+  info_html_obj <- learnr2:::widget_html(info)
   expect_true(inherits(info_html_obj, "shiny.tag"))
   encoded <- info_html_obj$attribs[["data-learnr2-info"]]
   decoded <- jsonlite::fromJSON(
@@ -135,7 +135,7 @@ test_that("rendered info/button HTML embeds a decodable payload with the quiz de
   expect_true(any(vapply(deps, function(d) d$name == "learnr2-quiz", logical(1))))
 
   btn <- download_answers_button()
-  btn_html_obj <- learnr2:::download_button_html(btn)
+  btn_html_obj <- learnr2:::widget_html(btn)
   encoded2 <- btn_html_obj$attribs[["data-learnr2-download"]]
   decoded2 <- jsonlite::fromJSON(
     rawToChar(jsonlite::base64_dec(encoded2)),

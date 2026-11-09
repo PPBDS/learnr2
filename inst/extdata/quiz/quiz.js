@@ -1,28 +1,13 @@
 (function () {
   "use strict";
 
-  // Captured once, at script-evaluation time (page load), not re-read on
-  // every storage access. quarto-live's own WebRExerciseEditor does the
-  // same for its `editor-${window.location.href}#${id}` persistence key --
-  // it's set once in the constructor, not recomputed on every keystroke
-  // (confirmed by reading its bundled live-runtime.js source). Reading
-  // `window.location.href` fresh at click time instead, as this file used
-  // to everywhere below, silently broke both Start Over and the exercises
-  // in a download: Quarto's own TOC sidebar links change the URL's hash on
-  // every click (a completely normal way to move around a tutorial), so a
-  // reader who saved an answer while the hash pointed at one section and
-  // then clicked to another section before downloading or starting over
-  // ended up computing a different storage key than the one the data was
-  // actually saved under -- the data was never touched, but neither
-  // feature could find it. Stripping the hash keeps every learnr2-owned
-  // key (and every `editor-` lookup into quarto-live's own keys) stable
-  // for the lifetime of the page view, matching quarto-live's own
-  // behavior -- as long as the page itself was first loaded without a
-  // hash (true for every normal run_tutorial()/GitHub Pages entry point;
-  // a reader arriving via a deep link straight to a `#section` anchor is a
-  // known remaining gap, since quarto-live would then cache *that* hash
-  // into its own key for the whole session and there is no way to read
-  // quarto-live's internal state to match it).
+  // The page's address, captured once at load with the hash stripped: every
+  // storage key is built from it, and Quarto's TOC links change the hash on
+  // every click, so reading location.href at click time made Start Over
+  // and the download look for keys the data was never saved under.
+  // quarto-live captures its own `editor-<href>#<id>` key the same way.
+  // Known gap: a page first opened at a `#section` deep link, where
+  // quarto-live's key keeps that hash and ours does not.
   var pageUrl = window.location.href.split("#")[0];
 
   // ---- Interface strings -------------------------------------------------
@@ -195,23 +180,19 @@
   }
 
   // ---- Progress persistence -------------------------------------------
-  // Mirrors the storage-key convention used by quarto-live's own exercise
-  // editor persistence (`editor-${location.href}#${id}`), with our own
-  // prefix so the two never collide. Shared by questions, info forms, and
-  // anything else that persists state. A question's `data.id` is its bare
-  // chunk label (see question_id() in R/question.R); an info form's is
-  // "learnr2-info-<id>"; the reveal's is PROGRESS_ID. So a chunk labelled
-  // "progressive-sections" would share the reveal's key -- unlikely, and
-  // check_tutorial() reports it.
+  // `learnr2-<page>#<id>`: the same shape as quarto-live's `editor-` keys,
+  // with our own prefix so the two never collide. A question's id is its
+  // chunk label (question_id() in R/question.R), an info form's is
+  // "learnr2-info-<id>", and PROGRESS_ID and LOADED_FROM_ID are reserved
+  // (check_tutorial() refuses them as labels).
 
   function storageKey(data) {
     return "learnr2-" + pageUrl + "#" + data.id;
   }
 
-  // Raw localStorage reads that never throw: a browser that blocks storage
-  // (private mode, a strict policy) throws on every access, and an unguarded
-  // read used to take the download button and Start Over down with it --
-  // exactly when the storage warning tells the reader to download.
+  // localStorage reads that never throw: a browser that blocks storage
+  // (private mode, a strict policy) throws on every access, and the
+  // download and Start Over must keep working then of all times.
   function storageGet(key) {
     try {
       return window.localStorage.getItem(key);
@@ -234,19 +215,17 @@
 
   function loadState(data) {
     try {
-      var raw = window.localStorage.getItem(storageKey(data));
+      var raw = storageGet(storageKey(data));
       return raw ? JSON.parse(raw) : null;
     } catch (e) {
       return null;
     }
   }
 
-  // Returns true if the state was stored. On failure it tells the reader,
-  // once per page, instead of failing silently: a full localStorage used to
-  // mean an answer looked submitted but was never stored, and so was
-  // missing from the download. Storage is per *site*, shared by every
-  // tutorial served from it (all of run_tutorial()'s 127.0.0.1:7446, all
-  // of ppbds.github.io), and about 5 MB in most browsers, so pasted
+  // Returns true if the state was stored; on failure it tells the reader
+  // (once per page) rather than letting an answer look submitted while it
+  // is missing from the download. Storage is per site -- all of
+  // 127.0.0.1:7446, all of ppbds.github.io -- and about 5 MB, so pasted
   // screenshots are what fill it.
   function saveState(data, state) {
     try {
@@ -460,15 +439,13 @@
     }
   }
 
-  // Shrinks a pasted screenshot before it is stored. The image is scaled to
-  // at most IMAGE_MAX_WIDTH x IMAGE_MAX_HEIGHT (aspect kept), drawn on a white
-  // background (so transparent areas don't turn black), and encoded as WebP,
-  // or JPEG where the browser can't encode WebP (Safari's canvas silently
-  // returns PNG for "image/webp"; we detect that from the data URL). If the
-  // result is still over IMAGE_TARGET_CHARS, quality and then size step down
-  // until it fits. Screenshots used to be stored as full-size PNG, so a
-  // single one could take 3 MB of the ~5 MB localStorage a whole site
-  // shares. Also strips metadata (EXIF orientation, GPS).
+  // Shrinks a pasted screenshot before it is stored: scaled to at most
+  // IMAGE_MAX_WIDTH x IMAGE_MAX_HEIGHT, drawn on white (transparency would
+  // turn black), encoded as WebP, or JPEG where the canvas can't write WebP
+  // (Safari returns PNG for "image/webp"; detected from the data URL), with
+  // quality and then size stepping down until it fits IMAGE_TARGET_CHARS. A
+  // full-size PNG could take 3 MB of the ~5 MB a whole site shares. Also
+  // drops metadata (EXIF orientation, GPS).
   var IMAGE_MAX_WIDTH = 1600;
   var IMAGE_MAX_HEIGHT = 4000;
   var IMAGE_TARGET_CHARS = 600 * 1024; // of data URL, ~450 KB of image
@@ -523,29 +500,16 @@
     reader.readAsDataURL(file);
   }
 
-  // A box showing the pasted image, plus a *secondary* paste target of its
-  // own -- but the primary way readers paste is directly into the response
-  // textarea (see wireImagePaste below). A <textarea> reliably fires native
-  // "paste" events in every browser; an arbitrary non-editable <div> does
-  // not always, and even where it does, a reader who never notices the
-  // small box below the textarea will naturally paste into the textarea
-  // instead and see nothing happen. Handling paste on the textarea too
-  // means it works wherever the reader's cursor actually is.
-  //
-  // Accepted clipboard image types are listed above handlePaste(), below.
-  // MAX_BYTES there is only a sanity cap on what gets decoded; keeping
-  // stored images small is compressImage()'s job.
-  //
-  // `onChange(hasImage)` fires whenever an image is set or removed, so the
-  // caller can hide its response textarea while an image is the answer.
-  //
-  // `noTextBox`: the question has no text box (allow_text = FALSE), so the
-  // placeholder must not point the reader at one.
+  // A box showing the pasted image, and a paste target of its own. Readers
+  // mostly paste into the response textarea, which fires native paste
+  // events reliably everywhere; buildReflectionQuestion() routes those here
+  // too, so pasting works wherever the cursor is. `onChange(hasImage)` lets
+  // the caller hide the textarea while an image is the answer; `noTextBox`
+  // (allow_text = FALSE) keeps the placeholder from pointing at one.
   var pasteAreaCount = 0;
 
   function buildImagePasteArea(onChange, noTextBox) {
-    // A sanity cap on what is decoded; the stored image is shrunk by
-    // compressImage() regardless, so readers no longer need to crop.
+    // A sanity cap on what is decoded; compressImage() keeps what is stored small.
     var MAX_BYTES = 20 * 1024 * 1024;
     var placeholderId = "learnr2-paste-hint-" + (++pasteAreaCount);
     var wrapper = el("div", {
@@ -601,33 +565,14 @@
       }
     }
 
-    // Which raster types get accepted: verified (MDN, web.dev) that only
-    // the *newer* Async Clipboard API's write() path is documented as
-    // PNG-only for images. This code uses the older `paste`-event
-    // clipboardData.items path instead (works without the permission
-    // prompt the async API needs), which has no such documented
-    // guarantee -- and a real OS-native screenshot's clipboard format is
-    // platform-dependent (this could not be verified end-to-end against
-    // real macOS/Windows/ChromeOS screenshot tools from this sandbox, only
-    // simulated). Rather than gamble on "screenshots are always PNG" and
-    // reject anything else, accept every raster type every mainstream
-    // browser can reliably decode via <img>/canvas, and re-encode it
-    // ourselves in compressImage() above -- so what's actually stored and
-    // submitted is always a size-capped WebP or JPEG regardless of what the
-    // reader's platform put on the clipboard. Deliberately excludes image/svg+xml
-    // (vector markup, not a raster screenshot, and a different security
-    // surface to feed into <img>) and image/tiff (real OS clipboards can
-    // expose this, notably on macOS, but mainstream browsers other than
-    // Safari generally don't decode it via <img> either, so accepting it
-    // would just trade one confusing failure for another -- flagged as an
-    // open gap rather than papered over).
+    // What the OS puts on the clipboard for a screenshot varies by platform,
+    // so every raster type browsers decode is accepted and re-encoded by
+    // compressImage(). SVG (markup, not a screenshot) and TIFF (which
+    // browsers other than Safari don't decode) are left out.
     var ACCEPTED_IMAGE_TYPES = /^image\/(png|jpeg|gif|webp|bmp)$/;
 
-    // `silent`: when handling paste on the textarea (which is also used for
-    // ordinary typed/pasted text), a clipboard paste with no image should
-    // just fall through to the browser's normal text-paste behavior --
-    // no error, no preventDefault(). The dedicated box has no other
-    // purpose, so there `silent` is false and a non-image paste is an error.
+    // `silent`: a paste on the textarea with no image is ordinary text and
+    // falls through to the browser; on the dedicated box it is an error.
     function handlePaste(event, silent) {
       if (disabled) {
         return;
@@ -831,10 +776,7 @@
         return;
       }
       var image = imagePaste ? imagePaste.getDataUrl() : null;
-      // `validate` constrains a typed answer. A pasted image is the whole
-      // answer, so there is nothing to validate; checking the (hidden,
-      // empty) text box used to refuse every image-only answer on a
-      // question with validate = "integer".
+      // A pasted image is the whole answer; `validate` applies to typing.
       if (!image && !passesValidation(textarea.value, data.validate)) {
         setFeedback(feedback, "incorrect", t(VALIDATION_KEYS[data.validate]));
         return;
@@ -912,17 +854,13 @@
   // buildDownloadButton, which blocks downloading until they're fixed,
   // regardless of whether the button was ever clicked.
   // The Edit/Submit cycle shared by student_info() and reflection_editable
-  // questions. Two states only: *submitted* (fields locked, button "Edit")
-  // and *editing* (fields open, button "Submit"). "Edit" just reopens the
-  // fields; nothing counts as received until the next Submit, so the
-  // button always tells the reader whether what they see is what was
-  // received. (The previous design left fields open after Submit and
-  // relabelled the button "Edit", which silently resaved -- readers had no
-  // signal their changes had gone in.) Ordinary "reflection" questions do
-  // not get this cycle: they stay locked for good, so a reader can't reopen
-  // one and paste in the model answer they were just shown.
-  // The note's text is t("editing_note"), or t("replacing_note") while a
-  // screenshot is being swapped; a refused save shows t("not_saved").
+  // questions: *submitted* (fields locked, button "Edit") or *editing*
+  // (fields open, button "Submit"). Edit only reopens; nothing counts as
+  // received until the next Submit, so the button always says whether what
+  // is shown is what was received. An ordinary "reflection" never reopens,
+  // or the model answer just shown could be pasted back in. The note under
+  // the widget is t("editing_note"), t("replacing_note") while a screenshot
+  // is being swapped; a refused save shows t("not_saved").
 
   // student_info() storage, per form: the flat field keys hold the last
   // *submitted* values (what the download reports); `submitted` is true only
@@ -1226,34 +1164,15 @@
     return (Math.floor(Date.now() / 1000) * TIME_MUL + TIME_ADD).toString(36);
   }
 
-  // Gathers every learnr2 question/info answer currently on *this* page
-  // (cross-referencing each element's own payload against its saved
-  // localStorage state, so the export is human-readable, not just raw ids)
-  // into one JSON object. The only non-plaintext field is `time` -- the
-  // download timestamp, obfuscated (see encodeDownloadTime() above) so it
-  // isn't readable or editable at a glance; nothing else is hashed or
-  // signed. {webr} exercises are entirely quarto-live's own markup -- learnr2 adds
-  // no data-learnr2-* attributes to them the way it does for its own
-  // question()/student_info() widgets. Discover them from quarto-live's own
-  // static markup instead: every {webr} cell embeds a
-  // `<script type="webr-<block-id>-contents">` tag holding a base64-encoded
-  // JSON blob of its starter code and chunk options (`{attr, code}`,
-  // confirmed by reading quarto-live's own webr-exercise.ojs template and
-  // live-runtime.js) -- present in the static HTML regardless of whether
-  // WebR has finished booting, unlike anything that depends on the live
-  // editor having initialized.
-  //
-  // Reads one such tag and returns `{ id, answer }`, or null for a cell
-  // that can't be captured: a plain demo/non-editable cell (no `#| exercise:`
-  // attr), or one without `#| persist: true` -- quarto-live's own editor
-  // only ever writes the reader's current code to `localStorage` when
-  // `persist` is enabled (see its `WebRExerciseEditor` constructor/`onInput`
-  // handler), so there is no record of it anywhere, live-DOM or otherwise,
-  // for a non-persisted cell. The key is `editor-${location.href}#${id}`,
-  // where `id` defaults to the script tag's own `type` (e.g.
-  // "webr-4-contents") -- *not* the `exercise:` label -- unless a chunk
-  // sets its own `#| id:` option. The stored value is the plain code
-  // string itself, not JSON.
+  // A {webr} exercise's answer, from quarto-live's own static markup: each
+  // cell embeds `<script type="webr-<block>-contents">` with base64 JSON
+  // `{attr, code}`, present whether or not WebR has booted. Returns
+  // `{ id, answer }` keyed by the exercise label, or null for a cell that
+  // has no record to read: no `#| exercise:`, or no `#| persist: true`
+  // (quarto-live writes the reader's code to localStorage only then). Its
+  // key is `editor-<page>#<id>`, where id is the cell's `#| id:` or else
+  // the script's own type ("webr-4-contents"), and the value is the bare
+  // code string.
   function exerciseAnswerFromScript(scriptEl) {
     var block;
     try {
@@ -1481,13 +1400,9 @@
   }
 
   // ---- Start Over (entire tutorial) ------------------------------------
-  // Clears every bit of progress this page has saved -- both learnr2's own
-  // question()/student_info() state (the "learnr2-" prefix from
-  // storageKey(), above) and quarto-live's own {webr} exercise persistence
-  // (the "editor-" prefix noted there too) -- then reloads so every widget
-  // on the page re-initializes from a clean slate. Deliberately leaves the
-  // "learnr2-device-id" key alone: that identifies this browser/device
-  // across every tutorial and visit, not this one tutorial's progress.
+  // Clears everything this page saved -- learnr2's own state ("learnr2-"
+  // keys) and quarto-live's exercise persistence ("editor-" keys) -- but
+  // not the device id, which belongs to the browser, not this tutorial.
   function clearAllProgress() {
     var prefixes = ["learnr2-" + pageUrl + "#", "editor-" + pageUrl + "#"];
     storageKeys().forEach(function (key) {
@@ -1501,17 +1416,11 @@
     });
   }
 
-  // A confirm() substitute built from plain DOM/CSS (the <dialog> element,
-  // not a browser-chrome-level dialog) rather than window.confirm().
-  // window.confirm() is a native, out-of-process browser dialog -- several
-  // real surfaces a rendered tutorial ends up viewed in (VS Code's built-in
-  // Simple Browser webview in particular, which is where the R Tutorials
-  // VS Code extension can open a tutorial) don't support it at all and
-  // silently resolve it to `false` with no dialog ever appearing, which
-  // made Start Over look completely inert: the click registered, nothing
-  // asked for confirmation, and clearAllProgress() was simply never
-  // reached. A <dialog> is ordinary page content, so it renders the same
-  // everywhere a tutorial itself renders.
+  // An in-page <dialog> instead of window.confirm(): VS Code's Simple
+  // Browser webview, where the R Tutorials extension can open a tutorial,
+  // resolves window.confirm() to false without showing anything, which
+  // made Start Over look dead. Page content renders everywhere the page
+  // does.
   function showConfirmDialog(message, confirmLabel) {
     return new Promise(function (resolve) {
       var settled = false;
@@ -1547,19 +1456,12 @@
     });
   }
 
-  // Where the Start Over button lives: the bottom of Quarto's own TOC
-  // sidebar when the page has one that is actually showing, otherwise the
-  // top of the tutorial, directly after the title block -- before the first
-  // section, so the progressive reveal below never hides it. "Actually
-  // showing" matters, not just "exists": a tutorial rendered with
-  // `toc: false` has no #quarto-margin-sidebar at all, but one rendered
-  // with `toc: true` still has the element on a phone-width screen, where
-  // Quarto's own stylesheet sets it to display: none (bootstrap's
-  // `@media (max-width: 767.98px) { #quarto-margin-sidebar { display: none } }`,
-  // confirmed in a real render). A button appended into a hidden sidebar
-  // is as good as missing, which is exactly how the first version of this
-  // behaved on mobile. getClientRects() is empty for anything display: none,
-  // itself or via an ancestor, which is the check wanted here.
+  // Where Start Over and Load Answers live: the bottom of Quarto's TOC
+  // sidebar when it is actually showing, otherwise right after the title
+  // block, outside every section so the progressive reveal never hides
+  // them. "Showing", not "exists": with `toc: true` the sidebar element is
+  // still there on a phone, where Quarto's stylesheet hides it below 768px.
+  // getClientRects() is empty for anything display: none.
   function sidebarShowing() {
     var sidebar = document.getElementById("quarto-margin-sidebar");
     return sidebar && sidebar.getClientRects().length > 0 ? sidebar : null;
@@ -1590,14 +1492,23 @@
   // R, so it works on a GitHub Pages copy too. The stored shapes are those
   // the builders above save and restore from; keep the two in step.
 
+  // The decoded payload of `node`'s `attr`, or null for a broken one.
+  function decodeAttr(node, attr) {
+    try {
+      return decodeBase64Json(node.getAttribute(attr));
+    } catch (e) {
+      return null;
+    }
+  }
+
   // id -> { kind, data } for everything on the page an answer can go to.
   function pageWidgets() {
     var widgets = {};
     document.querySelectorAll(".learnr2-question[data-learnr2-question]").forEach(function (node) {
-      try {
-        var data = decodeBase64Json(node.getAttribute("data-learnr2-question"));
+      var data = decodeAttr(node, "data-learnr2-question");
+      if (data) {
         widgets[data.id] = { kind: "question", data: data };
-      } catch (e) { /* a broken payload cannot take an answer either */ }
+      }
     });
     document.querySelectorAll('script[type^="webr-"][type$="-contents"]').forEach(function (script) {
       try {
@@ -1613,21 +1524,15 @@
   function infoForms() {
     return Array.prototype.map.call(
       document.querySelectorAll(".learnr2-info[data-learnr2-info]"),
-      function (node) { return decodeBase64Json(node.getAttribute("data-learnr2-info")); }
-    );
+      function (node) { return decodeAttr(node, "data-learnr2-info"); }
+    ).filter(Boolean);
   }
 
   // What this page's download button says a download from it is for.
   function pageTutorialName() {
     var node = document.querySelector(".learnr2-download-answers[data-learnr2-download]");
-    if (!node) {
-      return null;
-    }
-    try {
-      return decodeBase64Json(node.getAttribute("data-learnr2-download")).tutorial || null;
-    } catch (e) {
-      return null;
-    }
+    var data = node && decodeAttr(node, "data-learnr2-download");
+    return (data && data.tutorial) || null;
   }
 
   // The saved state for one downloaded answer, or null when it matches
@@ -1807,22 +1712,12 @@
   }
 
   // ---- Progressive section reveal ("Continue" buttons) ------------------
-  // Every level-2 (##) and level-3 (###) heading in the tutorial becomes its
-  // own gated section: hidden until the reader clicks a "Continue" button at
-  // the end of the section before it. Quarto's HTML output wraps each
-  // heading and everything under it in its own
-  // <section id="..." class="level2"|"level3">, nested for subsections (a
-  // "### Exercise 1" section renders *inside* its enclosing "## Running R
-  // Code" section) -- so a still-locked nested section stays hidden even
-  // once its parent section is revealed, and revealing a parent never forces
-  // open a child that hasn't been unlocked on its own: `.d-none` on one
-  // element has no effect on how its ancestors render, only its own
-  // descendants.
-  //
-  // Verified against a real rendered hello-learnr2.html (not just the JS
-  // test fixtures) -- see AGENTS.md, "Progressive reveal", for both this
-  // confirmation and a real regression it caught (Hints/Solutions wrongly
-  // getting their own gate).
+  // Every ## and ### heading is a gated section, hidden until the Continue
+  // at the end of the section before it. Quarto wraps each heading and its
+  // content in <section class="level2|level3">, nested for subsections, so
+  // a locked nested section stays hidden when its parent is revealed. The
+  // rules below were checked against real renders, not only the fixtures;
+  // AGENTS.md, "Progressive reveal", records what each one fixed.
   var PROGRESS_ID = "progressive-sections";
 
   function sectionHeading(section) {
@@ -1836,17 +1731,10 @@
     return heading ? heading.textContent.trim() : "";
   }
 
-  // A bare `###` line -- tutorial.helpers' pacing break, used twice inside
-  // every exercise (one before "our answer", one before the knowledge drop)
-  // -- renders as a <section class="level3"> whose <h3> has no text; Quarto
-  // still gives it an id ("section", "section-1", ...) and a TOC entry,
-  // which Quarto's own stylesheet hides (`nav[role=doc-toc] a:empty`).
-  // Gating it works unchanged; what needs fixing is cosmetic: the empty
-  // heading still takes up margin (and anchor.js would hang an anchor on
-  // it), and the Continue button would read "Continue: ". Mark such
-  // sections so CSS can hide the heading and the label can be plain
-  // "Continue". Verified against a real render (AGENTS.md, "bare ###
-  // dividers").
+  // A bare `###` (tutorial.helpers' pacing break) renders as a section
+  // with an empty <h3> and an id like "section-1". It gates like any other;
+  // marking it lets CSS hide the empty heading and the button read plain
+  // "Continue".
   function markPauseSections(sections) {
     sections.forEach(function (section) {
       if (sectionTitle(section) === "") {
@@ -1876,38 +1764,18 @@
     var sections = Array.prototype.slice.call(
       document.querySelectorAll("section.level2, section.level3")
     ).filter(function (section) {
-      // A "### Hints"/"### Solutions" section (quarto-live's own rendering
-      // of a `.hint`/`.solution` fenced div tied to an exercise -- see the
-      // "Translating learnr Tutorials" vignette) exists purely as a supplementary,
-      // reader-toggled aside for the exercise right before it, not a step
-      // to progress through in its own right -- confirmed by an actual
-      // hello-learnr2 render, where each one wraps a div already hidden by
-      // quarto-live itself pending its own separate "show hint"/"show
-      // solution" reveal (`class="... exercise-hint d-none"` /
-      // `"... exercise-solution d-none"`). Leaving one out of the gated
-      // list here means it simply inherits its enclosing section's
-      // visibility once that's unlocked, instead of demanding its own
-      // extra Continue click first -- verified against that same render:
-      // without this filter, reaching "5. Automatic grading" from "2.
-      // Non-editable cells" took two extra, easy-to-miss intermediate
-      // clicks through bare "Hints"/"Solutions" stops with no number of
-      // their own, which is what read as the numbering "jumping". Checked
-      // only for level3 sections themselves -- an *enclosing* level2
-      // section (e.g. "3. Exercises") also matches `querySelector` here
-      // simply because a Hints/Solutions section is nested somewhere
-      // inside it, which would wrongly exclude the enclosing section too.
+      // A "### Hints"/"### Solutions" section is quarto-live's rendering of
+      // a .hint/.solution div: an aside the reader toggles, already hidden
+      // by quarto-live, not a step of its own. Left out of the gated list,
+      // it appears with its exercise. Checked on level3 only: the enclosing
+      // level2 would match querySelector too and be wrongly excluded.
       if (section.classList.contains("level3") &&
           section.querySelector(".exercise-hint, .exercise-solution")) {
         return false;
       }
-      // A subsection that comes directly after its parent's heading, with
-      // no content of its own in between, is revealed together with that
-      // heading rather than behind a Continue of its own. tutorial.helpers
-      // starts every topic as "## Title" then a bare "###"; gating that
-      // first "###" put a Continue button directly under the heading with
-      // nothing above it to read (reported on the Orientation translation,
-      // 2026-10). learnr shows a topic's heading and first block together,
-      // and so do we: every Continue now sits at the end of real content.
+      // A subsection directly after its parent's heading is revealed with
+      // that heading: gating it put a Continue under a title with nothing
+      // above it to read. Every Continue sits at the end of real content.
       var parent = section.parentElement;
       var heading = parent && parent.tagName === "SECTION" ? sectionHeading(parent) : null;
       if (heading && section.previousElementSibling === heading) {
@@ -1915,11 +1783,8 @@
       }
       return true;
     });
-    // Mark *every* headingless section, not just the gated ones: a bare
-    // "###" right after its parent's heading isn't gated (it's revealed
-    // with that heading), but its empty <h3> must still be hidden. Marking
-    // only the gated list left that heading rendered as a blank band
-    // between a topic's title and its first paragraph (Orientation, 2026-10).
+    // Every headingless section, not just the gated ones: an ungated first
+    // "###" still has an empty <h3> to hide, or it shows as a blank band.
     markPauseSections(Array.prototype.slice.call(
       document.querySelectorAll("section.level2, section.level3")
     ));

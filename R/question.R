@@ -224,9 +224,7 @@ question <- function(text,
   type <- match.arg(type)
   validate <- match.arg(validate)
 
-  if (!is.null(id) && (!is.character(id) || length(id) != 1 || !nzchar(id))) {
-    stop("`id` must be a single non-empty string.", call. = FALSE)
-  }
+  check_label(id, "id")
 
   if (missing(text) || !is.character(text) || length(text) != 1) {
     stop("`text` must be a single string.", call. = FALSE)
@@ -383,87 +381,35 @@ quiz <- function(..., caption = NULL) {
   structure(list(caption = caption, questions = questions), class = "learnr2_quiz")
 }
 
-# A label argument: NULL (take the document language's default string, see
-# R/language.R) or one non-empty string.
-check_label <- function(x, name) {
-  if (!is.null(x) && (!is.character(x) || length(x) != 1 || is.na(x) || !nzchar(x))) {
-    stop("`", name, "` must be NULL or a single non-empty string.", call. = FALSE)
-  }
-  invisible(TRUE)
-}
-
 # ---- Rendering -------------------------------------------------------------
 
-# `head` carries the interface strings for the document's language (see
-# R/language.R), so they reach quiz.js before it renders anything, on any
-# page with at least one widget. htmltools keeps the first dependency of a
-# given name, and every call in one render resolves the same language.
-learnr2_dependency <- function() {
-  htmltools::htmlDependency(
-    name = "learnr2-quiz",
-    version = as.character(utils::packageVersion("learnr2")),
-    src = system.file("extdata", "quiz", package = "learnr2"),
-    script = "quiz.js",
-    stylesheet = "quiz.css",
-    head = language_script(),
-    all_files = FALSE
-  )
-}
-
 question_div <- function(question) {
-  json <- jsonlite::toJSON(question$payload, auto_unbox = TRUE, null = "null")
-  encoded <- jsonlite::base64_enc(charToRaw(as.character(json)))
-  htmltools::tags$div(
-    class = "learnr2-question",
-    `data-learnr2-question` = encoded,
-    htmltools::tags$noscript(tutorial_string("noscript_question"))
-  )
-}
-
-quiz_html <- function(x) {
-  UseMethod("quiz_html")
+  widget_div("learnr2-question", "data-learnr2-question", question$payload,
+             noscript = "noscript_question")
 }
 
 #' @exportS3Method
-quiz_html.learnr2_question <- function(x) {
-  htmltools::attachDependencies(question_div(x), learnr2_dependency())
+widget_html.learnr2_question <- function(x) {
+  with_dependency(question_div(x))
 }
 
 #' @exportS3Method
-quiz_html.learnr2_quiz <- function(x) {
-  container <- htmltools::tags$div(
+widget_html.learnr2_quiz <- function(x) {
+  with_dependency(htmltools::tags$div(
     class = "learnr2-quiz",
     htmltools::tags$div(class = "learnr2-quiz-caption", x$caption %||% tutorial_string("quiz")),
     lapply(x$questions, question_div)
-  )
-  htmltools::attachDependencies(container, learnr2_dependency())
+  ))
 }
 
 #' @exportS3Method knitr::knit_print
-knit_print.learnr2_question <- function(x, ...) {
-  knitr::knit_print(quiz_html(x), ...)
-}
+knit_print.learnr2_question <- function(x, ...) knit_widget(x, ...)
 
 #' @exportS3Method knitr::knit_print
-knit_print.learnr2_quiz <- function(x, ...) {
-  knitr::knit_print(quiz_html(x), ...)
-}
-
-# Console printing previews the widget in a browser only in an interactive
-# session. htmltools::browsable() would open the browser unconditionally,
-# which in a non-interactive session (R CMD check, Rscript, CI) launches
-# whatever handles HTML on that machine -- on CRAN's Debian checker that is
-# Calibre, which leaves `calibre-*` directories in the temp dir and earned
-# a "detritus in the temp directory" NOTE on submission. Non-interactive
-# prints emit the HTML source instead, same as print(htmltools::tags$div()).
-#' @export
-print.learnr2_question <- function(x, ...) {
-  print(quiz_html(x), browse = interactive())
-  invisible(x)
-}
+knit_print.learnr2_quiz <- function(x, ...) knit_widget(x, ...)
 
 #' @export
-print.learnr2_quiz <- function(x, ...) {
-  print(quiz_html(x), browse = interactive())
-  invisible(x)
-}
+print.learnr2_question <- function(x, ...) print_widget(x)
+
+#' @export
+print.learnr2_quiz <- function(x, ...) print_widget(x)

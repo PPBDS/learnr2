@@ -1,21 +1,11 @@
 # Ported from the 'tutorial.helpers' package (R/show_file.R), with its tests
 # and fixtures, so learnr2 users do not need tutorial.helpers installed.
 
-#' Remove embedded pagedtable HTML artifacts from a vector of lines
-#'
-#' VS Code's interactive chunk execution can cache a chunk's rendered output
-#' directly back into the .qmd/.Rmd source file. When the chunk's output is a
-#' tibble, that cached output is a pagedtable HTML widget (a `<div
-#' data-pagedtable="false">` block wrapping a `<script
-#' data-pagedtable-source>` JSON blob). Because this cached output can end up
-#' inside the same fenced region as the code itself, show_file()'s chunk
-#' extraction can otherwise return this HTML noise instead of clean source
-#' code. This helper strips any such blocks out of a character vector of
-#' lines before they are printed.
-#'
-#' @param lines A character vector of lines (as returned by readLines()).
-#' @return A character vector with any pagedtable HTML blocks removed.
-#' @noRd
+# Drop pagedtable HTML blocks from a vector of lines. VS Code's interactive
+# chunk execution can cache a chunk's rendered output back into the .qmd
+# source; a tibble's output is a `<div data-pagedtable="false">` block
+# wrapping a `<script data-pagedtable-source>` JSON blob, and it can land
+# inside the chunk's own fence, where show_file() would print it as code.
 strip_pagedtable_html <- function(lines) {
   if (length(lines) == 0) {
     return(lines)
@@ -172,19 +162,9 @@ show_file <- function(path, start = 1, end = NULL, pattern = NULL, chunk = "auto
   # are touched, since missing() only answers for the original call.
   rows_requested <- !missing(start) || !missing(end) || !missing(pattern)
 
-  contents <- readLines(path)
-
-  # VS Code's interactive chunk execution can cache a chunk's rendered
-  # output directly back into the .qmd/.Rmd source file. When the chunk's
-  # output is a tibble, that cached output is a pagedtable HTML widget (a
-  # `<div data-pagedtable="false">` block wrapping a `<script
-  # data-pagedtable-source>` JSON blob), and it can end up inside the same
-  # fenced region as the code itself. Strip any such blocks here, up front,
-  # so every code path below (YAML, whole-file, tail, chunk extraction, and
-  # row-range) sees clean source text rather than rendered-output noise.
-  contents <- strip_pagedtable_html(contents)
-
-  # Remove trailing empty lines from the contents
+  # Cached pagedtable output (see strip_pagedtable_html()) goes first, so
+  # every path below sees source text; then trailing blank lines.
+  contents <- strip_pagedtable_html(readLines(path))
   while (length(contents) > 0 && contents[length(contents)] == "") {
     contents <- contents[-length(contents)]
   }
@@ -198,15 +178,12 @@ show_file <- function(path, start = 1, end = NULL, pattern = NULL, chunk = "auto
     chunk <- if (!rows_requested && has_code_chunks(contents)) "Last" else "None"
   }
 
-  # If chunk is "YAML", extract and return the YAML header
   if (chunk == "YAML") {
     if (!grepl("^---\\s*$", contents[1])) {
       stop("No YAML header found.", call. = FALSE)
     }
 
-    # Find the closing --- for the YAML header. seq_len(length(contents))[-1]
-    # gives the indices from 2 to the end, and is empty (rather than c(2, 1))
-    # when the file has only a single line.
+    # seq_len(n)[-1] is 2:n, and empty (not c(2, 1)) for a one-line file.
     yaml_end <- NULL
     for (i in seq_len(length(contents))[-1]) {
       if (grepl("^---\\s*$", contents[i])) {
@@ -219,15 +196,12 @@ show_file <- function(path, start = 1, end = NULL, pattern = NULL, chunk = "auto
       stop("No YAML header found.", call. = FALSE)
     }
 
-    # Extract YAML content (excluding the --- delimiters)
     if (yaml_end > 2) {
-      yaml_content <- contents[2:(yaml_end - 1)]
-      cat(yaml_content, sep = "\n")
+      cat(contents[2:(yaml_end - 1)], sep = "\n")
     }
     return(invisible(NULL))
   }
 
-  # If start is 0, print the entire file
   if (start == 0) {
     selected_contents <- contents
     if (!is.null(pattern)) {
@@ -239,7 +213,6 @@ show_file <- function(path, start = 1, end = NULL, pattern = NULL, chunk = "auto
     return(invisible(NULL))
   }
 
-  # If start is negative, print the last abs(start) lines
   if (start < 0) {
     selected_contents <- utils::tail(contents, abs(start))
     if (!is.null(pattern)) {
@@ -281,33 +254,21 @@ show_file <- function(path, start = 1, end = NULL, pattern = NULL, chunk = "auto
     return(invisible(NULL))
   }
 
-  # Get the total number of rows
   total_rows <- length(contents)
-
-  # Set default value for end if not provided
   if (is.null(end)) {
     end <- total_rows
   }
-
-  # Check if start and end are within the valid range
   if (start < 1 || start > total_rows || end < 1 || end > total_rows) {
     stop("start and end must be within the valid range of rows.", call. = FALSE)
   }
-
-  # Check if start is smaller or equal to end
   if (start > end) {
     stop("start must be smaller or equal to end.", call. = FALSE)
   }
 
-  # Extract the specified range of rows
   selected_contents <- contents[start:end]
-
-  # Filter the selected rows based on the pattern (if provided)
   if (!is.null(pattern)) {
     selected_contents <- selected_contents[grepl(pattern, selected_contents)]
   }
-
-  # Print the selected contents to the console if there are matching rows
   if (length(selected_contents) > 0) {
     cat(selected_contents, sep = "\n")
   }

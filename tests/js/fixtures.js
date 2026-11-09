@@ -602,6 +602,14 @@ FIXTURES["restore-gated"] = [
   "})();</script>\n"
 ];
 
+// random_answer_order = TRUE: the options are shuffled on every load.
+FIXTURES["random-order"] = [
+  questionBlock(question({
+    id: "shuffled", text: "Pick the even number.", type: "single", randomAnswerOrder: true,
+    answers: [answer("1"), answer("2", true), answer("3"), answer("5"), answer("7"), answer("9")]
+  }))
+];
+
 // Any fixture is also available as "<name>-no-toc": the same blocks on a
 // page with no sidebar element at all, which is what Quarto emits for a
 // tutorial rendered with `toc: false`.

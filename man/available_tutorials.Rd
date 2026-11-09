@@ -71,15 +71,14 @@ flags it.
 
 \section{Packages loaded with pkgload}{
 
-\code{system.file()} resolves against the \emph{installed} copy of a package, so a
-content package under development used to be invisible here (or, worse,
-silently read from an old install) when its own tests ran under
-\code{devtools::test()}: 'pkgload' redirects \code{system.file()} only for code
-inside the package being developed, not for learnr2's calls. This
-function and \code{\link[=run_tutorial]{run_tutorial()}} therefore check whether \code{package} is a
-namespace loaded by \code{pkgload::load_all()} and, if so, read its tutorials from the
-source tree's \verb{inst/tutorials/} directly. Nothing changes for installed
-packages, and 'pkgload' itself is not required.
+\code{system.file()} resolves against the \emph{installed} copy of a package, and
+'pkgload' redirects it only for code inside the package being developed,
+not for learnr2's calls. So this function and \code{\link[=run_tutorial]{run_tutorial()}} check
+whether \code{package} is a namespace loaded by \code{pkgload::load_all()} and, if
+so, read its tutorials from the source tree's \verb{inst/tutorials/}. A
+content package's \code{devtools::test()} therefore sees its working tree,
+not a stale install. Nothing changes for installed packages, and
+'pkgload' itself is not required.
 }
 
 \examples{

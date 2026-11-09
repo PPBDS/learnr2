@@ -63,9 +63,7 @@ student_info <- function(fields = NULL,
   }
   check_label(submit_button, "submit_button")
   check_label(edit_button, "edit_button")
-  if (!is.character(id) || length(id) != 1 || !nzchar(id)) {
-    stop("`id` must be a single non-empty string.", call. = FALSE)
-  }
+  check_string(id, "id")
 
   field_keys <- names(fields)
   if (!is.character(required)) {
@@ -99,29 +97,17 @@ student_info <- function(fields = NULL,
 default_info_fields <- c("name", "email", "id")
 
 info_div <- function(info) {
-  json <- jsonlite::toJSON(info$payload, auto_unbox = TRUE, null = "null")
-  encoded <- jsonlite::base64_enc(charToRaw(as.character(json)))
-  htmltools::tags$div(
-    class = "learnr2-info",
-    `data-learnr2-info` = encoded,
-    htmltools::tags$noscript(tutorial_string("noscript_info"))
-  )
+  widget_div("learnr2-info", "data-learnr2-info", info$payload, noscript = "noscript_info")
 }
 
-info_html <- function(x) {
-  htmltools::attachDependencies(info_div(x), learnr2_dependency())
-}
+#' @exportS3Method
+widget_html.learnr2_info <- function(x) with_dependency(info_div(x))
 
 #' @exportS3Method knitr::knit_print
-knit_print.learnr2_info <- function(x, ...) {
-  knitr::knit_print(info_html(x), ...)
-}
+knit_print.learnr2_info <- function(x, ...) knit_widget(x, ...)
 
 #' @export
-print.learnr2_info <- function(x, ...) {
-  print(info_html(x), browse = interactive())
-  invisible(x)
-}
+print.learnr2_info <- function(x, ...) print_widget(x)
 
 #' Add a "download my answers" button
 #'
@@ -194,9 +180,7 @@ print.learnr2_info <- function(x, ...) {
 #' download_answers_button()
 download_answers_button <- function(filename_prefix = "learnr2-answers",
                                      label = NULL) {
-  if (!is.character(filename_prefix) || length(filename_prefix) != 1 || !nzchar(filename_prefix)) {
-    stop("`filename_prefix` must be a single non-empty string.", call. = FALSE)
-  }
+  check_string(filename_prefix, "filename_prefix")
   check_label(label, "label")
 
   identity <- render_identity()
@@ -243,29 +227,18 @@ render_identity <- function() {
 }
 
 download_button_div <- function(button) {
-  json <- jsonlite::toJSON(button$payload, auto_unbox = TRUE, null = "null")
-  encoded <- jsonlite::base64_enc(charToRaw(as.character(json)))
-  htmltools::tags$div(
-    class = "learnr2-download-answers",
-    `data-learnr2-download` = encoded,
-    htmltools::tags$noscript(tutorial_string("noscript_download"))
-  )
+  widget_div("learnr2-download-answers", "data-learnr2-download", button$payload,
+             noscript = "noscript_download")
 }
 
-download_button_html <- function(x) {
-  htmltools::attachDependencies(download_button_div(x), learnr2_dependency())
-}
+#' @exportS3Method
+widget_html.learnr2_download_button <- function(x) with_dependency(download_button_div(x))
 
 #' @exportS3Method knitr::knit_print
-knit_print.learnr2_download_button <- function(x, ...) {
-  knitr::knit_print(download_button_html(x), ...)
-}
+knit_print.learnr2_download_button <- function(x, ...) knit_widget(x, ...)
 
 #' @export
-print.learnr2_download_button <- function(x, ...) {
-  print(download_button_html(x), browse = interactive())
-  invisible(x)
-}
+print.learnr2_download_button <- function(x, ...) print_widget(x)
 
 #' Recover a submission's download time
 #'
