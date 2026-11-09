@@ -116,6 +116,6 @@ problems[, c("check", "message")]
 #> 11                                                                  line 374 (student-info-and-submission-1): widget chunk needs `#| echo: false`.
 #> 12                                                                  line 399 (student-info-and-submission-2): widget chunk needs `#| echo: false`.
 #> 13                                                                               line 439 (layout-options-1): widget chunk needs `#| echo: false`.
-#> 14                 1 code block(s) with no language (line 605): tag what the reader types as ```bash or ```r, and expected output as ```{.output}.
-#> 15 prose mentions learnr or tutorial.helpers (lines 159, 459, 468, 498, 609): students should never hear of either; see `vignette("translating")`.
+#> 14                 1 code block(s) with no language (line 609): tag what the reader types as ```bash or ```r, and expected output as ```{.output}.
+#> 15 prose mentions learnr or tutorial.helpers (lines 159, 459, 468, 498, 613): students should never hear of either; see `vignette("translating")`.
 ```

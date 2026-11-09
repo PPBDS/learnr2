@@ -80,6 +80,14 @@ obfuscated so the raw timestamp isn't readable or hand-editable in the
 file. Recover it with
 [`submission_time()`](https://ppbds.github.io/learnr2/reference/submission_time.md).
 
+A reader need not reach this button to download: a **Download Answers**
+control sits beside **Start Over** on every page that has one of these
+buttons, so a student who stops part-way can hand in what they did
+without revealing the rest of the tutorial. The file's `progress` field
+says how far they got (sections revealed, questions answered), and the
+confirmation before an incomplete download names only the unanswered
+questions in sections the reader has reached.
+
 The file ends with two fields for the grader. `fingerprint` is a SHA-256
 of the submission's identifying content (time, device id, `loadedFrom`,
 the info fields and every answer), so a name or an answer edited by hand
@@ -99,7 +107,7 @@ name changed, visible; they do not make the file tamper-proof.
 
 ``` r
 download_answers_button()
-#> <div class="learnr2-download-answers" data-learnr2-download="eyJmaWxlbmFtZVByZWZpeCI6ImxlYXJucjItYW5zd2VycyIsImxhYmVsIjpudWxsLCJwYWNr&#10;YWdlIjpudWxsLCJ2ZXJzaW9uIjpudWxsLCJ0dXRvcmlhbCI6bnVsbCwidGl0bGUiOm51bGws&#10;ImxlYXJucjJWZXJzaW9uIjoiMC4xLjMuOTAxMyJ9">
+#> <div class="learnr2-download-answers" data-learnr2-download="eyJmaWxlbmFtZVByZWZpeCI6ImxlYXJucjItYW5zd2VycyIsImxhYmVsIjpudWxsLCJwYWNr&#10;YWdlIjpudWxsLCJ2ZXJzaW9uIjpudWxsLCJ0dXRvcmlhbCI6bnVsbCwidGl0bGUiOm51bGws&#10;ImxlYXJucjJWZXJzaW9uIjoiMC4xLjMuOTAxNCJ9">
 #>   <noscript>This button requires JavaScript.</noscript>
 #> </div>
 ```

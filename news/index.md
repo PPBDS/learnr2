@@ -13,8 +13,10 @@
   gains `exercises`, `urls`, `language` and explicit-id checks.
 - New
   [`check_submission()`](https://ppbds.github.io/learnr2/reference/check_submission.md).
-  Downloads now record `package`, `version`, `tutorial`, a
-  tamper-evident `fingerprint` and `loadedFrom` provenance.
+  Downloads now record `package`, `version`, `tutorial`, `progress`, a
+  tamper-evident `fingerprint` and `loadedFrom` provenance, and a
+  **Download Answers** control beside Start Over lets a student hand in
+  a partial attempt without revealing the rest.
 - The interface follows Quarto’s `lang:` key (English and French ship);
   `tutorial_options(language = ...)` rewords single strings.
 - [`question()`](https://ppbds.github.io/learnr2/reference/question.md)

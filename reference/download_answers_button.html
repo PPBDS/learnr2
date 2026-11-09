@@ -25,7 +25,7 @@ to an email or upload to an LMS)."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">learnr2</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.3.9013</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.3.9014</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -123,6 +123,13 @@ a random per-device id persisted across the reader's visits) and a <code>time</c
 field: the moment the reader clicked "Download", lightly obfuscated so the
 raw timestamp isn't readable or hand-editable in the file. Recover it with
 <code><a href="submission_time.html">submission_time()</a></code>.</p>
+<p>A reader need not reach this button to download: a <strong>Download Answers</strong>
+control sits beside <strong>Start Over</strong> on every page that has one of these
+buttons, so a student who stops part-way can hand in what they did
+without revealing the rest of the tutorial. The file's <code>progress</code> field
+says how far they got (sections revealed, questions answered), and the
+confirmation before an incomplete download names only the unanswered
+questions in sections the reader has reached.</p>
 <p>The file ends with two fields for the grader. <code>fingerprint</code> is a SHA-256
 of the submission's identifying content (time, device id, <code>loadedFrom</code>,
 the info fields and every answer), so a name or an answer edited by hand
@@ -140,7 +147,7 @@ do not make the file tamper-proof.</p>
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="fu">download_answers_button</span><span class="op">(</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;div class="learnr2-download-answers" data-learnr2-download="eyJmaWxlbmFtZVByZWZpeCI6ImxlYXJucjItYW5zd2VycyIsImxhYmVsIjpudWxsLCJwYWNr&amp;#10;YWdlIjpudWxsLCJ2ZXJzaW9uIjpudWxsLCJ0dXRvcmlhbCI6bnVsbCwidGl0bGUiOm51bGws&amp;#10;ImxlYXJucjJWZXJzaW9uIjoiMC4xLjMuOTAxMyJ9"&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;div class="learnr2-download-answers" data-learnr2-download="eyJmaWxlbmFtZVByZWZpeCI6ImxlYXJucjItYW5zd2VycyIsImxhYmVsIjpudWxsLCJwYWNr&amp;#10;YWdlIjpudWxsLCJ2ZXJzaW9uIjpudWxsLCJ0dXRvcmlhbCI6bnVsbCwidGl0bGUiOm51bGws&amp;#10;ImxlYXJucjJWZXJzaW9uIjoiMC4xLjMuOTAxNCJ9"&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   &lt;noscript&gt;This button requires JavaScript.&lt;/noscript&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;/div&gt;</span>
 </code></pre></div>

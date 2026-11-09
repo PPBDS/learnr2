@@ -29,9 +29,11 @@ check_submission(path)
 ## Value
 
 Invisibly, a list: `time` (POSIXct, UTC, or `NULL`), `name`, `email`,
-`device` (the per-device id), `fingerprint` (one of `"valid"`,
-`"invalid"`, `"missing"`, `"unchecked"`) and `loaded_from` (the file's
-provenance block as a list, or `NULL`). Also prints a summary.
+`device` (the per-device id), `progress` (how far the reader got:
+sections revealed and questions answered, as a list, or `NULL`),
+`fingerprint` (one of `"valid"`, `"invalid"`, `"missing"`,
+`"unchecked"`) and `loaded_from` (the file's provenance block as a list,
+or `NULL`). Also prints a summary.
 
 ## Details
 
@@ -54,6 +56,7 @@ check_submission(answers)
 #> Submitted: 2026-01-15 12:00:00 UTC
 #> Name: Ada  Email: (none)
 #> Device: (none)
+#> Progress: not recorded
 #> Fingerprint: missing (downloaded before fingerprints, or stripped)
 #> Loaded from: nothing (a fresh run of the tutorial)
 ```
