@@ -1,0 +1,2193 @@
+(function () {
+  "use strict";
+
+  // The page's address, captured once at load with the hash stripped: every
+  // storage key is built from it, and Quarto's TOC links change the hash on
+  // every click, so reading location.href at click time made Start Over
+  // and the download look for keys the data was never saved under.
+  // quarto-live captures its own `editor-<href>#<id>` key the same way.
+  // Known gap: a page first opened at a `#section` deep link, where
+  // quarto-live's key keeps that hash and ours does not.
+  var pageUrl = window.location.href.split("#")[0];
+
+  // ---- Interface strings -------------------------------------------------
+  // Every string the reader sees goes through t(). English is built in,
+  // below, and must match inst/extdata/quiz/lang/en.json key for key (a
+  // test in tests/js compares them). The R side resolves the document's
+  // language -- Quarto's `lang:` YAML key -- to inst/extdata/quiz/lang/
+  // <lang>.json and injects that table into <head> as window.learnr2Strings
+  // before this script runs (learnr2_dependency(), R/language.R);
+  // learnr2::tutorial_options(language = list(...)) then overrides single
+  // keys through the options div. A key missing from a translation falls
+  // back to English, one key at a time. The English table is kept as pure
+  // JSON so the parity test can read it.
+  var STRINGS_EN = {
+    "continue": "Continue",
+    "continue_to": "Continue: {title}",
+    "continue_note_one": "Submit your answer above to continue.",
+    "continue_note_other": "Submit the {n} answers above to continue.",
+    "start_over": "Start Over",
+    "start_over_confirm": "Start over this entire tutorial? Every saved answer, pasted image, and exercise on this device will be permanently cleared. This cannot be undone.",
+    "cancel": "Cancel",
+    "submit_answer": "Submit Answer",
+    "try_again": "Try Again",
+    "edit_answer": "Edit Answer",
+    "correct": "Correct!",
+    "incorrect": "Incorrect.",
+    "select_answer": "Please select an answer.",
+    "integer_required": "Please enter a whole number (e.g. 42).",
+    "model_answer": "Model answer:",
+    "quiz": "Quiz",
+    "paste_area_label": "Screenshot paste area",
+    "paste_hint": "Paste a screenshot with Ctrl+V (or Cmd+V) into the text box above, or click here and paste it directly.",
+    "paste_hint_image_only": "Click here, then paste a screenshot with Ctrl+V (or Cmd+V).",
+    "pasted_image_alt": "Your pasted screenshot",
+    "remove_image": "Remove image",
+    "paste_not_image": "Please paste an image (copy a screenshot, then press Ctrl+V here).",
+    "image_unreadable": "Could not read the pasted image. Please try again.",
+    "image_too_large": "That image is too large (max 20MB). Try a smaller screenshot.",
+    "image_required": "Paste an image before submitting.",
+    "editing_note": "Editing. Submit to save your changes.",
+    "replacing_note": "Click the image box and paste a new screenshot (Ctrl+V or Cmd+V), then Submit.",
+    "not_saved": "This could not be saved. See the warning at the top of the page.",
+    "storage_full": "Your last answer was NOT saved: this browser's storage for this site is full. Pasted screenshots take the most room. Remove one with \"Remove image\", or use Start Over on a tutorial you have already downloaded and turned in, then submit again.",
+    "storage_blocked": "This browser is blocking storage for this page, so your answers will not be kept if you leave or reload it. Download your answers before you close the page.",
+    "submit": "Submit",
+    "edit": "Edit",
+    "field_name": "Name:",
+    "field_email": "Email:",
+    "field_id": "ID (if requested by your instructor):",
+    "field_required": "This field is required.",
+    "email_invalid": "Please include an \"@\" in the email address.",
+    "info_ok": "Looks good.",
+    "info_fix": "Please fix the highlighted field(s) above.",
+    "download_answers": "Download My Answers",
+    "download_blocked": "Before downloading, please submit your student information above.",
+    "download_unanswered_one": "You haven't submitted an answer for 1 question ({list}).",
+    "download_unanswered_other": "You haven't submitted an answer for {n} questions ({list}).",
+    "download_anyway": "Download Anyway",
+    "widget_broken": "This part of the tutorial could not be displayed. Reload the page; if that doesn't help, tell your instructor.",
+    "noscript_question": "This quiz question requires JavaScript.",
+    "noscript_info": "This form requires JavaScript.",
+    "noscript_download": "This button requires JavaScript.",
+    "run_code": "Run Code",
+    "show_hint": "Show Hint",
+    "next_hint": "Next Hint",
+    "show_solution": "Show Solution",
+    "caption_exercise": "Exercise",
+    "caption_r": "R Code",
+    "caption_python": "Python Code",
+    "load_answers": "Load Answers",
+    "load_answers_confirm": "Load the {n} answer(s) in {file}? Everything saved on this device for this tutorial will be replaced by what the file holds.",
+    "load_answers_other_tutorial": "{file} was downloaded from the tutorial \"{tutorial}\", not this one. Load its answers here anyway?",
+    "load_answers_dropped": "{n} answer(s) in the file match nothing on this page and will be left out: {list}.",
+    "load_answers_invalid": "{file} is not a learnr2 answers file.",
+    "load_answers_drop_hint": "Or drop a downloaded answers file anywhere on the page.",
+    "download_unreached_one": "1 more question is in a section you haven't reached yet.",
+    "download_unreached_other": "{n} more questions are in sections you haven't reached yet.",
+    "download_anyway_question": "Download anyway?",
+    "download_answers_short": "Download Answers"
+  };
+  var STRINGS = Object.assign({}, STRINGS_EN);
+
+  function initStrings() {
+    if (window.learnr2Strings && typeof window.learnr2Strings === "object") {
+      Object.assign(STRINGS, window.learnr2Strings);
+    }
+    var overrides = readTutorialOptions().language;
+    if (overrides && typeof overrides === "object") {
+      Object.assign(STRINGS, overrides);
+    }
+  }
+
+  // t("continue_to", { title: "Exercise 2" }): the string for `key`, with
+  // every {name} replaced from `vars`. tn() picks `key_one` or `key_other`
+  // by `n` and supplies it as {n}.
+  function t(key, vars) {
+    var text = STRINGS[key];
+    if (typeof text !== "string") {
+      text = typeof STRINGS_EN[key] === "string" ? STRINGS_EN[key] : key;
+    }
+    return text.replace(/\{(\w+)\}/g, function (match, name) {
+      return vars && Object.prototype.hasOwnProperty.call(vars, name) ? String(vars[name]) : match;
+    });
+  }
+
+  function tn(key, n, vars) {
+    return t(key + (n === 1 ? "_one" : "_other"), Object.assign({ n: n }, vars || {}));
+  }
+
+  // A payload label the R side left null (its default) takes the
+  // language's string; an explicit label, in any language, wins.
+  function labelOr(value, key) {
+    return typeof value === "string" ? value : t(key);
+  }
+
+  function decodeBase64Json(value) {
+    var binary = atob(value);
+    var bytes = new Uint8Array(binary.length);
+    for (var i = 0; i < binary.length; i++) {
+      bytes[i] = binary.charCodeAt(i);
+    }
+    var json = new TextDecoder("utf-8").decode(bytes);
+    return JSON.parse(json);
+  }
+
+  function shuffle(array) {
+    var result = array.slice();
+    for (var i = result.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var tmp = result[i];
+      result[i] = result[j];
+      result[j] = tmp;
+    }
+    return result;
+  }
+
+  function el(tag, attrs, children) {
+    var node = document.createElement(tag);
+    attrs = attrs || {};
+    Object.keys(attrs).forEach(function (key) {
+      if (key === "class") {
+        node.className = attrs[key];
+      } else if (key === "text") {
+        node.textContent = attrs[key];
+      } else {
+        node.setAttribute(key, attrs[key]);
+      }
+    });
+    (children || []).forEach(function (child) {
+      node.appendChild(child);
+    });
+    return node;
+  }
+
+  function normalizeText(value) {
+    return String(value).trim().replace(/\s+/g, " ").toLowerCase();
+  }
+
+  // Client-side format check applied before a "text"/"reflection"/
+  // "reflection_editable" answer is accepted, independent of grading --
+  // e.g. `validate: "integer"` rejects free-form prose in an otherwise
+  // ungraded reflection question ("how many minutes did this take?").
+  // `data.validate` is "none" (never blocks submission) unless the R side
+  // set it explicitly, so this is a no-op for every other question.
+  var VALIDATION_KEYS = {
+    integer: "integer_required"
+  };
+
+  function passesValidation(value, validate) {
+    if (validate === "integer") {
+      return /^-?\d+$/.test(String(value).trim());
+    }
+    return true;
+  }
+
+  // ---- Progress persistence -------------------------------------------
+  // `learnr2-<page>#<id>`: the same shape as quarto-live's `editor-` keys,
+  // with our own prefix so the two never collide. A question's id is its
+  // chunk label (question_id() in R/question.R), an info form's is
+  // "learnr2-info-<id>", and PROGRESS_ID and LOADED_FROM_ID are reserved
+  // (check_tutorial() refuses them as labels).
+
+  function storageKey(data) {
+    return "learnr2-" + pageUrl + "#" + data.id;
+  }
+
+  // localStorage reads that never throw: a browser that blocks storage
+  // (private mode, a strict policy) throws on every access, and the
+  // download and Start Over must keep working then of all times.
+  function storageGet(key) {
+    try {
+      return window.localStorage.getItem(key);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function storageKeys() {
+    try {
+      var keys = [];
+      for (var i = 0; i < window.localStorage.length; i++) {
+        keys.push(window.localStorage.key(i));
+      }
+      return keys;
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function loadState(data) {
+    try {
+      var raw = storageGet(storageKey(data));
+      return raw ? JSON.parse(raw) : null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  // Returns true if the state was stored; on failure it tells the reader
+  // (once per page) rather than letting an answer look submitted while it
+  // is missing from the download. Storage is per site -- all of
+  // 127.0.0.1:7446, all of ppbds.github.io -- and about 5 MB, so pasted
+  // screenshots are what fill it.
+  function saveState(data, state) {
+    try {
+      window.localStorage.setItem(storageKey(data), JSON.stringify(state));
+      return true;
+    } catch (e) {
+      reportStorageFailure(e);
+      return false;
+    }
+  }
+
+  function isQuotaError(e) {
+    return !!e && (e.name === "QuotaExceededError" ||
+      e.name === "NS_ERROR_DOM_QUOTA_REACHED" || e.code === 22 || e.code === 1014);
+  }
+
+  var storageWarning = null;
+  function reportStorageFailure(e) {
+    var message = t(isQuotaError(e) ? "storage_full" : "storage_blocked");
+    if (!storageWarning) {
+      storageWarning = el("div", { class: "learnr2-storage-warning", role: "alert" });
+      var main = document.getElementById("quarto-document-content") || document.body;
+      main.insertBefore(storageWarning, main.firstChild);
+    }
+    storageWarning.textContent = message;
+  }
+
+  function clearState(data) {
+    try {
+      window.localStorage.removeItem(storageKey(data));
+    } catch (e) {
+      // Ignore.
+    }
+  }
+
+  // ---- Shared widget pieces ---------------------------------------------
+  // Status text (feedback, validation errors, notes) that assistive tech
+  // announces when it changes, without moving focus.
+  function makeStatus(className) {
+    return el("div", { class: className + " d-none", role: "status", "aria-live": "polite" });
+  }
+
+  // kind: "correct" | "incorrect", or null to hide the feedback.
+  function setFeedback(feedback, kind, message) {
+    if (!kind) {
+      feedback.className = "learnr2-feedback d-none";
+      feedback.textContent = "";
+      return;
+    }
+    feedback.className = "learnr2-feedback learnr2-feedback-" + kind;
+    feedback.textContent = message;
+  }
+
+  // The Submit / Try Again pair every graded question has.
+  function makeControls(data) {
+    return {
+      submit: el("button", { type: "button", class: "learnr2-submit", text: labelOr(data.submitLabel, "submit_answer") }),
+      tryAgain: el("button", { type: "button", class: "learnr2-try-again d-none", text: labelOr(data.tryAgainLabel, "try_again") })
+    };
+  }
+
+  // After grading: hide Submit, and offer Try Again when allowed and wrong.
+  function lockGraded(ctl, correct, data) {
+    ctl.submit.classList.add("d-none");
+    if (!correct && data.allowRetry) {
+      ctl.tryAgain.classList.remove("d-none");
+    }
+  }
+
+  // Try Again: `reset` reopens the widget's own inputs; the rest is common.
+  function wireTryAgain(ctl, feedback, data, reset) {
+    ctl.tryAgain.addEventListener("click", function () {
+      reset();
+      setFeedback(feedback, null);
+      ctl.submit.classList.remove("d-none");
+      ctl.tryAgain.classList.add("d-none");
+      clearState(data);
+    });
+  }
+
+  // The id of the element holding a question's prompt (renderQuestion()
+  // sets it), so inputs can point at it with aria-labelledby -- including
+  // when show_text = FALSE hides the prompt visually.
+  function questionTextId(data) {
+    return data.id + "-text";
+  }
+
+  function buildChoiceQuestion(container, data) {
+    var inputType = data.type === "multiple" ? "checkbox" : "radio";
+    var answers = data.randomAnswerOrder ? shuffle(data.answers) : data.answers;
+    var name = data.id + "-choice";
+
+    var list = el("div", { class: "learnr2-answers", role: "group", "aria-labelledby": questionTextId(data) });
+    answers.forEach(function (answer, index) {
+      var inputId = data.id + "-answer-" + index;
+      var input = el("input", { type: inputType, id: inputId, name: name });
+      input.value = String(index);
+      var label = el(
+        "label",
+        { class: "learnr2-answer", for: inputId },
+        [input, el("span", { text: answer.text })]
+      );
+      list.appendChild(el("div", { class: "learnr2-answer-row" }, [label]));
+    });
+
+    var feedback = makeStatus("learnr2-feedback");
+    var ctl = makeControls(data);
+
+    // Shared by a fresh submission and by restoring a saved answer, so both
+    // paths produce identical feedback and locked state.
+    function applyOutcome(chosen) {
+      var totalCorrect = answers.filter(function (a) { return a.correct; }).length;
+      var allCorrect = chosen.length === totalCorrect &&
+        chosen.every(function (a) { return a.correct; });
+
+      var message = allCorrect ? labelOr(data.correctMessage, "correct") : labelOr(data.incorrectMessage, "incorrect");
+      var extra = chosen.map(function (a) { return a.message; }).filter(Boolean);
+      if (extra.length > 0) {
+        message = message + " " + extra.join(" ");
+      }
+      setFeedback(feedback, allCorrect ? "correct" : "incorrect", message);
+      list.querySelectorAll("input").forEach(function (input) {
+        input.disabled = true;
+      });
+      lockGraded(ctl, allCorrect, data);
+      return allCorrect;
+    }
+
+    ctl.submit.addEventListener("click", function () {
+      var checked = Array.prototype.slice.call(list.querySelectorAll("input:checked"));
+      if (checked.length === 0) {
+        setFeedback(feedback, "incorrect", t("select_answer"));
+        return;
+      }
+      var chosen = checked.map(function (input) {
+        return answers[Number(input.value)];
+      });
+      var allCorrect = applyOutcome(chosen);
+      saveState(data, {
+        selected: chosen.map(function (a) { return a.text; }),
+        correct: allCorrect
+      });
+    });
+
+    wireTryAgain(ctl, feedback, data, function () {
+      list.querySelectorAll("input").forEach(function (input) {
+        input.checked = false;
+        input.disabled = false;
+      });
+    });
+
+    container.appendChild(list);
+    container.appendChild(el("div", { class: "learnr2-controls" }, [ctl.submit, ctl.tryAgain]));
+    container.appendChild(feedback);
+
+    var saved = loadState(data);
+    if (saved && Array.isArray(saved.selected)) {
+      var selectedTexts = saved.selected;
+      list.querySelectorAll("input").forEach(function (input) {
+        var a = answers[Number(input.value)];
+        if (selectedTexts.indexOf(a.text) !== -1) {
+          input.checked = true;
+        }
+      });
+      applyOutcome(answers.filter(function (a) { return selectedTexts.indexOf(a.text) !== -1; }));
+    }
+  }
+
+  function buildTextQuestion(container, data) {
+    var input = el("input", { type: "text", class: "learnr2-text-input", "aria-labelledby": questionTextId(data) });
+    var feedback = makeStatus("learnr2-feedback");
+    var ctl = makeControls(data);
+
+    function applyOutcome(value) {
+      var normalized = normalizeText(value);
+      var match = data.answers.find(function (a) { return normalizeText(a.text) === normalized; });
+      var correct = !!(match && match.correct);
+
+      var message = correct ? labelOr(data.correctMessage, "correct") : labelOr(data.incorrectMessage, "incorrect");
+      if (match && match.message) {
+        message = message + " " + match.message;
+      }
+      setFeedback(feedback, correct ? "correct" : "incorrect", message);
+      input.disabled = true;
+      lockGraded(ctl, correct, data);
+      return correct;
+    }
+
+    ctl.submit.addEventListener("click", function () {
+      if (!passesValidation(input.value, data.validate)) {
+        setFeedback(feedback, "incorrect", t(VALIDATION_KEYS[data.validate]));
+        return;
+      }
+      var correct = applyOutcome(input.value);
+      saveState(data, { value: input.value, correct: correct });
+    });
+
+    wireTryAgain(ctl, feedback, data, function () {
+      input.value = "";
+      input.disabled = false;
+    });
+
+    container.appendChild(el("div", { class: "learnr2-answers" }, [input]));
+    container.appendChild(el("div", { class: "learnr2-controls" }, [ctl.submit, ctl.tryAgain]));
+    container.appendChild(feedback);
+
+    var saved = loadState(data);
+    if (saved && typeof saved.value === "string") {
+      input.value = saved.value;
+      applyOutcome(saved.value);
+    }
+  }
+
+  // Shrinks a pasted screenshot before it is stored: scaled to at most
+  // IMAGE_MAX_WIDTH x IMAGE_MAX_HEIGHT, drawn on white (transparency would
+  // turn black), encoded as WebP, or JPEG where the canvas can't write WebP
+  // (Safari returns PNG for "image/webp"; detected from the data URL), with
+  // quality and then size stepping down until it fits IMAGE_TARGET_CHARS. A
+  // full-size PNG could take 3 MB of the ~5 MB a whole site shares. Also
+  // drops metadata (EXIF orientation, GPS).
+  var IMAGE_MAX_WIDTH = 1600;
+  var IMAGE_MAX_HEIGHT = 4000;
+  var IMAGE_TARGET_CHARS = 600 * 1024; // of data URL, ~450 KB of image
+  var IMAGE_QUALITIES = [0.85, 0.7, 0.55];
+
+  function encodeCanvas(canvas, quality) {
+    var webp = canvas.toDataURL("image/webp", quality);
+    if (webp.indexOf("data:image/webp") === 0) {
+      return webp;
+    }
+    return canvas.toDataURL("image/jpeg", quality);
+  }
+
+  function compressImage(file, onSuccess, onError) {
+    var reader = new FileReader();
+    reader.onload = function () {
+      var img = new Image();
+      img.onload = function () {
+        try {
+          var scale = Math.min(1, IMAGE_MAX_WIDTH / img.naturalWidth, IMAGE_MAX_HEIGHT / img.naturalHeight);
+          var result = null;
+          for (var attempt = 0; attempt < 6 && !result; attempt++) {
+            var canvas = document.createElement("canvas");
+            canvas.width = Math.max(1, Math.round(img.naturalWidth * scale));
+            canvas.height = Math.max(1, Math.round(img.naturalHeight * scale));
+            var ctx = canvas.getContext("2d");
+            ctx.fillStyle = "#ffffff";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            for (var q = 0; q < IMAGE_QUALITIES.length; q++) {
+              var url = encodeCanvas(canvas, IMAGE_QUALITIES[q]);
+              if (url.length <= IMAGE_TARGET_CHARS) {
+                result = url;
+                break;
+              }
+            }
+            scale = scale * 0.75;
+          }
+          if (result) {
+            onSuccess(result);
+          } else {
+            onError();
+          }
+        } catch (e) {
+          onError();
+        }
+      };
+      img.onerror = onError;
+      img.src = reader.result;
+    };
+    reader.onerror = onError;
+    reader.readAsDataURL(file);
+  }
+
+  // A box showing the pasted image, and a paste target of its own. Readers
+  // mostly paste into the response textarea, which fires native paste
+  // events reliably everywhere; buildReflectionQuestion() routes those here
+  // too, so pasting works wherever the cursor is. `onChange(hasImage)` lets
+  // the caller hide the textarea while an image is the answer; `noTextBox`
+  // (allow_text = FALSE) keeps the placeholder from pointing at one.
+  var pasteAreaCount = 0;
+
+  function buildImagePasteArea(onChange, noTextBox) {
+    // A sanity cap on what is decoded; compressImage() keeps what is stored small.
+    var MAX_BYTES = 20 * 1024 * 1024;
+    var placeholderId = "learnr2-paste-hint-" + (++pasteAreaCount);
+    var wrapper = el("div", {
+      class: "learnr2-image-paste", tabindex: "0", role: "textbox",
+      "aria-label": t("paste_area_label"), "aria-describedby": placeholderId
+    });
+    var placeholder = el("div", {
+      class: "learnr2-image-paste-placeholder", id: placeholderId,
+      text: t(noTextBox ? "paste_hint_image_only" : "paste_hint")
+    });
+    var preview = el("img", { class: "learnr2-image-paste-preview d-none", alt: t("pasted_image_alt") });
+    var error = makeStatus("learnr2-image-paste-error");
+    var remove = el(
+      "button",
+      { type: "button", class: "learnr2-image-paste-remove d-none", text: t("remove_image") }
+    );
+
+    var dataUrl = null;
+    var disabled = false;
+
+    function setError(message) {
+      error.textContent = message;
+      error.classList.remove("d-none");
+    }
+
+    function clearError() {
+      error.textContent = "";
+      error.classList.add("d-none");
+    }
+
+    function setImage(nextDataUrl) {
+      dataUrl = nextDataUrl;
+      preview.src = nextDataUrl;
+      preview.classList.remove("d-none");
+      placeholder.classList.add("d-none");
+      if (!disabled) {
+        remove.classList.remove("d-none");
+      }
+      clearError();
+      if (onChange) {
+        onChange(true);
+      }
+    }
+
+    function clearImage() {
+      dataUrl = null;
+      preview.src = "";
+      preview.classList.add("d-none");
+      placeholder.classList.remove("d-none");
+      remove.classList.add("d-none");
+      if (onChange) {
+        onChange(false);
+      }
+    }
+
+    // What the OS puts on the clipboard for a screenshot varies by platform,
+    // so every raster type browsers decode is accepted and re-encoded by
+    // compressImage(). SVG (markup, not a screenshot) and TIFF (which
+    // browsers other than Safari don't decode) are left out.
+    var ACCEPTED_IMAGE_TYPES = /^image\/(png|jpeg|gif|webp|bmp)$/;
+
+    // `silent`: a paste on the textarea with no image is ordinary text and
+    // falls through to the browser; on the dedicated box it is an error.
+    function handlePaste(event, silent) {
+      if (disabled) {
+        return;
+      }
+      var items = (event.clipboardData && event.clipboardData.items) || [];
+      var imageItem = null;
+      for (var i = 0; i < items.length; i++) {
+        if (ACCEPTED_IMAGE_TYPES.test(items[i].type)) {
+          imageItem = items[i];
+          break;
+        }
+      }
+      if (!imageItem) {
+        if (!silent) {
+          setError(t("paste_not_image"));
+        }
+        return;
+      }
+      event.preventDefault();
+
+      var file = imageItem.getAsFile();
+      if (!file) {
+        setError(t("image_unreadable"));
+        return;
+      }
+      if (file.size > MAX_BYTES) {
+        setError(t("image_too_large"));
+        return;
+      }
+
+      compressImage(
+        file,
+        function (dataUrl) {
+          setImage(dataUrl);
+        },
+        function () {
+          setError(t("image_unreadable"));
+        }
+      );
+    }
+
+    wrapper.addEventListener("paste", function (event) {
+      handlePaste(event, false);
+    });
+
+    remove.addEventListener("click", function () {
+      clearImage();
+    });
+
+    wrapper.appendChild(placeholder);
+    wrapper.appendChild(preview);
+    wrapper.appendChild(remove);
+    wrapper.appendChild(error);
+
+    return {
+      element: wrapper,
+      getDataUrl: function () { return dataUrl; },
+      setImage: setImage,
+      handlePaste: function (event) { handlePaste(event, true); },
+      setDisabled: function (isDisabled) {
+        disabled = isDisabled;
+        wrapper.classList.toggle("learnr2-image-paste-disabled", disabled);
+        wrapper.tabIndex = disabled ? -1 : 0;
+        if (disabled) {
+          remove.classList.add("d-none");
+        } else if (dataUrl) {
+          remove.classList.remove("d-none");
+        }
+      }
+    };
+  }
+
+  // Ungraded free-response: reveals the `correct`-marked answer(s) as a
+  // model answer after submitting. `type === "reflection"` locks the
+  // reader's own response afterward; `"reflection_editable"` leaves it open
+  // so they can keep revising it.
+  function buildReflectionQuestion(container, data) {
+    var editable = data.type === "reflection_editable";
+    var modelAnswers = data.answers
+      .filter(function (a) { return a.correct; })
+      .map(function (a) { return a.text; });
+
+    // `validate: "integer"` (e.g. "how many minutes did this take?") expects
+    // a short numeric answer, not prose -- a single-line box sized like
+    // student_info()'s fields (same "learnr2-text-input" class, no
+    // "learnr2-textarea") fits that better than a 4-row textarea.
+    var labelled = { "aria-labelledby": questionTextId(data) };
+    var textarea = data.validate === "integer"
+      ? el("input", Object.assign({ type: "text", class: "learnr2-text-input" }, labelled))
+      : el("textarea", Object.assign({ class: "learnr2-text-input learnr2-textarea", rows: "4" }, labelled));
+    var reveal = el("div", { class: "learnr2-model-answer d-none" });
+    var feedback = makeStatus("learnr2-feedback");
+    var submit = el("button", { type: "button", class: "learnr2-submit", text: labelOr(data.submitLabel, "submit_answer") });
+    var answers = el("div", { class: "learnr2-answers" }, [textarea]);
+    // A locked image question can still swap its screenshot: its Edit
+    // button (labelled `editLabel`, like reflection_editable's) reopens only
+    // the image box (the text box stays hidden and disabled), and the
+    // question counts as unsubmitted, via `editing`, until a new image is
+    // submitted. Readers pasted the wrong screenshot and had to Start Over
+    // the whole tutorial to fix it. Text stays locked for good, per the
+    // note above EDITING_NOTE; reflection_editable already has Edit.
+    var replaceable = data.allowImage && !editable;
+    var replacing = false;
+    var replace = replaceable
+      ? el("button", { type: "button", class: "learnr2-image-edit d-none" })
+      : null;
+    // question(allow_text = FALSE): a screenshot-only question, with no text
+    // box at all and Submit refused until an image is pasted. Payloads from
+    // before allowText existed lack the key, so only an explicit false counts.
+    var imageOnly = data.allowImage && data.allowText === false;
+    if (imageOnly) {
+      answers.classList.add("d-none");
+    }
+    // Once an image is pasted it *is* the answer: hide the text box so the
+    // reader sees only the image (plus "Remove image", which brings the
+    // text box back, except while replacing or for an image-only question).
+    var imagePaste = data.allowImage
+      ? buildImagePasteArea(function (hasImage) {
+          answers.classList.toggle("d-none", hasImage || replacing || imageOnly);
+        }, imageOnly)
+      : null;
+    if (imagePaste) {
+      textarea.addEventListener("paste", function (event) {
+        imagePaste.handlePaste(event);
+      });
+    }
+
+    function showModelAnswer() {
+      // Nothing to reveal -- e.g. question() was called with no answer()
+      // marked correct, for a genuinely open-ended prompt. Leave `reveal`
+      // hidden rather than showing an empty "Model answer:" box.
+      if (modelAnswers.length === 0) {
+        return;
+      }
+      reveal.textContent = "";
+      reveal.appendChild(el("div", { class: "learnr2-model-answer-label", text: t("model_answer") }));
+      modelAnswers.forEach(function (text) {
+        reveal.appendChild(el("p", { text: text }));
+      });
+      reveal.classList.remove("d-none");
+    }
+
+    // "reflection" locks for good on submit. "reflection_editable" uses the
+    // Edit/Submit cycle described above EDITING_NOTE: submitting locks it
+    // with an "Edit" button, and Edit reopens it until the next Submit. The
+    // saved answer stays the last submitted one throughout; an open edit
+    // only sets `editing`, which the Continue gate and the download read
+    // (widgetPending()).
+    var locked = false;
+    var note = makeStatus("learnr2-editing-note");
+    note.textContent = t("editing_note");
+
+    function setLocked(isLocked, isEditing) {
+      locked = isLocked;
+      replacing = replaceable && !isLocked && !!isEditing;
+      textarea.disabled = isLocked || replacing;
+      if (replacing) {
+        answers.classList.add("d-none");
+      }
+      if (imagePaste) {
+        imagePaste.setDisabled(isLocked);
+      }
+      if (editable) {
+        submit.textContent = isLocked ? labelOr(data.editLabel, "edit_answer") : labelOr(data.submitLabel, "submit_answer");
+      } else {
+        submit.classList.toggle("d-none", isLocked);
+      }
+      if (replace) {
+        replace.textContent = labelOr(data.editLabel, "edit_answer");
+        replace.classList.toggle("d-none", !isLocked);
+      }
+      note.textContent = t(replacing ? "replacing_note" : "editing_note");
+      note.classList.toggle("d-none", isLocked || !isEditing);
+    }
+
+    // Reopen a submitted answer for editing: open the inputs, mark the
+    // saved state `editing` (so the Continue gate and the download treat it
+    // as unsubmitted), and move focus to what the reader should change.
+    function reopen(focusEl) {
+      setFeedback(feedback, null);
+      setLocked(false, true);
+      var reopened = loadState(data) || {};
+      reopened.editing = true;
+      saveState(data, reopened);
+      focusEl.focus();
+    }
+
+    if (replace) {
+      replace.addEventListener("click", function () {
+        reopen(imagePaste.element);
+      });
+    }
+
+    submit.addEventListener("click", function () {
+      if (locked && editable) {
+        reopen(imageOnly ? imagePaste.element : textarea);
+        return;
+      }
+      if ((replacing || imageOnly) && !imagePaste.getDataUrl()) {
+        setFeedback(feedback, "incorrect", t("image_required"));
+        return;
+      }
+      var image = imagePaste ? imagePaste.getDataUrl() : null;
+      // A pasted image is the whole answer; `validate` applies to typing.
+      if (!image && !passesValidation(textarea.value, data.validate)) {
+        setFeedback(feedback, "incorrect", t(VALIDATION_KEYS[data.validate]));
+        return;
+      }
+      setFeedback(feedback, null);
+      var stored = saveState(data, {
+        // Text typed before pasting is hidden along with the text box, so
+        // don't submit it alongside the image.
+        value: image ? "" : textarea.value,
+        image: image,
+        submitted: true
+      });
+      if (!stored) {
+        // Not received, so don't present it as submitted: leave it open to
+        // retry once there is room (see reportStorageFailure()).
+        setFeedback(feedback, "incorrect", t("not_saved"));
+        return;
+      }
+      showModelAnswer();
+      setLocked(true, false);
+    });
+
+    container.appendChild(answers);
+    if (imagePaste) {
+      container.appendChild(imagePaste.element);
+    }
+    container.appendChild(el("div", { class: "learnr2-controls" }, replace ? [submit, replace] : [submit]));
+    container.appendChild(note);
+    container.appendChild(feedback);
+    container.appendChild(reveal);
+
+    var saved = loadState(data);
+    if (saved) {
+      if (typeof saved.value === "string") {
+        textarea.value = saved.value;
+      }
+      if (saved.image && imagePaste) {
+        imagePaste.setImage(saved.image);
+      }
+      if (saved.submitted) {
+        showModelAnswer();
+        var reopened = !!saved.editing && (editable || replaceable);
+        setLocked(!reopened, reopened);
+      }
+    }
+  }
+
+  function debounce(fn, delay) {
+    var timer = null;
+    return function () {
+      var args = arguments;
+      clearTimeout(timer);
+      timer = setTimeout(function () {
+        fn.apply(null, args);
+      }, delay);
+    };
+  }
+
+  // A non-empty "email" field's value is required to look at least
+  // vaguely like an email address -- checked with a plain "@" test, not a
+  // full RFC 5322 regex, since this is a friendly nudge against typos
+  // ("adaexample.com"), not a security or deliverability check.
+  function isValidEmail(value) {
+    return value.indexOf("@") !== -1;
+  }
+
+  // Ungraded, always-editable data collection (name/email/id, etc.) --
+  // auto-saved as the reader types (so nothing is lost if they never click
+  // the confirmation button), plus a button matching the one on every
+  // question(), so the reader gets the same explicit "did that go through"
+  // confirmation. Required fields (per-field `required`, e.g. name/email by
+  // default) get a marker, and an "email" field is checked for an "@"
+  // regardless of `required`; both kinds of problem get inline validation
+  // on blur *and* on click. The actual gate that matters is in
+  // buildDownloadButton, which blocks downloading until they're fixed,
+  // regardless of whether the button was ever clicked.
+  // The Edit/Submit cycle shared by student_info() and reflection_editable
+  // questions: *submitted* (fields locked, button "Edit") or *editing*
+  // (fields open, button "Submit"). Edit only reopens; nothing counts as
+  // received until the next Submit, so the button always says whether what
+  // is shown is what was received. An ordinary "reflection" never reopens,
+  // or the model answer just shown could be pasted back in. The note under
+  // the widget is t("editing_note"), t("replacing_note") while a screenshot
+  // is being swapped; a refused save shows t("not_saved").
+
+  // student_info() storage, per form: the flat field keys hold the last
+  // *submitted* values (what the download reports); `submitted` is true only
+  // while the form is locked on a submission; `editing` marks a form reopened
+  // after a submission; `draft` holds typed-but-unsubmitted values, so a
+  // reload mid-edit loses nothing. Older saved data (flat keys plus
+  // `submitted: false`, from when every keystroke autosaved as the answer)
+  // is read as a draft, not as a submission.
+  function buildInfoForm(container, data) {
+    var inputs = {};
+    var validators = [];
+    var saved = loadState(data) || {};
+    var locked = !!saved.submitted;
+    var editing = !!saved.editing;
+    var lastSubmitted = {};
+    if (saved.submitted || saved.editing) {
+      data.fields.forEach(function (field) {
+        if (typeof saved[field.key] === "string") {
+          lastSubmitted[field.key] = saved[field.key];
+        }
+      });
+    }
+    var draft = saved.draft ||
+      (!saved.submitted && !saved.editing ? saved : null);
+
+    function currentValues() {
+      var values = {};
+      Object.keys(inputs).forEach(function (key) {
+        values[key] = inputs[key].value;
+      });
+      return values;
+    }
+
+    function persist() {
+      var state = Object.assign({}, lastSubmitted);
+      // Returns saveState()'s result, so Submit can refuse to lock a form
+      // that wasn't stored.
+      if (locked) {
+        state.submitted = true;
+      } else {
+        state.submitted = false;
+        if (editing) {
+          state.editing = true;
+        }
+        state.draft = currentValues();
+      }
+      return saveState(data, state);
+    }
+    var debouncedPersist = debounce(persist, 400);
+
+    data.fields.forEach(function (field) {
+      var inputId = data.id + "-" + field.key;
+      var errorId = inputId + "-error";
+      var input = el("input", {
+        type: "text", id: inputId, class: "learnr2-info-input",
+        "aria-required": field.required ? "true" : "false", "aria-describedby": errorId
+      });
+      var source = locked ? lastSubmitted : (draft || lastSubmitted);
+      if (source && typeof source[field.key] === "string") {
+        input.value = source[field.key];
+      }
+
+      var error = makeStatus("learnr2-info-error");
+      error.id = errorId;
+
+      function validate() {
+        var value = input.value.trim();
+        var missing = field.required && !value;
+        var invalidEmail = !missing && field.key === "email" && value && !isValidEmail(value);
+        if (missing) {
+          error.textContent = t("field_required");
+        } else if (invalidEmail) {
+          error.textContent = t("email_invalid");
+        }
+        var problem = missing || invalidEmail;
+        error.classList.toggle("d-none", !problem);
+        if (problem) {
+          input.setAttribute("aria-invalid", "true");
+        } else {
+          input.removeAttribute("aria-invalid");
+        }
+        return !problem;
+      }
+      validators.push(validate);
+
+      input.addEventListener("input", function () {
+        debouncedPersist();
+        if (input.value.trim()) {
+          error.classList.add("d-none");
+          input.removeAttribute("aria-invalid");
+        }
+      });
+      input.addEventListener("blur", function () {
+        if (!locked) {
+          persist();
+          validate();
+        }
+      });
+      inputs[field.key] = input;
+
+      // A default field (name/email/id) arrives with a null label, which
+      // the language table fills; a custom field always names its own.
+      var fieldLabel = typeof field.label === "string" ? field.label : t("field_" + field.key);
+      var labelText = field.required ? fieldLabel + " *" : fieldLabel;
+      var label = el("label", { class: "learnr2-info-label", for: inputId, text: labelText });
+      container.appendChild(el("div", { class: "learnr2-info-row" }, [label, input, error]));
+    });
+
+    var feedback = makeStatus("learnr2-feedback");
+    var note = makeStatus("learnr2-editing-note");
+    note.textContent = t("editing_note");
+    var submit = el("button", { type: "button", class: "learnr2-submit" });
+
+    function render() {
+      Object.keys(inputs).forEach(function (key) {
+        inputs[key].disabled = locked;
+      });
+      submit.textContent = locked ? labelOr(data.editLabel, "edit") : labelOr(data.submitLabel, "submit");
+      note.classList.toggle("d-none", locked || !editing);
+    }
+
+    submit.addEventListener("click", function () {
+      if (locked) {
+        locked = false;
+        editing = true;
+        setFeedback(feedback, null);
+        render();
+        persist();
+        var first = inputs[data.fields[0].key];
+        if (first) {
+          first.focus();
+        }
+        return;
+      }
+      var allValid = validators.map(function (validate) { return validate(); })
+        .every(Boolean);
+      var previous = lastSubmitted;
+      if (allValid) {
+        lastSubmitted = currentValues();
+        locked = true;
+        editing = false;
+      }
+      if (!persist() && allValid) {
+        lastSubmitted = previous;
+        locked = false;
+        editing = true;
+        render();
+        setFeedback(feedback, "incorrect", t("not_saved"));
+        return;
+      }
+      render();
+      setFeedback(feedback, allValid ? "correct" : "incorrect",
+        t(allValid ? "info_ok" : "info_fix"));
+    });
+
+    render();
+    container.appendChild(el("div", { class: "learnr2-controls" }, [submit]));
+    container.appendChild(note);
+    container.appendChild(feedback);
+  }
+
+  // A widget counts as received only once submitted, and not while it has
+  // been reopened for editing. Shared by the Continue gate and the
+  // download's checks, so they always agree.
+  function widgetPending(node) {
+    var isInfo = node.classList.contains("learnr2-info");
+    var data = decodeBase64Json(node.getAttribute(isInfo ? "data-learnr2-info" : "data-learnr2-question"));
+    var saved = loadState(data);
+    if (isInfo) {
+      return !(saved && saved.submitted);
+    }
+    return !saved || saved.editing === true;
+  }
+
+  // The last *submitted* value of one info field, or "" if the form has
+  // never been submitted. Never the live DOM value: what is typed but not
+  // submitted has not been received.
+  function infoFieldValue(data, fieldKey) {
+    var saved = loadState(data);
+    return saved && typeof saved[fieldKey] === "string" && (saved.submitted || saved.editing) ?
+      saved[fieldKey] : "";
+  }
+
+  // Is any student_info() form on the page not currently submitted --
+  // never submitted, or reopened with Edit and not resubmitted? Blocks the
+  // download: the submission identifies the student, so it must be one they
+  // actually confirmed.
+  function infoPending() {
+    return Array.prototype.some.call(
+      document.querySelectorAll(".learnr2-info[data-learnr2-info]"), widgetPending
+    );
+  }
+
+  // Every question, across every .learnr2-question on the page, that is not
+  // currently submitted (never submitted, or reopened with Edit and not
+  // resubmitted -- see widgetPending()). Unlike infoFieldProblems(),
+  // this doesn't block the download outright: a reader legitimately might
+  // download a partial attempt (see collectAnswers()'s own `answer: null`
+  // reporting for exactly that case). It's just what buildDownloadButton
+  // warns about before letting an incomplete download through.
+  // Split by whether the question is in a section the reader has reached:
+  // the prompts of unreached questions must not be shown (the download
+  // dialog would otherwise read out the rest of the tutorial), so those
+  // are only counted.
+  function unansweredQuestions() {
+    var visible = [];
+    var hidden = 0;
+    document.querySelectorAll(".learnr2-question[data-learnr2-question]").forEach(function (node) {
+      if (!widgetPending(node)) {
+        return;
+      }
+      if (node.closest("section.d-none")) {
+        hidden += 1;
+      } else {
+        visible.push(decodeBase64Json(node.getAttribute("data-learnr2-question")).text);
+      }
+    });
+    return { visible: visible, hidden: hidden };
+  }
+
+  // How far the reader got, for the download: sections revealed of those
+  // gated (null when the page has no gating), and questions submitted of
+  // all questions.
+  var gatedSections = [];
+  function progressSummary() {
+    var questions = document.querySelectorAll(".learnr2-question[data-learnr2-question]");
+    var answered = Array.prototype.filter.call(questions, function (node) { return !widgetPending(node); }).length;
+    var revealed = gatedSections.filter(function (section) { return !section.classList.contains("d-none"); }).length;
+    return {
+      sections: gatedSections.length ? revealed : null,
+      of: gatedSections.length ? gatedSections.length : null,
+      answered: answered,
+      of_questions: questions.length
+    };
+  }
+
+  // Renders one widget from its base64-JSON payload. A payload that can't
+  // be decoded (a hand-edited page, a truncated attribute) marks only that
+  // widget as broken, so the rest of the page still works.
+  function renderWidget(node, attr, build) {
+    var encoded = node.getAttribute(attr);
+    if (!encoded) {
+      return;
+    }
+    try {
+      var data = decodeBase64Json(encoded);
+      node.textContent = "";
+      build(node, data);
+    } catch (e) {
+      node.textContent = t("widget_broken");
+      node.classList.add("learnr2-widget-broken");
+      if (window.console && console.error) {
+        console.error("learnr2: could not render widget", node, e);
+      }
+    }
+    node.setAttribute("data-learnr2-initialized", "true");
+  }
+
+  function renderInfo(node) {
+    renderWidget(node, "data-learnr2-info", function (node, data) {
+      node.classList.add("learnr2-info-rendered");
+      buildInfoForm(node, data);
+    });
+  }
+
+  // A random id generated once and persisted in localStorage, so it stays
+  // the same across a reader's sessions on this browser/device -- not tied
+  // to their real identity, just a "this is the same device that did the
+  // work" signal in the download's metadata.
+  var DEVICE_ID_KEY = "learnr2-device-id";
+
+  function randomId() {
+    if (window.crypto && window.crypto.randomUUID) {
+      return window.crypto.randomUUID();
+    }
+    return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
+      var r = (Math.random() * 16) | 0;
+      var v = c === "x" ? r : (r & 0x3) | 0x8;
+      return v.toString(16);
+    });
+  }
+
+  function getDeviceId() {
+    try {
+      var existing = window.localStorage.getItem(DEVICE_ID_KEY);
+      if (existing) {
+        return existing;
+      }
+      var id = randomId();
+      window.localStorage.setItem(DEVICE_ID_KEY, id);
+      return id;
+    } catch (e) {
+      return "unknown";
+    }
+  }
+
+  // What a browser can actually expose to a web page -- notably NOT the
+  // computer name, OS username, or anything filesystem-related, which
+  // browsers deliberately never give to JavaScript.
+  function captureMetadata() {
+    var timezone = "unknown";
+    try {
+      timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    } catch (e) {
+      // Ignore; leave "unknown".
+    }
+    return {
+      timezone: timezone,
+      userAgent: navigator.userAgent,
+      language: navigator.language,
+      screen: window.screen.width + "x" + window.screen.height,
+      deviceId: getDeviceId()
+    };
+  }
+
+  // The download time, obfuscated: base-36 of (epoch-seconds * MUL + ADD).
+  // NOT cryptographic -- these constants are public, right here -- just
+  // enough that the raw timestamp isn't sitting in the downloaded file and a
+  // student can neither read it nor swap in a different valid one by hand.
+  // `learnr2::submission_time()` reverses it. Keep MUL/ADD in sync with
+  // R/submission.R. (epoch-seconds * MUL stays well under 2^53, so the
+  // base-36 round-trips exactly.)
+  var TIME_MUL = 8093;
+  var TIME_ADD = 1000003;
+
+  function encodeDownloadTime() {
+    return (Math.floor(Date.now() / 1000) * TIME_MUL + TIME_ADD).toString(36);
+  }
+
+  // A {webr} exercise's answer, from quarto-live's own static markup: each
+  // cell embeds `<script type="webr-<block>-contents">` with base64 JSON
+  // `{attr, code}`, present whether or not WebR has booted. Returns
+  // `{ id, answer }` keyed by the exercise label, or null for a cell that
+  // has no record to read: no `#| exercise:`, or no `#| persist: true`
+  // (quarto-live writes the reader's code to localStorage only then). Its
+  // key is `editor-<page>#<id>`, where id is the cell's `#| id:` or else
+  // the script's own type ("webr-4-contents"), and the value is the bare
+  // code string.
+  function exerciseAnswerFromScript(scriptEl) {
+    var block;
+    try {
+      block = decodeBase64Json(scriptEl.textContent);
+    } catch (e) {
+      return null;
+    }
+    var attr = block.attr || {};
+    if (!attr.exercise || !attr.persist) {
+      return null;
+    }
+    var storageKey = "editor-" + pageUrl + "#" + (attr.id || scriptEl.type);
+    return { id: attr.exercise, answer: storageGet(storageKey) };
+  }
+
+  // ---- Fingerprint and provenance -----------------------------------------
+  // The download ends with `fingerprint`: SHA-256 of a fixed text built from
+  // what identifies the submission (time, device, loadedFrom, info,
+  // answers), and `loadedFrom`: who the file this page was restored from
+  // belonged to, if it was (load_tutorial() or the Load Answers button).
+  // Neither is a signature -- there is no server and no secret, and this
+  // code is public -- so they do not *prevent* editing. They make a hand
+  // edit to the name or an answer, or a deleted provenance block, show up
+  // when learnr2::check_submission() recomputes the hash, which is what
+  // catches a copied file with the name changed. The canonical text is
+  // mirrored by canonical_submission() in R/submission.R; change both.
+  var FINGERPRINT_HEADER = "learnr2-fingerprint-v1";
+  var LOADED_FROM_ID = "loaded-from";
+
+  function canonicalSubmission(payload) {
+    var from = payload.loadedFrom && typeof payload.loadedFrom.fingerprint === "string"
+      ? payload.loadedFrom.fingerprint : "";
+    var p = payload.progress;
+    var progress = p ? [p.sections, p.of, p.answered, p.of_questions].map(function (v) {
+      return v === null || v === undefined ? "" : String(v);
+    }).join("/") : "";
+    var lines = [
+      FINGERPRINT_HEADER,
+      "time=" + payload.time,
+      "device=" + payload.metadata.deviceId,
+      "loadedFrom=" + from,
+      "progress=" + progress
+    ];
+    Object.keys(payload.info).sort().forEach(function (key) {
+      var v = payload.info[key];
+      lines.push("info." + key + "=" + (v === null || v === undefined ? "" : String(v)));
+    });
+    payload.answers.forEach(function (a) {
+      var v = a.answer;
+      var text = v === null || v === undefined ? "<null>"
+        : Array.isArray(v) ? v.map(String).join("\u001f") : String(v);
+      lines.push("answer." + a.id + "=" + text);
+    });
+    return lines.join("\n");
+  }
+
+  // Hex SHA-256, or null where the browser offers no SubtleCrypto (a page
+  // served over plain http from a non-local address).
+  async function sha256Hex(text) {
+    if (!(window.crypto && window.crypto.subtle && window.TextEncoder)) {
+      return null;
+    }
+    try {
+      var digest = await window.crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
+      return Array.prototype.map.call(new Uint8Array(digest), function (b) {
+        return ("0" + b.toString(16)).slice(-2);
+      }).join("");
+    } catch (e) {
+      return null;
+    }
+  }
+
+  // What to remember about a file whose answers are being restored.
+  function provenanceOf(file) {
+    var str = function (v) { return typeof v === "string" ? v : null; };
+    return {
+      time: str(file.time),
+      deviceId: str(file.metadata && file.metadata.deviceId),
+      fingerprint: str(file.fingerprint),
+      name: str(file.info && file.info.name),
+      email: str(file.info && file.info.email)
+    };
+  }
+
+  // `data` is the download button's payload, which carries what the file is
+  // a submission for (package, version, tutorial, title, learnr2Version),
+  // resolved on the R side at render time. Those go first, so a grader
+  // opening the file sees them before the answers.
+  async function collectAnswers(data) {
+    // Submitted values only (see infoFieldValue()): the download is blocked
+    // until every student_info() form is submitted, so these are what the
+    // reader confirmed, never half-typed edits.
+    var info = {};
+    document.querySelectorAll(".learnr2-info[data-learnr2-info]").forEach(function (node) {
+      var data = decodeBase64Json(node.getAttribute("data-learnr2-info"));
+      data.fields.forEach(function (field) {
+        var value = infoFieldValue(data, field.key);
+        info[field.key] = value ? value : null;
+      });
+    });
+
+    // One flat list, in the order things appear on the page, mixing
+    // question()/reflection widgets and {webr} exercises together -- every
+    // entry is just `{ id, answer }`. A single combined selector so the
+    // browser hands the nodes back in document order (querySelectorAll
+    // always does); branch per node on which kind it is. A question that
+    // was never submitted has no saved state and reports `answer: null`; one
+    // reopened with Edit reports its last submitted answer.
+    var answers = [];
+    document
+      .querySelectorAll(
+        '.learnr2-question[data-learnr2-question], script[type^="webr-"][type$="-contents"]'
+      )
+      .forEach(function (node) {
+        if (node.tagName === "SCRIPT") {
+          var exercise = exerciseAnswerFromScript(node);
+          if (exercise) {
+            answers.push(exercise);
+          }
+          return;
+        }
+        var data = decodeBase64Json(node.getAttribute("data-learnr2-question"));
+        var saved = loadState(data);
+        answers.push({
+          id: data.id,
+          // Choice questions save an array of picked texts in
+          // `saved.selected`; an image-paste reflection saves the screenshot
+          // as a data-URL string (WebP/JPEG) in `saved.image`; everything else saves
+          // a string in `saved.value`. For an image-paste answer the data
+          // URL *is* the answer we record. A submitted but empty text
+          // answer is "", distinct from the null of a never-submitted one.
+          answer: saved
+            ? (saved.selected || saved.image || (typeof saved.value === "string" ? saved.value : null))
+            : null
+        });
+      });
+
+    function header(key) {
+      return typeof data[key] === "string" ? data[key] : null;
+    }
+    var loadedFrom = loadState({ id: LOADED_FROM_ID });
+    var payload = {
+      package: header("package"),
+      version: header("version"),
+      tutorial: header("tutorial"),
+      title: header("title"),
+      learnr2Version: header("learnr2Version"),
+      page: window.location.href,
+      info: info,
+      answers: answers,
+      metadata: captureMetadata(),
+      time: encodeDownloadTime(),
+      progress: progressSummary(),
+      loadedFrom: loadedFrom && typeof loadedFrom === "object" ? loadedFrom : null,
+      fingerprint: null
+    };
+    payload.fingerprint = await sha256Hex(canonicalSubmission(payload));
+    return payload;
+  }
+
+  function triggerDownload(filename, dataObj) {
+    var json = JSON.stringify(dataObj, null, 2);
+    var blob = new Blob([json], { type: "application/json" });
+    var url = URL.createObjectURL(blob);
+    var link = el("a", { href: url, download: filename });
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    // Revoking synchronously after click() can cancel the download in some
+    // browsers; give it a moment to start.
+    window.setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+  }
+
+  // The download itself, shared by the end-of-tutorial button and the
+  // always-reachable control beside Start Over: refused until student info
+  // is submitted, confirmed when anything is unanswered, naming only the
+  // unanswered questions the reader can see.
+  async function downloadAnswers(data, error) {
+    if (infoPending()) {
+      error.textContent = t("download_blocked");
+      error.classList.remove("d-none");
+      return;
+    }
+    error.classList.add("d-none");
+
+    var unanswered = unansweredQuestions();
+    if (unanswered.visible.length > 0 || unanswered.hidden > 0) {
+      var parts = [];
+      if (unanswered.visible.length > 0) {
+        parts.push(tn("download_unanswered", unanswered.visible.length, { list: unanswered.visible.join("; ") }));
+      }
+      if (unanswered.hidden > 0) {
+        parts.push(tn("download_unreached", unanswered.hidden));
+      }
+      parts.push(t("download_anyway_question"));
+      var confirmed = await showConfirmDialog(parts.join(" "), t("download_anyway"));
+      if (!confirmed) {
+        return;
+      }
+    }
+
+    var payload = await collectAnswers(data);
+    var stamp = new Date().toISOString().replace(/[:.]/g, "-");
+    triggerDownload(data.filenamePrefix + "-" + stamp + ".json", payload);
+  }
+
+  function buildDownloadButton(node, data) {
+    var button = el("button", { type: "button", class: "learnr2-download-answers-btn", text: labelOr(data.label, "download_answers") });
+    var error = el("div", { class: "learnr2-download-error d-none" });
+    button.addEventListener("click", function () { downloadAnswers(data, error); });
+    node.appendChild(button);
+    node.appendChild(error);
+  }
+
+  function renderDownloadButton(node) {
+    renderWidget(node, "data-learnr2-download", function (node, data) {
+      node.classList.add("learnr2-download-rendered");
+      buildDownloadButton(node, data);
+    });
+  }
+
+  function renderQuestion(node) {
+    renderWidget(node, "data-learnr2-question", function (node, data) {
+      node.classList.add("learnr2-question-rendered");
+      // show_text = FALSE: the prompt is written on the page itself, so keep
+      // it out of the box visually, but leave it in the DOM for screen
+      // readers -- it is what the inputs' aria-labelledby points at.
+      var textClass =
+        data.showText === false ? "learnr2-question-text learnr2-visually-hidden" : "learnr2-question-text";
+      node.appendChild(el("div", { class: textClass, id: questionTextId(data), text: data.text }));
+
+      if (data.type === "text") {
+        buildTextQuestion(node, data);
+      } else if (data.type === "reflection" || data.type === "reflection_editable") {
+        buildReflectionQuestion(node, data);
+      } else {
+        buildChoiceQuestion(node, data);
+      }
+    });
+  }
+
+  // ---- Start Over (entire tutorial) ------------------------------------
+  // Clears everything this page saved -- learnr2's own state ("learnr2-"
+  // keys) and quarto-live's exercise persistence ("editor-" keys) -- but
+  // not the device id, which belongs to the browser, not this tutorial.
+  function clearAllProgress() {
+    var prefixes = ["learnr2-" + pageUrl + "#", "editor-" + pageUrl + "#"];
+    storageKeys().forEach(function (key) {
+      if (key && prefixes.some(function (prefix) { return key.indexOf(prefix) === 0; })) {
+        try {
+          window.localStorage.removeItem(key);
+        } catch (e) {
+          // Storage blocked: nothing was saved there to clear.
+        }
+      }
+    });
+  }
+
+  // An in-page <dialog> instead of window.confirm(): VS Code's Simple
+  // Browser webview, where the R Tutorials extension can open a tutorial,
+  // resolves window.confirm() to false without showing anything, which
+  // made Start Over look dead. Page content renders everywhere the page
+  // does.
+  function showConfirmDialog(message, confirmLabel) {
+    return new Promise(function (resolve) {
+      var settled = false;
+      // Give focus back to whatever opened the dialog (Start Over, the
+      // download button) once it closes, instead of dropping it on <body>.
+      var opener = document.activeElement;
+      function settle(result) {
+        if (settled) {
+          return;
+        }
+        settled = true;
+        dialog.close();
+        dialog.remove();
+        if (opener && typeof opener.focus === "function" && document.contains(opener)) {
+          opener.focus();
+        }
+        resolve(result);
+      }
+      var cancelButton = el("button", { type: "button", class: "learnr2-confirm-dialog-cancel", text: t("cancel") });
+      var confirmButton = el("button", { type: "button", class: "learnr2-confirm-dialog-confirm", text: confirmLabel });
+      cancelButton.addEventListener("click", function () { settle(false); });
+      confirmButton.addEventListener("click", function () { settle(true); });
+      var dialog = el("dialog", { class: "learnr2-confirm-dialog" }, [
+        el("p", { class: "learnr2-confirm-dialog-message", text: message }),
+        el("div", { class: "learnr2-confirm-dialog-actions" }, [cancelButton, confirmButton])
+      ]);
+      // Esc, or any other way the dialog closes itself, is a dismissal.
+      dialog.addEventListener("cancel", function () { settle(false); });
+      dialog.addEventListener("close", function () { settle(false); });
+      document.body.appendChild(dialog);
+      dialog.showModal();
+      confirmButton.focus();
+    });
+  }
+
+  // Where Start Over and Load Answers live: the bottom of Quarto's TOC
+  // sidebar when it is actually showing, otherwise right after the title
+  // block, outside every section so the progressive reveal never hides
+  // them. "Showing", not "exists": with `toc: true` the sidebar element is
+  // still there on a phone, where Quarto's stylesheet hides it below 768px.
+  // getClientRects() is empty for anything display: none.
+  function sidebarShowing() {
+    var sidebar = document.getElementById("quarto-margin-sidebar");
+    return sidebar && sidebar.getClientRects().length > 0 ? sidebar : null;
+  }
+
+  function placeStartOverButton(container) {
+    var sidebar = sidebarShowing();
+    if (sidebar) {
+      container.classList.remove("learnr2-start-over-top");
+      sidebar.appendChild(container);
+      return;
+    }
+    container.classList.add("learnr2-start-over-top");
+    var header = document.getElementById("title-block-header");
+    if (header && header.parentNode) {
+      header.parentNode.insertBefore(container, header.nextSibling);
+      return;
+    }
+    var main = document.getElementById("quarto-document-content") || document.body;
+    main.insertBefore(container, main.firstChild);
+  }
+
+  // ---- Load Answers (restore a downloaded file in the browser) ----------
+  // The in-page counterpart of learnr2::load_tutorial(): a reader hands
+  // back the JSON they downloaded (chosen with the button, or dropped on the
+  // page) and every answer in it whose id matches a widget on this page is
+  // saved as if they had just submitted it, then the page reloads. Needs no
+  // R, so it works on a GitHub Pages copy too. The stored shapes are those
+  // the builders above save and restore from; keep the two in step.
+
+  // The decoded payload of `node`'s `attr`, or null for a broken one.
+  function decodeAttr(node, attr) {
+    try {
+      return decodeBase64Json(node.getAttribute(attr));
+    } catch (e) {
+      return null;
+    }
+  }
+
+  // id -> { kind, data } for everything on the page an answer can go to.
+  function pageWidgets() {
+    var widgets = {};
+    document.querySelectorAll(".learnr2-question[data-learnr2-question]").forEach(function (node) {
+      var data = decodeAttr(node, "data-learnr2-question");
+      if (data) {
+        widgets[data.id] = { kind: "question", data: data };
+      }
+    });
+    document.querySelectorAll('script[type^="webr-"][type$="-contents"]').forEach(function (script) {
+      try {
+        var attr = decodeBase64Json(script.textContent).attr || {};
+        if (attr.exercise && attr.persist) {
+          widgets[attr.exercise] = { kind: "exercise", storageId: attr.id || script.type };
+        }
+      } catch (e) { /* not an exercise cell */ }
+    });
+    return widgets;
+  }
+
+  function infoForms() {
+    return Array.prototype.map.call(
+      document.querySelectorAll(".learnr2-info[data-learnr2-info]"),
+      function (node) { return decodeAttr(node, "data-learnr2-info"); }
+    ).filter(Boolean);
+  }
+
+  // What this page's download button says a download from it is for.
+  function pageTutorialName() {
+    var node = document.querySelector(".learnr2-download-answers[data-learnr2-download]");
+    var data = node && decodeAttr(node, "data-learnr2-download");
+    return (data && data.tutorial) || null;
+  }
+
+  // The saved state for one downloaded answer, or null when it matches
+  // nothing. Mirrors restore_entries() in R/load_tutorial.R.
+  function restoredState(widget, answer) {
+    if (widget.kind === "exercise") {
+      return { key: "editor-" + pageUrl + "#" + widget.storageId, value: String(answer), raw: true };
+    }
+    var data = widget.data;
+    var state;
+    if (data.type === "single" || data.type === "multiple") {
+      state = { selected: Array.isArray(answer) ? answer.map(String) : [String(answer)] };
+    } else if (data.type === "text") {
+      state = { value: String(answer) };
+    } else if (typeof answer === "string" && answer.indexOf("data:image/") === 0) {
+      state = { value: "", image: answer, submitted: true };
+    } else {
+      state = { value: String(answer), submitted: true };
+    }
+    return { key: storageKey(data), value: state, raw: false };
+  }
+
+  function planRestore(file) {
+    var widgets = pageWidgets();
+    var entries = [];
+    var dropped = [];
+    (file.answers || []).forEach(function (a) {
+      if (!a || typeof a.id !== "string" || a.answer === null || a.answer === undefined) {
+        return;
+      }
+      var widget = widgets[a.id];
+      if (widget) {
+        entries.push(restoredState(widget, a.answer));
+      } else {
+        dropped.push(a.id);
+      }
+    });
+    if (file.info && typeof file.info === "object") {
+      infoForms().forEach(function (form) {
+        var state = {};
+        var any = false;
+        form.fields.forEach(function (field) {
+          if (typeof file.info[field.key] === "string") {
+            state[field.key] = file.info[field.key];
+            any = true;
+          }
+        });
+        if (any) {
+          state.submitted = true;
+          entries.push({ key: storageKey(form), value: state, raw: false });
+        }
+      });
+    }
+    return { entries: entries, dropped: dropped };
+  }
+
+  function loadAnswersFile(fileObject, status) {
+    var reader = new FileReader();
+    reader.onload = function () {
+      var file = null;
+      try {
+        file = JSON.parse(reader.result);
+      } catch (e) { /* reported below */ }
+      if (!file || typeof file !== "object" || !Array.isArray(file.answers)) {
+        status.textContent = t("load_answers_invalid", { file: fileObject.name });
+        status.classList.remove("d-none");
+        return;
+      }
+      status.classList.add("d-none");
+      var plan = planRestore(file);
+      var question = "";
+      var here = pageTutorialName();
+      if (typeof file.tutorial === "string" && here && file.tutorial !== here) {
+        question = t("load_answers_other_tutorial", { file: fileObject.name, tutorial: file.tutorial }) + " ";
+      }
+      question += t("load_answers_confirm", { n: plan.entries.length, file: fileObject.name });
+      if (plan.dropped.length > 0) {
+        question += " " + t("load_answers_dropped", { n: plan.dropped.length, list: plan.dropped.join(", ") });
+      }
+      showConfirmDialog(question, t("load_answers")).then(function (confirmed) {
+        if (!confirmed) {
+          return;
+        }
+        clearAllProgress();
+        var ok = true;
+        plan.entries.push({ key: storageKey({ id: LOADED_FROM_ID }), value: provenanceOf(file), raw: false });
+        plan.entries.forEach(function (entry) {
+          try {
+            window.localStorage.setItem(entry.key, entry.raw ? entry.value : JSON.stringify(entry.value));
+          } catch (e) {
+            ok = false;
+            reportStorageFailure(e);
+          }
+        });
+        if (ok) {
+          window.location.reload();
+        }
+      });
+    };
+    reader.readAsText(fileObject);
+  }
+
+  function isAnswersFile(fileObject) {
+    return !!fileObject && (/\.json$/i.test(fileObject.name) || fileObject.type === "application/json");
+  }
+
+  function injectStartOverButton() {
+    if (document.querySelector(".learnr2-start-over")) {
+      return;
+    }
+    var button = el("button", { type: "button", class: "learnr2-start-over", text: t("start_over") });
+    button.addEventListener("click", function () {
+      showConfirmDialog(t("start_over_confirm"), t("start_over")).then(function (confirmed) {
+        if (!confirmed) {
+          return;
+        }
+        clearAllProgress();
+        window.location.reload();
+      });
+    });
+
+    // Load Answers: a hidden file input behind a button styled like Start
+    // Over, plus drag-and-drop of a .json anywhere on the page.
+    var input = el("input", { type: "file", accept: "application/json,.json", class: "learnr2-load-answers-input d-none" });
+    var load = el("button", { type: "button", class: "learnr2-load-answers", text: t("load_answers"), title: t("load_answers_drop_hint") });
+    var status = makeStatus("learnr2-load-answers-error");
+    load.addEventListener("click", function () { input.click(); });
+    input.addEventListener("change", function () {
+      if (input.files && input.files[0]) {
+        loadAnswersFile(input.files[0], status);
+        input.value = "";
+      }
+    });
+    document.addEventListener("dragover", function (event) {
+      var items = event.dataTransfer && event.dataTransfer.items;
+      if (items && items.length > 0 && items[0].kind === "file") {
+        event.preventDefault();
+      }
+    });
+    document.addEventListener("drop", function (event) {
+      var files = event.dataTransfer && event.dataTransfer.files;
+      if (files && files.length > 0 && isAnswersFile(files[0])) {
+        event.preventDefault();
+        loadAnswersFile(files[0], status);
+      }
+    });
+
+    // Download Answers, reachable from any point in the tutorial without
+    // revealing anything: a student who stops early can still hand in what
+    // they did. Present only when the page has a download_answers_button(),
+    // whose payload names the file and the tutorial.
+    var children = [load, button, input, status];
+    var downloadNode = document.querySelector(".learnr2-download-answers[data-learnr2-download]");
+    var downloadData = downloadNode && decodeAttr(downloadNode, "data-learnr2-download");
+    if (downloadData) {
+      var downloadError = el("div", { class: "learnr2-download-link-error d-none" });
+      var download = el("button", { type: "button", class: "learnr2-download-link", text: t("download_answers_short") });
+      download.addEventListener("click", function () { downloadAnswers(downloadData, downloadError); });
+      children = [download, load, button, input, status, downloadError];
+    }
+    var container = el("div", { class: "learnr2-start-over-container" }, children);
+    placeStartOverButton(container);
+    // The sidebar can appear or disappear after load (a window resized
+    // across Quarto's breakpoint, a phone rotated), so follow it. Moving
+    // the same node keeps its click handler; nothing is rebuilt.
+    var resizeTimer = null;
+    window.addEventListener("resize", function () {
+      window.clearTimeout(resizeTimer);
+      resizeTimer = window.setTimeout(function () { placeStartOverButton(container); }, 100);
+    });
+  }
+
+  // ---- Tutorial-wide options --------------------------------------------
+  // learnr2::tutorial_options() renders a hidden <div class="learnr2-options">
+  // carrying base64 JSON, the same way question()/student_info() carry
+  // their payloads. Every option has a default here, so a page with no
+  // such element behaves as documented in tutorial_options()'s help.
+  var OPTION_DEFAULTS = { allowSkip: false, requireSubmission: true };
+
+  function readTutorialOptions() {
+    var options = Object.assign({}, OPTION_DEFAULTS);
+    document.querySelectorAll(".learnr2-options[data-learnr2-options]").forEach(function (node) {
+      try {
+        Object.assign(options, decodeBase64Json(node.getAttribute("data-learnr2-options")));
+      } catch (e) {
+        // A malformed payload leaves the defaults in place.
+      }
+    });
+    return options;
+  }
+
+  // ---- Progressive section reveal ("Continue" buttons) ------------------
+  // Every ## and ### heading is a gated section, hidden until the Continue
+  // at the end of the section before it. Quarto wraps each heading and its
+  // content in <section class="level2|level3">, nested for subsections, so
+  // a locked nested section stays hidden when its parent is revealed. The
+  // rules below were checked against real renders, not only the fixtures;
+  // AGENTS.md, "Progressive reveal", records what each one fixed.
+  var PROGRESS_ID = "progressive-sections";
+
+  function sectionHeading(section) {
+    return section.querySelector("h2, h3");
+  }
+
+  // The heading's visible text, or "" for a bare `###` divider (see
+  // markPauseSections() below).
+  function sectionTitle(section) {
+    var heading = sectionHeading(section);
+    return heading ? heading.textContent.trim() : "";
+  }
+
+  // A bare `###` (tutorial.helpers' pacing break) renders as a section
+  // with an empty <h3> and an id like "section-1". It gates like any other;
+  // marking it lets CSS hide the empty heading and the button read plain
+  // "Continue".
+  function markPauseSections(sections) {
+    sections.forEach(function (section) {
+      if (sectionTitle(section) === "") {
+        section.classList.add("learnr2-pause");
+      }
+    });
+  }
+
+  // Where the "Continue to <next>" button for `section` belongs: as its own
+  // last child, unless `next` sits *inside* `section` (the nested-subsection
+  // case above), in which case the button goes right before whichever of
+  // `next`'s ancestors is `section`'s own direct child -- so it lands after
+  // `section`'s own intro content but before its first subsection, not after
+  // every subsection that follows.
+  function continueButtonAnchor(section, next) {
+    if (!section.contains(next)) {
+      return null;
+    }
+    var node = next;
+    while (node.parentElement !== section) {
+      node = node.parentElement;
+    }
+    return node;
+  }
+
+  function initProgressiveSections() {
+    var sections = Array.prototype.slice.call(
+      document.querySelectorAll("section.level2, section.level3")
+    ).filter(function (section) {
+      // A "### Hints"/"### Solutions" section is quarto-live's rendering of
+      // a .hint/.solution div: an aside the reader toggles, already hidden
+      // by quarto-live, not a step of its own. Left out of the gated list,
+      // it appears with its exercise. Checked on level3 only: the enclosing
+      // level2 would match querySelector too and be wrongly excluded.
+      if (section.classList.contains("level3") &&
+          section.querySelector(".exercise-hint, .exercise-solution")) {
+        return false;
+      }
+      // A subsection directly after its parent's heading is revealed with
+      // that heading: gating it put a Continue under a title with nothing
+      // above it to read. Every Continue sits at the end of real content.
+      var parent = section.parentElement;
+      var heading = parent && parent.tagName === "SECTION" ? sectionHeading(parent) : null;
+      if (heading && section.previousElementSibling === heading) {
+        return false;
+      }
+      return true;
+    });
+    // Every headingless section, not just the gated ones: an ungated first
+    // "###" still has an empty <h3> to hide, or it shows as a blank band.
+    markPauseSections(Array.prototype.slice.call(
+      document.querySelectorAll("section.level2, section.level3")
+    ));
+    // Nothing to gate: a one-section tutorial (or one with no headings at
+    // all) already shows everything there is to show.
+    if (sections.length < 2) {
+      return;
+    }
+    gatedSections = sections;
+
+    var saved = loadState({ id: PROGRESS_ID });
+    // Clamp -- a tutorial edited to have fewer sections since this was saved
+    // shouldn't leave every remaining section permanently hidden.
+    var unlocked = Math.min(Math.max(typeof saved === "number" ? saved : 1, 1), sections.length);
+    // Answers put back by learnr2::load_tutorial() arrive with no saved
+    // progress. A section holding a submitted widget was necessarily
+    // reached, so open through the last such section; the Continue after
+    // it then waits on whatever is still pending there, as usual. In
+    // normal use every submitted widget is already in an unlocked section,
+    // so this changes nothing.
+    var lastAnswered = -1;
+    sections.forEach(function (section, i) {
+      var widgets = section.querySelectorAll(
+        ".learnr2-question[data-learnr2-question], .learnr2-info[data-learnr2-info]"
+      );
+      if (Array.prototype.some.call(widgets, function (node) { return !widgetPending(node); })) {
+        lastAnswered = i;
+      }
+    });
+    if (lastAnswered + 1 > unlocked) {
+      unlocked = Math.min(lastAnswered + 1, sections.length);
+      saveState({ id: PROGRESS_ID }, unlocked);
+    }
+
+    var options = readTutorialOptions();
+    var toc = document.getElementById("quarto-margin-sidebar");
+
+    // The gated section a TOC link points at: the deepest one that is, or
+    // contains, the link's target. Scan from the end, not the start: a
+    // nested section's ancestor (e.g. "Running R Code" containing
+    // "Exercise 2") also satisfies `.contains(target)`, but at a lower,
+    // too-shallow index -- the last (most specific) match is the real one.
+    // -1 for a link that points outside every gated section.
+    function sectionIndexForLink(link) {
+      var href = link.getAttribute("href") || "";
+      if (href.charAt(0) !== "#" || href.length < 2) {
+        return -1;
+      }
+      var target = document.getElementById(decodeURIComponent(href.slice(1)));
+      if (!target) {
+        return -1;
+      }
+      for (var i = sections.length - 1; i >= 0; i--) {
+        if (sections[i] === target || sections[i].contains(target)) {
+          return i;
+        }
+      }
+      return -1;
+    }
+
+    // Without allow_skip, a TOC entry for a section the reader hasn't
+    // reached is dimmed and inert (styled via .learnr2-toc-locked, taken out
+    // of the tab order, flagged for assistive tech), and turns back into an
+    // ordinary link the moment its section unlocks. Re-run on every
+    // visibility change so the sidebar always mirrors the page.
+    function applyTocLocks() {
+      if (!toc || options.allowSkip) {
+        return;
+      }
+      toc.querySelectorAll('a[href^="#"]').forEach(function (link) {
+        var index = sectionIndexForLink(link);
+        var locked = index !== -1 && index >= unlocked;
+        link.classList.toggle("learnr2-toc-locked", locked);
+        if (locked) {
+          link.setAttribute("aria-disabled", "true");
+          link.setAttribute("tabindex", "-1");
+        } else {
+          link.removeAttribute("aria-disabled");
+          link.removeAttribute("tabindex");
+        }
+      });
+    }
+
+    function applyVisibility() {
+      sections.forEach(function (section, i) {
+        section.classList.toggle("d-none", i >= unlocked);
+      });
+      applyTocLocks();
+    }
+
+    function clearContinueButtons() {
+      document.querySelectorAll(".learnr2-continue-container").forEach(function (node) {
+        node.parentNode.removeChild(node);
+      });
+    }
+
+    // The widgets a Continue button waits on, with require_submission (the
+    // default): every question() and student_info() inside `section` that
+    // sits *before* `container` in document order -- i.e. above the button.
+    // Anything below it belongs to a later stop and gets its own gate. A
+    // widget counts as submitted when it has saved state (saveState() only
+    // runs from a submit handler; student_info() autosaves as the reader
+    // types, so for it the saved `submitted` flag is what matters).
+    function pendingWidgets(section, container) {
+      if (!options.requireSubmission) {
+        return [];
+      }
+      var nodes = section.querySelectorAll(
+        ".learnr2-question[data-learnr2-question], .learnr2-info[data-learnr2-info]"
+      );
+      return Array.prototype.filter.call(nodes, function (node) {
+        if (!(container.compareDocumentPosition(node) & Node.DOCUMENT_POSITION_PRECEDING)) {
+          return false;
+        }
+        return widgetPending(node);
+      });
+    }
+
+    // Disable or enable the current Continue button according to what is
+    // still unsubmitted above it. Re-run after every submit click.
+    var gate = null;
+    function refreshContinueGate() {
+      if (!gate || !gate.container.parentNode) {
+        return;
+      }
+      var pending = pendingWidgets(gate.section, gate.container);
+      var locked = pending.length > 0;
+      gate.button.disabled = locked;
+      gate.container.classList.toggle("learnr2-continue-locked", locked);
+      gate.note.textContent = locked ? tn("continue_note", pending.length) : "";
+      gate.note.classList.toggle("d-none", !locked);
+    }
+
+    function placeContinueButton() {
+      clearContinueButtons();
+      if (unlocked >= sections.length) {
+        return;
+      }
+      var current = sections[unlocked - 1];
+      var next = sections[unlocked];
+      var title = sectionTitle(next);
+      var button = el("button", {
+        type: "button",
+        class: "learnr2-continue",
+        text: title ? t("continue_to", { title: title }) : t("continue")
+      });
+      button.addEventListener("click", function () {
+        if (button.disabled) {
+          return;
+        }
+        unlockThrough(unlocked, true);
+      });
+      var note = el("div", { class: "learnr2-continue-note d-none" });
+      var container = el("div", { class: "learnr2-continue-container" }, [button, note]);
+
+      var anchor = continueButtonAnchor(current, next);
+      if (anchor) {
+        current.insertBefore(container, anchor);
+      } else {
+        current.appendChild(container);
+      }
+      gate = { section: current, container: container, button: button, note: note };
+      refreshContinueGate();
+    }
+
+    // `index` is the 0-based section to reveal. `scroll` is true only for an
+    // explicit Continue click -- a TOC link's own default action already
+    // scrolls to its target once that target stops being display:none, so a
+    // second, JS-driven scroll there would just fight the native one.
+    function unlockThrough(index, scroll) {
+      if (index + 1 <= unlocked) {
+        return;
+      }
+      unlocked = index + 1;
+      saveState({ id: PROGRESS_ID }, unlocked);
+      applyVisibility();
+      placeContinueButton();
+      if (scroll) {
+        var heading = sectionHeading(sections[index]);
+        if (heading) {
+          heading.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      }
+    }
+
+    applyVisibility();
+    placeContinueButton();
+
+    // Any button inside a widget -- Submit, Try Again, Edit, a screenshot
+    // question's Edit, Remove image -- can change whether the widget counts
+    // as submitted. Its own click handler saves or clears state
+    // synchronously, and this document-level listener runs after it, so a
+    // zero-delay timeout is enough to observe the new state. Matching
+    // "any button in a widget" rather than a list of button classes is
+    // deliberate: the list once missed the screenshot Edit button, which
+    // reopened the question while Continue stayed enabled.
+    document.addEventListener("click", function (event) {
+      var target = event.target;
+      if (target && target.closest && target.closest(".learnr2-question button, .learnr2-info button")) {
+        window.setTimeout(refreshContinueGate, 0);
+      }
+    });
+
+    // Quarto's own TOC sidebar links jump straight to a heading's id via a
+    // plain <a href="#id">, bypassing Continue entirely. What happens next
+    // is the author's call, via learnr2::tutorial_options(allow_skip = ...):
+    //
+    // * allow_skip = TRUE: honour the click as a deliberate skip-ahead and
+    //   unlock every section through the target (classic learnr's
+    //   `allow_skip: yes`), rather than leaving the reader looking at a hash
+    //   change with nothing visible to show for it.
+    // * allow_skip = FALSE (the default): a link to a still-locked section
+    //   is inert -- its default hash jump is cancelled too, so the URL
+    //   doesn't change and nothing scrolls. applyTocLocks() has already
+    //   dimmed it and removed it from the tab order; the preventDefault here
+    //   is for a click that gets through anyway (keyboard activation of a
+    //   focused link, a stale pointer). Links to unlocked sections behave as
+    //   ordinary navigation.
+    if (toc) {
+      toc.addEventListener("click", function (event) {
+        var link = event.target;
+        while (link && link !== toc && link.tagName !== "A") {
+          link = link.parentElement;
+        }
+        if (!link || link.tagName !== "A") {
+          return;
+        }
+        var index = sectionIndexForLink(link);
+        if (index === -1) {
+          return;
+        }
+        if (options.allowSkip) {
+          unlockThrough(index, false);
+        } else if (index >= unlocked) {
+          event.preventDefault();
+        }
+      });
+    }
+  }
+
+  // Every link that leaves the page opens in a new tab, so following one
+  // never makes the tutorial "disappear" -- which worried students, and
+  // whose answers live in this page's localStorage. In-page links (the
+  // table of contents, footnotes: href starting "#"), download links, and
+  // mailto:/javascript: links are left alone. Quarto's own
+  // link-external-newwindow option would only catch other sites; a link to
+  // another page on the same site (the tutorial index on GitHub Pages)
+  // would still replace this one.
+  function openLinksInNewTabs() {
+    document.querySelectorAll("a[href]").forEach(function (link) {
+      var href = link.getAttribute("href") || "";
+      if (href === "" || href.charAt(0) === "#" || link.hasAttribute("download") ||
+          /^(mailto|javascript|tel):/i.test(href)) {
+        return;
+      }
+      link.setAttribute("target", "_blank");
+      link.setAttribute("rel", "noopener noreferrer");
+    });
+  }
+
+  // quarto-live's exercise buttons -- Run Code, Show Hint, Next Hint, Show
+  // Solution, Start Over -- and its cell captions -- Exercise, R Code,
+  // Python Code -- are English literals inside its minified bundle with no
+  // option to change them (r-wasm/quarto-live#3 and #74, open since 2024;
+  // a PR adding i18next-based translation is pending). Each editor builds
+  // its header when its OJS cell runs, after this script, so they are
+  // relabelled as they appear. The English text is the only stable
+  // handle: the buttons share their classes except Run Code, and the
+  // caption is a bare <div>. Skipped entirely when the page is in English.
+  var LIVE_LABELS = {
+    "Run Code": "run_code",
+    "Show Hint": "show_hint",
+    "Next Hint": "next_hint",
+    "Show Solution": "show_solution",
+    "Start Over": "start_over",
+    "Exercise": "caption_exercise",
+    "R Code": "caption_r",
+    "Python Code": "caption_python"
+  };
+  var LIVE_LABEL_SELECTOR =
+    "span.btn-label-exercise-editor, .exercise-editor-header > div:first-child > div:first-child";
+
+  function relabelLiveButton(node) {
+    var key = LIVE_LABELS[node.textContent.trim()];
+    if (!key) {
+      return;
+    }
+    node.textContent = t(key);
+    var button = node.closest("[role=button]");
+    if (button) {
+      button.setAttribute("aria-label", t(key));
+    }
+  }
+
+  function relabelLiveButtons() {
+    var english = Object.keys(LIVE_LABELS).every(function (text) {
+      return t(LIVE_LABELS[text]) === text;
+    });
+    if (english || !window.MutationObserver) {
+      return;
+    }
+    document.querySelectorAll(LIVE_LABEL_SELECTOR).forEach(relabelLiveButton);
+    new MutationObserver(function (mutations) {
+      mutations.forEach(function (mutation) {
+        Array.prototype.forEach.call(mutation.addedNodes, function (node) {
+          if (node.nodeType !== 1) {
+            return;
+          }
+          if (node.matches(LIVE_LABEL_SELECTOR)) {
+            relabelLiveButton(node);
+          }
+          node.querySelectorAll(LIVE_LABEL_SELECTOR).forEach(relabelLiveButton);
+        });
+      });
+    }).observe(document.body, { childList: true, subtree: true });
+  }
+
+  var initialized = false;
+  function init() {
+    // The page-level listeners below (document click, TOC click, resize)
+    // must be added once; a second init() would stack them.
+    if (initialized) {
+      return;
+    }
+    initialized = true;
+    // Before any widget renders: everything below reads t().
+    initStrings();
+    document
+      .querySelectorAll(".learnr2-question:not([data-learnr2-initialized])")
+      .forEach(renderQuestion);
+    document
+      .querySelectorAll(".learnr2-info:not([data-learnr2-initialized])")
+      .forEach(renderInfo);
+    document
+      .querySelectorAll(".learnr2-download-answers:not([data-learnr2-initialized])")
+      .forEach(renderDownloadButton);
+    injectStartOverButton();
+    initProgressiveSections();
+    openLinksInNewTabs();
+    relabelLiveButtons();
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init);
+  } else {
+    init();
+  }
+})();
