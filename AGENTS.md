@@ -268,6 +268,13 @@ subsections) behind a Continue button. Verified against real renders.
   `restoredState()` builds the same shapes; the two must stay in step
   with the builders' saved formats. It clears the tutorial's storage
   first, so a load is a restart from the file, then reloads.
+- **Download from anywhere, reveal nothing** (2026-11). The utility
+  control beside Start Over calls the same `downloadAnswers()` as the end
+  button; hidden sections are in the DOM, so nothing need unlock. The
+  confirmation names only unanswered questions outside `section.d-none`
+  and counts the rest (`unansweredQuestions()`): listing them all would
+  read the unseen tutorial aloud. `progress` (sections revealed of gated,
+  answers of questions) is in the file and in the fingerprint.
 - **Fingerprint and provenance are tamper-evident, not tamper-proof**
   (2026-11). `fingerprint` is SHA-256 of `canonicalSubmission()`'s text
   (quiz.js) and `canonical_submission()` (R/submission.R) must produce

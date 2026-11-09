@@ -331,7 +331,8 @@ section.learnr2-pause > h3 {
 }
 
 .learnr2-start-over,
-.learnr2-load-answers {
+.learnr2-load-answers,
+.learnr2-download-link {
   width: auto;
   padding: 0.1rem 0.5rem;
   border: none;
@@ -342,15 +343,27 @@ section.learnr2-pause > h3 {
 }
 
 .learnr2-start-over:hover,
-.learnr2-load-answers:hover {
+.learnr2-load-answers:hover,
+.learnr2-download-link:hover {
   color: #343a40;
   text-decoration: underline;
 }
 
-/* Load Answers sits beside Start Over, styled the same; its error (a file
-   that isn't an answers file) appears under the two. */
-.learnr2-load-answers {
-  margin-right: 0.75rem;
+/* Download Answers, Load Answers and Start Over sit in a row; their
+   errors appear under the row. */
+.learnr2-start-over-container button + button {
+  margin-left: 0.75rem;
+}
+
+.learnr2-download-link-error {
+  margin-top: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.3rem;
+  font-size: 0.8rem;
+  text-align: left;
+  background: #f8d7da;
+  color: #58151c;
+  border: 1px solid #f1aeb5;
 }
 
 .learnr2-load-answers-error {

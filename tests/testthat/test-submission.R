@@ -234,10 +234,11 @@ fingerprint_fixture <- function() list(
   info = list(name = "Ada", email = "ada@example.com", id = NULL),
   answers = list(list(id = "q1", answer = list("a", "b")), list(id = "q2", answer = "Because."),
                  list(id = "q3", answer = NULL)),
+  progress = list(sections = 2, of = 5, answered = 2, of_questions = 3),
   loadedFrom = NULL
 )
 fingerprint_canonical <- paste(c(
-  "learnr2-fingerprint-v1", "time=abc", "device=dev-1", "loadedFrom=",
+  "learnr2-fingerprint-v1", "time=abc", "device=dev-1", "loadedFrom=", "progress=2/5/2/3",
   "info.email=ada@example.com", "info.id=", "info.name=Ada",
   "answer.q1=a\u001fb", "answer.q2=Because.", "answer.q3=<null>"
 ), collapse = "\n")
@@ -264,9 +265,15 @@ test_that("check_submission() tells a pristine file from an edited one, and repo
   skip_if_not(exists("sha256sum", asNamespace("tools")))
   dir <- withr::local_tempdir()
   expect_message(res <- check_submission(write_fingerprinted(dir)), "Fingerprint: valid")
+  expect_message(check_submission(write_fingerprinted(dir)), "Progress: section 2 of 5, 2 of 3 questions answered")
   expect_equal(res$fingerprint, "valid")
   expect_equal(res$name, "Ada")
+  expect_equal(res$progress$answered, 2)
   expect_null(res$loaded_from)
+  # A file with no progress block (an ungated page, or an older download).
+  no_progress <- write_fingerprinted(dir, function(f) { f$progress <- NULL; f$fingerprint <- learnr2:::sha256_text(learnr2:::canonical_submission(f)); f })
+  expect_message(res <- check_submission(no_progress), "Progress: not recorded")
+  expect_equal(res$fingerprint, "valid")
 
   edited <- write_fingerprinted(dir, function(f) { f$info$name <- "Bob"; f })
   expect_message(res <- check_submission(edited), "Fingerprint: INVALID")

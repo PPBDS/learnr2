@@ -11,10 +11,11 @@ check_submission(path)
 }
 \value{
 Invisibly, a list: \code{time} (POSIXct, UTC, or \code{NULL}), \code{name},
-\code{email}, \code{device} (the per-device id), \code{fingerprint} (one of
-\code{"valid"}, \code{"invalid"}, \code{"missing"}, \code{"unchecked"}) and \code{loaded_from}
-(the file's provenance block as a list, or \code{NULL}). Also prints a
-summary.
+\code{email}, \code{device} (the per-device id), \code{progress} (how far the reader
+got: sections revealed and questions answered, as a list, or \code{NULL}),
+\code{fingerprint} (one of \code{"valid"}, \code{"invalid"}, \code{"missing"},
+\code{"unchecked"}) and \code{loaded_from} (the file's provenance block as a
+list, or \code{NULL}). Also prints a summary.
 }
 \description{
 Every file from \code{\link[=download_answers_button]{download_answers_button()}} ends with a \code{fingerprint},

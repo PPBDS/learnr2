@@ -602,6 +602,20 @@ FIXTURES["restore-gated"] = [
   "})();</script>\n"
 ];
 
+// A gated tutorial with student info and a question in the first section,
+// a second question behind a Continue, and the download button at the end:
+// the "download part-way through" case.
+FIXTURES["progressive-download"] = [
+  sectionBlock("topic-one", 2, "Topic one", "<p>Start here.</p>\n" +
+    infoBlock(info({ id: "learnr2-info-student-info" })) +
+    questionBlock(question({ id: "topic-one-1", type: "reflection", text: "First question, visible." })), [
+    sectionBlock("exercise-1", 3, "Exercise 1", "<p>Later.</p>\n" +
+      questionBlock(question({ id: "exercise-1-1", type: "reflection", text: "Second question, hidden." })))
+  ]),
+  sectionBlock("summary", 2, "Summary", "<p>Done.</p>\n" + downloadBlock(downloadButton({ filenamePrefix: "partial" }))),
+  tocScript([["topic-one", "Topic one"], ["exercise-1", "Exercise 1"], ["summary", "Summary"]])
+];
+
 // random_answer_order = TRUE: the options are shuffled on every load.
 FIXTURES["random-order"] = [
   questionBlock(question({

@@ -40,8 +40,8 @@
   "info_fix": "Please fix the highlighted field(s) above.",
   "download_answers": "Download My Answers",
   "download_blocked": "Before downloading, please submit your student information above.",
-  "download_unanswered_one": "You haven't submitted an answer for 1 question: {list}. Download anyway?",
-  "download_unanswered_other": "You haven't submitted an answer for {n} questions: {list}. Download anyway?",
+  "download_unanswered_one": "You haven't submitted an answer for 1 question ({list}).",
+  "download_unanswered_other": "You haven't submitted an answer for {n} questions ({list}).",
   "download_anyway": "Download Anyway",
   "widget_broken": "This part of the tutorial could not be displayed. Reload the page; if that doesn't help, tell your instructor.",
   "noscript_question": "This quiz question requires JavaScript.",
@@ -59,5 +59,9 @@
   "load_answers_other_tutorial": "{file} was downloaded from the tutorial \"{tutorial}\", not this one. Load its answers here anyway?",
   "load_answers_dropped": "{n} answer(s) in the file match nothing on this page and will be left out: {list}.",
   "load_answers_invalid": "{file} is not a learnr2 answers file.",
-  "load_answers_drop_hint": "Or drop a downloaded answers file anywhere on the page."
+  "load_answers_drop_hint": "Or drop a downloaded answers file anywhere on the page.",
+  "download_unreached_one": "1 more question is in a section you haven't reached yet.",
+  "download_unreached_other": "{n} more questions are in sections you haven't reached yet.",
+  "download_anyway_question": "Download anyway?",
+  "download_answers_short": "Download Answers"
 }

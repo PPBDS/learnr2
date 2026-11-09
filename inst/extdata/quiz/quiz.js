@@ -63,8 +63,8 @@
     "info_fix": "Please fix the highlighted field(s) above.",
     "download_answers": "Download My Answers",
     "download_blocked": "Before downloading, please submit your student information above.",
-    "download_unanswered_one": "You haven't submitted an answer for 1 question: {list}. Download anyway?",
-    "download_unanswered_other": "You haven't submitted an answer for {n} questions: {list}. Download anyway?",
+    "download_unanswered_one": "You haven't submitted an answer for 1 question ({list}).",
+    "download_unanswered_other": "You haven't submitted an answer for {n} questions ({list}).",
     "download_anyway": "Download Anyway",
     "widget_broken": "This part of the tutorial could not be displayed. Reload the page; if that doesn't help, tell your instructor.",
     "noscript_question": "This quiz question requires JavaScript.",
@@ -82,7 +82,11 @@
     "load_answers_other_tutorial": "{file} was downloaded from the tutorial \"{tutorial}\", not this one. Load its answers here anyway?",
     "load_answers_dropped": "{n} answer(s) in the file match nothing on this page and will be left out: {list}.",
     "load_answers_invalid": "{file} is not a learnr2 answers file.",
-    "load_answers_drop_hint": "Or drop a downloaded answers file anywhere on the page."
+    "load_answers_drop_hint": "Or drop a downloaded answers file anywhere on the page.",
+    "download_unreached_one": "1 more question is in a section you haven't reached yet.",
+    "download_unreached_other": "{n} more questions are in sections you haven't reached yet.",
+    "download_anyway_question": "Download anyway?",
+    "download_answers_short": "Download Answers"
   };
   var STRINGS = Object.assign({}, STRINGS_EN);
 
@@ -1061,14 +1065,40 @@
   // download a partial attempt (see collectAnswers()'s own `answer: null`
   // reporting for exactly that case). It's just what buildDownloadButton
   // warns about before letting an incomplete download through.
-  function unansweredQuestionLabels() {
-    var labels = [];
+  // Split by whether the question is in a section the reader has reached:
+  // the prompts of unreached questions must not be shown (the download
+  // dialog would otherwise read out the rest of the tutorial), so those
+  // are only counted.
+  function unansweredQuestions() {
+    var visible = [];
+    var hidden = 0;
     document.querySelectorAll(".learnr2-question[data-learnr2-question]").forEach(function (node) {
-      if (widgetPending(node)) {
-        labels.push(decodeBase64Json(node.getAttribute("data-learnr2-question")).text);
+      if (!widgetPending(node)) {
+        return;
+      }
+      if (node.closest("section.d-none")) {
+        hidden += 1;
+      } else {
+        visible.push(decodeBase64Json(node.getAttribute("data-learnr2-question")).text);
       }
     });
-    return labels;
+    return { visible: visible, hidden: hidden };
+  }
+
+  // How far the reader got, for the download: sections revealed of those
+  // gated (null when the page has no gating), and questions submitted of
+  // all questions.
+  var gatedSections = [];
+  function progressSummary() {
+    var questions = document.querySelectorAll(".learnr2-question[data-learnr2-question]");
+    var answered = Array.prototype.filter.call(questions, function (node) { return !widgetPending(node); }).length;
+    var revealed = gatedSections.filter(function (section) { return !section.classList.contains("d-none"); }).length;
+    return {
+      sections: gatedSections.length ? revealed : null,
+      of: gatedSections.length ? gatedSections.length : null,
+      answered: answered,
+      of_questions: questions.length
+    };
   }
 
   // Renders one widget from its base64-JSON payload. A payload that can't
@@ -1205,11 +1235,16 @@
   function canonicalSubmission(payload) {
     var from = payload.loadedFrom && typeof payload.loadedFrom.fingerprint === "string"
       ? payload.loadedFrom.fingerprint : "";
+    var p = payload.progress;
+    var progress = p ? [p.sections, p.of, p.answered, p.of_questions].map(function (v) {
+      return v === null || v === undefined ? "" : String(v);
+    }).join("/") : "";
     var lines = [
       FINGERPRINT_HEADER,
       "time=" + payload.time,
       "device=" + payload.metadata.deviceId,
-      "loadedFrom=" + from
+      "loadedFrom=" + from,
+      "progress=" + progress
     ];
     Object.keys(payload.info).sort().forEach(function (key) {
       var v = payload.info[key];
@@ -1320,6 +1355,7 @@
       answers: answers,
       metadata: captureMetadata(),
       time: encodeDownloadTime(),
+      progress: progressSummary(),
       loadedFrom: loadedFrom && typeof loadedFrom === "object" ? loadedFrom : null,
       fingerprint: null
     };
@@ -1340,34 +1376,43 @@
     window.setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
   }
 
+  // The download itself, shared by the end-of-tutorial button and the
+  // always-reachable control beside Start Over: refused until student info
+  // is submitted, confirmed when anything is unanswered, naming only the
+  // unanswered questions the reader can see.
+  async function downloadAnswers(data, error) {
+    if (infoPending()) {
+      error.textContent = t("download_blocked");
+      error.classList.remove("d-none");
+      return;
+    }
+    error.classList.add("d-none");
+
+    var unanswered = unansweredQuestions();
+    if (unanswered.visible.length > 0 || unanswered.hidden > 0) {
+      var parts = [];
+      if (unanswered.visible.length > 0) {
+        parts.push(tn("download_unanswered", unanswered.visible.length, { list: unanswered.visible.join("; ") }));
+      }
+      if (unanswered.hidden > 0) {
+        parts.push(tn("download_unreached", unanswered.hidden));
+      }
+      parts.push(t("download_anyway_question"));
+      var confirmed = await showConfirmDialog(parts.join(" "), t("download_anyway"));
+      if (!confirmed) {
+        return;
+      }
+    }
+
+    var payload = await collectAnswers(data);
+    var stamp = new Date().toISOString().replace(/[:.]/g, "-");
+    triggerDownload(data.filenamePrefix + "-" + stamp + ".json", payload);
+  }
+
   function buildDownloadButton(node, data) {
     var button = el("button", { type: "button", class: "learnr2-download-answers-btn", text: labelOr(data.label, "download_answers") });
     var error = el("div", { class: "learnr2-download-error d-none" });
-
-    button.addEventListener("click", async function () {
-      if (infoPending()) {
-        error.textContent = t("download_blocked");
-        error.classList.remove("d-none");
-        return;
-      }
-      error.classList.add("d-none");
-
-      var unanswered = unansweredQuestionLabels();
-      if (unanswered.length > 0) {
-        var confirmed = await showConfirmDialog(
-          tn("download_unanswered", unanswered.length, { list: unanswered.join("; ") }),
-          t("download_anyway")
-        );
-        if (!confirmed) {
-          return;
-        }
-      }
-
-      var payload = await collectAnswers(data);
-      var stamp = new Date().toISOString().replace(/[:.]/g, "-");
-      triggerDownload(data.filenamePrefix + "-" + stamp + ".json", payload);
-    });
-
+    button.addEventListener("click", function () { downloadAnswers(data, error); });
     node.appendChild(button);
     node.appendChild(error);
   }
@@ -1680,7 +1725,20 @@
       }
     });
 
-    var container = el("div", { class: "learnr2-start-over-container" }, [load, button, input, status]);
+    // Download Answers, reachable from any point in the tutorial without
+    // revealing anything: a student who stops early can still hand in what
+    // they did. Present only when the page has a download_answers_button(),
+    // whose payload names the file and the tutorial.
+    var children = [load, button, input, status];
+    var downloadNode = document.querySelector(".learnr2-download-answers[data-learnr2-download]");
+    var downloadData = downloadNode && decodeAttr(downloadNode, "data-learnr2-download");
+    if (downloadData) {
+      var downloadError = el("div", { class: "learnr2-download-link-error d-none" });
+      var download = el("button", { type: "button", class: "learnr2-download-link", text: t("download_answers_short") });
+      download.addEventListener("click", function () { downloadAnswers(downloadData, downloadError); });
+      children = [download, load, button, input, status, downloadError];
+    }
+    var container = el("div", { class: "learnr2-start-over-container" }, children);
     placeStartOverButton(container);
     // The sidebar can appear or disappear after load (a window resized
     // across Quarto's breakpoint, a phone rotated), so follow it. Moving
@@ -1793,6 +1851,7 @@
     if (sections.length < 2) {
       return;
     }
+    gatedSections = sections;
 
     var saved = loadState({ id: PROGRESS_ID });
     // Clamp -- a tutorial edited to have fewer sections since this was saved

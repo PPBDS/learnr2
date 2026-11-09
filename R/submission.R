@@ -154,6 +154,14 @@ print.learnr2_info <- function(x, ...) print_widget(x)
 #' raw timestamp isn't readable or hand-editable in the file. Recover it with
 #' [submission_time()].
 #'
+#' A reader need not reach this button to download: a **Download Answers**
+#' control sits beside **Start Over** on every page that has one of these
+#' buttons, so a student who stops part-way can hand in what they did
+#' without revealing the rest of the tutorial. The file's `progress` field
+#' says how far they got (sections revealed, questions answered), and the
+#' confirmation before an incomplete download names only the unanswered
+#' questions in sections the reader has reached.
+#'
 #' The file ends with two fields for the grader. `fingerprint` is a SHA-256
 #' of the submission's identifying content (time, device id, `loadedFrom`,
 #' the info fields and every answer), so a name or an answer edited by hand
@@ -398,10 +406,11 @@ encode_submission_time <- function(when) {
 #' @param path Path to a JSON file downloaded via [download_answers_button()].
 #'
 #' @return Invisibly, a list: `time` (POSIXct, UTC, or `NULL`), `name`,
-#'   `email`, `device` (the per-device id), `fingerprint` (one of
-#'   `"valid"`, `"invalid"`, `"missing"`, `"unchecked"`) and `loaded_from`
-#'   (the file's provenance block as a list, or `NULL`). Also prints a
-#'   summary.
+#'   `email`, `device` (the per-device id), `progress` (how far the reader
+#'   got: sections revealed and questions answered, as a list, or `NULL`),
+#'   `fingerprint` (one of `"valid"`, `"invalid"`, `"missing"`,
+#'   `"unchecked"`) and `loaded_from` (the file's provenance block as a
+#'   list, or `NULL`). Also prints a summary.
 #' @seealso [submission_time()], [load_tutorial()].
 #' @export
 #' @examples
@@ -423,11 +432,16 @@ check_submission <- function(path) {
   }
   when <- if (is_string(file$time)) decode_submission_time(file$time) else NULL
   from <- if (is.list(file$loadedFrom)) file$loadedFrom else NULL
+  progress <- if (is.list(file$progress)) file$progress else NULL
 
   lines <- c(
     paste0("Submitted: ", if (is.null(when)) "unknown" else format(when, "%Y-%m-%d %H:%M:%S UTC", tz = "UTC")),
     paste0("Name: ", info$name %||% "(none)", "  Email: ", info$email %||% "(none)"),
     paste0("Device: ", device %||% "(none)"),
+    paste0("Progress: ", if (is.null(progress)) "not recorded" else paste0(
+      if (!is.null(progress$sections)) paste0("section ", progress$sections, " of ", progress$of, ", ") else "",
+      progress$answered %||% "?", " of ", progress$of_questions %||% "?", " questions answered"
+    )),
     paste0("Fingerprint: ", switch(state,
       valid = "valid (the file matches what was downloaded)",
       invalid = "INVALID (the file was edited after it was downloaded)",
@@ -449,23 +463,32 @@ check_submission <- function(path) {
   }
   message(paste(lines, collapse = "\n"))
   invisible(list(time = when, name = info$name, email = info$email, device = device,
-                 fingerprint = state, loaded_from = from))
+                 progress = progress, fingerprint = state, loaded_from = from))
 }
 
 # The text the fingerprint hashes. Mirrors canonicalSubmission() in quiz.js
 # line for line: header, time, device, the loaded-from file's fingerprint,
-# the info fields in byte order of their keys (JavaScript sorts by code
-# unit; `method = "radix"` does the same, not the session locale), then
-# every answer in file order -- an array joined with U+001F, a missing
-# answer as "<null>".
+# progress as sections/of/answered/of_questions, the info fields in byte
+# order of their keys (JavaScript sorts by code unit; `method = "radix"`
+# does the same, not the session locale), then every answer in file order
+# -- an array joined with U+001F, a missing answer as "<null>".
 canonical_submission <- function(file) {
   info <- file$info %||% list()
   from <- file$loadedFrom
+  p <- file$progress
+  progress <- if (is.list(p)) {
+    paste(vapply(c("sections", "of", "answered", "of_questions"), function(k) {
+      if (is.null(p[[k]])) "" else as.character(p[[k]])
+    }, character(1)), collapse = "/")
+  } else {
+    ""
+  }
   lines <- c(
     "learnr2-fingerprint-v1",
     paste0("time=", file$time %||% ""),
     paste0("device=", file$metadata$deviceId %||% ""),
-    paste0("loadedFrom=", if (is.list(from) && is_string(from$fingerprint)) from$fingerprint else "")
+    paste0("loadedFrom=", if (is.list(from) && is_string(from$fingerprint)) from$fingerprint else ""),
+    paste0("progress=", progress)
   )
   for (key in sort(names(info), method = "radix")) {
     lines <- c(lines, paste0("info.", key, "=", if (is.null(info[[key]])) "" else as.character(info[[key]])))

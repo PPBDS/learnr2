@@ -513,7 +513,11 @@ top of the tutorial, directly under the title, where it stays visible no
 matter how far the reader has progressed. Either way the reader always has
 exactly one.
 
-Beside it sits **Load Answers**, the way back from a downloaded file. A
+Beside it sit two more. **Download Answers** downloads the same file as the
+button at the end of the tutorial, from wherever the reader is, revealing
+nothing: a student who stops part-way can hand in what they did, and the
+file's `progress` field says how far they got. **Load Answers** is the way
+back from a downloaded file. A
 reader who downloaded their answers and has to change one (a mistyped
 URL, say) picks that file, or drops it anywhere on the page, and every
 answer in it is filled in as if just submitted, with the page open where

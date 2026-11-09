@@ -62,6 +62,14 @@ field: the moment the reader clicked "Download", lightly obfuscated so the
 raw timestamp isn't readable or hand-editable in the file. Recover it with
 \code{\link[=submission_time]{submission_time()}}.
 
+A reader need not reach this button to download: a \strong{Download Answers}
+control sits beside \strong{Start Over} on every page that has one of these
+buttons, so a student who stops part-way can hand in what they did
+without revealing the rest of the tutorial. The file's \code{progress} field
+says how far they got (sections revealed, questions answered), and the
+confirmation before an incomplete download names only the unanswered
+questions in sections the reader has reached.
+
 The file ends with two fields for the grader. \code{fingerprint} is a SHA-256
 of the submission's identifying content (time, device id, \code{loadedFrom},
 the info fields and every answer), so a name or an answer edited by hand

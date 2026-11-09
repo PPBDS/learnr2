@@ -8,7 +8,9 @@ const crypto = require("crypto");
 // R/submission.R; the pinned fixture below is shared with test-submission.R.
 function canonicalSubmission(payload) {
   const from = payload.loadedFrom && typeof payload.loadedFrom.fingerprint === "string" ? payload.loadedFrom.fingerprint : "";
-  const lines = ["learnr2-fingerprint-v1", "time=" + payload.time, "device=" + payload.metadata.deviceId, "loadedFrom=" + from];
+  const p = payload.progress;
+  const progress = p ? [p.sections, p.of, p.answered, p.of_questions].map((v) => (v == null ? "" : String(v))).join("/") : "";
+  const lines = ["learnr2-fingerprint-v1", "time=" + payload.time, "device=" + payload.metadata.deviceId, "loadedFrom=" + from, "progress=" + progress];
   Object.keys(payload.info).sort().forEach((k) => lines.push("info." + k + "=" + (payload.info[k] == null ? "" : String(payload.info[k]))));
   payload.answers.forEach((a) => {
     const v = a.answer;
@@ -726,8 +728,10 @@ test.describe("download answers button", () => {
     expect(Math.abs(decodedSecs - Date.now() / 1000)).toBeLessThan(60);
 
     // The file ends with its fingerprint, which anyone can recompute from the
-    // file's own content, and no provenance for a fresh run.
-    expect(Object.keys(contents).slice(-2)).toEqual(["loadedFrom", "fingerprint"]);
+    // file's own content, and no provenance for a fresh run. This fixture has
+    // no gated sections, so progress counts questions only.
+    expect(Object.keys(contents).slice(-3)).toEqual(["progress", "loadedFrom", "fingerprint"]);
+    expect(contents.progress).toEqual({ sections: null, of: null, answered: 1, of_questions: 2 });
     expect(contents.loadedFrom).toBeNull();
     expect(contents.fingerprint).toMatch(/^[0-9a-f]{64}$/);
     expect(contents.fingerprint).toBe(sha256(canonicalSubmission(contents)));
@@ -1830,13 +1834,60 @@ test.describe("fingerprint canonical text", () => {
       time: "abc", metadata: { deviceId: "dev-1" },
       info: { name: "Ada", email: "ada@example.com", id: null },
       answers: [{ id: "q1", answer: ["a", "b"] }, { id: "q2", answer: "Because." }, { id: "q3", answer: null }],
+      progress: { sections: 2, of: 5, answered: 2, of_questions: 3 },
       loadedFrom: null
     };
     expect(canonicalSubmission(fixture)).toBe([
-      "learnr2-fingerprint-v1", "time=abc", "device=dev-1", "loadedFrom=",
+      "learnr2-fingerprint-v1", "time=abc", "device=dev-1", "loadedFrom=", "progress=2/5/2/3",
       "info.email=ada@example.com", "info.id=", "info.name=Ada",
       "answer.q1=a\u001fb", "answer.q2=Because.", "answer.q3=<null>"
     ].join("\n"));
+  });
+});
+
+test.describe("downloading part-way through", () => {
+  test("the Download Answers control beside Start Over downloads without revealing anything, and the dialog names only reached questions", async ({ page }) => {
+    await page.goto("/progressive-download");
+    await page.evaluate(() => localStorage.clear());
+    await page.reload();
+    await expect(page.locator("#exercise-1")).toBeHidden();
+    const link = page.locator(".learnr2-start-over-container .learnr2-download-link");
+    await expect(link).toHaveText("Download Answers");
+
+    // Blocked until student info is submitted, like the end button.
+    await link.click();
+    await expect(page.locator(".learnr2-download-link-error"))
+      .toHaveText("Before downloading, please submit your student information above.");
+    await page.locator("#learnr2-info-student-info-name").fill("Ada");
+    await page.locator("#learnr2-info-student-info-email").fill("ada@example.com");
+    await page.locator(".learnr2-info .learnr2-submit").click();
+
+    await link.click();
+    const dialog = page.locator(".learnr2-confirm-dialog-message");
+    await expect(dialog).toHaveText(
+      "You haven't submitted an answer for 1 question (First question, visible.). " +
+      "1 more question is in a section you haven't reached yet. Download anyway?"
+    );
+    await expect(dialog).not.toContainText("Second question");
+    // Nothing was revealed by asking.
+    await expect(page.locator("#exercise-1")).toBeHidden();
+
+    const downloadPromise = page.waitForEvent("download");
+    await page.locator(".learnr2-confirm-dialog-confirm").click();
+    const download = await downloadPromise;
+    const chunks = [];
+    for await (const chunk of await download.createReadStream()) chunks.push(chunk);
+    const contents = JSON.parse(Buffer.concat(chunks).toString("utf8"));
+    expect(contents.progress).toEqual({ sections: 1, of: 3, answered: 0, of_questions: 2 });
+    expect(contents.answers.map((a) => a.answer)).toEqual([null, null]);
+    expect(contents.fingerprint).toBe(sha256(canonicalSubmission(contents)));
+    await expect(page.locator("#exercise-1")).toBeHidden();
+  });
+
+  test("the control is absent on a page with no download_answers_button()", async ({ page }) => {
+    await page.goto("/progressive-sections-gated");
+    await expect(page.locator(".learnr2-start-over")).toBeVisible();
+    await expect(page.locator(".learnr2-download-link")).toHaveCount(0);
   });
 });
 
