@@ -21,10 +21,12 @@ Scaffold and run interactive tutorials.
 
 Confirm tutorials render and follow the authoring rules.
 
-- [`render_tutorials()`](https://ppbds.github.io/learnr2/reference/render_tutorials.md)
-  : Render tutorials, as a test that they build
+- [`check_tutorials()`](https://ppbds.github.io/learnr2/reference/check_tutorials.md)
+  : Check every tutorial in a package
 - [`check_tutorial()`](https://ppbds.github.io/learnr2/reference/check_tutorial.md)
   : Check that a tutorial has the recommended components
+- [`render_tutorials()`](https://ppbds.github.io/learnr2/reference/render_tutorials.md)
+  : Render tutorials, as a test that they build
 
 ## Quiz questions
 
@@ -39,14 +41,19 @@ learnr-style quiz questions, graded in the browser.
 
 ## Collecting student work
 
-Gather reader identifying information and let them turn work in.
+Gather reader identifying information, let them turn work in, and check
+what comes back.
 
 - [`student_info()`](https://ppbds.github.io/learnr2/reference/student_info.md)
   : Collect student identifying information
 - [`download_answers_button()`](https://ppbds.github.io/learnr2/reference/download_answers_button.md)
   : Add a "download my answers" button
+- [`check_submission()`](https://ppbds.github.io/learnr2/reference/check_submission.md)
+  : Check a submission's fingerprint and provenance
 - [`submission_time()`](https://ppbds.github.io/learnr2/reference/submission_time.md)
   : Recover a submission's download time
+- [`load_tutorial()`](https://ppbds.github.io/learnr2/reference/load_tutorial.md)
+  : Reopen a tutorial with a student's downloaded answers filled in
 
 ## Quarto-live extension
 

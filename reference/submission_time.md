@@ -31,9 +31,9 @@ file.
 
 ## Details
 
-Nothing else in the file is hashed or signed, so this does **not**
-detect edited answers. If you need that, compare against work submitted
-through a channel you control.
+This reads only `time`. For the file's `fingerprint` and `loadedFrom`
+provenance, see
+[`check_submission()`](https://ppbds.github.io/learnr2/reference/check_submission.md).
 
 ## Examples
 

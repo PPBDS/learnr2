@@ -67,9 +67,12 @@ question(
     response can be reopened. Submit locks it behind an "Edit" button;
     Edit reopens it, with a note that the change isn't saved until the
     next Submit. The saved answer is always the last submitted one.
-    Meant for answers with nothing to copy, such as a minutes-spent
-    count: an ordinary `"reflection"` stays locked for good, so a reader
-    can't reopen it and paste in the model answer they were just shown.
+    Meant for answers with nothing to copy: a question whose answer is a
+    URL of the reader's own (see
+    [`check_tutorial()`](https://ppbds.github.io/learnr2/reference/check_tutorial.md)'s
+    `urls` check), or a minutes-spent count: an ordinary `"reflection"`
+    stays locked for good, so a reader can't reopen it and paste in the
+    model answer they were just shown.
 
 - correct:
 

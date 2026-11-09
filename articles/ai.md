@@ -320,10 +320,12 @@ submitted their own. Locking the box removes the temptation. Requiring a
 submission removes the option of clicking past the question and filling
 it in later from our answer.
 
-`type = "reflection_editable"` still exists, for the rare question where
-revising is the point, and the minutes question at the end of every
-tutorial uses it, since there is no right answer to copy. Don’t reach
-for it otherwise.
+`type = "reflection_editable"` still exists for the questions where
+there is no right answer to copy: the minutes question at the end of
+every tutorial, and any question whose answer is a URL of the student’s
+own, such as the address of their repository or their published page. A
+wrong URL is the commonest reason a student resubmits, so those stay
+editable. Don’t reach for it otherwise.
 
 Unlike `learnr::question_text()`, where the prompt was prose above the
 chunk and the question itself got `NULL` for text, a

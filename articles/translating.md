@@ -337,12 +337,18 @@ once per reader. These arguments carry over unchanged: `allow_retry`,
   `validate = "integer"` and no
   [`answer()`](https://ppbds.github.io/learnr2/reference/answer.md), as
   in the minutes question.
+- **A question whose answer is a URL** (“Copy and paste the URL for your
+  repository”) is also `type = "reflection_editable"`. A wrong URL is
+  the commonest reason a student resubmits, and a URL is theirs alone,
+  so letting them fix it copies nothing of ours.
+  [`check_tutorial()`](https://ppbds.github.io/learnr2/reference/check_tutorial.md)
+  insists on it (`urls`).
 - **Custom `answer_fn` checkers**, regular expressions and partial
   credit have no equivalent. Reduce them to plain
   [`answer()`](https://ppbds.github.io/learnr2/reference/answer.md)
   matches, or to a `"reflection"` question if the point was open-ended.
 
-Use `"reflection"`, not `"reflection_editable"`, for the old
+Otherwise use `"reflection"`, not `"reflection_editable"`, for the old
 `allow_retry = TRUE, try_again_button = "Edit Answer"` idiom.
 **learnr2** locks every submitted answer by default, and [Tutorials in
 the Age of AI](https://ppbds.github.io/learnr2/articles/ai.md) explains
@@ -722,6 +728,16 @@ translating, run the static checks and a real render:
 
 learnr2::check_tutorial("inst/tutorials/<name>")    # labels, echo, persist, boilerplate, packages
 learnr2::render_tutorials("inst/tutorials/<name>")  # a real Quarto render
+```
+
+For a whole package, one call does both for every tutorial and also
+checks that each rendered page’s download file will name the package,
+its version and the tutorial. It is what a content package’s
+`tests/testthat/test-tutorials.R` should run:
+
+``` r
+
+learnr2::check_tutorials("my.tutorials", render = !is.null(quarto::quarto_path()))
 ```
 
 [`check_tutorial()`](https://ppbds.github.io/learnr2/reference/check_tutorial.md)

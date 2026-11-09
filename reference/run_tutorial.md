@@ -135,31 +135,20 @@ and are found again as long as the codespace keeps its name.
 
 ## Why this blocks and serves over local HTTP instead of opening the file directly
 
-Every `{webr}` exercise compiles down to Observable JS (OJS), which
-Quarto's runtime loads via ES modules – and browsers refuse to load ES
-modules from a `file://` URL. Opening the rendered HTML directly (e.g.
-[`utils::browseURL()`](https://rdrr.io/r/utils/browseURL.html) on the
-local path, or double-clicking the file) hits this and shows an "OJS
-runtime" error, even though plain
-[`question()`](https://ppbds.github.io/learnr2/reference/question.md)/[`student_info()`](https://ppbds.github.io/learnr2/reference/student_info.md)
-widgets (not OJS-based) work fine over `file://`.
-
-An earlier version of this function used
-[`quarto::quarto_preview()`](https://quarto-dev.github.io/quarto-r/reference/quarto_preview.html)
-to both render and serve the tutorial via a background daemon process,
-on the theory that it would keep running after `run_tutorial()`
-returned. In practice that daemon did not reliably stay alive
-(confirmed: it could exit within seconds, even with the calling R
-session still running and pumping its event loop), silently leaving you
-back at a `file://` URL with no server behind it. This function now
-renders with the same one-shot
-[`quarto::quarto_render()`](https://quarto-dev.github.io/quarto-r/reference/quarto_render.html)
-call the package's own pkgdown publishing script uses, and serves the
-result with httpuv's static server – an in-process server with no
-separate daemon to lose track of. Its trade-off is that it blocks the
-caller while serving, matching how the original 'learnr' package's
-`run_tutorial()` (built on a blocking Shiny app) behaved – stop the
-server to get your prompt back.
+Every `{webr}` exercise compiles down to Observable JS, which Quarto's
+runtime loads as ES modules, and browsers refuse to load ES modules from
+a `file://` URL: a rendered tutorial opened as a file shows an "OJS
+runtime" error (plain
+[`question()`](https://ppbds.github.io/learnr2/reference/question.md)
+and
+[`student_info()`](https://ppbds.github.io/learnr2/reference/student_info.md)
+widgets would work, the code cells would not). So the tutorial is
+served, by httpuv's static server inside this R process. A background
+daemon
+([`quarto::quarto_preview()`](https://quarto-dev.github.io/quarto-r/reference/quarto_preview.html))
+was tried and did not reliably outlive the call. The trade-off is that
+serving blocks the caller, as 'learnr”s own `run_tutorial()` (a Shiny
+app) did; stop the server to get your prompt back.
 
 ## See also
 

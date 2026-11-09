@@ -64,17 +64,19 @@ usually the first sign of something that will also be slow for readers.
 
 ## In a content package's tests
 
-A package of tutorials can check every one of them from
-`tests/testthat/test-tutorials.R`:
+A package of tutorials need not list them:
+[`check_tutorials()`](https://ppbds.github.io/learnr2/reference/check_tutorials.md)
+finds every tutorial, runs
+[`check_tutorial()`](https://ppbds.github.io/learnr2/reference/check_tutorial.md)
+on each, renders each with this function and checks the rendered page.
+One call in `tests/testthat/test-tutorials.R`:
 
-    tutorials <- available_tutorials(package = "my.tutorials")
-    render_tutorials(tutorials$path)
-    check_tutorial(tutorials$path)
+    check_tutorials("my.tutorials", render = !is.null(quarto::quarto_path()))
 
 Guard that test with
-[`testthat::skip_on_cran()`](https://testthat.r-lib.org/reference/skip.html)
-and `testthat::skip_if(is.null(quarto::quarto_path()))`, since it needs
-the Quarto command line tool.
+[`testthat::skip_on_cran()`](https://testthat.r-lib.org/reference/skip.html),
+since rendering needs the Quarto command line tool and takes a few
+seconds per tutorial.
 
 ## Examples
 
@@ -88,8 +90,8 @@ if (!is.null(quarto::quarto_path())) {
   file.exists(html)
   unlink(c(dir, dirname(html)), recursive = TRUE)
 }
-#> Created tutorial: /tmp/Rtmp1YFknW/file19ec327df485/render-me/render-me.qmd
-#> Rendering render-me (/tmp/Rtmp1YFknW/file19ec327df485/render-me/render-me.qmd) ...
-#> Rendered render-me in 4s: /tmp/Rtmp1YFknW/learnr2-render-19ec5a02e291/render-me/render-me.html
+#> Created tutorial: /tmp/RtmpNxQ7MM/file18c12e6c359b/render-me/render-me.qmd
+#> Rendering render-me (/tmp/RtmpNxQ7MM/file18c12e6c359b/render-me/render-me.qmd) ...
+#> Rendered render-me in 2.8s: /tmp/RtmpNxQ7MM/learnr2-render-18c15915051e/render-me/render-me.html
 #> Rendered 1 tutorial(s).
 ```

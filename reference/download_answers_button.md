@@ -79,14 +79,27 @@ and a random per-device id persisted across the reader's visits) and a
 obfuscated so the raw timestamp isn't readable or hand-editable in the
 file. Recover it with
 [`submission_time()`](https://ppbds.github.io/learnr2/reference/submission_time.md).
-Nothing else is hashed or signed – a determined reader can still edit
-their answers; this only keeps the submission time honest at a glance.
+
+The file ends with two fields for the grader. `fingerprint` is a SHA-256
+of the submission's identifying content (time, device id, `loadedFrom`,
+the info fields and every answer), so a name or an answer edited by hand
+in the file no longer matches it;
+[`check_submission()`](https://ppbds.github.io/learnr2/reference/check_submission.md)
+recomputes and compares. `loadedFrom` is `null` unless the page was
+restored from an earlier download
+([`load_tutorial()`](https://ppbds.github.io/learnr2/reference/load_tutorial.md)
+or the page's Load Answers button), in which case it records that file's
+`time`, device id, fingerprint, name and email, so a resubmission can be
+traced to the file it grew from. Neither is a signature: everything runs
+in the reader's browser with no secret, so a reader who reads the code
+can regenerate both. They make the common case, a copied file with the
+name changed, visible; they do not make the file tamper-proof.
 
 ## Examples
 
 ``` r
 download_answers_button()
-#> <div class="learnr2-download-answers" data-learnr2-download="eyJmaWxlbmFtZVByZWZpeCI6ImxlYXJucjItYW5zd2VycyIsImxhYmVsIjpudWxsLCJwYWNr&#10;YWdlIjpudWxsLCJ2ZXJzaW9uIjpudWxsLCJ0dXRvcmlhbCI6bnVsbCwidGl0bGUiOm51bGws&#10;ImxlYXJucjJWZXJzaW9uIjoiMC4xLjMuOTAwOCJ9">
+#> <div class="learnr2-download-answers" data-learnr2-download="eyJmaWxlbmFtZVByZWZpeCI6ImxlYXJucjItYW5zd2VycyIsImxhYmVsIjpudWxsLCJwYWNr&#10;YWdlIjpudWxsLCJ2ZXJzaW9uIjpudWxsLCJ0dXRvcmlhbCI6bnVsbCwidGl0bGUiOm51bGws&#10;ImxlYXJucjJWZXJzaW9uIjoiMC4xLjMuOTAxMyJ9">
 #>   <noscript>This button requires JavaScript.</noscript>
 #> </div>
 ```

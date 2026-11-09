@@ -81,18 +81,16 @@ flags it.
 ## Packages loaded with pkgload
 
 [`system.file()`](https://rdrr.io/r/base/system.file.html) resolves
-against the *installed* copy of a package, so a content package under
-development used to be invisible here (or, worse, silently read from an
-old install) when its own tests ran under `devtools::test()`: 'pkgload'
-redirects [`system.file()`](https://rdrr.io/r/base/system.file.html)
+against the *installed* copy of a package, and 'pkgload' redirects it
 only for code inside the package being developed, not for learnr2's
-calls. This function and
+calls. So this function and
 [`run_tutorial()`](https://ppbds.github.io/learnr2/reference/run_tutorial.md)
-therefore check whether `package` is a namespace loaded by
+check whether `package` is a namespace loaded by
 [`pkgload::load_all()`](https://pkgload.r-lib.org/reference/load_all.html)
-and, if so, read its tutorials from the source tree's `inst/tutorials/`
-directly. Nothing changes for installed packages, and 'pkgload' itself
-is not required.
+and, if so, read its tutorials from the source tree's `inst/tutorials/`.
+A content package's `devtools::test()` therefore sees its working tree,
+not a stale install. Nothing changes for installed packages, and
+'pkgload' itself is not required.
 
 ## Examples
 

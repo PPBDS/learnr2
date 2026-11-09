@@ -38,6 +38,34 @@ scaffolds.
 Vignette prose follows the house style: package names **bold**, keyboard
 input in backticks, function names with `()`, no semicolons.
 
+## Where things are
+
+- `R/tutorials.R` lists tutorials
+  ([`available_tutorials()`](https://ppbds.github.io/learnr2/reference/available_tutorials.md),
+  pkgload detection); `R/run_tutorial.R` renders into the cache and
+  serves
+  ([`run_tutorial()`](https://ppbds.github.io/learnr2/reference/run_tutorial.md),
+  [`prerender_tutorials()`](https://ppbds.github.io/learnr2/reference/prerender_tutorials.md),
+  `probe_server()`); `R/render_tutorials.R` renders and works out a
+  tutorial’s package (`tutorial_identity()`); `R/load_tutorial.R`
+  restores a download.
+- `R/question.R`, `R/submission.R`
+  ([`student_info()`](https://ppbds.github.io/learnr2/reference/student_info.md),
+  the download button,
+  [`submission_time()`](https://ppbds.github.io/learnr2/reference/submission_time.md),
+  [`check_submission()`](https://ppbds.github.io/learnr2/reference/check_submission.md)),
+  `R/tutorial_options.R` build widget payloads; `R/widgets.R` turns any
+  of them into the `<div>` plus dependency and holds the shared
+  print/knit methods; `R/language.R` the string tables; `R/utils.R` the
+  small argument checks.
+- `R/check_tutorial.R` is the per-file static checks,
+  `R/check_tutorials.R` the whole-package run; `R/show_file.R` is ported
+  from tutorial.helpers.
+- `inst/extdata/quiz/quiz.js` is one file, in the order: strings and
+  storage, shared widget pieces, the four builders, download and
+  fingerprint, Load Answers, Start Over, options, progressive reveal,
+  init. `quiz.css` beside it; `lang/*.json` the translations.
+
 ## Settled design decisions
 
 - **Instructions beat templates.** A template shows what a correct file
@@ -56,14 +84,18 @@ input in backticks, function names with `()`, no semicolons.
   [`student_info()`](https://ppbds.github.io/learnr2/reference/student_info.md)
   above it is submitted. Reason: we show our answer right after the
   reader’s, and an editable box beside it invites copying it back.
-  `reflection_editable` is for the minutes question only. One exception
-  (2026-10): a submitted `allow_image` reflection has a “Edit Answer”
-  button (`edit_button`) that reopens only the image box (text box
-  hidden and disabled, `editing: true` so it counts as unsubmitted,
-  Submit refuses an empty box). Readers who pasted the wrong screenshot
-  had to Start Over the whole tutorial. A screenshot can’t be lifted
-  from the model answer the way text can, so the reason for locking
-  doesn’t apply.
+  `reflection_editable` is for two kinds of question: the minutes
+  question, and any question whose answer is a URL (2026-11). A wrong
+  URL is the commonest reason a student resubmits, and a URL is theirs
+  alone, so reopening it copies nothing of ours;
+  [`check_tutorial()`](https://ppbds.github.io/learnr2/reference/check_tutorial.md)’s
+  `urls` check enforces it. One exception (2026-10): a submitted
+  `allow_image` reflection has a “Edit Answer” button (`edit_button`)
+  that reopens only the image box (text box hidden and disabled,
+  `editing: true` so it counts as unsubmitted, Submit refuses an empty
+  box). Readers who pasted the wrong screenshot had to Start Over the
+  whole tutorial. A screenshot can’t be lifted from the model answer the
+  way text can, so the reason for locking doesn’t apply.
 - **Tutorial-wide switches go through
   [`tutorial_options()`](https://ppbds.github.io/learnr2/reference/tutorial_options.md)**,
   never a new YAML key: `quiz.js` can’t see the YAML, and the hidden
@@ -199,12 +231,13 @@ Verified against real renders.
   `-no-toc` variants.
 - **Edit/Submit cycle** (2026-10), for
   [`student_info()`](https://ppbds.github.io/learnr2/reference/student_info.md)
-  and `reflection_editable` only. Submit locks the fields and shows
-  “Edit”; Edit only reopens them, shows “Submit” and an editing note
-  (`EDITING_NOTE`). Received means last submitted: `widgetPending()`
-  (used by the Continue gate and the download) treats a reopened widget
-  as unsubmitted, the download reads submitted values, never the live
-  DOM, and is blocked until every
+  and `reflection_editable` (the minutes question and URL questions)
+  only. Submit locks the fields and shows “Edit”; Edit only reopens
+  them, shows “Submit” and an editing note (`t("editing_note")`).
+  Received means last submitted: `widgetPending()` (used by the Continue
+  gate and the download) treats a reopened widget as unsubmitted, the
+  download reads submitted values, never the live DOM, and is blocked
+  until every
   [`student_info()`](https://ppbds.github.io/learnr2/reference/student_info.md)
   is submitted. Info storage: flat keys are the submitted values,
   `draft` holds typing, `submitted` and `editing` are flags; old
@@ -271,6 +304,43 @@ Verified against real renders.
   `a[href]` except `#...`, `download`, `mailto:`/`tel:`/`javascript:`.
   Students worried when a tutorial “disappeared”. Quarto’s
   `link-external-newwindow` would miss same-site links.
+- **[`load_tutorial()`](https://ppbds.github.io/learnr2/reference/load_tutorial.md)
+  restores a download through a page, not the HTML** (2026-11). Answers
+  live in `localStorage` keyed by the tutorial’s address, and that
+  address differs between `127.0.0.1` and a Codespaces forwarded port,
+  so R cannot know the key.
+  [`load_tutorial()`](https://ppbds.github.io/learnr2/reference/load_tutorial.md)
+  parses the *rendered* page for its widgets (`page_widgets()`, the same
+  markup `quiz.js` reads), rebuilds the stored shapes
+  (`restore_entries()`), and writes `learnr2-restore.html` beside the
+  tutorial; that page derives the tutorial’s address from its own,
+  stores the entries, and forwards. `quiz.js` then opens the tutorial
+  through the last section holding a submitted widget when no progress
+  is saved (a no-op in normal use). `serve_tutorial(page =)` opens a
+  file inside the tutorial’s directory and reports `served_here` so the
+  restore page can be deleted once our own server stops. Exercise code
+  is keyed by quarto-live’s block id, not the exercise label, so the map
+  is read from the `<script type="webr-N- contents">` tags. The
+  browser-side twin is `loadAnswersFile()` in `quiz.js` (the Load
+  Answers button and a document `drop` listener): `planRestore()`
+  matches ids against `pageWidgets()` and `restoredState()` builds the
+  same shapes; the two must stay in step with the builders’ saved
+  formats. It clears the tutorial’s storage first, so a load is a
+  restart from the file, then reloads.
+- **Fingerprint and provenance are tamper-evident, not tamper-proof**
+  (2026-11). `fingerprint` is SHA-256 of `canonicalSubmission()`’s text
+  (quiz.js) and `canonical_submission()` (R/submission.R) must produce
+  the identical text; a pinned fixture in both test suites holds them to
+  it. There is no secret: a reader who reads quiz.js can regenerate it,
+  so the aim is the hand-edited copy of a friend’s file, not forgery.
+  `loadedFrom` (storage id `loaded-from`, a reserved label) is written
+  by both loaders and is inside the hashed text, so deleting it breaks
+  the fingerprint. `sha256Hex()` returns null without SubtleCrypto
+  (plain http from a non-local address) and
+  [`check_submission()`](https://ppbds.github.io/learnr2/reference/check_submission.md)
+  then reports “missing”;
+  [`tools::sha256sum()`](https://rdrr.io/r/tools/sha256sum.html) needs R
+  \>= 4.5, reported as “unchecked”.
 - **The download file’s header comes through the environment**
   (2026-11).
   [`render_tutorials()`](https://ppbds.github.io/learnr2/reference/render_tutorials.md)
@@ -352,7 +422,7 @@ Verified against real renders.
   port briefly still accepts connections that nothing answers, long
   enough on Windows to be misread as “something else holds the port”.
   `probe_server()` re-checks that verdict (`attempts`, `wait`), and
-  tests use `free_port()` (in `test-tutorials.R`), never
+  tests use `free_port()` (in `tests/testthat/helper-stubs.R`), never
   [`httpuv::randomPort()`](https://rstudio.github.io/httpuv/reference/randomPort.html)
   directly. Found from the actual CI job log
   (`gh api repos/PPBDS/learnr2/actions/jobs/<id>/logs`) after a first
@@ -362,19 +432,19 @@ Verified against real renders.
 
 Two layers, both in CI (`R-CMD-check.yaml`, `js-tests.yaml`).
 
-**R, `tests/testthat/` (edition 3).** One `test-*.R` per `R/*.R` file:
-`test-question.R`, `test-submission.R`, `test-tutorials.R`,
-`test-tutorial_options.R`, `test-extension.R`, `test-create-tutorial.R`,
-`test-show_file.R`, `test-render-tutorials.R`, `test-check-tutorial.R`,
-`test-language.R`.
+**R, `tests/testthat/` (edition 3).** One `test-*.R` per `R/*.R` file,
+same name (`test-run_tutorial.R` for `R/run_tutorial.R`, and so on).
+Stubs shared across files live in `helper-stubs.R`:
+`local_stub_quarto()`, `local_stub_serving()`,
+`local_dev_tutorial_package()`, `free_port()`.
 
 - Every exported function and internal helper has a test; call internals
-  as `learnr2:::helper()`.
+  as `learnr2:::helper()`. Coverage (`covr::package_coverage()`) is
+  about 99%; what is left is error branches that need a broken install.
 - Heavy calls are mocked with `local_mocked_bindings()`: `quarto`,
   `httpuv`, `utils`, plus learnr2’s own seams `probe_server()`,
-  `open_in_browser()` and `block_serving()` (see `local_stub_serving()`
-  and `local_stub_quarto()`). No test boots WebR, opens a browser, or
-  hits the network.
+  `open_in_browser()` and `block_serving()`. No test boots WebR, opens a
+  browser, or hits the network.
 - **One test serves for real**: the “served root, against a real httpuv
   server” block fetches `/` from a live httpuv server, because stubs can
   only show that `index.html` was written. It fails if
@@ -390,6 +460,22 @@ Two layers, both in CI (`R-CMD-check.yaml`, `js-tests.yaml`).
   shows its widget source, has no minutes question, shows a bare code
   block on purpose and talks about learnr. The same skip list is in
   `tools/render_tutorials_for_pages.R`; keep the two in step.
+- **[`check_tutorials()`](https://ppbds.github.io/learnr2/reference/check_tutorials.md)
+  is the content-package entry point** (2026-11). It lists a package’s
+  tutorials itself
+  ([`available_tutorials()`](https://ppbds.github.io/learnr2/reference/available_tutorials.md),
+  so a `load_all()` checkout is read from source), runs
+  [`check_tutorial()`](https://ppbds.github.io/learnr2/reference/check_tutorial.md),
+  renders each with
+  [`render_tutorials()`](https://ppbds.github.io/learnr2/reference/render_tutorials.md)
+  and decodes the rendered page’s download payload to confirm it names
+  the package, version and tutorial (`check_download_header()`). Content
+  packages used to hand-roll the three-line equivalent; their tests now
+  make one call. Its tests mock
+  [`available_tutorials()`](https://ppbds.github.io/learnr2/reference/available_tutorials.md)
+  and
+  [`quarto::quarto_render()`](https://quarto-dev.github.io/quarto-r/reference/quarto_render.html),
+  never rendering.
 - **[`check_tutorial()`](https://ppbds.github.io/learnr2/reference/check_tutorial.md)
   has two severities** (2026-10). `warning_checks` (`fences`,
   `mentions`, `yaml`, `language`) report as one
@@ -412,7 +498,8 @@ Two layers, both in CI (`R-CMD-check.yaml`, `js-tests.yaml`).
 `fixtures.js`) and `persistence.spec.js` across a real browser restart.
 Any fixture is also served as `<name>-no-toc`, without a sidebar. The
 six image-paste tests fail in local headless Chromium (clipboard) but
-pass in CI.
+pass in CI. Fixture payloads mirror the R `payload <- list(...)` shapes
+by hand; when a payload field changes, change `fixtures.js` too.
 
 Run: `R -q -e 'devtools::test()'`, and
 `cd tests/js && npx playwright test`.

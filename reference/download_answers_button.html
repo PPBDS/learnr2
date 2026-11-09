@@ -25,7 +25,7 @@ to an email or upload to an LMS)."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">learnr2</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.3.9008</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.3.9013</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -122,15 +122,25 @@ any package has <code>package</code> and <code>version</code> <code>null</code>.
 a random per-device id persisted across the reader's visits) and a <code>time</code>
 field: the moment the reader clicked "Download", lightly obfuscated so the
 raw timestamp isn't readable or hand-editable in the file. Recover it with
-<code><a href="submission_time.html">submission_time()</a></code>. Nothing else is hashed or signed – a determined
-reader can still edit their answers; this only keeps the submission time
-honest at a glance.</p>
+<code><a href="submission_time.html">submission_time()</a></code>.</p>
+<p>The file ends with two fields for the grader. <code>fingerprint</code> is a SHA-256
+of the submission's identifying content (time, device id, <code>loadedFrom</code>,
+the info fields and every answer), so a name or an answer edited by hand
+in the file no longer matches it; <code><a href="check_submission.html">check_submission()</a></code> recomputes and
+compares. <code>loadedFrom</code> is <code>null</code> unless the page was restored from an
+earlier download (<code><a href="load_tutorial.html">load_tutorial()</a></code> or the page's Load Answers button),
+in which case it records that file's <code>time</code>, device id, fingerprint,
+name and email, so a resubmission can be traced to the file it grew
+from. Neither is a signature: everything runs in the reader's browser
+with no secret, so a reader who reads the code can regenerate both. They
+make the common case, a copied file with the name changed, visible; they
+do not make the file tamper-proof.</p>
     </div>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="fu">download_answers_button</span><span class="op">(</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;div class="learnr2-download-answers" data-learnr2-download="eyJmaWxlbmFtZVByZWZpeCI6ImxlYXJucjItYW5zd2VycyIsImxhYmVsIjpudWxsLCJwYWNr&amp;#10;YWdlIjpudWxsLCJ2ZXJzaW9uIjpudWxsLCJ0dXRvcmlhbCI6bnVsbCwidGl0bGUiOm51bGws&amp;#10;ImxlYXJucjJWZXJzaW9uIjoiMC4xLjMuOTAwOCJ9"&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;div class="learnr2-download-answers" data-learnr2-download="eyJmaWxlbmFtZVByZWZpeCI6ImxlYXJucjItYW5zd2VycyIsImxhYmVsIjpudWxsLCJwYWNr&amp;#10;YWdlIjpudWxsLCJ2ZXJzaW9uIjpudWxsLCJ0dXRvcmlhbCI6bnVsbCwidGl0bGUiOm51bGws&amp;#10;ImxlYXJucjJWZXJzaW9uIjoiMC4xLjMuOTAxMyJ9"&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   &lt;noscript&gt;This button requires JavaScript.&lt;/noscript&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;/div&gt;</span>
 </code></pre></div>

@@ -79,10 +79,18 @@ alongside it, so it renders out of the box with Quarto or
   “Continue” buttons, the table of contents can’t be used to read ahead
   unless `tutorial_options(allow_skip = TRUE)` says so, and every page
   has a “Start Over” button that clears saved progress.
+- **Resubmission** —
+  [`load_tutorial()`](https://ppbds.github.io/learnr2/reference/load_tutorial.md)
+  reopens a tutorial from a student’s downloaded JSON file with every
+  answer filled in, so they can fix one and download again.
 - **Translated interface** — set Quarto’s `lang:` key and every button
   and message follows (English and French so far; translations welcome,
   see the “Language” section of the “Translating learnr Tutorials”
   vignette).
+
+Content packages test every tutorial they ship with one call,
+`check_tutorials("my.tutorials")`, which runs the static checks, renders
+each tutorial and checks the rendered page.
 
 See the bundled `hello-learnr2` tutorial and the reference index for
 details. Two vignettes cover writing tutorials: “Tutorials in the Age of

@@ -2,152 +2,33 @@
 
 ## learnr2 (development version)
 
-- The downloaded answers file now opens with what it is a submission
-  for: `package` and `version` (the package the tutorial ships in and
-  its version as rendered), `tutorial` (the tutorial’s name), `title`
-  and `learnr2Version`, ahead of the answers.
-  [`render_tutorials()`](https://ppbds.github.io/learnr2/reference/render_tutorials.md),
-  and so
-  [`run_tutorial()`](https://ppbds.github.io/learnr2/reference/run_tutorial.md)
-  and
-  [`prerender_tutorials()`](https://ppbds.github.io/learnr2/reference/prerender_tutorials.md),
-  work these out from where the tutorial lives
-  (`<pkg>/inst/tutorials/<name>/` or an installed
-  `<pkg>/tutorials/<name>/`) and pass them to the render; a plain
-  `quarto render` inside a package tree finds them the same way, and a
-  tutorial outside any package reports `null` for package and version.
-
-- The interface follows the document’s language. Set Quarto’s `lang:`
-  key (`lang: fr`) and every string learnr2 puts on the page – Continue,
-  Start Over, Submit Answer, Try Again, Edit, the feedback, notes and
-  error messages, the screenshot box’s prompts, the default labels of
-  [`student_info()`](https://ppbds.github.io/learnr2/reference/student_info.md),
-  [`download_answers_button()`](https://ppbds.github.io/learnr2/reference/download_answers_button.md)
-  and [`quiz()`](https://ppbds.github.io/learnr2/reference/quiz.md) – is
-  translated, as are quarto-live’s Run Code, Show Hint and Show Solution
-  buttons and its Exercise / R Code cell captions. English and French
-  ship; a language with no translation falls back to English, which
+- New
+  [`load_tutorial()`](https://ppbds.github.io/learnr2/reference/load_tutorial.md)
+  and an in-page **Load Answers** button: reopen a tutorial from a
+  downloaded answers file with every answer filled in.
+- New
+  [`check_tutorials()`](https://ppbds.github.io/learnr2/reference/check_tutorials.md):
+  one call checks, renders and verifies every tutorial in a package.
   [`check_tutorial()`](https://ppbds.github.io/learnr2/reference/check_tutorial.md)
-  now warns about (`language`).
-  `tutorial_options(language = list(continue = "Next"))` rewords single
-  strings. The label arguments of
-  [`question()`](https://ppbds.github.io/learnr2/reference/question.md),
-  [`quiz()`](https://ppbds.github.io/learnr2/reference/quiz.md),
-  [`student_info()`](https://ppbds.github.io/learnr2/reference/student_info.md)
-  and
-  [`download_answers_button()`](https://ppbds.github.io/learnr2/reference/download_answers_button.md)
-  now default to `NULL`, meaning the page language’s string; an explicit
-  label is used as given. Translations live in
-  `inst/extdata/quiz/lang/<lang>.json`; see the “Language” section of
-  [`vignette("translating")`](https://ppbds.github.io/learnr2/articles/translating.md)
-  to add one ([\#7](https://github.com/PPBDS/learnr2/issues/7)).
-
-- Accessibility: feedback, validation errors and editing notes are live
-  regions that screen readers announce; every answer box is labelled by
-  its question’s prompt (including when `show_text = FALSE` hides it);
-  choice answers form a labelled group; student-info fields carry
-  `aria-required` and flag invalid entries with `aria-invalid`; the
-  screenshot paste box is labelled and described; the confirm dialog
-  returns focus to the button that opened it. The Start Over button,
-  locked table-of-contents entries and the disabled Continue button now
-  meet the WCAG AA contrast ratio.
-
-- A widget whose payload can’t be decoded is marked as broken on the
-  page instead of stopping every later widget from rendering. A
-  submitted but empty text answer downloads as `""`, distinct from an
-  unsubmitted question’s `null`.
-
-- The feature tour, hello-learnr2, now shows `show_text = FALSE`,
-  screenshot-only questions (`allow_text = FALSE`) and replacing a
-  submitted screenshot.
-
-- [`check_tutorial()`](https://ppbds.github.io/learnr2/reference/check_tutorial.md)
-  enforces more of the authoring guide. New error-level checks: `prefix`
-  (every learnr2 function is called as `learnr2::fn()`), `options`
-  ([`tutorial_options()`](https://ppbds.github.io/learnr2/reference/tutorial_options.md)
-  at most once), `divs` (`.hint` and `.solution` divs name a real
-  exercise, and a graded exercise has no `.solution` div), plus inline
-  `{r label, opt=...}` options and the reserved label
-  `progressive-sections` under `labels`. Three new checks report
-  warnings rather than errors, since a tutorial can break them and still
-  work: `fences` (every code block names a language or is marked
-  `{.output}`), `mentions` (prose never names learnr or
-  tutorial.helpers) and `yaml` (no classic learnr keys, no document-wide
-  `execute: echo: false`). The returned data frame gains a `severity`
-  column, and with `error = TRUE` warning-level problems are reported as
-  one warning before any error. The `echo` check now also recognises
-  unprefixed widget calls.
-
-- Fixed: on a screenshot question, “Edit Answer” reopened the answer
-  without re-locking the section’s Continue button. Fixed: with
-  `localStorage` blocked by the browser, the download button and Start
-  Over threw instead of working without saved exercise code. Fixed: a
-  pasted image on a question with `validate = "integer"` was refused
-  because the empty text box was validated.
-
-- Code blocks in a tutorial now distinguish what to type from what to
-  expect. A bare ```` ``` ```` fence, which Quarto shows as plain
-  monospace text with no box, now gets the same grey box as a block that
-  names its language. A ```` ```{.output} ```` block, and the output of
-  an `{r}` chunk or [webr](https://github.com/cardiomoon/webr) cell,
-  gets a lighter style (white, thin border, grey left edge) so expected
-  output isn’t mistaken for a command.
-  [`vignette("translating")`](https://ppbds.github.io/learnr2/articles/translating.md)
-  gives the convention: name the language for anything to type,
-  optionally with a `filename` label saying which Terminal, and mark
-  expected output `{.output}`. hello-learnr2 has a new section 10
-  showing each option.
-
-- `create_tutorial(open = TRUE)` now opens the new file with each
-  editor’s own mechanism:
-  [`file.edit()`](https://rdrr.io/r/utils/file.edit.html) in RStudio and
-  Positron, and VS Code’s `code` command in a VS Code terminal or
-  Codespace. Anywhere else it prints the path, instead of handing the
-  `.qmd` to whatever app the operating system associates with it.
-  rstudioapi is no longer used, and pkgdown moves from Suggests to
-  `Config/Needs/website`, since only the website build uses it.
-  learnr2’s Suggests are now just pkgload, testthat and withr, all for
-  the tests.
-
-- learnr2 no longer depends on learnr, even as a suggested package, and
-  no longer runs classic learnr tutorials.
-  [`available_tutorials()`](https://ppbds.github.io/learnr2/reference/available_tutorials.md)
-  lists only `.qmd` tutorials, skipping directories that hold only a
-  classic `.Rmd`.
-  [`run_tutorial()`](https://ppbds.github.io/learnr2/reference/run_tutorial.md)
-  on a classic tutorial stops with a message to run it with
-  `learnr::run_tutorial()`; it used to hand such tutorials to learnr
-  itself. For compatibility,
-  [`available_tutorials()`](https://ppbds.github.io/learnr2/reference/available_tutorials.md)
-  keeps its `type` argument (`"all"` and `"quarto"` give the same list;
-  `"rmarkdown"` is now an error) and its `format` and
-  `package_dependencies` columns, which are now always `"quarto"` and
-  `character(0)`. **Breaking for tools** that ran classic tutorials
-  through learnr2, such as the R Tutorials VS Code extension: they must
-  now call learnr for those directly.
-
+  gains `exercises`, `urls`, `language` and explicit-id checks.
+- New
+  [`check_submission()`](https://ppbds.github.io/learnr2/reference/check_submission.md).
+  Downloads now record `package`, `version`, `tutorial`, a
+  tamper-evident `fingerprint` and `loadedFrom` provenance.
+- The interface follows Quarto’s `lang:` key (English and French ship);
+  `tutorial_options(language = ...)` rewords single strings.
 - [`question()`](https://ppbds.github.io/learnr2/reference/question.md)
-  gains `allow_text`. With `allow_image = TRUE, allow_text = FALSE`, a
-  question is screenshot-only: no text box is shown, and Submit is
-  refused until an image is pasted.
-
-- A submitted screenshot question (`allow_image = TRUE`) now has an
-  “Edit Answer” button (`edit_button`), so a reader who pasted the wrong
-  screenshot can paste another one. It reopens only the image box, and
-  the question counts as unsubmitted until the new image is submitted.
-  Previously the only way out was Start Over, which clears the whole
-  tutorial.
-
-- Pasted screenshots are now scaled to at most 1600 pixels wide and
-  stored as WebP (JPEG in Safari) of at most about 450KB, instead of
-  full-size PNG. A few large screenshots could previously fill the
-  browser’s storage, which every tutorial on a site shares. The paste
-  limit rises from 2MB to 20MB, since the stored image is shrunk anyway.
-
-- When the browser refuses to save an answer (storage full or blocked),
-  the page now shows a warning and the answer stays unsubmitted.
-  Previously the failure was silent, and the answer was missing from the
-  download.
+  gains `allow_text`; a submitted screenshot can be replaced; pasted
+  screenshots are shrunk; a failed save is reported, not swallowed.
+- Code blocks distinguish what to type (`bash`, `r`, `default`) from
+  what to compare against (`{.output}`).
+- Accessibility: live regions, labelled inputs,
+  `aria-required`/`-invalid`, focus restored after dialogs, AA contrast.
+- learnr2 no longer depends on learnr in any way; `rstudioapi` and
+  `pkgdown` dropped from Suggests.
+- Internal: `tutorials.R` split into listing and running; widget
+  rendering and validation helpers consolidated (`R/widgets.R`,
+  `R/utils.R`); test stubs shared in `helper-stubs.R`.
 
 ## learnr2 0.1.3
 

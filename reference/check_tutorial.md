@@ -10,6 +10,9 @@ tutorials. Pair it with
 [`render_tutorials()`](https://ppbds.github.io/learnr2/reference/render_tutorials.md):
 rendering proves the document builds, these checks catch what a
 successful render does not.
+[`check_tutorials()`](https://ppbds.github.io/learnr2/reference/check_tutorials.md)
+does both for every tutorial in a package, and is what a content
+package's test should call.
 
 ## Usage
 
@@ -102,6 +105,18 @@ Each check has a name, used in `skip`:
   learns what to install. `gradethis` is exempt, since the
   `_gradethis.qmd` include provides it.
 
+- `exercises` – no two `{webr}` cells are the editor for the same
+  `#| exercise:` id. 'quarto-live' refuses such a document at render
+  time; this says so first.
+
+- `urls` – a
+  [`question()`](https://ppbds.github.io/learnr2/reference/question.md)
+  whose prompt asks the reader to copy or paste a URL is
+  `type = "reflection_editable"`, not a `"reflection"` that locks on
+  submit. A wrong URL is the commonest reason a student resubmits, and a
+  URL is theirs alone, so letting them correct it cannot copy our
+  answer. A screenshot question (`allow_image = TRUE`) is exempt.
+
 - `prefix` – every learnr2 function in an `{r}` chunk is called with its
   `learnr2::` prefix. A tutorial never attaches the package, so a bare
   [`question()`](https://ppbds.github.io/learnr2/reference/question.md)
@@ -147,7 +162,7 @@ house style that a tutorial can violate and still work:
 
 ``` r
 qmd <- create_tutorial("checked", dir = tempfile(), open = FALSE)
-#> Created tutorial: /tmp/Rtmp1YFknW/file19ece90d51f/checked/checked.qmd
+#> Created tutorial: /tmp/RtmpNxQ7MM/file18c12153a4f0/checked/checked.qmd
 check_tutorial(qmd)
 
 # Break the template, then see the problems instead of an error.
