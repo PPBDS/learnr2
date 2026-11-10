@@ -438,6 +438,20 @@ test_that("labels: an explicit `id =` that repeats a label or another id is an e
   expect_false("labels" %in% failing_checks(sub('id = "your-answers-1"', 'id = "something-else"', clash)))
 })
 
+test_that("labels: `.id =` and `id =` outside a question() call are not question ids", {
+  # An "our answer" chunk that stacks tibbles with bind_rows(.id = ...), as
+  # ims.tutorials' do, once failed this check: `\bid` matched `.id`.
+  with_chunks <- function(...) c(good_lines[seq_len(which(good_lines == "## Your answers") - 1)],
+                                 ..., good_lines[which(good_lines == "## Your answers"):length(good_lines)])
+  answers <- c(
+    "```{r}", "#| label: vectors-6", "#| echo: true",
+    'bind_rows(a = mtcars, b = mtcars, .id = "your-answers-1")', "```", "",
+    "```{r}", "#| label: vectors-7", "#| echo: true",
+    'data.frame(id = "your-answers-1")', "```", ""
+  )
+  expect_false("labels" %in% failing_checks(with_chunks(answers)))
+})
+
 test_that("urls: a question asking the reader to paste a URL must be reflection_editable", {
   url_q <- function(type, extra = "") c(
     "```{r}", "#| label: vectors-7", "#| echo: false",

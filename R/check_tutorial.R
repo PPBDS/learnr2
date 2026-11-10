@@ -456,9 +456,15 @@ tutorial_checks <- list(
     }
     # A question's id is its chunk label unless it passes `id =`; an explicit
     # id that repeats a label or another explicit id merges two questions'
-    # saved answers, just as a duplicated label would.
+    # saved answers, just as a duplicated label would. Only chunks calling
+    # question() can set one, and `id` must not follow a dot or a word
+    # character: ims.tutorials' answer chunks use
+    # `bind_rows(..., .id = "model")`, which `\bid` matched, since a dot is a
+    # word boundary.
     explicit <- lapply(chunks, function(ch) {
-      m <- regmatches(ch$body, gregexpr("\\bid\\s*=\\s*[\"']([^\"']+)[\"']", ch$body))
+      if (!any(grepl("question\\(", ch$body))) return(character(0))
+      m <- regmatches(ch$body, gregexpr("(?<![.\\w])id\\s*=\\s*[\"']([^\"']+)[\"']",
+                                        ch$body, perl = TRUE))
       sub("^.*[\"']([^\"']+)[\"']$", "\\1", unlist(m))
     })
     ids <- c(labels[!is.na(labels)], unlist(explicit))
