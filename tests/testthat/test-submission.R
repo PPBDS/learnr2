@@ -312,14 +312,20 @@ test_that("check_submission() counts screenshots and recordings, and extract_sub
   expect_message(files <- extract_submission_media(path), "Wrote 3 file\\(s\\) to '.*ada'")
   expect_identical(names(files), c("plot-1", "say-2", "odd-4"))
   expect_identical(basename(files), c("plot-1.webp", "say-2.webm", "odd-4.x-made-up"))
-  expect_identical(dirname(files[[1]]), file.path(dir, "ada"))
+  # Compared with the separators normalised: on Windows dirname() gives
+  # forward slashes while local_tempdir() gives backslashes.
+  same_dir <- function(a, b) {
+    expect_identical(normalizePath(a, winslash = "/", mustWork = FALSE),
+                     normalizePath(b, winslash = "/", mustWork = FALSE))
+  }
+  same_dir(dirname(files[[1]]), file.path(dir, "ada"))
   expect_identical(readBin(files[["say-2"]], "raw", 100), charToRaw("opus bytes"))
   expect_identical(readBin(files[["plot-1"]], "raw", 100), charToRaw("webp bytes"))
 
   out <- file.path(dir, "elsewhere", "deeper")
   expect_silent(files2 <- extract_submission_media(path, dir = out, quiet = TRUE))
   expect_true(all(file.exists(files2)))
-  expect_identical(dirname(files2[[1]]), out)
+  same_dir(dirname(files2[[1]]), out)
 
   empty <- file.path(dir, "empty.json")
   writeLines('{"answers": [{"id": "t", "answer": "words"}]}', empty)
