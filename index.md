@@ -68,7 +68,8 @@ alongside it, so it renders out of the box with Quarto or
   / [`quiz()`](https://ppbds.github.io/learnr2/reference/quiz.md),
   graded in the browser with plain JavaScript, including single/multiple
   choice, free-text, and reflection questions (optionally answered with
-  a pasted screenshot). Answers persist in the browser’s `localStorage`.
+  a pasted screenshot or a voice recording). Answers persist in the
+  browser’s `localStorage`.
 - **Student info and submission** —
   [`student_info()`](https://ppbds.github.io/learnr2/reference/student_info.md)
   collects a name and email;

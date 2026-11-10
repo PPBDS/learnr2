@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">learnr2</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.3.9014</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.3.9015</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -39,7 +39,9 @@
 
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="development version" id="learnr2-development-version">learnr2 (development version)<a class="anchor" aria-label="anchor" href="#learnr2-development-version"></a></h2>
-<ul><li>New <code><a href="../reference/load_tutorial.html">load_tutorial()</a></code> and an in-page <strong>Load Answers</strong> button: reopen a tutorial from a downloaded answers file with every answer filled in.</li>
+<ul><li>
+<code><a href="../reference/question.html">question()</a></code> gains <code>allow_audio</code> and <code>max_seconds</code>: the reader records a spoken answer in the browser (Chrome or Edge), stored and downloaded like a screenshot. New <code><a href="../reference/extract_submission_media.html">extract_submission_media()</a></code> writes a submission’s recordings and screenshots to files, <code><a href="../reference/check_submission.html">check_submission()</a></code> counts them, and <code><a href="../reference/check_tutorial.html">check_tutorial()</a></code> gains an <code>audio</code> warning.</li>
+<li>New <code><a href="../reference/load_tutorial.html">load_tutorial()</a></code> and an in-page <strong>Load Answers</strong> button: reopen a tutorial from a downloaded answers file with every answer filled in.</li>
 <li>New <code><a href="../reference/check_tutorials.html">check_tutorials()</a></code>: one call checks, renders and verifies every tutorial in a package. <code><a href="../reference/check_tutorial.html">check_tutorial()</a></code> gains <code>exercises</code>, <code>urls</code>, <code>language</code> and explicit-id checks.</li>
 <li>New <code><a href="../reference/check_submission.html">check_submission()</a></code>. Downloads now record <code>package</code>, <code>version</code>, <code>tutorial</code>, <code>progress</code>, a tamper-evident <code>fingerprint</code> and <code>loadedFrom</code> provenance, and a <strong>Download Answers</strong> control beside Start Over lets a student hand in a partial attempt without revealing the rest.</li>
 <li>The interface follows Quarto’s <code>lang:</code> key (English and French ship); <code>tutorial_options(language = ...)</code> rewords single strings.</li>

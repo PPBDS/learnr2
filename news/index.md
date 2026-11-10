@@ -2,6 +2,16 @@
 
 ## learnr2 (development version)
 
+- [`question()`](https://ppbds.github.io/learnr2/reference/question.md)
+  gains `allow_audio` and `max_seconds`: the reader records a spoken
+  answer in the browser (Chrome or Edge), stored and downloaded like a
+  screenshot. New
+  [`extract_submission_media()`](https://ppbds.github.io/learnr2/reference/extract_submission_media.md)
+  writes a submission’s recordings and screenshots to files,
+  [`check_submission()`](https://ppbds.github.io/learnr2/reference/check_submission.md)
+  counts them, and
+  [`check_tutorial()`](https://ppbds.github.io/learnr2/reference/check_tutorial.md)
+  gains an `audio` warning.
 - New
   [`load_tutorial()`](https://ppbds.github.io/learnr2/reference/load_tutorial.md)
   and an in-page **Load Answers** button: reopen a tutorial from a

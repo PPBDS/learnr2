@@ -50,6 +50,8 @@ what comes back.
   : Add a "download my answers" button
 - [`check_submission()`](https://ppbds.github.io/learnr2/reference/check_submission.md)
   : Check a submission's fingerprint and provenance
+- [`extract_submission_media()`](https://ppbds.github.io/learnr2/reference/extract_submission_media.md)
+  : Write a submission's screenshots and recordings to files
 - [`submission_time()`](https://ppbds.github.io/learnr2/reference/submission_time.md)
   : Recover a submission's download time
 - [`load_tutorial()`](https://ppbds.github.io/learnr2/reference/load_tutorial.md)

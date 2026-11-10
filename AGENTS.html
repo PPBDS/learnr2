@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="index.html">learnr2</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.3.9014</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.3.9015</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -60,7 +60,7 @@
 <li>
 <code>R/check_tutorial.R</code> is the per-file static checks, <code>R/check_tutorials.R</code> the whole-package run; <code>R/show_file.R</code> is ported from tutorial.helpers.</li>
 <li>
-<code>inst/extdata/quiz/quiz.js</code> is one file, in the order: strings and storage, shared widget pieces, the four builders, download and fingerprint, Load Answers, Start Over, options, progressive reveal, init. <code>quiz.css</code> beside it; <code>lang/*.json</code> the translations.</li>
+<code>inst/extdata/quiz/quiz.js</code> is one file, in the order: strings and storage, shared widget pieces, the four builders (with the image paste box and the voice recorder before the reflection one), download and fingerprint, Load Answers, Start Over, options, progressive reveal, init. <code>quiz.css</code> beside it; <code>lang/*.json</code> the translations.</li>
 </ul></div>
 <div class="section level2">
 <h2 id="settled-design-decisions">Settled design decisions<a class="anchor" aria-label="anchor" href="#settled-design-decisions"></a></h2>
@@ -131,6 +131,8 @@
 <li>
 <strong>Image-paste answers.</strong> Once an image is pasted, the textarea hides and typed text is not saved (<code>value</code> is <code>""</code>). A user reported the visible empty textarea above a pasted image as a second box to fill in. Don’t bring it back. <code>question(allow_text = FALSE)</code> (payload <code>allowText</code>) goes further: no text box at all, and Submit is refused without an image. Primer’s Getting Started screenshot questions use it, because a typed answer there proves nothing. <code>quiz.js</code> treats only an explicit <code>allowText: false</code> as image-only, so older payloads keep the text box.</li>
 <li>
+<strong>Voice answers</strong> (2026-11): <code>question(allow_audio = TRUE, max_seconds =)</code>, <code>buildAudioRecorder()</code> in <code>quiz.js</code>. The browser’s MediaRecorder, Opus in WebM at 24 kbps (about 3 KB/s), stored as a <code>data:audio/</code> URL in <code>saved.audio</code> and handled everywhere exactly as <code>saved.image</code> is: the reflection builder’s <code>media</code> is whichever box the question has, so Edit Answer, the download, <code>restoredState()</code> and <code>restore_entries()</code> each needed one branch. One screenshot or one recording per question, never both. Chrome and Edge are the supported browsers (Safari’s MediaRecorder can’t write WebM/Opus); <code>audioRecordingSupported()</code> decides at load, giving a note in place of the Record button and, when the page has any voice question, a page-top notice (<code>noteUnsupportedAudio()</code>), so the requirement never depends on the author’s prose. There is deliberately no <code><a href="reference/check_tutorial.html">check_tutorial()</a></code> check that greps the introduction for “Chrome”: a wording check misfires the way the title smoke test did. MediaRecorder’s WebM carries no duration, so <code>seconds</code> is saved beside the data URL and shown as “Recorded: m:ss”. <code><a href="reference/check_tutorial.html">check_tutorial()</a></code>’s <code>audio</code> warning sums <code>max_seconds</code> (default 120, cap 300) against ten minutes, for the 5 MB site storage. <code><a href="reference/extract_submission_media.html">extract_submission_media()</a></code> is the grader’s way out of the data URLs.</li>
+<li>
 <strong>Storage keys strip the URL hash</strong> (<code>pageUrl</code> at the top of <code>quiz.js</code>). TOC clicks change the hash, and reading <code>location.href</code> fresh made Start Over and the download miss saved answers.</li>
 <li>
 <strong><code>window.confirm()</code> is never used.</strong> VS Code’s Simple Browser silently resolves it to <code>false</code>, which made Start Over look dead. Use the in-page <code>&lt;dialog&gt;</code> (<code>showConfirmDialog()</code>).</li>
@@ -164,7 +166,7 @@
 <li>
 <strong><code>withr</code> is in Suggests</strong>, and every test file using it starts with <code>testthat::skip_if_not_installed("withr")</code> for CRAN’s no-Suggests check. Moving it to Imports instead gave a NOTE (“not imported from”), because no package code uses it.</li>
 <li>Deliberately untested: <code><a href="reference/live_extension_dir.html">live_extension_dir()</a></code>’s missing-package branch (needs a broken install).</li>
-</ul><p><strong>JS, <code>tests/js/</code> (Playwright).</strong> <code>quiz.js</code> is covered end to end: <code>quiz.spec.js</code> against a local fixture server (<code>server.js</code>, <code>fixtures.js</code>) and <code>persistence.spec.js</code> across a real browser restart. Any fixture is also served as <code>&lt;name&gt;-no-toc</code>, without a sidebar. The six image-paste tests fail in local headless Chromium (clipboard) but pass in CI. Fixture payloads mirror the R <code>payload &lt;- list(...)</code> shapes by hand; when a payload field changes, change <code>fixtures.js</code> too.</p>
+</ul><p><strong>JS, <code>tests/js/</code> (Playwright).</strong> <code>quiz.js</code> is covered end to end: <code>quiz.spec.js</code> against a local fixture server (<code>server.js</code>, <code>fixtures.js</code>), <code>audio.spec.js</code> for the voice recorder, and <code>persistence.spec.js</code> across a real browser restart; <code>helpers.js</code> holds the fingerprint helpers the specs share. Any fixture is also served as <code>&lt;name&gt;-no-toc</code>, without a sidebar. The six image-paste tests fail in local headless Chromium (clipboard) but pass in CI. <code>audio.spec.js</code> runs on the full Chromium build (<code>channel: "chromium"</code>) with Chromium’s fake microphone: Playwright’s default headless shell never answers <code>getUserMedia()</code> (the promise hangs, no error), found when every recording test timed out waiting for a player. Fixture payloads mirror the R <code>payload &lt;- list(...)</code> shapes by hand; when a payload field changes, change <code>fixtures.js</code> too.</p>
 <p>Run: <code>R -q -e 'devtools::test()'</code>, and <code>cd tests/js &amp;&amp; npx playwright test</code>.</p>
 </div>
 <div class="section level2">

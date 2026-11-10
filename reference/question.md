@@ -21,6 +21,8 @@ question(
   edit_button = NULL,
   id = NULL,
   allow_image = FALSE,
+  allow_audio = FALSE,
+  max_seconds = 120,
   allow_text = TRUE,
   show_text = TRUE,
   validate = c("none", "integer")
@@ -104,10 +106,11 @@ question(
 - edit_button:
 
   Button label shown while a submitted `"reflection_editable"` question,
-  or a `"reflection"` question with `allow_image = TRUE`, is locked;
-  clicking it reopens the answer for editing (only the image, for the
-  latter). `NULL`, the default, means the page language's "Edit Answer".
-  Ignored otherwise.
+  or a `"reflection"` question with `allow_image = TRUE` or
+  `allow_audio = TRUE`, is locked; clicking it reopens the answer for
+  editing (only the image or the recording, for the latter two). `NULL`,
+  the default, means the page language's "Edit Answer". Ignored
+  otherwise.
 
 - id:
 
@@ -142,13 +145,44 @@ question(
   unsubmitted until the new image is submitted. The text box stays
   locked.
 
+- allow_audio:
+
+  For `"reflection"`/`"reflection_editable"` questions, let the reader
+  record their voice, in the browser, as their answer. Defaults to
+  `FALSE`. **Recording works in Chrome and Edge**; tell students who
+  will meet a voice question to open the tutorial in one of them.
+  (Recording uses the browser's `MediaRecorder` with the Opus codec in
+  WebM, which those two support everywhere learnr2 is used. Firefox
+  usually works too. Safari does not.) In a browser that cannot record,
+  the question shows a note saying which browsers can, and a notice at
+  the top of the page says so before the reader starts; the Load Answers
+  button lets them carry a download into the right browser. The widget
+  has Record, Stop and Record again buttons, a timer, and a player for
+  what was recorded; the microphone is asked for on the first Record and
+  released at Stop. The recording is stored like a pasted screenshot, as
+  a data URL in the browser's storage and in the download file (about
+  3KB per second: two minutes is roughly 360KB of the browser's 5MB for
+  the whole site). A submitted voice question gets an `edit_button`
+  ("Edit Answer") that reopens only the recorder, as a screenshot
+  question's reopens only the image box. Cannot be combined with
+  `allow_image`. Ignored for other question types.
+
+- max_seconds:
+
+  With `allow_audio = TRUE`, the longest recording allowed, in seconds;
+  recording stops by itself at this point. Defaults to `120`, at most
+  `300`.
+  [`check_tutorial()`](https://ppbds.github.io/learnr2/reference/check_tutorial.md)'s
+  `audio` check warns when a tutorial's voice questions add up to more
+  than ten minutes.
+
 - allow_text:
 
-  With `allow_image = TRUE`, also offer a text box for a typed answer?
-  Defaults to `TRUE`. Set it to `FALSE` for a screenshot-only question:
-  no text box is shown, the reader pastes into the image box, and Submit
-  is refused until an image is pasted. Ignored when `allow_image` is
-  `FALSE`.
+  With `allow_image = TRUE` or `allow_audio = TRUE`, also offer a text
+  box for a typed answer? Defaults to `TRUE`. Set it to `FALSE` for a
+  screenshot-only or voice-only question: no text box is shown, and
+  Submit is refused until an image is pasted or a recording made.
+  Ignored when neither `allow_image` nor `allow_audio` is `TRUE`.
 
 - show_text:
 
@@ -169,8 +203,8 @@ question(
   for a question like "how many minutes did this take?" where any honest
   number is fine, but free-form prose is not; see the
   `"reflection_editable"` example below. A pasted image (`allow_image`)
-  is not validated. Ignored (forced to `"none"`) for
-  `"single"`/`"multiple"` questions.
+  or a recording (`allow_audio`) is not validated. Ignored (forced to
+  `"none"`) for `"single"`/`"multiple"` questions.
 
 ## Value
 
@@ -244,7 +278,7 @@ question(
   answer("48"),
   allow_retry = TRUE
 )
-#> <div class="learnr2-question" data-learnr2-question="eyJpZCI6IndoYXQtaXMtNi10aW1lcy03IiwidGV4dCI6IldoYXQgaXMgNiB0aW1lcyA3PyIs&#10;InR5cGUiOiJzaW5nbGUiLCJhbnN3ZXJzIjpbeyJ0ZXh0IjoiNDIiLCJjb3JyZWN0Ijp0cnVl&#10;LCJtZXNzYWdlIjpudWxsfSx7InRleHQiOiIzNiIsImNvcnJlY3QiOmZhbHNlLCJtZXNzYWdl&#10;IjpudWxsfSx7InRleHQiOiI0OCIsImNvcnJlY3QiOmZhbHNlLCJtZXNzYWdlIjpudWxsfV0s&#10;ImNvcnJlY3RNZXNzYWdlIjpudWxsLCJpbmNvcnJlY3RNZXNzYWdlIjpudWxsLCJhbGxvd1Jl&#10;dHJ5Ijp0cnVlLCJyYW5kb21BbnN3ZXJPcmRlciI6ZmFsc2UsInN1Ym1pdExhYmVsIjpudWxs&#10;LCJ0cnlBZ2FpbkxhYmVsIjpudWxsLCJlZGl0TGFiZWwiOm51bGwsImFsbG93SW1hZ2UiOmZh&#10;bHNlLCJhbGxvd1RleHQiOnRydWUsInNob3dUZXh0Ijp0cnVlLCJ2YWxpZGF0ZSI6Im5vbmUi&#10;fQ==">
+#> <div class="learnr2-question" data-learnr2-question="eyJpZCI6IndoYXQtaXMtNi10aW1lcy03IiwidGV4dCI6IldoYXQgaXMgNiB0aW1lcyA3PyIs&#10;InR5cGUiOiJzaW5nbGUiLCJhbnN3ZXJzIjpbeyJ0ZXh0IjoiNDIiLCJjb3JyZWN0Ijp0cnVl&#10;LCJtZXNzYWdlIjpudWxsfSx7InRleHQiOiIzNiIsImNvcnJlY3QiOmZhbHNlLCJtZXNzYWdl&#10;IjpudWxsfSx7InRleHQiOiI0OCIsImNvcnJlY3QiOmZhbHNlLCJtZXNzYWdlIjpudWxsfV0s&#10;ImNvcnJlY3RNZXNzYWdlIjpudWxsLCJpbmNvcnJlY3RNZXNzYWdlIjpudWxsLCJhbGxvd1Jl&#10;dHJ5Ijp0cnVlLCJyYW5kb21BbnN3ZXJPcmRlciI6ZmFsc2UsInN1Ym1pdExhYmVsIjpudWxs&#10;LCJ0cnlBZ2FpbkxhYmVsIjpudWxsLCJlZGl0TGFiZWwiOm51bGwsImFsbG93SW1hZ2UiOmZh&#10;bHNlLCJhbGxvd0F1ZGlvIjpmYWxzZSwibWF4U2Vjb25kcyI6bnVsbCwiYWxsb3dUZXh0Ijp0&#10;cnVlLCJzaG93VGV4dCI6dHJ1ZSwidmFsaWRhdGUiOiJub25lIn0=">
 #>   <noscript>This quiz question requires JavaScript.</noscript>
 #> </div>
 
@@ -255,7 +289,19 @@ question(
   type = "reflection_editable",
   validate = "integer"
 )
-#> <div class="learnr2-question" data-learnr2-question="eyJpZCI6Imhvdy1tYW55LW1pbnV0ZXMtYXBwcm94aW1hdGVseS1kaWQtdGhpcy10YWtlIiwi&#10;dGV4dCI6IkhvdyBtYW55IG1pbnV0ZXMsIGFwcHJveGltYXRlbHksIGRpZCB0aGlzIHRha2U/&#10;IiwidHlwZSI6InJlZmxlY3Rpb25fZWRpdGFibGUiLCJhbnN3ZXJzIjpbXSwiY29ycmVjdE1l&#10;c3NhZ2UiOm51bGwsImluY29ycmVjdE1lc3NhZ2UiOm51bGwsImFsbG93UmV0cnkiOmZhbHNl&#10;LCJyYW5kb21BbnN3ZXJPcmRlciI6ZmFsc2UsInN1Ym1pdExhYmVsIjpudWxsLCJ0cnlBZ2Fp&#10;bkxhYmVsIjpudWxsLCJlZGl0TGFiZWwiOm51bGwsImFsbG93SW1hZ2UiOmZhbHNlLCJhbGxv&#10;d1RleHQiOnRydWUsInNob3dUZXh0Ijp0cnVlLCJ2YWxpZGF0ZSI6ImludGVnZXIifQ==">
+#> <div class="learnr2-question" data-learnr2-question="eyJpZCI6Imhvdy1tYW55LW1pbnV0ZXMtYXBwcm94aW1hdGVseS1kaWQtdGhpcy10YWtlIiwi&#10;dGV4dCI6IkhvdyBtYW55IG1pbnV0ZXMsIGFwcHJveGltYXRlbHksIGRpZCB0aGlzIHRha2U/&#10;IiwidHlwZSI6InJlZmxlY3Rpb25fZWRpdGFibGUiLCJhbnN3ZXJzIjpbXSwiY29ycmVjdE1l&#10;c3NhZ2UiOm51bGwsImluY29ycmVjdE1lc3NhZ2UiOm51bGwsImFsbG93UmV0cnkiOmZhbHNl&#10;LCJyYW5kb21BbnN3ZXJPcmRlciI6ZmFsc2UsInN1Ym1pdExhYmVsIjpudWxsLCJ0cnlBZ2Fp&#10;bkxhYmVsIjpudWxsLCJlZGl0TGFiZWwiOm51bGwsImFsbG93SW1hZ2UiOmZhbHNlLCJhbGxv&#10;d0F1ZGlvIjpmYWxzZSwibWF4U2Vjb25kcyI6bnVsbCwiYWxsb3dUZXh0Ijp0cnVlLCJzaG93&#10;VGV4dCI6dHJ1ZSwidmFsaWRhdGUiOiJpbnRlZ2VyIn0=">
+#>   <noscript>This quiz question requires JavaScript.</noscript>
+#> </div>
+
+# A voice-only question: Chrome or Edge, up to one minute.
+question(
+  "In a sentence or two, say what a p-value is.",
+  type = "reflection",
+  allow_audio = TRUE,
+  allow_text = FALSE,
+  max_seconds = 60
+)
+#> <div class="learnr2-question" data-learnr2-question="eyJpZCI6ImluLWEtc2VudGVuY2Utb3ItdHdvLXNheS13aGF0LWEtcC12YWx1ZS1pcyIsInRl&#10;eHQiOiJJbiBhIHNlbnRlbmNlIG9yIHR3bywgc2F5IHdoYXQgYSBwLXZhbHVlIGlzLiIsInR5&#10;cGUiOiJyZWZsZWN0aW9uIiwiYW5zd2VycyI6W10sImNvcnJlY3RNZXNzYWdlIjpudWxsLCJp&#10;bmNvcnJlY3RNZXNzYWdlIjpudWxsLCJhbGxvd1JldHJ5IjpmYWxzZSwicmFuZG9tQW5zd2Vy&#10;T3JkZXIiOmZhbHNlLCJzdWJtaXRMYWJlbCI6bnVsbCwidHJ5QWdhaW5MYWJlbCI6bnVsbCwi&#10;ZWRpdExhYmVsIjpudWxsLCJhbGxvd0ltYWdlIjpmYWxzZSwiYWxsb3dBdWRpbyI6dHJ1ZSwi&#10;bWF4U2Vjb25kcyI6NjAsImFsbG93VGV4dCI6ZmFsc2UsInNob3dUZXh0Ijp0cnVlLCJ2YWxp&#10;ZGF0ZSI6Im5vbmUifQ==">
 #>   <noscript>This quiz question requires JavaScript.</noscript>
 #> </div>
 ```

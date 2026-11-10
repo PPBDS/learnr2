@@ -32,8 +32,9 @@ Invisibly, a list: `time` (POSIXct, UTC, or `NULL`), `name`, `email`,
 `device` (the per-device id), `progress` (how far the reader got:
 sections revealed and questions answered, as a list, or `NULL`),
 `fingerprint` (one of `"valid"`, `"invalid"`, `"missing"`,
-`"unchecked"`) and `loaded_from` (the file's provenance block as a list,
-or `NULL`). Also prints a summary.
+`"unchecked"`), `loaded_from` (the file's provenance block as a list, or
+`NULL`), `screenshots` and `recordings` (how many answers are pasted
+images and voice recordings). Also prints a summary.
 
 ## Details
 
@@ -45,7 +46,8 @@ available from R 4.5.0; on an older R the fingerprint is reported as
 ## See also
 
 [`submission_time()`](https://ppbds.github.io/learnr2/reference/submission_time.md),
-[`load_tutorial()`](https://ppbds.github.io/learnr2/reference/load_tutorial.md).
+[`load_tutorial()`](https://ppbds.github.io/learnr2/reference/load_tutorial.md),
+[`extract_submission_media()`](https://ppbds.github.io/learnr2/reference/extract_submission_media.md).
 
 ## Examples
 
@@ -57,6 +59,7 @@ check_submission(answers)
 #> Name: Ada  Email: (none)
 #> Device: (none)
 #> Progress: not recorded
+#> Media: 0 screenshot(s), 0 recording(s)
 #> Fingerprint: missing (downloaded before fingerprints, or stripped)
 #> Loaded from: nothing (a fresh run of the tutorial)
 ```

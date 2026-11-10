@@ -39,7 +39,7 @@ quiz(
 )
 #> <div class="learnr2-quiz">
 #>   <div class="learnr2-quiz-caption">Arithmetic</div>
-#>   <div class="learnr2-question" data-learnr2-question="eyJpZCI6IndoYXQtaXMtMi0yIiwidGV4dCI6IldoYXQgaXMgMiArIDI/IiwidHlwZSI6InNp&#10;bmdsZSIsImFuc3dlcnMiOlt7InRleHQiOiI0IiwiY29ycmVjdCI6dHJ1ZSwibWVzc2FnZSI6&#10;bnVsbH0seyJ0ZXh0IjoiMjIiLCJjb3JyZWN0IjpmYWxzZSwibWVzc2FnZSI6bnVsbH1dLCJj&#10;b3JyZWN0TWVzc2FnZSI6bnVsbCwiaW5jb3JyZWN0TWVzc2FnZSI6bnVsbCwiYWxsb3dSZXRy&#10;eSI6ZmFsc2UsInJhbmRvbUFuc3dlck9yZGVyIjpmYWxzZSwic3VibWl0TGFiZWwiOm51bGws&#10;InRyeUFnYWluTGFiZWwiOm51bGwsImVkaXRMYWJlbCI6bnVsbCwiYWxsb3dJbWFnZSI6ZmFs&#10;c2UsImFsbG93VGV4dCI6dHJ1ZSwic2hvd1RleHQiOnRydWUsInZhbGlkYXRlIjoibm9uZSJ9&#10;">
+#>   <div class="learnr2-question" data-learnr2-question="eyJpZCI6IndoYXQtaXMtMi0yIiwidGV4dCI6IldoYXQgaXMgMiArIDI/IiwidHlwZSI6InNp&#10;bmdsZSIsImFuc3dlcnMiOlt7InRleHQiOiI0IiwiY29ycmVjdCI6dHJ1ZSwibWVzc2FnZSI6&#10;bnVsbH0seyJ0ZXh0IjoiMjIiLCJjb3JyZWN0IjpmYWxzZSwibWVzc2FnZSI6bnVsbH1dLCJj&#10;b3JyZWN0TWVzc2FnZSI6bnVsbCwiaW5jb3JyZWN0TWVzc2FnZSI6bnVsbCwiYWxsb3dSZXRy&#10;eSI6ZmFsc2UsInJhbmRvbUFuc3dlck9yZGVyIjpmYWxzZSwic3VibWl0TGFiZWwiOm51bGws&#10;InRyeUFnYWluTGFiZWwiOm51bGwsImVkaXRMYWJlbCI6bnVsbCwiYWxsb3dJbWFnZSI6ZmFs&#10;c2UsImFsbG93QXVkaW8iOmZhbHNlLCJtYXhTZWNvbmRzIjpudWxsLCJhbGxvd1RleHQiOnRy&#10;dWUsInNob3dUZXh0Ijp0cnVlLCJ2YWxpZGF0ZSI6Im5vbmUifQ==">
 #>     <noscript>This quiz question requires JavaScript.</noscript>
 #>   </div>
 #> </div>

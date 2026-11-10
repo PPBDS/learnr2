@@ -13,7 +13,7 @@ questions, graded entirely in the reader's browser."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">learnr2</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.3.9014</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.3.9015</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -66,6 +66,8 @@ questions, graded entirely in the reader's browser.</p>
 <span>  edit_button <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  id <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  allow_image <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  allow_audio <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  max_seconds <span class="op">=</span> <span class="fl">120</span>,</span>
 <span>  allow_text <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  show_text <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  validate <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"none"</span>, <span class="st">"integer"</span><span class="op">)</span></span>
@@ -142,9 +144,10 @@ default, means the page language's "Submit Answer" and "Try Again".</p></dd>
 <dt id="arg-edit-button">edit_button<a class="anchor" aria-label="anchor" href="#arg-edit-button"></a></dt>
 <dd><p>Button label shown while a submitted
 <code>"reflection_editable"</code> question, or a <code>"reflection"</code> question with
-<code>allow_image = TRUE</code>, is locked; clicking it reopens the answer for
-editing (only the image, for the latter). <code>NULL</code>, the default, means
-the page language's "Edit Answer". Ignored otherwise.</p></dd>
+<code>allow_image = TRUE</code> or <code>allow_audio = TRUE</code>, is locked; clicking it
+reopens the answer for editing (only the image or the recording, for
+the latter two). <code>NULL</code>, the default, means the page language's
+"Edit Answer". Ignored otherwise.</p></dd>
 
 
 <dt id="arg-id">id<a class="anchor" aria-label="anchor" href="#arg-id"></a></dt>
@@ -177,12 +180,41 @@ can swap in a different screenshot; the question counts as unsubmitted
 until the new image is submitted. The text box stays locked.</p></dd>
 
 
+<dt id="arg-allow-audio">allow_audio<a class="anchor" aria-label="anchor" href="#arg-allow-audio"></a></dt>
+<dd><p>For <code>"reflection"</code>/<code>"reflection_editable"</code> questions,
+let the reader record their voice, in the browser, as their answer.
+Defaults to <code>FALSE</code>. <strong>Recording works in Chrome and Edge</strong>; tell
+students who will meet a voice question to open the tutorial in one of
+them. (Recording uses the browser's <code>MediaRecorder</code> with the Opus codec
+in WebM, which those two support everywhere learnr2 is used. Firefox
+usually works too. Safari does not.) In a browser that cannot record,
+the question shows a note saying which browsers can, and a notice at
+the top of the page says so before the reader starts; the Load Answers
+button lets them carry a download into the right browser. The widget
+has Record, Stop and Record again buttons, a timer, and a player for
+what was recorded; the microphone is asked for on the first Record and
+released at Stop. The recording is stored like a pasted screenshot, as
+a data URL in the browser's storage and in the download file (about
+3KB per second: two minutes is roughly 360KB of the browser's 5MB for
+the whole site). A submitted voice question gets an <code>edit_button</code>
+("Edit Answer") that reopens only the recorder, as a screenshot
+question's reopens only the image box. Cannot be combined with
+<code>allow_image</code>. Ignored for other question types.</p></dd>
+
+
+<dt id="arg-max-seconds">max_seconds<a class="anchor" aria-label="anchor" href="#arg-max-seconds"></a></dt>
+<dd><p>With <code>allow_audio = TRUE</code>, the longest recording
+allowed, in seconds; recording stops by itself at this point. Defaults
+to <code>120</code>, at most <code>300</code>. <code><a href="check_tutorial.html">check_tutorial()</a></code>'s <code>audio</code> check warns when
+a tutorial's voice questions add up to more than ten minutes.</p></dd>
+
+
 <dt id="arg-allow-text">allow_text<a class="anchor" aria-label="anchor" href="#arg-allow-text"></a></dt>
-<dd><p>With <code>allow_image = TRUE</code>, also offer a text box for a
-typed answer? Defaults to <code>TRUE</code>. Set it to <code>FALSE</code> for a
-screenshot-only question: no text box is shown, the reader pastes into
-the image box, and Submit is refused until an image is pasted. Ignored
-when <code>allow_image</code> is <code>FALSE</code>.</p></dd>
+<dd><p>With <code>allow_image = TRUE</code> or <code>allow_audio = TRUE</code>, also
+offer a text box for a typed answer? Defaults to <code>TRUE</code>. Set it to
+<code>FALSE</code> for a screenshot-only or voice-only question: no text box is
+shown, and Submit is refused until an image is pasted or a recording
+made. Ignored when neither <code>allow_image</code> nor <code>allow_audio</code> is <code>TRUE</code>.</p></dd>
 
 
 <dt id="arg-show-text">show_text<a class="anchor" aria-label="anchor" href="#arg-show-text"></a></dt>
@@ -203,7 +235,7 @@ response to be a whole number (optionally signed, e.g. <code>-3</code>) – usef
 for a question like "how many minutes did this take?" where any honest
 number is fine, but free-form prose is not; see the
 <code>"reflection_editable"</code> example below. A pasted image (<code>allow_image</code>)
-is not validated. Ignored (forced to <code>"none"</code>) for
+or a recording (<code>allow_audio</code>) is not validated. Ignored (forced to <code>"none"</code>) for
 <code>"single"</code>/<code>"multiple"</code> questions.</p></dd>
 
 </dl></div>
@@ -275,7 +307,7 @@ visit, not this one tutorial's progress.</p>
 <span class="r-in"><span>  <span class="fu"><a href="answer.html">answer</a></span><span class="op">(</span><span class="st">"48"</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>  allow_retry <span class="op">=</span> <span class="cn">TRUE</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;div class="learnr2-question" data-learnr2-question="eyJpZCI6IndoYXQtaXMtNi10aW1lcy03IiwidGV4dCI6IldoYXQgaXMgNiB0aW1lcyA3PyIs&amp;#10;InR5cGUiOiJzaW5nbGUiLCJhbnN3ZXJzIjpbeyJ0ZXh0IjoiNDIiLCJjb3JyZWN0Ijp0cnVl&amp;#10;LCJtZXNzYWdlIjpudWxsfSx7InRleHQiOiIzNiIsImNvcnJlY3QiOmZhbHNlLCJtZXNzYWdl&amp;#10;IjpudWxsfSx7InRleHQiOiI0OCIsImNvcnJlY3QiOmZhbHNlLCJtZXNzYWdlIjpudWxsfV0s&amp;#10;ImNvcnJlY3RNZXNzYWdlIjpudWxsLCJpbmNvcnJlY3RNZXNzYWdlIjpudWxsLCJhbGxvd1Jl&amp;#10;dHJ5Ijp0cnVlLCJyYW5kb21BbnN3ZXJPcmRlciI6ZmFsc2UsInN1Ym1pdExhYmVsIjpudWxs&amp;#10;LCJ0cnlBZ2FpbkxhYmVsIjpudWxsLCJlZGl0TGFiZWwiOm51bGwsImFsbG93SW1hZ2UiOmZh&amp;#10;bHNlLCJhbGxvd1RleHQiOnRydWUsInNob3dUZXh0Ijp0cnVlLCJ2YWxpZGF0ZSI6Im5vbmUi&amp;#10;fQ=="&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;div class="learnr2-question" data-learnr2-question="eyJpZCI6IndoYXQtaXMtNi10aW1lcy03IiwidGV4dCI6IldoYXQgaXMgNiB0aW1lcyA3PyIs&amp;#10;InR5cGUiOiJzaW5nbGUiLCJhbnN3ZXJzIjpbeyJ0ZXh0IjoiNDIiLCJjb3JyZWN0Ijp0cnVl&amp;#10;LCJtZXNzYWdlIjpudWxsfSx7InRleHQiOiIzNiIsImNvcnJlY3QiOmZhbHNlLCJtZXNzYWdl&amp;#10;IjpudWxsfSx7InRleHQiOiI0OCIsImNvcnJlY3QiOmZhbHNlLCJtZXNzYWdlIjpudWxsfV0s&amp;#10;ImNvcnJlY3RNZXNzYWdlIjpudWxsLCJpbmNvcnJlY3RNZXNzYWdlIjpudWxsLCJhbGxvd1Jl&amp;#10;dHJ5Ijp0cnVlLCJyYW5kb21BbnN3ZXJPcmRlciI6ZmFsc2UsInN1Ym1pdExhYmVsIjpudWxs&amp;#10;LCJ0cnlBZ2FpbkxhYmVsIjpudWxsLCJlZGl0TGFiZWwiOm51bGwsImFsbG93SW1hZ2UiOmZh&amp;#10;bHNlLCJhbGxvd0F1ZGlvIjpmYWxzZSwibWF4U2Vjb25kcyI6bnVsbCwiYWxsb3dUZXh0Ijp0&amp;#10;cnVlLCJzaG93VGV4dCI6dHJ1ZSwidmFsaWRhdGUiOiJub25lIn0="&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   &lt;noscript&gt;This quiz question requires JavaScript.&lt;/noscript&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;/div&gt;</span>
 <span class="r-in"><span></span></span>
@@ -286,7 +318,19 @@ visit, not this one tutorial's progress.</p>
 <span class="r-in"><span>  type <span class="op">=</span> <span class="st">"reflection_editable"</span>,</span></span>
 <span class="r-in"><span>  validate <span class="op">=</span> <span class="st">"integer"</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;div class="learnr2-question" data-learnr2-question="eyJpZCI6Imhvdy1tYW55LW1pbnV0ZXMtYXBwcm94aW1hdGVseS1kaWQtdGhpcy10YWtlIiwi&amp;#10;dGV4dCI6IkhvdyBtYW55IG1pbnV0ZXMsIGFwcHJveGltYXRlbHksIGRpZCB0aGlzIHRha2U/&amp;#10;IiwidHlwZSI6InJlZmxlY3Rpb25fZWRpdGFibGUiLCJhbnN3ZXJzIjpbXSwiY29ycmVjdE1l&amp;#10;c3NhZ2UiOm51bGwsImluY29ycmVjdE1lc3NhZ2UiOm51bGwsImFsbG93UmV0cnkiOmZhbHNl&amp;#10;LCJyYW5kb21BbnN3ZXJPcmRlciI6ZmFsc2UsInN1Ym1pdExhYmVsIjpudWxsLCJ0cnlBZ2Fp&amp;#10;bkxhYmVsIjpudWxsLCJlZGl0TGFiZWwiOm51bGwsImFsbG93SW1hZ2UiOmZhbHNlLCJhbGxv&amp;#10;d1RleHQiOnRydWUsInNob3dUZXh0Ijp0cnVlLCJ2YWxpZGF0ZSI6ImludGVnZXIifQ=="&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;div class="learnr2-question" data-learnr2-question="eyJpZCI6Imhvdy1tYW55LW1pbnV0ZXMtYXBwcm94aW1hdGVseS1kaWQtdGhpcy10YWtlIiwi&amp;#10;dGV4dCI6IkhvdyBtYW55IG1pbnV0ZXMsIGFwcHJveGltYXRlbHksIGRpZCB0aGlzIHRha2U/&amp;#10;IiwidHlwZSI6InJlZmxlY3Rpb25fZWRpdGFibGUiLCJhbnN3ZXJzIjpbXSwiY29ycmVjdE1l&amp;#10;c3NhZ2UiOm51bGwsImluY29ycmVjdE1lc3NhZ2UiOm51bGwsImFsbG93UmV0cnkiOmZhbHNl&amp;#10;LCJyYW5kb21BbnN3ZXJPcmRlciI6ZmFsc2UsInN1Ym1pdExhYmVsIjpudWxsLCJ0cnlBZ2Fp&amp;#10;bkxhYmVsIjpudWxsLCJlZGl0TGFiZWwiOm51bGwsImFsbG93SW1hZ2UiOmZhbHNlLCJhbGxv&amp;#10;d0F1ZGlvIjpmYWxzZSwibWF4U2Vjb25kcyI6bnVsbCwiYWxsb3dUZXh0Ijp0cnVlLCJzaG93&amp;#10;VGV4dCI6dHJ1ZSwidmFsaWRhdGUiOiJpbnRlZ2VyIn0="&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   &lt;noscript&gt;This quiz question requires JavaScript.&lt;/noscript&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;/div&gt;</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># A voice-only question: Chrome or Edge, up to one minute.</span></span></span>
+<span class="r-in"><span><span class="fu">question</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="st">"In a sentence or two, say what a p-value is."</span>,</span></span>
+<span class="r-in"><span>  type <span class="op">=</span> <span class="st">"reflection"</span>,</span></span>
+<span class="r-in"><span>  allow_audio <span class="op">=</span> <span class="cn">TRUE</span>,</span></span>
+<span class="r-in"><span>  allow_text <span class="op">=</span> <span class="cn">FALSE</span>,</span></span>
+<span class="r-in"><span>  max_seconds <span class="op">=</span> <span class="fl">60</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;div class="learnr2-question" data-learnr2-question="eyJpZCI6ImluLWEtc2VudGVuY2Utb3ItdHdvLXNheS13aGF0LWEtcC12YWx1ZS1pcyIsInRl&amp;#10;eHQiOiJJbiBhIHNlbnRlbmNlIG9yIHR3bywgc2F5IHdoYXQgYSBwLXZhbHVlIGlzLiIsInR5&amp;#10;cGUiOiJyZWZsZWN0aW9uIiwiYW5zd2VycyI6W10sImNvcnJlY3RNZXNzYWdlIjpudWxsLCJp&amp;#10;bmNvcnJlY3RNZXNzYWdlIjpudWxsLCJhbGxvd1JldHJ5IjpmYWxzZSwicmFuZG9tQW5zd2Vy&amp;#10;T3JkZXIiOmZhbHNlLCJzdWJtaXRMYWJlbCI6bnVsbCwidHJ5QWdhaW5MYWJlbCI6bnVsbCwi&amp;#10;ZWRpdExhYmVsIjpudWxsLCJhbGxvd0ltYWdlIjpmYWxzZSwiYWxsb3dBdWRpbyI6dHJ1ZSwi&amp;#10;bWF4U2Vjb25kcyI6NjAsImFsbG93VGV4dCI6ZmFsc2UsInNob3dUZXh0Ijp0cnVlLCJ2YWxp&amp;#10;ZGF0ZSI6Im5vbmUifQ=="&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   &lt;noscript&gt;This quiz question requires JavaScript.&lt;/noscript&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;/div&gt;</span>
 </code></pre></div>

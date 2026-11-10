@@ -62,7 +62,8 @@ input in backticks, function names with `()`, no semicolons.
   `R/check_tutorials.R` the whole-package run; `R/show_file.R` is ported
   from tutorial.helpers.
 - `inst/extdata/quiz/quiz.js` is one file, in the order: strings and
-  storage, shared widget pieces, the four builders, download and
+  storage, shared widget pieces, the four builders (with the image paste
+  box and the voice recorder before the reflection one), download and
   fingerprint, Load Answers, Start Over, options, progressive reveal,
   init. `quiz.css` beside it; `lang/*.json` the translations.
 
@@ -394,6 +395,30 @@ Verified against real renders.
   it, because a typed answer there proves nothing. `quiz.js` treats only
   an explicit `allowText: false` as image-only, so older payloads keep
   the text box.
+- **Voice answers** (2026-11):
+  `question(allow_audio = TRUE, max_seconds =)`, `buildAudioRecorder()`
+  in `quiz.js`. The browser’s MediaRecorder, Opus in WebM at 24 kbps
+  (about 3 KB/s), stored as a `data:audio/` URL in `saved.audio` and
+  handled everywhere exactly as `saved.image` is: the reflection
+  builder’s `media` is whichever box the question has, so Edit Answer,
+  the download, `restoredState()` and `restore_entries()` each needed
+  one branch. One screenshot or one recording per question, never both.
+  Chrome and Edge are the supported browsers (Safari’s MediaRecorder
+  can’t write WebM/Opus); `audioRecordingSupported()` decides at load,
+  giving a note in place of the Record button and, when the page has any
+  voice question, a page-top notice (`noteUnsupportedAudio()`), so the
+  requirement never depends on the author’s prose. There is deliberately
+  no
+  [`check_tutorial()`](https://ppbds.github.io/learnr2/reference/check_tutorial.md)
+  check that greps the introduction for “Chrome”: a wording check
+  misfires the way the title smoke test did. MediaRecorder’s WebM
+  carries no duration, so `seconds` is saved beside the data URL and
+  shown as “Recorded: m:ss”.
+  [`check_tutorial()`](https://ppbds.github.io/learnr2/reference/check_tutorial.md)’s
+  `audio` warning sums `max_seconds` (default 120, cap 300) against ten
+  minutes, for the 5 MB site storage.
+  [`extract_submission_media()`](https://ppbds.github.io/learnr2/reference/extract_submission_media.md)
+  is the grader’s way out of the data URLs.
 - **Storage keys strip the URL hash** (`pageUrl` at the top of
   `quiz.js`). TOC clicks change the hash, and reading `location.href`
   fresh made Start Over and the download miss saved answers.
@@ -503,11 +528,17 @@ Stubs shared across files live in `helper-stubs.R`:
 
 **JS, `tests/js/` (Playwright).** `quiz.js` is covered end to end:
 `quiz.spec.js` against a local fixture server (`server.js`,
-`fixtures.js`) and `persistence.spec.js` across a real browser restart.
-Any fixture is also served as `<name>-no-toc`, without a sidebar. The
-six image-paste tests fail in local headless Chromium (clipboard) but
-pass in CI. Fixture payloads mirror the R `payload <- list(...)` shapes
-by hand; when a payload field changes, change `fixtures.js` too.
+`fixtures.js`), `audio.spec.js` for the voice recorder, and
+`persistence.spec.js` across a real browser restart; `helpers.js` holds
+the fingerprint helpers the specs share. Any fixture is also served as
+`<name>-no-toc`, without a sidebar. The six image-paste tests fail in
+local headless Chromium (clipboard) but pass in CI. `audio.spec.js` runs
+on the full Chromium build (`channel: "chromium"`) with Chromium’s fake
+microphone: Playwright’s default headless shell never answers
+`getUserMedia()` (the promise hangs, no error), found when every
+recording test timed out waiting for a player. Fixture payloads mirror
+the R `payload <- list(...)` shapes by hand; when a payload field
+changes, change `fixtures.js` too.
 
 Run: `R -q -e 'devtools::test()'`, and
 `cd tests/js && npx playwright test`.

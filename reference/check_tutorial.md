@@ -115,7 +115,8 @@ Each check has a name, used in `skip`:
   `type = "reflection_editable"`, not a `"reflection"` that locks on
   submit. A wrong URL is the commonest reason a student resubmits, and a
   URL is theirs alone, so letting them correct it cannot copy our
-  answer. A screenshot question (`allow_image = TRUE`) is exempt.
+  answer. A screenshot or voice question (`allow_image = TRUE`,
+  `allow_audio = TRUE`) is exempt.
 
 - `prefix` – every learnr2 function in an `{r}` chunk is called with its
   `learnr2::` prefix. A tutorial never attaches the package, so a bare
@@ -131,7 +132,7 @@ Each check has a name, used in `skip`:
   `check: true` cell) has a `.solution` div, which the grader cannot
   read.
 
-Four further checks report *warnings* rather than errors: with
+Five further checks report *warnings* rather than errors: with
 `error = TRUE` they are shown as one warning and do not stop. They cover
 house style that a tutorial can violate and still work:
 
@@ -151,6 +152,12 @@ house style that a tutorial can violate and still work:
   document-wide `execute: echo: false`, which is not known to be safe
   for `{webr}` cells.
 
+- `audio` – the tutorial's voice questions (`allow_audio = TRUE`) add up
+  to at most ten minutes of `max_seconds`. A recording takes about 3KB a
+  second of the browser's storage, which is about 5MB for the whole
+  site, shared with every screenshot and every other tutorial served
+  from the same address.
+
 - `language` – if the YAML header sets `lang:`, learnr2 ships interface
   strings for that language, so the Continue and Submit buttons match
   the rest of the page. Without a translation they stay English. See the
@@ -162,7 +169,7 @@ house style that a tutorial can violate and still work:
 
 ``` r
 qmd <- create_tutorial("checked", dir = tempfile(), open = FALSE)
-#> Created tutorial: /tmp/Rtmpjxgajb/file18d11c87cb42/checked/checked.qmd
+#> Created tutorial: /tmp/RtmpwmMymS/file19935e58eb3e/checked/checked.qmd
 check_tutorial(qmd)
 
 # Break the template, then see the problems instead of an error.

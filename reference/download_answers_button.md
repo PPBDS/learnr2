@@ -49,7 +49,10 @@ picked options; an image-paste reflection's `answer` is the pasted
 screenshot as a data-URL string (WebP, or JPEG where the browser can't
 write WebP; see
 [`question()`](https://ppbds.github.io/learnr2/reference/question.md)'s
-`allow_image`).
+`allow_image`), and a voice question's is the recording as a data-URL
+string (WebM; see `allow_audio`).
+[`extract_submission_media()`](https://ppbds.github.io/learnr2/reference/extract_submission_media.md)
+writes those out as files a grader can open.
 
 A `{webr}` exercise appears only under the condition quarto-live itself
 requires to keep a record of the reader's code at all:
@@ -107,7 +110,7 @@ name changed, visible; they do not make the file tamper-proof.
 
 ``` r
 download_answers_button()
-#> <div class="learnr2-download-answers" data-learnr2-download="eyJmaWxlbmFtZVByZWZpeCI6ImxlYXJucjItYW5zd2VycyIsImxhYmVsIjpudWxsLCJwYWNr&#10;YWdlIjpudWxsLCJ2ZXJzaW9uIjpudWxsLCJ0dXRvcmlhbCI6bnVsbCwidGl0bGUiOm51bGws&#10;ImxlYXJucjJWZXJzaW9uIjoiMC4xLjMuOTAxNCJ9">
+#> <div class="learnr2-download-answers" data-learnr2-download="eyJmaWxlbmFtZVByZWZpeCI6ImxlYXJucjItYW5zd2VycyIsImxhYmVsIjpudWxsLCJwYWNr&#10;YWdlIjpudWxsLCJ2ZXJzaW9uIjpudWxsLCJ0dXRvcmlhbCI6bnVsbCwidGl0bGUiOm51bGws&#10;ImxlYXJucjJWZXJzaW9uIjoiMC4xLjMuOTAxNSJ9">
 #>   <noscript>This button requires JavaScript.</noscript>
 #> </div>
 ```
