@@ -169,7 +169,7 @@ house style that a tutorial can violate and still work:
 
 ``` r
 qmd <- create_tutorial("checked", dir = tempfile(), open = FALSE)
-#> Created tutorial: /tmp/RtmpwmMymS/file19935e58eb3e/checked/checked.qmd
+#> Created tutorial: /tmp/RtmpBFWhb6/file191a4b624bfc/checked/checked.qmd
 check_tutorial(qmd)
 
 # Break the template, then see the problems instead of an error.

@@ -49,7 +49,7 @@ writeLines(paste0(
   jsonlite::base64_enc(charToRaw("not really an image")), '"}]}'
 ), answers)
 files <- extract_submission_media(answers, dir = tempfile())
-#> Wrote 1 file(s) to '/tmp/RtmpwmMymS/file1993746302d0': plot-1.webp
+#> Wrote 1 file(s) to '/tmp/RtmpBFWhb6/file191aae280be': plot-1.webp
 basename(files)
 #> [1] "plot-1.webp"
 ```
