@@ -452,13 +452,37 @@ test_that("urls: a question asking the reader to paste a URL must be reflection_
   expect_identical(res$check, "urls")
   expect_match(res$message, "asks for a URL but is `type = \"reflection\"`")
   expect_false("urls" %in% failing_checks(with_q(url_q("reflection_editable"))))
-  # A screenshot question is exempt; so is a prompt that merely mentions a URL.
+  # A screenshot or voice question is exempt; so is a prompt that merely mentions a URL.
   expect_false("urls" %in% failing_checks(with_q(url_q("reflection", ",\n  allow_image = TRUE"))))
+  expect_false("urls" %in% failing_checks(with_q(url_q("reflection", ",\n  allow_audio = TRUE"))))
   expect_true(learnr2:::asks_for_url("Copy/paste the resulting URL below."))
   expect_true(learnr2:::asks_for_url("Open your repo on GitHub, click index.qmd, and paste the URL of that page below."))
   expect_false(learnr2:::asks_for_url("Download movies.csv from this URL: https://example.org/x.csv. CP/CR."))
   expect_false(learnr2:::asks_for_url("Copy the URL in your address bar, then run curl -o x URL. CP/CR."))
   expect_false(learnr2:::asks_for_url("Open the URL it shows and paste the verification code into the terminal."))
+})
+
+test_that("audio is a warning-level check: voice questions over ten minutes in all are reported", {
+  voice_q <- function(n, extra = "") c(
+    "```{r}", paste0("#| label: vectors-", n), "#| echo: false",
+    "learnr2::question(",
+    '  "Say what you learned.",',
+    paste0('  type = "reflection", allow_audio = TRUE', extra),
+    ")", "```", ""
+  )
+  with_qs <- function(...) c(good_lines[seq_len(which(good_lines == "## Your answers") - 1)], ...,
+                             good_lines[which(good_lines == "## Your answers"):length(good_lines)])
+  # Five at the default 120 s is ten minutes exactly: allowed.
+  expect_false("audio" %in% failing_checks(with_qs(voice_q(7), voice_q(8), voice_q(9), voice_q(10), voice_q(11))))
+  # Two at the cap plus one default is 720 s.
+  res <- check_tutorial(write_qmd(with_qs(voice_q(7, ", max_seconds = 300"), voice_q(8, ", max_seconds = 300"), voice_q(9))),
+                        error = FALSE)
+  expect_identical(res$check, "audio")
+  expect_identical(res$severity, "warning")
+  expect_match(res$message, "allow 12 minutes of recording in all")
+  expect_match(res$message, "2.1MB")
+  expect_warning(check_tutorial(write_qmd(with_qs(voice_q(7, ", max_seconds = 300"), voice_q(8, ", max_seconds = 300"), voice_q(9)))),
+                 "style problem")
 })
 
 test_that("language is a warning-level check: a `lang:` with no translation is reported", {

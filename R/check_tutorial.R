@@ -53,8 +53,8 @@
 #'   a URL is `type = "reflection_editable"`, not a `"reflection"` that
 #'   locks on submit. A wrong URL is the commonest reason a student
 #'   resubmits, and a URL is theirs alone, so letting them correct it
-#'   cannot copy our answer. A screenshot question (`allow_image = TRUE`)
-#'   is exempt.
+#'   cannot copy our answer. A screenshot or voice question
+#'   (`allow_image = TRUE`, `allow_audio = TRUE`) is exempt.
 #' * `prefix` -- every learnr2 function in an `{r}` chunk is called with
 #'   its `learnr2::` prefix. A tutorial never attaches the package, so a
 #'   bare `question()` fails at render time.
@@ -64,7 +64,7 @@
 #'   (one with a `check: true` cell) has a `.solution` div, which the
 #'   grader cannot read.
 #'
-#' Four further checks report *warnings* rather than errors: with
+#' Five further checks report *warnings* rather than errors: with
 #' `error = TRUE` they are shown as one warning and do not stop. They cover
 #' house style that a tutorial can violate and still work:
 #' * `fences` -- every fenced code block names a language (```` ```bash ````,
@@ -79,6 +79,11 @@
 #'   (`output`, `runtime`, `tutorial`, `progressive`, `allow_skip`) and no
 #'   document-wide `execute: echo: false`, which is not known to be safe
 #'   for `{webr}` cells.
+#' * `audio` -- the tutorial's voice questions (`allow_audio = TRUE`) add
+#'   up to at most ten minutes of `max_seconds`. A recording takes about
+#'   3KB a second of the browser's storage, which is about 5MB for the
+#'   whole site, shared with every screenshot and every other tutorial
+#'   served from the same address.
 #' * `language` -- if the YAML header sets `lang:`, learnr2 ships interface
 #'   strings for that language, so the Continue and Submit buttons match
 #'   the rest of the page. Without a translation they stay English. See
@@ -165,8 +170,10 @@ report_problems <- function(problems, error) {
   invisible(problems)
 }
 
+MAX_AUDIO_MINUTES <- 10
+
 # Checks whose problems are reported as warnings, not errors (see ?check_tutorial).
-warning_checks <- c("fences", "mentions", "yaml", "language")
+warning_checks <- c("fences", "mentions", "yaml", "audio", "language")
 
 format_problems <- function(problems) {
   paste0("  ", fs::path_file(problems$path), " [", problems$check, "] ",
@@ -495,7 +502,7 @@ tutorial_checks <- list(
       type <- regmatches(body, regexec("type\\s*=\\s*[\"']([a-z_]+)[\"']", body))[[1]]
       type <- if (length(type) == 2) type[2] else "auto"
       if (!type %in% c("reflection", "text")) next
-      if (grepl("allow_image\\s*=\\s*TRUE", body)) next
+      if (grepl("allow_(image|audio)\\s*=\\s*TRUE", body)) next
       if (asks_for_url(text[2])) {
         msgs <- c(msgs, paste0(chunk_ref(ch), ": asks for a URL but is `type = \"", type,
                                "\"`, which locks on submit. Use `type = \"reflection_editable\"`: ",
@@ -644,6 +651,21 @@ tutorial_checks <- list(
                              "{webr} cells; put `#| echo: false` on each widget chunk instead."))
     }
     msgs
+  },
+
+  audio = function(doc) {
+    total <- 0
+    for (ch in chunks_of(doc, "r")) {
+      body <- paste(ch$body, collapse = " ")
+      if (!grepl("allow_audio\\s*=\\s*TRUE", body)) next
+      given <- regmatches(body, regexec("max_seconds\\s*=\\s*([0-9]+)", body))[[1]]
+      total <- total + if (length(given) == 2) as.numeric(given[2]) else 120
+    }
+    if (total <= MAX_AUDIO_MINUTES * 60) return(character(0))
+    paste0("voice questions allow ", round(total / 60, 1), " minutes of recording in all; ",
+           "at about 3KB a second that is ", round(total * 3 / 1024, 1), "MB of the browser's ",
+           "5MB storage for the whole site. Keep the total under ", MAX_AUDIO_MINUTES,
+           " minutes with shorter `max_seconds`.")
   },
 
   language = function(doc) {

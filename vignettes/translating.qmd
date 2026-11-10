@@ -253,6 +253,14 @@ Ask for one specific screenshot, never a hedged choice. "Paste a screenshot of y
 
 If the prompt reads better as ordinary text on the page, write it there and pass `show_text = FALSE`. Still repeat the wording in `text`, which is kept in the saved data and read to screen-reader users.
 
+### Voice questions
+
+`learnr2::question(type = "reflection", allow_audio = TRUE)` lets the reader record a spoken answer in the browser. Use it where hearing the student explain something in their own words is the point, such as "say in a sentence what a confidence interval is", or where a typed answer would invite pasting. Add `allow_text = FALSE` for a voice-only question and `max_seconds` to cap the length (120 by default, 300 at most). A question takes a screenshot or a recording, not both.
+
+**Recording works in Chrome and Edge.** When a tutorial has a voice question, say so in its introduction: one sentence telling students to open the tutorial in Chrome or Edge. A reader in another browser sees a note in place of the Record button, and a notice at the top of the page before they start, so nobody discovers the problem at the last question. Their answers travel to the right browser through the Download Answers and Load Answers buttons.
+
+A recording is stored like a screenshot, as a data URL in the browser's storage and in the download file, at about 3KB a second. `check_tutorial()` warns (`audio`) when a tutorial's voice questions add up to more than ten minutes of `max_seconds`. To grade, `extract_submission_media()` writes every recording in a submission out as a `.webm` file, and `load_tutorial()` plays them in place.
+
 ## Images
 
 Replace `knitr::include_graphics()` chunks with plain Markdown, `![](images/thing.png)`, optionally with `{width=90%}`. There is no chunk to label or hide.

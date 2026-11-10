@@ -128,7 +128,10 @@ print.learnr2_info <- function(x, ...) print_widget(x)
 #' `answer: null`; a choice question's `answer` is an array of the picked
 #' options; an image-paste reflection's `answer` is the pasted screenshot
 #' as a data-URL string (WebP, or JPEG where the browser can't write
-#' WebP; see [question()]'s `allow_image`).
+#' WebP; see [question()]'s `allow_image`), and a voice question's is the
+#' recording as a data-URL string (WebM; see `allow_audio`).
+#' [extract_submission_media()] writes those out as files a grader can
+#' open.
 #'
 #' A `{webr}` exercise appears only under the condition quarto-live itself
 #' requires to keep a record of the reader's code at all: `#| persist:
@@ -409,9 +412,11 @@ encode_submission_time <- function(when) {
 #'   `email`, `device` (the per-device id), `progress` (how far the reader
 #'   got: sections revealed and questions answered, as a list, or `NULL`),
 #'   `fingerprint` (one of `"valid"`, `"invalid"`, `"missing"`,
-#'   `"unchecked"`) and `loaded_from` (the file's provenance block as a
-#'   list, or `NULL`). Also prints a summary.
-#' @seealso [submission_time()], [load_tutorial()].
+#'   `"unchecked"`), `loaded_from` (the file's provenance block as a
+#'   list, or `NULL`), `screenshots` and `recordings` (how many answers
+#'   are pasted images and voice recordings). Also prints a summary.
+#' @seealso [submission_time()], [load_tutorial()],
+#'   [extract_submission_media()].
 #' @export
 #' @examples
 #' answers <- tempfile(fileext = ".json")
@@ -433,6 +438,7 @@ check_submission <- function(path) {
   when <- if (is_string(file$time)) decode_submission_time(file$time) else NULL
   from <- if (is.list(file$loadedFrom)) file$loadedFrom else NULL
   progress <- if (is.list(file$progress)) file$progress else NULL
+  media <- submission_media(file)
 
   lines <- c(
     paste0("Submitted: ", if (is.null(when)) "unknown" else format(when, "%Y-%m-%d %H:%M:%S UTC", tz = "UTC")),
@@ -442,6 +448,8 @@ check_submission <- function(path) {
       if (!is.null(progress$sections)) paste0("section ", progress$sections, " of ", progress$of, ", ") else "",
       progress$answered %||% "?", " of ", progress$of_questions %||% "?", " questions answered"
     )),
+    paste0("Media: ", sum(media$kind == "image"), " screenshot(s), ",
+           sum(media$kind == "audio"), " recording(s)"),
     paste0("Fingerprint: ", switch(state,
       valid = "valid (the file matches what was downloaded)",
       invalid = "INVALID (the file was edited after it was downloaded)",
@@ -463,7 +471,85 @@ check_submission <- function(path) {
   }
   message(paste(lines, collapse = "\n"))
   invisible(list(time = when, name = info$name, email = info$email, device = device,
-                 progress = progress, fingerprint = state, loaded_from = from))
+                 progress = progress, fingerprint = state, loaded_from = from,
+                 screenshots = sum(media$kind == "image"),
+                 recordings = sum(media$kind == "audio")))
+}
+
+# Every answer in a parsed download that is a data URL: a data frame of
+# id, kind ("image" or "audio"), mime type and the base64 text.
+submission_media <- function(file) {
+  rows <- lapply(file$answers, function(a) {
+    value <- a$answer
+    if (!is_string(a$id) || !is_string(value)) return(NULL)
+    m <- regmatches(value, regexec("^data:((image|audio)/[a-z0-9.+-]+)[^,]*;base64,(.*)$", value))[[1]]
+    if (length(m) == 0) return(NULL)
+    data.frame(id = a$id, kind = m[3], mime = m[2], base64 = m[4], stringsAsFactors = FALSE)
+  })
+  rows <- do.call(rbind, rows)
+  if (is.null(rows)) {
+    rows <- data.frame(id = character(0), kind = character(0), mime = character(0),
+                       base64 = character(0), stringsAsFactors = FALSE)
+  }
+  rows
+}
+
+MEDIA_EXTENSIONS <- c(
+  "image/webp" = "webp", "image/jpeg" = "jpg", "image/png" = "png",
+  "image/gif" = "gif", "image/bmp" = "bmp",
+  "audio/webm" = "webm", "audio/ogg" = "ogg", "audio/mp4" = "m4a",
+  "audio/mpeg" = "mp3", "audio/wav" = "wav"
+)
+
+#' Write a submission's screenshots and recordings to files
+#'
+#' A pasted screenshot ([question()]'s `allow_image`) or a voice recording
+#' (`allow_audio`) sits in the downloaded file as a base64 data URL, which
+#' nothing opens directly. This writes each one to `dir` as
+#' `<question id>.<ext>` (`.webp` or `.jpg` for a screenshot, `.webm` for
+#' a recording), so a grader can look or listen. [load_tutorial()] is the
+#' alternative: it shows them in place, in the tutorial.
+#'
+#' @param path Path to a JSON file downloaded via [download_answers_button()].
+#' @param dir Directory to write into, created if needed. Defaults to a
+#'   directory named after the file, beside it.
+#' @param quiet If `FALSE`, the default, say what was written.
+#' @return Invisibly, a character vector of the files written, named by
+#'   question id. Empty when the file holds no media.
+#' @seealso [check_submission()].
+#' @export
+#' @examples
+#' answers <- tempfile(fileext = ".json")
+#' writeLines(paste0(
+#'   '{"answers": [{"id": "plot-1", "answer": "data:image/webp;base64,',
+#'   jsonlite::base64_enc(charToRaw("not really an image")), '"}]}'
+#' ), answers)
+#' files <- extract_submission_media(answers, dir = tempfile())
+#' basename(files)
+extract_submission_media <- function(path, dir = NULL, quiet = FALSE) {
+  file <- read_answers_file(path)
+  media <- submission_media(file)
+  if (is.null(dir)) {
+    dir <- file.path(dirname(path), sub("\\.json$", "", basename(path)))
+  }
+  check_string(dir, "dir")
+  if (nrow(media) == 0) {
+    if (!isTRUE(quiet)) message("No screenshots or recordings in '", path, "'.")
+    return(invisible(character(0)))
+  }
+  dir.create(dir, showWarnings = FALSE, recursive = TRUE)
+  ext <- MEDIA_EXTENSIONS[media$mime]
+  ext[is.na(ext)] <- sub("^[a-z]+/", "", media$mime[is.na(ext)])
+  files <- file.path(dir, paste0(media$id, ".", ext))
+  for (i in seq_len(nrow(media))) {
+    writeBin(jsonlite::base64_dec(media$base64[i]), files[i])
+  }
+  names(files) <- media$id
+  if (!isTRUE(quiet)) {
+    message("Wrote ", nrow(media), " file(s) to '", dir, "': ",
+            paste(basename(files), collapse = ", "))
+  }
+  invisible(files)
 }
 
 # The text the fingerprint hashes. Mirrors canonicalSubmission() in quiz.js

@@ -193,6 +193,8 @@ restore_entries <- function(answers, widgets, path = "the answers file") {
           text <- paste(unlist(value), collapse = "")
           if (grepl("^data:image/", text)) {
             list(value = "", image = text, submitted = TRUE)
+          } else if (grepl("^data:audio/", text)) {
+            list(value = "", audio = text, submitted = TRUE)
           } else {
             list(value = text, submitted = TRUE)
           }

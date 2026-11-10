@@ -14,8 +14,9 @@ Invisibly, a list: \code{time} (POSIXct, UTC, or \code{NULL}), \code{name},
 \code{email}, \code{device} (the per-device id), \code{progress} (how far the reader
 got: sections revealed and questions answered, as a list, or \code{NULL}),
 \code{fingerprint} (one of \code{"valid"}, \code{"invalid"}, \code{"missing"},
-\code{"unchecked"}) and \code{loaded_from} (the file's provenance block as a
-list, or \code{NULL}). Also prints a summary.
+\code{"unchecked"}), \code{loaded_from} (the file's provenance block as a
+list, or \code{NULL}), \code{screenshots} and \code{recordings} (how many answers
+are pasted images and voice recordings). Also prints a summary.
 }
 \description{
 Every file from \code{\link[=download_answers_button]{download_answers_button()}} ends with a \code{fingerprint},
@@ -40,5 +41,6 @@ writeLines('{"time": "52mz7x0xv", "info": {"name": "Ada"}, "answers": []}', answ
 check_submission(answers)
 }
 \seealso{
-\code{\link[=submission_time]{submission_time()}}, \code{\link[=load_tutorial]{load_tutorial()}}.
+\code{\link[=submission_time]{submission_time()}}, \code{\link[=load_tutorial]{load_tutorial()}},
+\code{\link[=extract_submission_media]{extract_submission_media()}}.
 }

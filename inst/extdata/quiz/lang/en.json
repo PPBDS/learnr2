@@ -27,7 +27,7 @@
   "editing_note": "Editing. Submit to save your changes.",
   "replacing_note": "Click the image box and paste a new screenshot (Ctrl+V or Cmd+V), then Submit.",
   "not_saved": "This could not be saved. See the warning at the top of the page.",
-  "storage_full": "Your last answer was NOT saved: this browser's storage for this site is full. Pasted screenshots take the most room. Remove one with \"Remove image\", or use Start Over on a tutorial you have already downloaded and turned in, then submit again.",
+  "storage_full": "Your last answer was NOT saved: this browser's storage for this site is full. Pasted screenshots and voice recordings take the most room. Remove one with \"Remove image\", or use Start Over on a tutorial you have already downloaded and turned in, then submit again.",
   "storage_blocked": "This browser is blocking storage for this page, so your answers will not be kept if you leave or reload it. Download your answers before you close the page.",
   "submit": "Submit",
   "edit": "Edit",
@@ -63,5 +63,18 @@
   "download_unreached_one": "1 more question is in a section you haven't reached yet.",
   "download_unreached_other": "{n} more questions are in sections you haven't reached yet.",
   "download_anyway_question": "Download anyway?",
-  "download_answers_short": "Download Answers"
+  "download_answers_short": "Download Answers",
+  "record": "Record",
+  "stop_recording": "Stop",
+  "record_again": "Record again",
+  "recording_label": "Voice recording",
+  "audio_hint": "Click Record, speak for up to {max}, then click Stop. You can listen back and record again before you submit.",
+  "audio_recording": "Recording… {elapsed} of {max}",
+  "audio_length": "Recorded: {length}",
+  "audio_required": "Record an answer before submitting.",
+  "audio_unsupported": "Voice recording works in Chrome or Edge. Open this tutorial in one of them to answer this question.",
+  "audio_denied": "The microphone is blocked. Click the microphone icon in the address bar to allow it, then click Record again.",
+  "audio_failed": "Recording failed. Check that a microphone is connected, then try again.",
+  "rerecording_note": "Click Record again to replace your recording, then Submit.",
+  "audio_page_notice": "This tutorial has voice questions, which record only in Chrome or Edge. Open it in one of those browsers before you start. (Your answers can be carried over with Load Answers.)"
 }

@@ -25,6 +25,7 @@ function question(overrides) {
       tryAgainLabel: "Try Again",
       editLabel: "Edit Answer",
       allowImage: false,
+      allowAudio: false,
       showText: true,
       validate: "none"
     },
@@ -280,6 +281,50 @@ const FIXTURES = {
         allowText: false
       })
     )
+  ],
+  // Voice questions. "reflection-audio" is voice-only with a long limit;
+  // "reflection-audio-short" allows text and stops by itself after one
+  // second, for the auto-stop test; "reflection-audio-download" has the
+  // info form and download button for the round-trip tests.
+  "reflection-audio": [
+    questionBlock(
+      question({
+        id: "reflection-audio",
+        text: "Say what you learned.",
+        type: "reflection",
+        answers: [answer("A model answer.", true)],
+        allowAudio: true,
+        allowText: false,
+        maxSeconds: 60
+      })
+    )
+  ],
+  "reflection-audio-short": [
+    questionBlock(
+      question({
+        id: "reflection-audio-short",
+        text: "Say or type what you learned.",
+        type: "reflection",
+        answers: [],
+        allowAudio: true,
+        maxSeconds: 1
+      })
+    )
+  ],
+  "reflection-audio-download": [
+    infoBlock(info({ id: "learnr2-info-student-info" })),
+    questionBlock(
+      question({
+        id: "reflection-audio",
+        text: "Say what you learned.",
+        type: "reflection",
+        answers: [],
+        allowAudio: true,
+        allowText: false,
+        maxSeconds: 60
+      })
+    ),
+    downloadBlock(downloadButton({ filenamePrefix: "voice", tutorial: "voice-tutorial" }))
   ],
   "reflection-hidden-text": [
     questionBlock(

@@ -1,5 +1,10 @@
 # learnr2 (development version)
 
+* `question()` gains `allow_audio` and `max_seconds`: the reader records a
+  spoken answer in the browser (Chrome or Edge), stored and downloaded like
+  a screenshot. New `extract_submission_media()` writes a submission's
+  recordings and screenshots to files, `check_submission()` counts them,
+  and `check_tutorial()` gains an `audio` warning.
 * New `load_tutorial()` and an in-page **Load Answers** button: reopen a
   tutorial from a downloaded answers file with every answer filled in.
 * New `check_tutorials()`: one call checks, renders and verifies every

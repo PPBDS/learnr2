@@ -131,6 +131,38 @@ test_that("allow_text = FALSE makes an image question screenshot-only, and is ig
   expect_true(q3$payload$allowText)
 })
 
+test_that("allow_audio and max_seconds are carried through for reflection types only", {
+  q <- question("Say it.", type = "reflection", allow_audio = TRUE)
+  expect_true(q$payload$allowAudio)
+  expect_identical(q$payload$maxSeconds, 120L)
+  expect_true(q$payload$allowText)
+
+  q2 <- question("Say it.", type = "reflection_editable", allow_audio = TRUE,
+                 allow_text = FALSE, max_seconds = 45)
+  expect_true(q2$payload$allowAudio)
+  expect_identical(q2$payload$maxSeconds, 45L)
+  expect_false(q2$payload$allowText)
+
+  # Ignored for a graded question, and then no limit is sent either.
+  q3 <- question("Pick.", answer("a", correct = TRUE), allow_audio = TRUE)
+  expect_false(q3$payload$allowAudio)
+  expect_null(q3$payload$maxSeconds)
+  expect_true(q3$payload$allowText)
+})
+
+test_that("a question takes a screenshot or a recording, not both, and max_seconds is bounded", {
+  expect_error(
+    question("x", type = "reflection", allow_image = TRUE, allow_audio = TRUE),
+    "cannot both be TRUE"
+  )
+  for (bad in list(0, 301, 2.5, "60", NA, c(10, 20))) {
+    expect_error(question("x", type = "reflection", allow_audio = TRUE, max_seconds = bad),
+                 "whole number between 1 and 300")
+  }
+  # Only checked when it matters.
+  expect_silent(question("x", type = "reflection", max_seconds = -1))
+})
+
 test_that("show_text defaults to TRUE and is carried through when FALSE", {
   q <- question(
     "Paste a screenshot of your plot.",

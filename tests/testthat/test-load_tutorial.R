@@ -85,6 +85,11 @@ test_that("restore_entries() rebuilds quiz.js's saved shapes and drops what matc
   expect_equal(by_id[["intro-2"]]$value, list(value = "yes"))
   expect_equal(by_id[["intro-3"]]$value, list(value = "Because.", submitted = TRUE))
   expect_equal(by_id[["intro-4"]]$value, list(value = "", image = "data:image/webp;base64,AAAA", submitted = TRUE))
+  # A recording restores as the audio shape buildReflectionQuestion() reads.
+  voice <- answers
+  voice$answers <- list(list(id = "intro-4", answer = "data:audio/webm;codecs=opus;base64,AAAA"))
+  voice_entries <- learnr2:::restore_entries(voice, w)
+  expect_equal(voice_entries[[1]]$value, list(value = "", audio = "data:audio/webm;codecs=opus;base64,AAAA", submitted = TRUE))
   expect_true(by_id[["webr-7-contents"]]$raw)
   expect_equal(by_id[["webr-7-contents"]]$prefix, "editor-")
   expect_equal(by_id[["webr-7-contents"]]$value, "2 + 2")

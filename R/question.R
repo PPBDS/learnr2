@@ -83,9 +83,10 @@ print.learnr2_answer <- function(x, ...) {
 #'   default, means the page language's "Submit Answer" and "Try Again".
 #' @param edit_button Button label shown while a submitted
 #'   `"reflection_editable"` question, or a `"reflection"` question with
-#'   `allow_image = TRUE`, is locked; clicking it reopens the answer for
-#'   editing (only the image, for the latter). `NULL`, the default, means
-#'   the page language's "Edit Answer". Ignored otherwise.
+#'   `allow_image = TRUE` or `allow_audio = TRUE`, is locked; clicking it
+#'   reopens the answer for editing (only the image or the recording, for
+#'   the latter two). `NULL`, the default, means the page language's
+#'   "Edit Answer". Ignored otherwise.
 #' @param id Stable identifier for this question: it keys the reader's saved
 #'   answer (see "Progress persistence" below) and is the `id` the question
 #'   appears under in a [download_answers_button()] submission. Defaults to
@@ -111,11 +112,34 @@ print.learnr2_answer <- function(x, ...) {
 #'   `edit_button` ("Edit Answer"), which reopens only the image box so the reader
 #'   can swap in a different screenshot; the question counts as unsubmitted
 #'   until the new image is submitted. The text box stays locked.
-#' @param allow_text With `allow_image = TRUE`, also offer a text box for a
-#'   typed answer? Defaults to `TRUE`. Set it to `FALSE` for a
-#'   screenshot-only question: no text box is shown, the reader pastes into
-#'   the image box, and Submit is refused until an image is pasted. Ignored
-#'   when `allow_image` is `FALSE`.
+#' @param allow_audio For `"reflection"`/`"reflection_editable"` questions,
+#'   let the reader record their voice, in the browser, as their answer.
+#'   Defaults to `FALSE`. **Recording works in Chrome and Edge**; tell
+#'   students who will meet a voice question to open the tutorial in one of
+#'   them. (Recording uses the browser's `MediaRecorder` with the Opus codec
+#'   in WebM, which those two support everywhere learnr2 is used. Firefox
+#'   usually works too. Safari does not.) In a browser that cannot record,
+#'   the question shows a note saying which browsers can, and a notice at
+#'   the top of the page says so before the reader starts; the Load Answers
+#'   button lets them carry a download into the right browser. The widget
+#'   has Record, Stop and Record again buttons, a timer, and a player for
+#'   what was recorded; the microphone is asked for on the first Record and
+#'   released at Stop. The recording is stored like a pasted screenshot, as
+#'   a data URL in the browser's storage and in the download file (about
+#'   3KB per second: two minutes is roughly 360KB of the browser's 5MB for
+#'   the whole site). A submitted voice question gets an `edit_button`
+#'   ("Edit Answer") that reopens only the recorder, as a screenshot
+#'   question's reopens only the image box. Cannot be combined with
+#'   `allow_image`. Ignored for other question types.
+#' @param max_seconds With `allow_audio = TRUE`, the longest recording
+#'   allowed, in seconds; recording stops by itself at this point. Defaults
+#'   to `120`, at most `300`. `check_tutorial()`'s `audio` check warns when
+#'   a tutorial's voice questions add up to more than ten minutes.
+#' @param allow_text With `allow_image = TRUE` or `allow_audio = TRUE`, also
+#'   offer a text box for a typed answer? Defaults to `TRUE`. Set it to
+#'   `FALSE` for a screenshot-only or voice-only question: no text box is
+#'   shown, and Submit is refused until an image is pasted or a recording
+#'   made. Ignored when neither `allow_image` nor `allow_audio` is `TRUE`.
 #' @param show_text Show `text` as the question's prompt inside the widget?
 #'   Defaults to `TRUE`. Set it to `FALSE` when the prompt is written as
 #'   ordinary text on the page, just above the question, and should not be
@@ -130,7 +154,7 @@ print.learnr2_answer <- function(x, ...) {
 #'   for a question like "how many minutes did this take?" where any honest
 #'   number is fine, but free-form prose is not; see the
 #'   `"reflection_editable"` example below. A pasted image (`allow_image`)
-#'   is not validated. Ignored (forced to `"none"`) for
+#'   or a recording (`allow_audio`) is not validated. Ignored (forced to `"none"`) for
 #'   `"single"`/`"multiple"` questions.
 #'
 #' @return A `learnr2_question` object. Printed as an interactive HTML
@@ -203,6 +227,15 @@ print.learnr2_answer <- function(x, ...) {
 #'   type = "reflection_editable",
 #'   validate = "integer"
 #' )
+#'
+#' # A voice-only question: Chrome or Edge, up to one minute.
+#' question(
+#'   "In a sentence or two, say what a p-value is.",
+#'   type = "reflection",
+#'   allow_audio = TRUE,
+#'   allow_text = FALSE,
+#'   max_seconds = 60
+#' )
 question <- function(text,
                       ...,
                       type = c(
@@ -218,6 +251,8 @@ question <- function(text,
                       edit_button = NULL,
                       id = NULL,
                       allow_image = FALSE,
+                      allow_audio = FALSE,
+                      max_seconds = 120,
                       allow_text = TRUE,
                       show_text = TRUE,
                       validate = c("none", "integer")) {
@@ -258,6 +293,14 @@ question <- function(text,
   }
 
   allow_image <- isTRUE(allow_image) && is_reflection_type
+  allow_audio <- isTRUE(allow_audio) && is_reflection_type
+  if (allow_image && allow_audio) {
+    stop("`allow_image` and `allow_audio` cannot both be TRUE: a question takes a ",
+         "screenshot or a recording, not either.", call. = FALSE)
+  }
+  if (allow_audio) {
+    max_seconds <- check_max_seconds(max_seconds)
+  }
 
   if (type == "auto") {
     type <- if (n_correct > 1) "multiple" else "single"
@@ -280,12 +323,28 @@ question <- function(text,
     tryAgainLabel = try_again_button,
     editLabel = edit_button,
     allowImage = allow_image,
-    allowText = !allow_image || !isFALSE(allow_text),
+    allowAudio = allow_audio,
+    maxSeconds = if (allow_audio) max_seconds else NULL,
+    allowText = !(allow_image || allow_audio) || !isFALSE(allow_text),
     showText = isTRUE(show_text),
     validate = if (is_free_text_type) validate else "none"
   )
 
   structure(list(payload = payload), class = "learnr2_question")
+}
+
+# A whole number of seconds, 1 to 300. The cap keeps one recording under
+# about 900KB of the browser's storage (see `allow_audio` in ?question).
+MAX_RECORDING_SECONDS <- 300L
+
+check_max_seconds <- function(x) {
+  ok <- is.numeric(x) && length(x) == 1 && !is.na(x) && x == trunc(x) &&
+    x >= 1 && x <= MAX_RECORDING_SECONDS
+  if (!ok) {
+    stop("`max_seconds` must be a whole number between 1 and ",
+         MAX_RECORDING_SECONDS, ".", call. = FALSE)
+  }
+  as.integer(x)
 }
 
 # lowercase; every run of non-alphanumerics (including any already-present

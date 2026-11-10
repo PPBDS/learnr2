@@ -50,7 +50,7 @@
     "editing_note": "Editing. Submit to save your changes.",
     "replacing_note": "Click the image box and paste a new screenshot (Ctrl+V or Cmd+V), then Submit.",
     "not_saved": "This could not be saved. See the warning at the top of the page.",
-    "storage_full": "Your last answer was NOT saved: this browser's storage for this site is full. Pasted screenshots take the most room. Remove one with \"Remove image\", or use Start Over on a tutorial you have already downloaded and turned in, then submit again.",
+    "storage_full": "Your last answer was NOT saved: this browser's storage for this site is full. Pasted screenshots and voice recordings take the most room. Remove one with \"Remove image\", or use Start Over on a tutorial you have already downloaded and turned in, then submit again.",
     "storage_blocked": "This browser is blocking storage for this page, so your answers will not be kept if you leave or reload it. Download your answers before you close the page.",
     "submit": "Submit",
     "edit": "Edit",
@@ -86,7 +86,20 @@
     "download_unreached_one": "1 more question is in a section you haven't reached yet.",
     "download_unreached_other": "{n} more questions are in sections you haven't reached yet.",
     "download_anyway_question": "Download anyway?",
-    "download_answers_short": "Download Answers"
+    "download_answers_short": "Download Answers",
+    "record": "Record",
+    "stop_recording": "Stop",
+    "record_again": "Record again",
+    "recording_label": "Voice recording",
+    "audio_hint": "Click Record, speak for up to {max}, then click Stop. You can listen back and record again before you submit.",
+    "audio_recording": "Recording… {elapsed} of {max}",
+    "audio_length": "Recorded: {length}",
+    "audio_required": "Record an answer before submitting.",
+    "audio_unsupported": "Voice recording works in Chrome or Edge. Open this tutorial in one of them to answer this question.",
+    "audio_denied": "The microphone is blocked. Click the microphone icon in the address bar to allow it, then click Record again.",
+    "audio_failed": "Recording failed. Check that a microphone is connected, then try again.",
+    "rerecording_note": "Click Record again to replace your recording, then Submit.",
+    "audio_page_notice": "This tutorial has voice questions, which record only in Chrome or Edge. Open it in one of those browsers before you start. (Your answers can be carried over with Load Answers.)"
   };
   var STRINGS = Object.assign({}, STRINGS_EN);
 
@@ -649,6 +662,245 @@
     };
   }
 
+  // ---- Voice recording (allow_audio) --------------------------------------
+  // The browser's own MediaRecorder, Opus in WebM at 24 kbps mono: about
+  // 3 KB a second, so two minutes is roughly 360 KB of the ~5 MB the
+  // browser gives the whole site. Tutorials are run in Chrome or Edge, which
+  // both record this; Safari cannot, and a browser that cannot gets a note
+  // in place of the Record button, plus a page-top notice before the reader
+  // starts (noteUnsupportedAudio()). The recording is stored as a data URL,
+  // like a pasted screenshot, so every path that handles an image answer
+  // (download, restore, Edit Answer) handles a recording the same way.
+  var AUDIO_MIME = "audio/webm;codecs=opus";
+  var AUDIO_BITS_PER_SECOND = 24000;
+
+  function audioRecordingSupported() {
+    return !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia &&
+      window.MediaRecorder && typeof window.MediaRecorder.isTypeSupported === "function" &&
+      window.MediaRecorder.isTypeSupported(AUDIO_MIME));
+  }
+
+  function formatSeconds(seconds) {
+    var s = Math.max(0, Math.round(seconds));
+    return Math.floor(s / 60) + ":" + ("0" + (s % 60)).slice(-2);
+  }
+
+  var recorderCount = 0;
+
+  // The recorder box: hint, timer, player, one button that reads Record,
+  // Stop or Record again by state, and an error line. `onChange(hasAudio)`
+  // lets the caller hide the text box while a recording is the answer, as
+  // buildImagePasteArea() does for an image. Same interface as the paste
+  // area, so buildReflectionQuestion() treats the two alike.
+  function buildAudioRecorder(onChange, maxSeconds) {
+    var hintId = "learnr2-audio-hint-" + (++recorderCount);
+    var maxText = formatSeconds(maxSeconds);
+    // tabindex -1 so Edit Answer can move focus here (reopen()).
+    var wrapper = el("div", {
+      class: "learnr2-audio", role: "group", tabindex: "-1",
+      "aria-label": t("recording_label"), "aria-describedby": hintId
+    });
+    var hint = el("div", { class: "learnr2-audio-hint", id: hintId, text: t("audio_hint", { max: maxText }) });
+    var timer = makeStatus("learnr2-audio-timer");
+    var player = el("audio", { class: "learnr2-audio-player d-none", controls: "controls", preload: "metadata" });
+    var button = el("button", { type: "button", class: "learnr2-audio-record", text: t("record") });
+    var error = makeStatus("learnr2-audio-error");
+
+    var dataUrl = null;
+    var seconds = null;
+    var disabled = false;
+    var recorder = null;
+    var stream = null;
+    var chunks = [];
+    var startedAt = 0;
+    var ticker = null;
+
+    function setError(message) {
+      error.textContent = message;
+      error.classList.remove("d-none");
+    }
+
+    function clearError() {
+      error.textContent = "";
+      error.classList.add("d-none");
+    }
+
+    function setTimer(message) {
+      timer.textContent = message || "";
+      timer.classList.toggle("d-none", !message);
+    }
+
+    function recording() {
+      return !!recorder && recorder.state === "recording";
+    }
+
+    function refreshButton() {
+      button.textContent = t(recording() ? "stop_recording" : dataUrl ? "record_again" : "record");
+      button.classList.toggle("learnr2-audio-recording", recording());
+      button.classList.toggle("d-none", disabled);
+    }
+
+    // MediaRecorder's WebM carries no duration, so the player can't show
+    // one; the timer line keeps the length the recorder measured.
+    function setAudio(nextDataUrl, nextSeconds) {
+      dataUrl = nextDataUrl;
+      seconds = typeof nextSeconds === "number" ? nextSeconds : null;
+      player.src = nextDataUrl;
+      player.classList.remove("d-none");
+      setTimer(seconds === null ? "" : t("audio_length", { length: formatSeconds(seconds) }));
+      clearError();
+      refreshButton();
+      if (onChange) {
+        onChange(true);
+      }
+    }
+
+    function releaseStream() {
+      if (stream) {
+        stream.getTracks().forEach(function (track) { track.stop(); });
+        stream = null;
+      }
+    }
+
+    function stop() {
+      if (ticker) {
+        window.clearInterval(ticker);
+        ticker = null;
+      }
+      if (recording()) {
+        recorder.stop();
+      } else {
+        releaseStream();
+      }
+    }
+
+    function finish() {
+      var elapsed = Math.min(maxSeconds, (Date.now() - startedAt) / 1000);
+      releaseStream();
+      recorder = null;
+      var blob = new Blob(chunks, { type: AUDIO_MIME });
+      chunks = [];
+      if (blob.size === 0) {
+        setTimer("");
+        setError(t("audio_failed"));
+        refreshButton();
+        return;
+      }
+      var reader = new FileReader();
+      reader.onload = function () { setAudio(reader.result, elapsed); };
+      reader.onerror = function () {
+        setTimer("");
+        setError(t("audio_failed"));
+        refreshButton();
+      };
+      reader.readAsDataURL(blob);
+    }
+
+    function start() {
+      clearError();
+      navigator.mediaDevices.getUserMedia({ audio: true }).then(function (nextStream) {
+        stream = nextStream;
+        chunks = [];
+        try {
+          recorder = new window.MediaRecorder(stream, { mimeType: AUDIO_MIME, audioBitsPerSecond: AUDIO_BITS_PER_SECOND });
+        } catch (e) {
+          releaseStream();
+          setError(t("audio_failed"));
+          return;
+        }
+        recorder.addEventListener("dataavailable", function (event) {
+          if (event.data && event.data.size > 0) {
+            chunks.push(event.data);
+          }
+        });
+        recorder.addEventListener("stop", finish);
+        recorder.addEventListener("error", function () {
+          stop();
+          setError(t("audio_failed"));
+        });
+        recorder.start();
+        startedAt = Date.now();
+        var tick = function () {
+          var elapsed = (Date.now() - startedAt) / 1000;
+          setTimer(t("audio_recording", { elapsed: formatSeconds(elapsed), max: maxText }));
+          if (elapsed >= maxSeconds) {
+            stop();
+          }
+        };
+        tick();
+        ticker = window.setInterval(tick, 250);
+        refreshButton();
+      }).catch(function (err) {
+        var denied = err && (err.name === "NotAllowedError" || err.name === "SecurityError" || err.name === "PermissionDeniedError");
+        setError(t(denied ? "audio_denied" : "audio_failed"));
+      });
+    }
+
+    button.addEventListener("click", function () {
+      if (disabled) {
+        return;
+      }
+      if (recording()) {
+        stop();
+      } else {
+        start();
+      }
+    });
+
+    wrapper.appendChild(hint);
+    wrapper.appendChild(timer);
+    wrapper.appendChild(player);
+    if (audioRecordingSupported()) {
+      wrapper.appendChild(button);
+    } else {
+      wrapper.appendChild(el("div", { class: "learnr2-audio-unsupported", text: t("audio_unsupported") }));
+    }
+    wrapper.appendChild(error);
+
+    return {
+      element: wrapper,
+      getDataUrl: function () { return dataUrl; },
+      getSeconds: function () { return seconds; },
+      setAudio: setAudio,
+      setDisabled: function (isDisabled) {
+        disabled = isDisabled;
+        if (disabled && recording()) {
+          stop();
+        }
+        wrapper.classList.toggle("learnr2-audio-disabled", disabled);
+        hint.classList.toggle("d-none", disabled);
+        refreshButton();
+      }
+    };
+  }
+
+  // Before the reader starts: a page holding a voice question in a browser
+  // that cannot record gets a notice under the title, so the browser
+  // requirement never depends on the author having mentioned it.
+  function noteUnsupportedAudio() {
+    if (audioRecordingSupported()) {
+      return;
+    }
+    var any = Array.prototype.some.call(
+      document.querySelectorAll(".learnr2-question[data-learnr2-question]"),
+      function (node) {
+        var data = decodeAttr(node, "data-learnr2-question");
+        return !!(data && data.allowAudio);
+      }
+    );
+    if (!any) {
+      return;
+    }
+    var notice = el("div", { class: "learnr2-audio-notice", role: "status", text: t("audio_page_notice") });
+    var header = document.getElementById("title-block-header");
+    if (header && header.parentNode) {
+      header.parentNode.insertBefore(notice, header.nextSibling);
+    } else {
+      var main = document.getElementById("quarto-document-content") || document.body;
+      main.insertBefore(notice, main.firstChild);
+    }
+  }
+
   // Ungraded free-response: reveals the `correct`-marked answer(s) as a
   // model answer after submitting. `type === "reflection"` locks the
   // reader's own response afterward; `"reflection_editable"` leaves it open
@@ -678,26 +930,34 @@
     // submitted. Readers pasted the wrong screenshot and had to Start Over
     // the whole tutorial to fix it. Text stays locked for good, per the
     // note above EDITING_NOTE; reflection_editable already has Edit.
-    var replaceable = data.allowImage && !editable;
+    // A voice question (allow_audio) is handled exactly like an image one
+    // below: `media` is whichever box the question has.
+    var hasMedia = !!(data.allowImage || data.allowAudio);
+    var replaceable = hasMedia && !editable;
     var replacing = false;
     var replace = replaceable
       ? el("button", { type: "button", class: "learnr2-image-edit d-none" })
       : null;
-    // question(allow_text = FALSE): a screenshot-only question, with no text
-    // box at all and Submit refused until an image is pasted. Payloads from
-    // before allowText existed lack the key, so only an explicit false counts.
-    var imageOnly = data.allowImage && data.allowText === false;
+    // question(allow_text = FALSE): a screenshot-only or voice-only question,
+    // with no text box at all and Submit refused until an image is pasted
+    // or a recording made. Payloads from before allowText existed lack the
+    // key, so only an explicit false counts.
+    var imageOnly = hasMedia && data.allowText === false;
     if (imageOnly) {
       answers.classList.add("d-none");
     }
-    // Once an image is pasted it *is* the answer: hide the text box so the
-    // reader sees only the image (plus "Remove image", which brings the
-    // text box back, except while replacing or for an image-only question).
-    var imagePaste = data.allowImage
-      ? buildImagePasteArea(function (hasImage) {
-          answers.classList.toggle("d-none", hasImage || replacing || imageOnly);
-        }, imageOnly)
+    // Once an image is pasted (or a recording made) it *is* the answer: hide
+    // the text box so the reader sees only the image (plus "Remove image",
+    // which brings the text box back, except while replacing or for an
+    // image-only question).
+    var onMediaChange = function (present) {
+      answers.classList.toggle("d-none", present || replacing || imageOnly);
+    };
+    var imagePaste = data.allowImage ? buildImagePasteArea(onMediaChange, imageOnly) : null;
+    var recorder = !data.allowImage && data.allowAudio
+      ? buildAudioRecorder(onMediaChange, data.maxSeconds || 120)
       : null;
+    var media = imagePaste || recorder;
     if (imagePaste) {
       textarea.addEventListener("paste", function (event) {
         imagePaste.handlePaste(event);
@@ -736,8 +996,8 @@
       if (replacing) {
         answers.classList.add("d-none");
       }
-      if (imagePaste) {
-        imagePaste.setDisabled(isLocked);
+      if (media) {
+        media.setDisabled(isLocked);
       }
       if (editable) {
         submit.textContent = isLocked ? labelOr(data.editLabel, "edit_answer") : labelOr(data.submitLabel, "submit_answer");
@@ -748,7 +1008,7 @@
         replace.textContent = labelOr(data.editLabel, "edit_answer");
         replace.classList.toggle("d-none", !isLocked);
       }
-      note.textContent = t(replacing ? "replacing_note" : "editing_note");
+      note.textContent = t(replacing ? (recorder ? "rerecording_note" : "replacing_note") : "editing_note");
       note.classList.toggle("d-none", isLocked || !isEditing);
     }
 
@@ -766,33 +1026,42 @@
 
     if (replace) {
       replace.addEventListener("click", function () {
-        reopen(imagePaste.element);
+        reopen(media.element);
       });
     }
 
     submit.addEventListener("click", function () {
       if (locked && editable) {
-        reopen(imageOnly ? imagePaste.element : textarea);
+        reopen(imageOnly ? media.element : textarea);
         return;
       }
-      if ((replacing || imageOnly) && !imagePaste.getDataUrl()) {
-        setFeedback(feedback, "incorrect", t("image_required"));
+      if ((replacing || imageOnly) && !media.getDataUrl()) {
+        setFeedback(feedback, "incorrect", t(recorder ? "audio_required" : "image_required"));
         return;
       }
       var image = imagePaste ? imagePaste.getDataUrl() : null;
-      // A pasted image is the whole answer; `validate` applies to typing.
-      if (!image && !passesValidation(textarea.value, data.validate)) {
+      var audio = recorder ? recorder.getDataUrl() : null;
+      // A pasted image or a recording is the whole answer; `validate`
+      // applies to typing.
+      if (!image && !audio && !passesValidation(textarea.value, data.validate)) {
         setFeedback(feedback, "incorrect", t(VALIDATION_KEYS[data.validate]));
         return;
       }
       setFeedback(feedback, null);
-      var stored = saveState(data, {
+      var state = {
         // Text typed before pasting is hidden along with the text box, so
-        // don't submit it alongside the image.
-        value: image ? "" : textarea.value,
-        image: image,
+        // don't submit it alongside the image or recording.
+        value: image || audio ? "" : textarea.value,
         submitted: true
-      });
+      };
+      if (imagePaste) {
+        state.image = image;
+      }
+      if (recorder) {
+        state.audio = audio;
+        state.seconds = recorder.getSeconds();
+      }
+      var stored = saveState(data, state);
       if (!stored) {
         // Not received, so don't present it as submitted: leave it open to
         // retry once there is room (see reportStorageFailure()).
@@ -804,8 +1073,8 @@
     });
 
     container.appendChild(answers);
-    if (imagePaste) {
-      container.appendChild(imagePaste.element);
+    if (media) {
+      container.appendChild(media.element);
     }
     container.appendChild(el("div", { class: "learnr2-controls" }, replace ? [submit, replace] : [submit]));
     container.appendChild(note);
@@ -819,6 +1088,9 @@
       }
       if (saved.image && imagePaste) {
         imagePaste.setImage(saved.image);
+      }
+      if (saved.audio && recorder) {
+        recorder.setAudio(saved.audio, saved.seconds);
       }
       if (saved.submitted) {
         showModelAnswer();
@@ -1330,12 +1602,13 @@
           id: data.id,
           // Choice questions save an array of picked texts in
           // `saved.selected`; an image-paste reflection saves the screenshot
-          // as a data-URL string (WebP/JPEG) in `saved.image`; everything else saves
-          // a string in `saved.value`. For an image-paste answer the data
-          // URL *is* the answer we record. A submitted but empty text
-          // answer is "", distinct from the null of a never-submitted one.
+          // as a data-URL string (WebP/JPEG) in `saved.image` and a voice
+          // question its recording (WebM) in `saved.audio`; everything else
+          // saves a string in `saved.value`. For an image or a recording
+          // the data URL *is* the answer we record. A submitted but empty
+          // text answer is "", distinct from the null of a never-submitted one.
           answer: saved
-            ? (saved.selected || saved.image || (typeof saved.value === "string" ? saved.value : null))
+            ? (saved.selected || saved.image || saved.audio || (typeof saved.value === "string" ? saved.value : null))
             : null
         });
       });
@@ -1594,6 +1867,8 @@
       state = { value: String(answer) };
     } else if (typeof answer === "string" && answer.indexOf("data:image/") === 0) {
       state = { value: "", image: answer, submitted: true };
+    } else if (typeof answer === "string" && answer.indexOf("data:audio/") === 0) {
+      state = { value: "", audio: answer, submitted: true };
     } else {
       state = { value: String(answer), submitted: true };
     }
@@ -2180,6 +2455,7 @@
       .querySelectorAll(".learnr2-download-answers:not([data-learnr2-initialized])")
       .forEach(renderDownloadButton);
     injectStartOverButton();
+    noteUnsupportedAudio();
     initProgressiveSections();
     openLinksInNewTabs();
     relabelLiveButtons();

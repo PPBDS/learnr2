@@ -294,6 +294,40 @@ test_that("check_submission() tells a pristine file from an edited one, and repo
   expect_equal(res$loaded_from$name, "Carol")
 })
 
+test_that("check_submission() counts screenshots and recordings, and extract_submission_media() writes them out", {
+  dir <- withr::local_tempdir()
+  path <- file.path(dir, "ada.json")
+  jsonlite::write_json(list(answers = list(
+    list(id = "plot-1", answer = paste0("data:image/webp;base64,", jsonlite::base64_enc(charToRaw("webp bytes")))),
+    list(id = "say-2", answer = paste0("data:audio/webm;codecs=opus;base64,", jsonlite::base64_enc(charToRaw("opus bytes")))),
+    list(id = "text-3", answer = "data: is how a line of prose might start"),
+    list(id = "odd-4", answer = paste0("data:audio/x-made-up;base64,", jsonlite::base64_enc(charToRaw("?")))),
+    list(id = "none-5", answer = NULL)
+  ), info = list(name = "Ada")), path, auto_unbox = TRUE, null = "null")
+
+  expect_message(res <- check_submission(path), "Media: 1 screenshot\\(s\\), 2 recording\\(s\\)")
+  expect_identical(res$screenshots, 1L)
+  expect_identical(res$recordings, 2L)
+
+  expect_message(files <- extract_submission_media(path), "Wrote 3 file\\(s\\) to '.*ada'")
+  expect_identical(names(files), c("plot-1", "say-2", "odd-4"))
+  expect_identical(basename(files), c("plot-1.webp", "say-2.webm", "odd-4.x-made-up"))
+  expect_identical(dirname(files[[1]]), file.path(dir, "ada"))
+  expect_identical(readBin(files[["say-2"]], "raw", 100), charToRaw("opus bytes"))
+  expect_identical(readBin(files[["plot-1"]], "raw", 100), charToRaw("webp bytes"))
+
+  out <- file.path(dir, "elsewhere", "deeper")
+  expect_silent(files2 <- extract_submission_media(path, dir = out, quiet = TRUE))
+  expect_true(all(file.exists(files2)))
+  expect_identical(dirname(files2[[1]]), out)
+
+  empty <- file.path(dir, "empty.json")
+  writeLines('{"answers": [{"id": "t", "answer": "words"}]}', empty)
+  expect_message(none <- extract_submission_media(empty), "No screenshots or recordings")
+  expect_identical(none, character(0))
+  expect_error(extract_submission_media(path, dir = 1), "`dir` must be a single non-empty string")
+})
+
 test_that("submission_time() decodes a bare time code", {
   code <- learnr2:::encode_submission_time(as.POSIXct("2026-01-15 12:00:00", tz = "UTC"))
   res <- withVisible(suppressMessages(submission_time(code)))

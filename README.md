@@ -61,7 +61,8 @@ copied alongside it, so it renders out of the box with Quarto or
   [gradethis](https://rstudio.github.io/gradethis/).
 - **Quiz questions** — `question()` / `quiz()`, graded in the browser with
   plain JavaScript, including single/multiple choice, free-text, and
-  reflection questions (optionally answered with a pasted screenshot).
+  reflection questions (optionally answered with a pasted screenshot or
+  a voice recording).
   Answers persist in the browser's `localStorage`.
 - **Student info and submission** — `student_info()` collects a name and
   email; `download_answers_button()` bundles every saved answer into a

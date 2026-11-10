@@ -27,7 +27,7 @@
   "editing_note": "Modification en cours. Soumettez pour enregistrer vos changements.",
   "replacing_note": "Cliquez sur la zone d'image et collez une nouvelle capture d'écran (Ctrl+V ou Cmd+V), puis soumettez.",
   "not_saved": "Impossible d'enregistrer. Voir l'avertissement en haut de la page.",
-  "storage_full": "Votre dernière réponse n'a PAS été enregistrée : le stockage de ce navigateur pour ce site est plein. Les captures d'écran collées prennent le plus de place. Supprimez-en une avec « Supprimer l'image », ou utilisez Recommencer sur un tutoriel déjà téléchargé et remis, puis soumettez à nouveau.",
+  "storage_full": "Votre dernière réponse n'a PAS été enregistrée : le stockage de ce navigateur pour ce site est plein. Les captures d'écran collées et les enregistrements vocaux prennent le plus de place. Supprimez-en une avec « Supprimer l'image », ou utilisez Recommencer sur un tutoriel déjà téléchargé et remis, puis soumettez à nouveau.",
   "storage_blocked": "Ce navigateur bloque le stockage pour cette page : vos réponses ne seront pas conservées si vous la quittez ou la rechargez. Téléchargez vos réponses avant de fermer la page.",
   "submit": "Soumettre",
   "edit": "Modifier",
@@ -63,5 +63,18 @@
   "download_unreached_one": "1 autre question se trouve dans une section que vous n'avez pas encore atteinte.",
   "download_unreached_other": "{n} autres questions se trouvent dans des sections que vous n'avez pas encore atteintes.",
   "download_anyway_question": "Télécharger quand même ?",
-  "download_answers_short": "Télécharger les réponses"
+  "download_answers_short": "Télécharger les réponses",
+  "record": "Enregistrer",
+  "stop_recording": "Arrêter",
+  "record_again": "Réenregistrer",
+  "recording_label": "Enregistrement vocal",
+  "audio_hint": "Cliquez sur Enregistrer, parlez pendant au plus {max}, puis cliquez sur Arrêter. Vous pouvez réécouter et réenregistrer avant de soumettre.",
+  "audio_recording": "Enregistrement… {elapsed} sur {max}",
+  "audio_length": "Durée : {length}",
+  "audio_required": "Enregistrez une réponse avant de soumettre.",
+  "audio_unsupported": "L'enregistrement vocal fonctionne dans Chrome ou Edge. Ouvrez ce tutoriel dans l'un d'eux pour répondre à cette question.",
+  "audio_denied": "Le microphone est bloqué. Cliquez sur l'icône de microphone dans la barre d'adresse pour l'autoriser, puis cliquez de nouveau sur Enregistrer.",
+  "audio_failed": "L'enregistrement a échoué. Vérifiez qu'un microphone est branché, puis réessayez.",
+  "rerecording_note": "Cliquez sur Réenregistrer pour remplacer votre enregistrement, puis soumettez.",
+  "audio_page_notice": "Ce tutoriel contient des questions vocales, qui ne s'enregistrent que dans Chrome ou Edge. Ouvrez-le dans l'un de ces navigateurs avant de commencer. (Vos réponses peuvent être transférées avec Charger des réponses.)"
 }

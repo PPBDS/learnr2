@@ -17,6 +17,8 @@ question(
   edit_button = NULL,
   id = NULL,
   allow_image = FALSE,
+  allow_audio = FALSE,
+  max_seconds = 120,
   allow_text = TRUE,
   show_text = TRUE,
   validate = c("none", "integer")
@@ -74,9 +76,10 @@ default, means the page language's "Submit Answer" and "Try Again".}
 
 \item{edit_button}{Button label shown while a submitted
 \code{"reflection_editable"} question, or a \code{"reflection"} question with
-\code{allow_image = TRUE}, is locked; clicking it reopens the answer for
-editing (only the image, for the latter). \code{NULL}, the default, means
-the page language's "Edit Answer". Ignored otherwise.}
+\code{allow_image = TRUE} or \code{allow_audio = TRUE}, is locked; clicking it
+reopens the answer for editing (only the image or the recording, for
+the latter two). \code{NULL}, the default, means the page language's
+"Edit Answer". Ignored otherwise.}
 
 \item{id}{Stable identifier for this question: it keys the reader's saved
 answer (see "Progress persistence" below) and is the \code{id} the question
@@ -104,11 +107,36 @@ submitted \code{"reflection"} question with \code{allow_image = TRUE} gets an
 can swap in a different screenshot; the question counts as unsubmitted
 until the new image is submitted. The text box stays locked.}
 
-\item{allow_text}{With \code{allow_image = TRUE}, also offer a text box for a
-typed answer? Defaults to \code{TRUE}. Set it to \code{FALSE} for a
-screenshot-only question: no text box is shown, the reader pastes into
-the image box, and Submit is refused until an image is pasted. Ignored
-when \code{allow_image} is \code{FALSE}.}
+\item{allow_audio}{For \code{"reflection"}/\code{"reflection_editable"} questions,
+let the reader record their voice, in the browser, as their answer.
+Defaults to \code{FALSE}. \strong{Recording works in Chrome and Edge}; tell
+students who will meet a voice question to open the tutorial in one of
+them. (Recording uses the browser's \code{MediaRecorder} with the Opus codec
+in WebM, which those two support everywhere learnr2 is used. Firefox
+usually works too. Safari does not.) In a browser that cannot record,
+the question shows a note saying which browsers can, and a notice at
+the top of the page says so before the reader starts; the Load Answers
+button lets them carry a download into the right browser. The widget
+has Record, Stop and Record again buttons, a timer, and a player for
+what was recorded; the microphone is asked for on the first Record and
+released at Stop. The recording is stored like a pasted screenshot, as
+a data URL in the browser's storage and in the download file (about
+3KB per second: two minutes is roughly 360KB of the browser's 5MB for
+the whole site). A submitted voice question gets an \code{edit_button}
+("Edit Answer") that reopens only the recorder, as a screenshot
+question's reopens only the image box. Cannot be combined with
+\code{allow_image}. Ignored for other question types.}
+
+\item{max_seconds}{With \code{allow_audio = TRUE}, the longest recording
+allowed, in seconds; recording stops by itself at this point. Defaults
+to \code{120}, at most \code{300}. \code{check_tutorial()}'s \code{audio} check warns when
+a tutorial's voice questions add up to more than ten minutes.}
+
+\item{allow_text}{With \code{allow_image = TRUE} or \code{allow_audio = TRUE}, also
+offer a text box for a typed answer? Defaults to \code{TRUE}. Set it to
+\code{FALSE} for a screenshot-only or voice-only question: no text box is
+shown, and Submit is refused until an image is pasted or a recording
+made. Ignored when neither \code{allow_image} nor \code{allow_audio} is \code{TRUE}.}
 
 \item{show_text}{Show \code{text} as the question's prompt inside the widget?
 Defaults to \code{TRUE}. Set it to \code{FALSE} when the prompt is written as
@@ -125,7 +153,7 @@ response to be a whole number (optionally signed, e.g. \code{-3}) -- useful
 for a question like "how many minutes did this take?" where any honest
 number is fine, but free-form prose is not; see the
 \code{"reflection_editable"} example below. A pasted image (\code{allow_image})
-is not validated. Ignored (forced to \code{"none"}) for
+or a recording (\code{allow_audio}) is not validated. Ignored (forced to \code{"none"}) for
 \code{"single"}/\code{"multiple"} questions.}
 }
 \value{
@@ -206,5 +234,14 @@ question(
   "How many minutes, approximately, did this take?",
   type = "reflection_editable",
   validate = "integer"
+)
+
+# A voice-only question: Chrome or Edge, up to one minute.
+question(
+  "In a sentence or two, say what a p-value is.",
+  type = "reflection",
+  allow_audio = TRUE,
+  allow_text = FALSE,
+  max_seconds = 60
 )
 }

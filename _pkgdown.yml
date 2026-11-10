@@ -40,6 +40,7 @@ reference:
       - student_info
       - download_answers_button
       - check_submission
+      - extract_submission_media
       - submission_time
       - load_tutorial
   - title: Quarto-live extension

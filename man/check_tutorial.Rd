@@ -79,8 +79,8 @@ time; this says so first.
 a URL is \code{type = "reflection_editable"}, not a \code{"reflection"} that
 locks on submit. A wrong URL is the commonest reason a student
 resubmits, and a URL is theirs alone, so letting them correct it
-cannot copy our answer. A screenshot question (\code{allow_image = TRUE})
-is exempt.
+cannot copy our answer. A screenshot or voice question
+(\code{allow_image = TRUE}, \code{allow_audio = TRUE}) is exempt.
 \item \code{prefix} -- every learnr2 function in an \code{{r}} chunk is called with
 its \verb{learnr2::} prefix. A tutorial never attaches the package, so a
 bare \code{question()} fails at render time.
@@ -91,7 +91,7 @@ bare \code{question()} fails at render time.
 grader cannot read.
 }
 
-Four further checks report \emph{warnings} rather than errors: with
+Five further checks report \emph{warnings} rather than errors: with
 \code{error = TRUE} they are shown as one warning and do not stop. They cover
 house style that a tutorial can violate and still work:
 \itemize{
@@ -107,6 +107,11 @@ a code block is not checked, since a quoted file may well name them.
 (\code{output}, \code{runtime}, \code{tutorial}, \code{progressive}, \code{allow_skip}) and no
 document-wide \code{execute: echo: false}, which is not known to be safe
 for \code{{webr}} cells.
+\item \code{audio} -- the tutorial's voice questions (\code{allow_audio = TRUE}) add
+up to at most ten minutes of \code{max_seconds}. A recording takes about
+3KB a second of the browser's storage, which is about 5MB for the
+whole site, shared with every screenshot and every other tutorial
+served from the same address.
 \item \code{language} -- if the YAML header sets \verb{lang:}, learnr2 ships interface
 strings for that language, so the Continue and Submit buttons match
 the rest of the page. Without a translation they stay English. See
