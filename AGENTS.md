@@ -333,8 +333,11 @@ subsections) behind a Continue button. Verified against real renders.
   the reflection builder's `media` is whichever box the question has, so
   Edit Answer, the download, `restoredState()` and `restore_entries()`
   each needed one branch. One screenshot or one recording per question,
-  never both. Chrome and Edge are the supported browsers (Safari's
-  MediaRecorder can't write WebM/Opus); `audioRecordingSupported()`
+  never both. Chrome and Edge are the browsers we test; current Firefox
+  and Safari record WebM/Opus too (a Safari 26 download proved it,
+  2026-11, after the docs had said Safari couldn't), so the docs name
+  Chrome and Edge as the recommendation, not a requirement.
+  `audioRecordingSupported()`
   decides at load, giving a note in place of the Record button and, when
   the page has any voice question, a page-top notice
   (`noteUnsupportedAudio()`), so the requirement never depends on the

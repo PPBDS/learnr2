@@ -665,8 +665,9 @@
   // ---- Voice recording (allow_audio) --------------------------------------
   // The browser's own MediaRecorder, Opus in WebM at 24 kbps mono: about
   // 3 KB a second, so two minutes is roughly 360 KB of the ~5 MB the
-  // browser gives the whole site. Tutorials are run in Chrome or Edge, which
-  // both record this; Safari cannot, and a browser that cannot gets a note
+  // browser gives the whole site. Chrome and Edge are what we test; current
+  // Firefox and Safari record this too (a Safari 26 download confirmed it,
+  // 2026-11), and a browser that cannot gets a note
   // in place of the Record button, plus a page-top notice before the reader
   // starts (noteUnsupportedAudio()). The recording is stored as a data URL,
   // like a pasted screenshot, so every path that handles an image answer
