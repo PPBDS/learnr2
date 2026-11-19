@@ -105,19 +105,19 @@ problems[, c("check", "message")]
 #> 16 mentions
 #>                                                                                                                                            message
 #> 1                                                             No "how many minutes" question: a `learnr2::question()` with `validate = "integer"`.
-#> 2                                                                                line 168 (quiz-questions-1): widget chunk needs `#| echo: false`.
-#> 3                                                                                line 182 (quiz-questions-2): widget chunk needs `#| echo: false`.
-#> 4                                                                                line 196 (quiz-questions-3): widget chunk needs `#| echo: false`.
-#> 5                                                                                line 212 (quiz-questions-4): widget chunk needs `#| echo: false`.
-#> 6                                                                                line 235 (quiz-questions-5): widget chunk needs `#| echo: false`.
-#> 7                                                                                line 260 (quiz-questions-7): widget chunk needs `#| echo: false`.
-#> 8                                                                                line 278 (quiz-questions-6): widget chunk needs `#| echo: false`.
-#> 9                                                                           line 319 (copy-paste-an-image-2): widget chunk needs `#| echo: false`.
-#> 10                                                                          line 344 (copy-paste-an-image-3): widget chunk needs `#| echo: false`.
-#> 11                                                                            line 381 (record-your-voice-1): widget chunk needs `#| echo: false`.
-#> 12                                                                  line 413 (student-info-and-submission-1): widget chunk needs `#| echo: false`.
-#> 13                                                                  line 438 (student-info-and-submission-2): widget chunk needs `#| echo: false`.
-#> 14                                                                               line 478 (layout-options-1): widget chunk needs `#| echo: false`.
-#> 15                 1 code block(s) with no language (line 648): tag what the reader types as ```bash or ```r, and expected output as ```{.output}.
-#> 16 prose mentions learnr or tutorial.helpers (lines 160, 498, 507, 537, 652): students should never hear of either; see `vignette("translating")`.
+#> 2                                                                                line 251 (quiz-questions-1): widget chunk needs `#| echo: false`.
+#> 3                                                                                line 265 (quiz-questions-2): widget chunk needs `#| echo: false`.
+#> 4                                                                                line 279 (quiz-questions-3): widget chunk needs `#| echo: false`.
+#> 5                                                                                line 295 (quiz-questions-4): widget chunk needs `#| echo: false`.
+#> 6                                                                                line 318 (quiz-questions-5): widget chunk needs `#| echo: false`.
+#> 7                                                                                line 343 (quiz-questions-7): widget chunk needs `#| echo: false`.
+#> 8                                                                                line 361 (quiz-questions-6): widget chunk needs `#| echo: false`.
+#> 9                                                                           line 402 (copy-paste-an-image-2): widget chunk needs `#| echo: false`.
+#> 10                                                                          line 427 (copy-paste-an-image-3): widget chunk needs `#| echo: false`.
+#> 11                                                                            line 466 (record-your-voice-1): widget chunk needs `#| echo: false`.
+#> 12                                                                  line 498 (student-info-and-submission-1): widget chunk needs `#| echo: false`.
+#> 13                                                                  line 523 (student-info-and-submission-2): widget chunk needs `#| echo: false`.
+#> 14                                                                               line 563 (layout-options-1): widget chunk needs `#| echo: false`.
+#> 15                 1 code block(s) with no language (line 733): tag what the reader types as ```bash or ```r, and expected output as ```{.output}.
+#> 16 prose mentions learnr or tutorial.helpers (lines 244, 583, 592, 622, 737): students should never hear of either; see `vignette("translating")`.
 ```

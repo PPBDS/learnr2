@@ -152,10 +152,11 @@ question(
   `FALSE`. **Recording works in Chrome and Edge**; tell students who
   will meet a voice question to open the tutorial in one of them.
   (Recording uses the browser's `MediaRecorder` with the Opus codec in
-  WebM, which those two support everywhere learnr2 is used. Firefox
-  usually works too. Safari does not.) In a browser that cannot record,
-  the question shows a note saying which browsers can, and a notice at
-  the top of the page says so before the reader starts; the Load Answers
+  WebM. Chrome and Edge are what we test; current Firefox and Safari
+  record it too, and the page checks before offering Record, so an older
+  browser gets a note instead.) In a browser that cannot record, the
+  question shows a note saying which browsers can, and a notice at the
+  top of the page says so before the reader starts; the Load Answers
   button lets them carry a download into the right browser. The widget
   has Record, Stop and Record again buttons, a timer, and a player for
   what was recorded; the microphone is asked for on the first Record and

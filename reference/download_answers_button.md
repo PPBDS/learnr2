@@ -110,7 +110,7 @@ name changed, visible; they do not make the file tamper-proof.
 
 ``` r
 download_answers_button()
-#> <div class="learnr2-download-answers" data-learnr2-download="eyJmaWxlbmFtZVByZWZpeCI6ImxlYXJucjItYW5zd2VycyIsImxhYmVsIjpudWxsLCJwYWNr&#10;YWdlIjpudWxsLCJ2ZXJzaW9uIjpudWxsLCJ0dXRvcmlhbCI6bnVsbCwidGl0bGUiOm51bGws&#10;ImxlYXJucjJWZXJzaW9uIjoiMC4xLjMuOTAxNSJ9">
+#> <div class="learnr2-download-answers" data-learnr2-download="eyJmaWxlbmFtZVByZWZpeCI6ImxlYXJucjItYW5zd2VycyIsImxhYmVsIjpudWxsLCJwYWNr&#10;YWdlIjpudWxsLCJ2ZXJzaW9uIjpudWxsLCJ0dXRvcmlhbCI6bnVsbCwidGl0bGUiOm51bGws&#10;ImxlYXJucjJWZXJzaW9uIjoiMC4xLjMuOTAxNiJ9">
 #>   <noscript>This button requires JavaScript.</noscript>
 #> </div>
 ```

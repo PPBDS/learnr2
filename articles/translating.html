@@ -21,7 +21,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">learnr2</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.3.9015</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.3.9016</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -347,7 +347,7 @@
 </section><section class="level3"><h3 id="voice-questions">Voice questions<a class="anchor" aria-label="anchor" href="#voice-questions"></a>
 </h3>
 <p><code>learnr2::question(type = "reflection", allow_audio = TRUE)</code> lets the reader record a spoken answer in the browser. Use it where hearing the student explain something in their own words is the point, such as “say in a sentence what a confidence interval is”, or where a typed answer would invite pasting. Add <code>allow_text = FALSE</code> for a voice-only question and <code>max_seconds</code> to cap the length (120 by default, 300 at most). A question takes a screenshot or a recording, not both.</p>
-<p><strong>Recording works in Chrome and Edge.</strong> When a tutorial has a voice question, say so in its introduction: one sentence telling students to open the tutorial in Chrome or Edge. A reader in another browser sees a note in place of the Record button, and a notice at the top of the page before they start, so nobody discovers the problem at the last question. Their answers travel to the right browser through the Download Answers and Load Answers buttons.</p>
+<p><strong>Recommend Chrome or Edge.</strong> They are the browsers <strong>learnr2</strong> is tested in. Current Firefox and Safari record too, and the page checks before offering Record, so an older browser is told rather than left guessing. When a tutorial has a voice question, say so in its introduction: one sentence telling students to open the tutorial in Chrome or Edge. A student in a browser that cannot record sees a note in place of the Record button, and a notice at the top of the page before they start, so nobody discovers the problem at the last question. Their answers travel to the right browser through the Download Answers and Load Answers buttons.</p>
 <p>A recording is stored like a screenshot, as a data URL in the browser’s storage and in the download file, at about 3KB a second. <code><a href="../reference/check_tutorial.html">check_tutorial()</a></code> warns (<code>audio</code>) when a tutorial’s voice questions add up to more than ten minutes of <code>max_seconds</code>. To grade, <code><a href="../reference/extract_submission_media.html">extract_submission_media()</a></code> writes every recording in a submission out as a <code>.webm</code> file, and <code><a href="../reference/load_tutorial.html">load_tutorial()</a></code> plays them in place.</p>
 </section></section><section class="level2"><h2 id="images">Images<a class="anchor" aria-label="anchor" href="#images"></a>
 </h2>

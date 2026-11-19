@@ -443,13 +443,16 @@ would invite pasting. Add `allow_text = FALSE` for a voice-only question
 and `max_seconds` to cap the length (120 by default, 300 at most). A
 question takes a screenshot or a recording, not both.
 
-**Recording works in Chrome and Edge.** When a tutorial has a voice
-question, say so in its introduction: one sentence telling students to
-open the tutorial in Chrome or Edge. A reader in another browser sees a
-note in place of the Record button, and a notice at the top of the page
-before they start, so nobody discovers the problem at the last question.
-Their answers travel to the right browser through the Download Answers
-and Load Answers buttons.
+**Recommend Chrome or Edge.** They are the browsers **learnr2** is
+tested in. Current Firefox and Safari record too, and the page checks
+before offering Record, so an older browser is told rather than left
+guessing. When a tutorial has a voice question, say so in its
+introduction: one sentence telling students to open the tutorial in
+Chrome or Edge. A student in a browser that cannot record sees a note in
+place of the Record button, and a notice at the top of the page before
+they start, so nobody discovers the problem at the last question. Their
+answers travel to the right browser through the Download Answers and
+Load Answers buttons.
 
 A recording is stored like a screenshot, as a data URL in the browser’s
 storage and in the download file, at about 3KB a second.

@@ -403,12 +403,14 @@ Verified against real renders.
   builder’s `media` is whichever box the question has, so Edit Answer,
   the download, `restoredState()` and `restore_entries()` each needed
   one branch. One screenshot or one recording per question, never both.
-  Chrome and Edge are the supported browsers (Safari’s MediaRecorder
-  can’t write WebM/Opus); `audioRecordingSupported()` decides at load,
-  giving a note in place of the Record button and, when the page has any
-  voice question, a page-top notice (`noteUnsupportedAudio()`), so the
-  requirement never depends on the author’s prose. There is deliberately
-  no
+  Chrome and Edge are the browsers we test; current Firefox and Safari
+  record WebM/Opus too (a Safari 26 download proved it, 2026-11, after
+  the docs had said Safari couldn’t), so the docs name Chrome and Edge
+  as the recommendation, not a requirement. `audioRecordingSupported()`
+  decides at load, giving a note in place of the Record button and, when
+  the page has any voice question, a page-top notice
+  (`noteUnsupportedAudio()`), so the requirement never depends on the
+  author’s prose. There is deliberately no
   [`check_tutorial()`](https://ppbds.github.io/learnr2/reference/check_tutorial.md)
   check that greps the introduction for “Chrome”: a wording check
   misfires the way the title smoke test did. MediaRecorder’s WebM
